@@ -8,6 +8,9 @@ RUN npm install
 
 COPY . .
 
+# Ensure local dev placeholder .env files never override container environment variables
+RUN rm -f .env .env.local .env.production .env.development
+
 RUN npm run build
 
 EXPOSE 3000

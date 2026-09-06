@@ -805,6 +805,8 @@ if (import.meta.env.PROD) {
 	const host = "0.0.0.0";
 	const server = app.listen(port, host, () => {
 		console.log(`[server] Server listening on http://${host}:${port}`);
+		const hasOpenAIKey = Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'SERVER_SIDE_ONLY' && process.env.OPENAI_API_KEY.trim().length > 0);
+		console.log(`[startup] OPENAI_API_KEY configured: ${hasOpenAIKey}`);
 	});
 	server.on("error", (err: NodeJS.ErrnoException) => {
 		console.error("ssr.server.listen-failed", {
