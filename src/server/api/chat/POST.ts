@@ -32,10 +32,12 @@ function loadFreshEnv() {
             val = val.slice(1, -1);
           }
           val = val.trim();
-          if (key) {
-            process.env[key] = val;
-            if (key === 'OPENAI_API_KE') {
-              process.env['OPENAI_API_KEY'] = val;
+          if (key && (!process.env[key] || process.env[key] === 'SERVER_SIDE_ONLY')) {
+            if (val && val !== 'SERVER_SIDE_ONLY') {
+              process.env[key] = val;
+              if (key === 'OPENAI_API_KE') {
+                process.env['OPENAI_API_KEY'] = val;
+              }
             }
           }
         }
@@ -65,7 +67,10 @@ export default async function handler(req: Request, res: Response) {
   try {
     loadFreshEnv();
 
-    const apiKey = process.env.OPENAI_API_KEY?.trim();
+    let apiKey = process.env.OPENAI_API_KEY?.trim();
+    if (apiKey === 'SERVER_SIDE_ONLY') {
+      apiKey = undefined;
+    }
     if (!apiKey) {
       console.error('[chat] OPENAI_API_KEY is missing on the server');
       return res.status(503).send('Archie AI is not configured on the server yet.');
