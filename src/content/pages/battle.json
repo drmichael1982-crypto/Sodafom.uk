@@ -1,0 +1,72 @@
+{
+  "hero": {
+    "eyebrow": "Challenge your friends",
+    "headline": "Friend Battle Mode ⚔️",
+    "subtext": "Pick a game, invite a friend, and see who scores highest. Friendly competition makes learning twice as fun!"
+  },
+  "howItWorks": [
+    {
+      "id": "hw-1",
+      "step": "1",
+      "emoji": "🎮",
+      "title": "Choose a game",
+      "description": "Pick any of the 118 games as your battle arena."
+    },
+    {
+      "id": "hw-2",
+      "step": "2",
+      "emoji": "📨",
+      "title": "Invite a friend",
+      "description": "Share your unique battle link via WhatsApp, email, or copy-paste."
+    },
+    {
+      "id": "hw-3",
+      "step": "3",
+      "emoji": "🏁",
+      "title": "Both play",
+      "description": "You each play the same game independently — no cheating!"
+    },
+    {
+      "id": "hw-4",
+      "step": "4",
+      "emoji": "🏆",
+      "title": "See who wins",
+      "description": "Scores are compared and the winner earns bonus stars."
+    }
+  ],
+  "rewards": {
+    "headline": "Battle rewards",
+    "items": [
+      {
+        "id": "br-1",
+        "emoji": "🥇",
+        "title": "Win a battle",
+        "reward": "+5 bonus stars"
+      },
+      {
+        "id": "br-2",
+        "emoji": "🤝",
+        "title": "Complete a battle (win or lose)",
+        "reward": "+2 stars"
+      },
+      {
+        "id": "br-3",
+        "emoji": "🔥",
+        "title": "Win 3 battles in a row",
+        "reward": "Battle Streak badge"
+      },
+      {
+        "id": "br-4",
+        "emoji": "👑",
+        "title": "Win 10 battles total",
+        "reward": "Champion badge"
+      }
+    ]
+  },
+  "cta": {
+    "headline": "Ready to battle?",
+    "subtext": "Log in to start a challenge — your friends don't even need an account to accept!",
+    "button": "Start a battle",
+    "href": "/hub"
+  }
+}

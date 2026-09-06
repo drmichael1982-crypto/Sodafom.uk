@@ -1,0 +1,12 @@
+{
+  "TABS": [
+    { "id": "overview",  "label": "Overview" },
+    { "id": "revenue",   "label": "Revenue" },
+    { "id": "traffic",   "label": "Traffic" },
+    { "id": "reviews",   "label": "Reviews" },
+    { "id": "security",  "label": "Access Codes" },
+    { "id": "insurance", "label": "Insurance" },
+    { "id": "promo",     "label": "🎟️ Promo Codes" },
+    { "id": "push",      "label": "🔔 Push" }
+  ]
+}

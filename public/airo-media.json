@@ -1,0 +1,400 @@
+{
+  "logo/horizontal": {
+    "mediaType": "logo",
+    "currentUrl": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-transparent-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png",
+    "searchQuery": "Keep the same composition — golden key in the center, red heart around the key, ",
+    "alternatives": [],
+    "solidUrlMap": {
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-transparent-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-original-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png",
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-transparent-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-original-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+    },
+    "mockupUrlMap": {
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-transparent-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-transparent-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png",
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-transparent-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-transparent-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+    },
+    "landscapeMockupUrlMap": {},
+    "logoSourceMap": {
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-transparent-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png": {
+        "sessionId": "8a666ef6-23b1-4e28-a7ac-c1634c3988a3",
+        "logoId": "39643536-a13a-4bd1-a513-3d962affe57b"
+      },
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-transparent-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png": {
+        "sessionId": "aa2f9110-6181-4796-bd54-1ef443153740",
+        "logoId": "ea50e317-8f65-4ab7-afc0-a1c2195a7c00"
+      }
+    },
+    "productMockupsMap": {
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-transparent-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png": [
+        {
+          "type": "mug",
+          "label": "Mug",
+          "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-mockup-mug-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png"
+        },
+        {
+          "type": "card",
+          "label": "Business Card",
+          "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-mockup-card-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png"
+        },
+        {
+          "type": "tshirt",
+          "label": "T-Shirt",
+          "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-mockup-tshirt-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png"
+        },
+        {
+          "type": "box",
+          "label": "Packaging",
+          "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/8a666ef6-23b1-4e28-a7ac-c1634c3988a3/horizontal-mockup-box-39643536-a13a-4bd1-a513-3d962affe57b/logo-logo.png"
+        }
+      ],
+      "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-transparent-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png": [
+        {
+          "type": "mug",
+          "label": "Mug",
+          "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-mockup-mug-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+        },
+        {
+          "type": "card",
+          "label": "Business Card",
+          "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-mockup-card-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+        },
+        {
+          "type": "tshirt",
+          "label": "T-Shirt",
+          "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-mockup-tshirt-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+        },
+        {
+          "type": "box",
+          "label": "Packaging",
+          "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-mockup-box-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+        }
+      ]
+    },
+    "productMockups": [
+      {
+        "type": "mug",
+        "label": "Mug",
+        "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-mockup-mug-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+      },
+      {
+        "type": "card",
+        "label": "Business Card",
+        "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-mockup-card-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+      },
+      {
+        "type": "tshirt",
+        "label": "T-Shirt",
+        "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-mockup-tshirt-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+      },
+      {
+        "type": "box",
+        "label": "Packaging",
+        "url": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-mockup-box-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+      }
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-17T21:37:46.664Z",
+    "lastUpdated": "2026-08-17T21:40:19.882Z",
+    "surfaceMode": "dark",
+    "generatedForSurfaceColor": "#2D6A4F",
+    "darkSurfaceUrl": "https://isteam.wsimg.com/genai-assistant/logoagent/customer/c597615e-9e2a-4d30-9bf8-47aa24943a18/session/aa2f9110-6181-4796-bd54-1ef443153740/horizontal-transparent-ea50e317-8f65-4ab7-afc0-a1c2195a7c00/logo-logo.png"
+  },
+  "pages/home/maths-card": {
+    "requestedSize": {
+      "width": 600,
+      "height": 400,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "moods": "warm,vivid",
+    "numberOfPeople": "one",
+    "ageOfPeople": "child",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/2252157328",
+    "searchQuery": "child doing maths with numbers colorful fun learning",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/693525684",
+      "https://img1.wsimg.com/isteam/getty/2224050668"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-17T21:41:54.742Z",
+    "lastUpdated": "2026-08-17T21:41:54.742Z",
+    "gettyId": "2252157328",
+    "alternativeGettyIds": [
+      "693525684",
+      "2224050668"
+    ]
+  },
+  "pages/home/reading-card": {
+    "requestedSize": {
+      "width": 600,
+      "height": 400,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "moods": "warm,vivid",
+    "numberOfPeople": "one",
+    "ageOfPeople": "child",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/1271382515",
+    "searchQuery": "child reading book smiling happy bright colorful",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/2223044931",
+      "https://img1.wsimg.com/isteam/getty/1417650203"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-17T21:41:56.206Z",
+    "lastUpdated": "2026-08-17T21:41:56.206Z",
+    "gettyId": "1271382515",
+    "alternativeGettyIds": [
+      "2223044931",
+      "1417650203"
+    ]
+  },
+  "pages/home/testimonials": {
+    "requestedSize": {
+      "width": 800,
+      "height": 500,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "moods": "warm",
+    "numberOfPeople": "two",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/2224635654",
+    "searchQuery": "happy parent and child learning together at home tablet",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/1473857526",
+      "https://img1.wsimg.com/isteam/getty/1555804011"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-17T21:41:56.675Z",
+    "lastUpdated": "2026-08-17T21:41:56.675Z",
+    "gettyId": "2224635654",
+    "alternativeGettyIds": [
+      "1473857526",
+      "1555804011"
+    ]
+  },
+  "pages/home/spelling-card": {
+    "requestedSize": {
+      "width": 600,
+      "height": 400,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "moods": "warm,vivid",
+    "numberOfPeople": "one",
+    "ageOfPeople": "child",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/1221789907",
+    "searchQuery": "child spelling words letter tiles alphabet fun education",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/488089390",
+      "https://img1.wsimg.com/isteam/getty/1222592813"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-17T21:41:57.552Z",
+    "lastUpdated": "2026-08-17T21:41:57.552Z",
+    "gettyId": "1221789907",
+    "alternativeGettyIds": [
+      "488089390",
+      "1222592813"
+    ]
+  },
+  "pages/home/hero": {
+    "requestedSize": {
+      "width": 1920,
+      "height": 900,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "compositions": "wide_shot",
+    "moods": "warm,vivid",
+    "numberOfPeople": "group",
+    "ageOfPeople": "child",
+    "minimumSize": "x_large",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/2255276412",
+    "searchQuery": "happy diverse children learning together colorful classroom bright",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/2267325128",
+      "https://img1.wsimg.com/isteam/getty/2151872600",
+      "https://img1.wsimg.com/isteam/getty/2270840708",
+      "https://img1.wsimg.com/isteam/getty/2224293508"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-17T21:41:58.836Z",
+    "lastUpdated": "2026-08-17T21:41:58.836Z",
+    "gettyId": "2255276412",
+    "alternativeGettyIds": [
+      "2267325128",
+      "2151872600",
+      "2270840708",
+      "2224293508"
+    ]
+  },
+  "pages/app/hero-device": {
+    "requestedSize": {
+      "width": 600,
+      "height": 900,
+      "fit": "cover"
+    },
+    "orientations": "vertical",
+    "numberOfPeople": "one",
+    "ageOfPeople": "child",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/1036713860",
+    "searchQuery": "child using tablet educational app colorful fun learning",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/520132859",
+      "https://img1.wsimg.com/isteam/getty/1071097258",
+      "https://img1.wsimg.com/isteam/getty/1364643473",
+      "https://img1.wsimg.com/isteam/getty/592688036"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-17T23:22:00.646Z",
+    "lastUpdated": "2026-08-17T23:22:00.646Z",
+    "gettyId": "1036713860",
+    "alternativeGettyIds": [
+      "520132859",
+      "1071097258",
+      "1364643473",
+      "592688036"
+    ]
+  },
+  "generated/can-you-make-the-graphics-like-this-pict-0p-p0v": {
+    "mediaType": "generated",
+    "currentUrl": "/airo-assets/uploads/can-you-make-the-graphics-like-this-pict-JaZSZQ.png",
+    "searchQuery": "app graphics design mockup request",
+    "caption": "app graphics design mockup request",
+    "alternatives": [],
+    "aiGeneratedUrls": [
+      "/airo-assets/uploads/can-you-make-the-graphics-like-this-pict-JaZSZQ.png"
+    ],
+    "userModified": true,
+    "createdAt": "2026-08-18T04:02:59.201Z",
+    "lastUpdated": "2026-08-18T04:02:59.201Z"
+  },
+  "pages/home/hero-character": {
+    "orientations": "vertical",
+    "graphicalStyles": "illustration",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/2222050428",
+    "searchQuery": "cartoon school child character illustration education fun colourful",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/884171038",
+      "https://img1.wsimg.com/isteam/getty/2228424575",
+      "https://img1.wsimg.com/isteam/getty/2207912136",
+      "https://img1.wsimg.com/isteam/getty/2184153402",
+      "https://img1.wsimg.com/isteam/getty/2163735721",
+      "https://img1.wsimg.com/isteam/getty/1542569647",
+      "https://img1.wsimg.com/isteam/getty/1466557142"
+    ],
+    "userModified": true,
+    "createdAt": "2026-08-18T04:05:00.153Z",
+    "lastUpdated": "2026-08-18T04:20:16.074Z",
+    "gettyId": "2222050428",
+    "alternativeGettyIds": [
+      "884171038",
+      "2228424575",
+      "2207912136",
+      "2184153402",
+      "2163735721",
+      "1542569647",
+      "1466557142"
+    ]
+  },
+  "pages/shop/school-uniform": {
+    "requestedSize": {
+      "width": 600,
+      "height": 400,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/2239765517",
+    "searchQuery": "school uniform children blazer shirt smart clothing",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/866186456",
+      "https://img1.wsimg.com/isteam/getty/674286114"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-19T17:23:02.329Z",
+    "lastUpdated": "2026-08-19T17:23:02.329Z",
+    "gettyId": "2239765517",
+    "alternativeGettyIds": [
+      "866186456",
+      "674286114"
+    ]
+  },
+  "pages/shop/school-books": {
+    "requestedSize": {
+      "width": 600,
+      "height": 400,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/1449551795",
+    "searchQuery": "school books stationery children colourful",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/2281271590",
+      "https://img1.wsimg.com/isteam/getty/2175593503"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-19T17:23:03.691Z",
+    "lastUpdated": "2026-08-19T17:23:03.691Z",
+    "gettyId": "1449551795",
+    "alternativeGettyIds": [
+      "2281271590",
+      "2175593503"
+    ]
+  },
+  "pages/shop/school-accessories": {
+    "requestedSize": {
+      "width": 600,
+      "height": 400,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/1621517897",
+    "searchQuery": "school bag backpack accessories pencil case children",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/1387302164",
+      "https://img1.wsimg.com/isteam/getty/1632030841"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-19T17:23:04.581Z",
+    "lastUpdated": "2026-08-19T17:23:04.581Z",
+    "gettyId": "1621517897",
+    "alternativeGettyIds": [
+      "1387302164",
+      "1632030841"
+    ]
+  },
+  "pages/home/science-card": {
+    "requestedSize": {
+      "width": 600,
+      "height": 400,
+      "fit": "cover"
+    },
+    "orientations": "horizontal",
+    "ageOfPeople": "child",
+    "mediaType": "image",
+    "currentUrl": "https://img1.wsimg.com/isteam/getty/2175087483",
+    "searchQuery": "child science experiment nature animals curious learning",
+    "alternatives": [
+      "https://img1.wsimg.com/isteam/getty/1159851740",
+      "https://img1.wsimg.com/isteam/getty/2157544290"
+    ],
+    "userModified": false,
+    "createdAt": "2026-08-20T01:41:03.726Z",
+    "lastUpdated": "2026-08-20T01:41:03.726Z",
+    "gettyId": "2175087483",
+    "alternativeGettyIds": [
+      "1159851740",
+      "2157544290"
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+Sodafom progress checkpoint - 4 September 2026
+
+Verified changes in this checkpoint:
+1. One-to-One Tutor Voice button now stops the active SpeechRecognition session when tapped again.
+2. SpeechRecognition is cleaned up on error/end and when leaving the tutor page.
+3. Tutor speech now respects the child's read-aloud preference; when disabled, automatic TTS is not started.
+4. TeacherModePage.tsx passed a direct TypeScript/TSX syntax transpilation check with 0 syntax errors.
+
+Build status:
+- Full project dependency installation could not be completed in this execution environment; npm install stalled before Vite/type packages were fully restored.
+- A full Android APK build is therefore not claimed as verified in this checkpoint.
+
+Next device verification:
+- Install/build on Android Studio.
+- Open One-to-One Tutor.
+- Verify Voice starts and stops from the same button.
+- Verify read-aloud OFF prevents automatic tutor speech.
+- Verify read-aloud ON speaks the lesson and feedback.
+- Continue Ask Archie online/backend and Parent Area tests after the Android build passes.

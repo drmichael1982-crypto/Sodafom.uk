@@ -1,0 +1,46 @@
+{
+  "QUICK_LINKS": [
+    {
+      "href": "/games?age=5-7",
+      "emoji": "🌟",
+      "label": "Ages 5–7 games",
+      "color": "bg-yellow-100 border-yellow-300 text-yellow-800 hover:bg-yellow-200",
+      "id": "t4OQMxhXquxol03U90219"
+    },
+    {
+      "href": "/games?age=8-10",
+      "emoji": "🚀",
+      "label": "Ages 8–10 games",
+      "color": "bg-blue-100 border-blue-300 text-blue-800 hover:bg-blue-200",
+      "id": "ZCSsNX5tXyrwoiOCHM-hS"
+    },
+    {
+      "href": "/games?age=11-13",
+      "emoji": "🏆",
+      "label": "Ages 11–13 games",
+      "color": "bg-purple-100 border-purple-300 text-purple-800 hover:bg-purple-200",
+      "id": "l1CcO8zqSEQX1M_K_ZJrG"
+    },
+    {
+      "href": "/games?cat=maths",
+      "emoji": "🔢",
+      "label": "Maths games",
+      "color": "bg-green-100 border-green-300 text-green-800 hover:bg-green-200",
+      "id": "h3Qb3yZC2I2MLgeEpftGK"
+    },
+    {
+      "href": "/games?cat=spelling",
+      "emoji": "✏️",
+      "label": "Spelling games",
+      "color": "bg-pink-100 border-pink-300 text-pink-800 hover:bg-pink-200",
+      "id": "vAMkczKWDTt6GCPoT5CMP"
+    },
+    {
+      "href": "/games?cat=reading",
+      "emoji": "📖",
+      "label": "Reading games",
+      "color": "bg-orange-100 border-orange-300 text-orange-800 hover:bg-orange-200",
+      "id": "ZUJj4BT6sSW8ovzp4mg1l"
+    }
+  ]
+}

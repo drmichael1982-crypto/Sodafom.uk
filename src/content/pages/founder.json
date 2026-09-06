@@ -1,0 +1,24 @@
+{
+  "name": "Michael Davis",
+  "role": "Founder of Sodafom",
+  "tagline": "Built with love, for Archie — and every child like him.",
+  "story": "I'm Michael Davis, founder of Sodafom.uk. I built this platform for my son Archie, who was struggling to engage with traditional learning. I wanted something that made education feel like play — not a chore. Drawing on years of experience working with children and families, I designed Sodafom to be the tool I wished existed when Archie was starting out. Every game, every star, every subject has been shaped by watching him learn, grow, and smile.",
+  "mission": "My mission is simple: give every child the key to unlock their own potential, no matter their starting point. Learning should be joyful, accessible, and something children actually look forward to.",
+  "values": [
+    {
+      "id": "v1",
+      "emoji": "❤️",
+      "label": "Built for children"
+    },
+    {
+      "id": "v2",
+      "emoji": "🔑",
+      "label": "Learning unlocks potential"
+    },
+    {
+      "id": "v3",
+      "emoji": "🌱",
+      "label": "Every child can grow"
+    }
+  ]
+}
