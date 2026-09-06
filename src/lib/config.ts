@@ -32,8 +32,8 @@ function detectCapacitor() {
 
 export const isCapacitor = detectCapacitor();
 
-// The production backend URL
-export const PRODUCTION_URL = 'https://sodafom.uk';
+// The production backend URL (Railway)
+export const PRODUCTION_URL = 'https://sodafomuk-production.up.railway.app';
 
 // Phone builds use the hosted backend by default, or VITE_API_BASE_URL when specified for local testing.
 const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim();
