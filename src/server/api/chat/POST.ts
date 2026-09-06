@@ -1,7 +1,5 @@
 import type { Request, Response } from 'express';
 import OpenAI from 'openai';
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { SYSTEM_PROMPT } from '@/lib/chatbot/chat-config';
 
 interface ChatMessage {
@@ -9,42 +7,7 @@ interface ChatMessage {
   content: string;
 }
 
-function loadFreshEnv() {
-  const cwd = process.cwd();
-  const envPaths = [
-    resolve(cwd, '.env'),
-    resolve(cwd, '../.env'),
-    resolve(cwd, '../../.env')
-  ];
-  for (const envPath of envPaths) {
-    if (existsSync(envPath)) {
-      try {
-        const content = readFileSync(envPath, 'utf-8');
-        const lines = content.split(/\r?\n/);
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine || trimmedLine.startsWith('#')) continue;
-          const eqIdx = trimmedLine.indexOf('=');
-          if (eqIdx === -1) continue;
-          const key = trimmedLine.slice(0, eqIdx).trim();
-          let val = trimmedLine.slice(eqIdx + 1).trim();
-          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-            val = val.slice(1, -1);
-          }
-          val = val.trim();
-          if (key && (!process.env[key] || process.env[key] === 'SERVER_SIDE_ONLY')) {
-            if (val && val !== 'SERVER_SIDE_ONLY') {
-              process.env[key] = val;
-              if (key === 'OPENAI_API_KE') {
-                process.env['OPENAI_API_KEY'] = val;
-              }
-            }
-          }
-        }
-      } catch { /* ignore */ }
-    }
-  }
-}
+// Production secrets come directly from process.env. Never reload local .env files in a request.
 
 export default async function handler(req: Request, res: Response) {
   console.log('[chat] Request received. Origin:', req.headers.origin);
@@ -65,8 +28,6 @@ export default async function handler(req: Request, res: Response) {
   }
 
   try {
-    loadFreshEnv();
-
     let apiKey = process.env.OPENAI_API_KEY?.trim();
     if (apiKey === 'SERVER_SIDE_ONLY') {
       apiKey = undefined;

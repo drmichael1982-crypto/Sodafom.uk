@@ -101,47 +101,9 @@ import {
 import { loadIndexNowKey } from "./indexnow-key";
 import { isSystemHost } from "./seo-host";
 import { llmsTxtHandler } from "./llms-txt";
-import { existsSync, readFileSync as fsReadFileSync } from "node:fs";
-import { resolve as pathResolve } from "node:path";
 
-export function reloadProjectEnv() {
-  const cwd = process.cwd();
-  const envPaths = [
-    pathResolve(cwd, ".env"),
-    pathResolve(cwd, "../.env"),
-    pathResolve(cwd, "../../.env")
-  ];
-  for (const envPath of envPaths) {
-    if (existsSync(envPath)) {
-      try {
-        const content = fsReadFileSync(envPath, "utf-8");
-        const lines = content.split(/\r?\n/);
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine || trimmedLine.startsWith("#")) continue;
-          const eqIdx = trimmedLine.indexOf("=");
-          if (eqIdx === -1) continue;
-          const key = trimmedLine.slice(0, eqIdx).trim();
-          let val = trimmedLine.slice(eqIdx + 1).trim();
-          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-            val = val.slice(1, -1);
-          }
-          val = val.trim();
-          if (key) {
-            process.env[key] = val;
-            if (key === 'OPENAI_API_KE') {
-              process.env['OPENAI_API_KEY'] = val;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("[server] Failed to load .env from:", envPath, err);
-      }
-    }
-  }
-}
-
-reloadProjectEnv();
+// Railway and other production hosts inject secrets into process.env at runtime.
+// Do not reload .env files here: local placeholders must never overwrite runtime secrets.
 
 
 export interface SsrRenderResult {
