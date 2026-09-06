@@ -2,7 +2,7 @@
 nixPkgs = ["nodejs"]
 
 [phases.build]
-cmds = ["pnpm install --frozen-lockfile", "pnpm run build"]
+cmds = ["npm install", "npm run build"]
 
 [start]
 cmd = "node dist/server.bundle.mjs"
