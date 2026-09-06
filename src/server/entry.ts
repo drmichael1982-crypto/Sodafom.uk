@@ -802,9 +802,9 @@ if (import.meta.env.PROD) {
 		console.error("ssr.server.invalid-port", { rawPort });
 		process.exit(1);
 	}
-	const host = process.env.HOST || "0.0.0.0";
+	const host = "0.0.0.0";
 	const server = app.listen(port, host, () => {
-		console.log(`Server listening on http://${host}:${port}`);
+		console.log(`[server] Server listening on http://${host}:${port}`);
 	});
 	server.on("error", (err: NodeJS.ErrnoException) => {
 		console.error("ssr.server.listen-failed", {
