@@ -39,7 +39,16 @@ export const PRODUCTION_URL = 'https://sodafomuk-production.up.railway.app';
 const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim();
 export const API_BASE_URL = (configuredApiUrl || PRODUCTION_URL).replace(/\/$/, '');
 
-export const API_PREFIX = `${API_BASE_URL}/api`;
+function getApiPrefix(): string {
+  if (typeof window !== 'undefined' && window.location.origin && !window.location.origin.includes('localhost') && !window.location.protocol.includes('capacitor') && window.location.protocol.startsWith('http')) {
+    // Web app running live on Railway/production host: use relative /api for same-origin reliability
+    return '/api';
+  }
+  // Mobile / Capacitor / local app: use full URL
+  return `${API_BASE_URL}/api`;
+}
+
+export const API_PREFIX = getApiPrefix();
 
 if (typeof window !== 'undefined') {
   console.info('[Config] Sodafom API_PREFIX configured as:', API_PREFIX);
