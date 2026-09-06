@@ -2,6 +2,7 @@
   "name": "v8-app-template",
   "version": "1.0.0",
   "type": "module",
+  "packageManager": "pnpm@11.23.0",
   "imports": {
     "#airo/secrets": "./export-plugins/airo-secrets.ts"
   },
