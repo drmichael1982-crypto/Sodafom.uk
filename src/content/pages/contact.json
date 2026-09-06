@@ -1,0 +1,62 @@
+{
+  "ENQUIRY_TYPES": [
+    { "id": "eq-general",      "label": "General question" },
+    { "id": "eq-billing",      "label": "Billing & subscription" },
+    { "id": "eq-technical",    "label": "Technical issue" },
+    { "id": "eq-school",       "label": "School / classroom use" },
+    { "id": "eq-safeguarding", "label": "Safeguarding / privacy" },
+    { "id": "eq-other",        "label": "Something else" }
+  ],
+  "FAQS": [
+    {
+      "q": "How do I cancel my subscription?",
+      "a": "Log in to the Parent & Teacher Hub, go to Account Settings, and select Cancel Subscription. Your access continues until the end of the current billing period.",
+      "id": "ddQGiXr4NImdVHR1PKDAA"
+    },
+    {
+      "q": "How do I delete my child's data?",
+      "a": "You can remove a child profile from the Hub dashboard at any time. All associated activity data is deleted within 30 days. For full account deletion, email privacy@sodafom.com.",
+      "id": "GPgG-yo0OhFFc957pTC8h"
+    },
+    {
+      "q": "I forgot my password — what do I do?",
+      "a": "Click \"Forgot password\" on the login page and we'll send a reset link to your registered email address.",
+      "id": "3WVS0UDx7EXp3s5URH3Xr"
+    },
+    {
+      "q": "Can I use Sodafom in a school or classroom?",
+      "a": "Yes! Teachers can create an account and add multiple children. Contact us at support@sodafom.com for school pricing and bulk access options.",
+      "id": "3m5-PkBzlcmiX8UXb6V6d"
+    },
+    {
+      "q": "The app isn't working — what should I do?",
+      "a": "Try refreshing the page or restarting the app. If the issue persists, use the contact form below with as much detail as possible (device, browser, what happened) and we'll investigate.",
+      "id": "EnxZVeg0J924HOho8smxg"
+    },
+    {
+      "q": "How much does Sodafom cost?",
+      "a": "Sodafom starts from £1/month after a free 7-day trial. We offer monthly and annual plans — annual saves you over 30%. There are no hidden fees and you can cancel anytime.",
+      "id": "6yZv4FCudqPpdmDOqyR2h"
+    },
+    {
+      "q": "Which devices does Sodafom work on?",
+      "a": "Sodafom works on any modern device with a web browser — tablets, laptops, Chromebooks, and desktop computers. No app download is required. We recommend a screen size of at least 7 inches for the best experience.",
+      "id": "jHO0gZgUi5oX6cr84Jpow"
+    },
+    {
+      "q": "Is Sodafom aligned to the UK curriculum?",
+      "a": "Yes. Every game maps to the UK National Curriculum for Key Stages 1 and 2 (ages 5–11), with extension content for Key Stage 3 (ages 11–13). Our content is reviewed regularly to stay current.",
+      "id": "f3DAhcXdlRDc-QICw7k_S"
+    },
+    {
+      "q": "Is Sodafom safe for children?",
+      "a": "Absolutely. Sodafom has no adverts, no in-app purchases, no social features, and no third-party tracking. We are GDPR compliant and follow COPPA guidelines. Children only interact with games — never with other users.",
+      "id": "OI37LLZdAqgnjMa033lrN"
+    },
+    {
+      "q": "How many children can I add to one account?",
+      "a": "You can add up to 5 child profiles on a single parent account, each with their own age group, progress tracking, and star rewards. Need more? Contact us for a family or school plan.",
+      "id": "bAst1OIECwhnrW8-jUUv0"
+    }
+  ]
+}

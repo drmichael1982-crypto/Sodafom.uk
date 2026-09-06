@@ -1,0 +1,12 @@
+Sodafom backend local AI fix - 2026-09-03
+
+Changes:
+1. start_server.bat now loads .env automatically using Node --env-file=.env.
+2. Local startup no longer tries MySQL unless database credentials are explicitly configured.
+3. Ask Archie/OpenAI can therefore run for phone testing without the MySQL root@localhost password error blocking startup.
+4. Database-backed features still require real DB_* or MYSQL_* credentials when those features are tested.
+
+Put your secret key in .env as:
+OPENAI_API_KEY=your_key_here
+
+Do not share the .env file or API key.

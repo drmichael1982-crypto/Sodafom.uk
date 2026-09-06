@@ -1,0 +1,349 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Core Colors */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 4%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 4%;
+    --primary: 153 40% 30%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 100% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 154 30% 95%;
+    --muted-foreground: 158 30% 30%;
+    --accent: 51 100% 50%;
+    --accent-foreground: 0 0% 34%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 160 84% 39%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%;
+    --info-foreground: 0 0% 100%;
+    --border: 152 37% 84%;
+    --input: 152 37% 84%;
+    --ring: 153 40% 30%;
+
+    /* Extended Colors */
+    --chart-1: 154 41% 60%;
+    --chart-2: 153 40% 45%;
+    --chart-3: 153 40% 30%;
+    --chart-4: 154 41% 15%;
+    --chart-5: 0 0% 0%;
+
+    /* Sidebar Colors */
+    --sidebar: 154 30% 95%;
+    --sidebar-foreground: 0 0% 4%;
+    --sidebar-primary: 153 40% 30%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 51 100% 50%;
+    --sidebar-accent-foreground: 0 0% 34%;
+    --sidebar-border: 152 37% 84%;
+    --sidebar-ring: 153 40% 30%;
+
+    /* Typography */
+    --font-sans: "Nunito", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-heading: "Nunito", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-serif: ui-serif, Georgia, "Times New Roman", serif;
+    --font-mono: ui-monospace, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+
+    /* Hero section palette — sky-blue children's educational theme */
+    --hero-sky-top: 210 72% 32%;
+    --hero-sky-mid: 210 65% 42%;
+    --hero-sky-ground: 140 58% 26%;
+    --hero-pill-blue: 210 65% 38%;
+    --hero-pill-green: 140 60% 32%;
+    --hero-pill-orange: 25 80% 42%;
+    --hero-pill-gold: 45 90% 44%;
+    --hero-pill-purple: 270 60% 42%;
+    --hero-pill-red: 0 65% 40%;
+    --hero-pill-teal: 185 60% 36%;
+    /* Rainbow arc bands (decorative SVG strokes) */
+    --rainbow-red: 4 79% 56%;
+    --rainbow-orange: 27 96% 61%;
+    --rainbow-yellow: 49 98% 60%;
+    --rainbow-green: 123 38% 46%;
+    --rainbow-blue: 214 79% 51%;
+    --rainbow-purple: 291 64% 42%;
+    /* Hero overlay / shadow helpers */
+    --hero-overlay-glass: 0 0% 100% / 0.12;
+    --hero-overlay-dark: 0 0% 0% / 0.30;
+    --hero-overlay-bar: 0 0% 100% / 0.10;
+    --hero-text-shadow: 3px 3px 0 hsl(0 0% 0% / 0.40), -1px -1px 0 hsl(0 0% 0% / 0.25);
+    --hero-sub-shadow: 1px 1px 4px hsl(0 0% 0% / 0.50);
+
+    /* Border Radius */
+    --radius: 0.5rem;
+    /* Button radius: the kit's radiusButton is written here at install time;
+       the default matches shadcn `rounded-md` (calc(var(--radius) - 2px)) so a
+       kit without a button radius renders unchanged. Consumed by the Button
+       `cva` via `rounded-[var(--radius-button)]` (AIROBUILD-3249). */
+    --radius-button: calc(var(--radius) - 2px);
+
+    /* Shadows */
+    --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+    --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
+    --shadow-md: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 2px 4px -1px hsl(0 0% 0% / 0.10);
+    --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
+    --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
+    --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  p, li, span, label, td, th {
+    font-weight: 500;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading) !important;
+  }
+}
+
+/* ── Accessibility modes ─────────────────────────────────────────────────────
+   Applied as classes on <html> by AccessibilityProvider.
+   These override the base theme without touching CSS variables so the
+   colour system stays intact. */
+
+/* Dyslexia-friendly: switch to a more readable font stack */
+html.a11y-dyslexia body,
+html.a11y-dyslexia p,
+html.a11y-dyslexia span,
+html.a11y-dyslexia li,
+html.a11y-dyslexia label,
+html.a11y-dyslexia input,
+html.a11y-dyslexia textarea,
+html.a11y-dyslexia button {
+  font-family: 'Comic Sans MS', 'Comic Sans', 'Chalkboard SE', 'Arial Rounded MT Bold', cursive !important;
+  letter-spacing: 0.04em;
+  word-spacing: 0.1em;
+  line-height: 1.75 !important;
+}
+
+/* High contrast: darken borders and text */
+html.a11y-high-contrast {
+  --foreground: 0 0% 0%;
+  --muted-foreground: 0 0% 15%;
+  --border: 0 0% 0%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 0%;
+  --background: 0 0% 98%;
+}
+html.a11y-high-contrast * {
+  outline-offset: 2px;
+}
+html.a11y-high-contrast a:focus,
+html.a11y-high-contrast button:focus {
+  outline: 3px solid hsl(var(--primary)) !important;
+}
+
+/* Large text: bump base font size */
+html.a11y-large-text body {
+  font-size: 1.15rem !important;
+}
+html.a11y-large-text p,
+html.a11y-large-text li,
+html.a11y-large-text label,
+html.a11y-large-text span {
+  font-size: 1.1em !important;
+}
+html.a11y-large-text h1 { font-size: 2.6rem !important; }
+html.a11y-large-text h2 { font-size: 2rem !important; }
+html.a11y-large-text h3 { font-size: 1.6rem !important; }
+
+/* Shared long-form type scale (RUBICON-554). Single source of truth for
+   page titles and rich markdown content; anchored to the site heading range so
+   blog posts match the rest of the customer's site. */
+@layer components {
+  /* ── Hero section helpers ── */
+  .hero-bg {
+    background: linear-gradient(
+      175deg,
+      hsl(var(--hero-sky-top)) 0%,
+      hsl(var(--hero-sky-mid)) 45%,
+      hsl(var(--hero-sky-ground)) 100%
+    );
+  }
+  .hero-glass { background: hsl(var(--hero-overlay-glass)); }
+  .hero-dark-strip { background: hsl(var(--hero-overlay-dark)); }
+  .hero-bar { background: hsl(var(--hero-overlay-bar)); }
+  .hero-title-shadow { text-shadow: var(--hero-text-shadow); }
+  .hero-sub-shadow   { text-shadow: var(--hero-sub-shadow); }
+  .hero-pill-blue    { background: hsl(var(--hero-pill-blue)); }
+  .hero-pill-green   { background: hsl(var(--hero-pill-green)); }
+  .hero-pill-orange  { background: hsl(var(--hero-pill-orange)); }
+  .hero-pill-gold    { background: hsl(var(--hero-pill-gold)); }
+  .hero-pill-purple  { background: hsl(var(--hero-pill-purple)); }
+  .hero-pill-red     { background: hsl(var(--hero-pill-red)); }
+  .hero-pill-teal    { background: hsl(var(--hero-pill-teal)); }
+  .hero-phone-bg     { background: hsl(var(--foreground)); }
+  .hero-google-label { color: hsl(var(--hero-pill-blue)); }
+  .hero-google-title { color: hsl(var(--hero-sky-top)); }
+  .hero-grass-a      { fill: hsl(var(--hero-sky-ground)); }
+  .hero-grass-b      { fill: hsl(var(--hero-pill-green)); }
+  /* Rainbow SVG stroke classes */
+  .rb-red    { stroke: hsl(var(--rainbow-red));    }
+  .rb-orange { stroke: hsl(var(--rainbow-orange)); }
+  .rb-yellow { stroke: hsl(var(--rainbow-yellow)); }
+  .rb-green  { stroke: hsl(var(--rainbow-green));  }
+  .rb-blue   { stroke: hsl(var(--rainbow-blue));   }
+  .rb-purple { stroke: hsl(var(--rainbow-purple)); }
+
+  .page-title {
+    font-size: clamp(1.875rem, 2vw + 1rem, 2.25rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: normal;
+    color: hsl(var(--foreground));
+  }
+
+  .rich-text {
+    color: hsl(var(--muted-foreground));
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+  /* Defensive: a stray body H1 renders one step below .page-title and is
+     visually distinct from the real page title above it. */
+  .rich-text h1 {
+    font-size: clamp(1.5rem, 1.5vw + 1rem, 1.875rem);
+    font-weight: 700;
+    line-height: 1.3;
+    color: hsl(var(--foreground));
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  .rich-text h2 {
+    font-size: clamp(1.5rem, 1.5vw + 1rem, 1.875rem);
+    font-weight: 700;
+    line-height: 1.3;
+    color: hsl(var(--foreground));
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+  .rich-text h3 {
+    font-size: clamp(1.25rem, 1vw + 0.9rem, 1.5rem);
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .rich-text h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .rich-text p {
+    margin-bottom: 1.25rem;
+  }
+  .rich-text a {
+    color: hsl(var(--primary));
+    text-decoration: underline;
+  }
+  .rich-text ul,
+  .rich-text ol {
+    margin: 1.25rem 0;
+    padding-left: 1.5rem;
+  }
+  .rich-text ul { list-style: disc; }
+  .rich-text ol { list-style: decimal; }
+  .rich-text li { margin-bottom: 0.5rem; }
+  .rich-text blockquote {
+    border-left: 3px solid hsl(var(--primary));
+    padding-left: 1rem;
+    font-style: italic;
+    margin: 1.5rem 0;
+    color: hsl(var(--foreground));
+  }
+  .rich-text code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: hsl(var(--muted));
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.25rem;
+  }
+  .rich-text pre {
+    background: hsl(var(--muted));
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+  .rich-text pre code {
+    background: transparent;
+    padding: 0;
+  }
+  .rich-text img {
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+    max-width: 100%;
+    height: auto;
+  }
+  .rich-text table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+  }
+  .rich-text th,
+  .rich-text td {
+    border: 1px solid hsl(var(--border));
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+  }
+}
+
+/* Custom utility classes */
+@layer utilities {
+  .animate-in {
+    animation-duration: 0.2s;
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation-name: fadeIn;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+/* Unless told otherwise, keep it for smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}

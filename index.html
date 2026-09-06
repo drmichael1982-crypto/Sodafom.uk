@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // Samsung A10 and other older Android WebViews do not provide the ES2022
+      // Object.hasOwn helper. Install the standards-compatible fallback before
+      // any application or vendor JavaScript is evaluated.
+      if (typeof Object.hasOwn !== 'function') {
+        Object.hasOwn = function (object, property) {
+          return Object.prototype.hasOwnProperty.call(Object(object), property);
+        };
+      }
+    </script>
+    <script>
+      // Capacitor startup guard: make pre-React failures visible instead of a white screen.
+      (function () {
+        function showStartupError(message) {
+          try {
+            var existing = document.getElementById('sodafom-startup-error');
+            if (existing) return;
+            var box = document.createElement('div');
+            box.id = 'sodafom-startup-error';
+            box.style.cssText = 'position:fixed;inset:0;z-index:2147483647;background:#fff;color:#111;padding:20px;overflow:auto;font-family:sans-serif';
+            box.innerHTML = '<h1 style="color:#b91c1c;font-size:20px">Sodafom startup error</h1><pre style="white-space:pre-wrap;font-size:12px"></pre>';
+            box.querySelector('pre').textContent = String(message || 'Unknown startup error');
+            document.addEventListener('DOMContentLoaded', function () { document.body.appendChild(box); }, { once:true });
+            if (document.body) document.body.appendChild(box);
+          } catch (_) {}
+        }
+        window.addEventListener('error', function (e) { showStartupError(e.error && e.error.stack ? e.error.stack : e.message); });
+        window.addEventListener('unhandledrejection', function (e) { showStartupError(e.reason && e.reason.stack ? e.reason.stack : e.reason); });
+      })();
+    </script>
+    <script>
+      (function () {
+        try {
+          var u = new URL(location.href);
+          if (u.searchParams.has('airoShareToken')) {
+            u.searchParams.delete('airoShareToken');
+            history.replaceState(null, '', u.toString());
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <meta name="referrer" content="same-origin" />
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--app-head-->
+    <script src="/airo-video-slots.js"></script>
+    <script src="/airo-logo-orientation.js"></script>
+  </head>
+  <body class="fs-unmask-airo-app-builder">
+    <div id="app" class="fs-unmask-airo-app-builder"><!--app-html--><div style="color:white;padding:20px;">Loading Sodafom...</div></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script src="/analytics.js"></script>
+  </body>
+</html>

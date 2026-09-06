@@ -1,0 +1,97 @@
+SODAFOM COMPLETE WORLDS / CARTOON / ARCHIE VOICE BUILD
+Prepared from the user's Sodafom source plus the continuous Archie voice fixes.
+
+WHAT IS INCLUDED
+1. New launch Home screen at /
+   - Correct golden-key Archie artwork
+   - Explore My World button
+   - Parent Area, Stars & Rewards, Ask Archie, Sticker Book, Progress, Archie & Friends
+   - Bright/glowing child-friendly icons
+
+2. Choose Your World screen
+   - Maths (blue)
+   - Reading (purple)
+   - Spelling (red/orange)
+   - Science (green)
+   - Geography (gold/orange)
+   - Puzzle/Crossword (indigo)
+
+3. Subject World menu screen
+   - Six category/game buttons per world
+   - All buttons link to existing game routes (no duplicate game engines)
+   - Show all games remains available
+
+4. Sticker Book
+   - Open-book style collection page
+   - Categories and progress bar
+   - Earned vs locked sticker appearance
+   - Links back to the existing Stars & Rewards system
+
+5. Archie & Friends
+   - Correct golden-key Archie used as main Archie
+   - Soda Bot, Captain Spark, Professor Thinkwell, Mia, Toby, Bella, Rocky, Penny, Ziggy, Daisy, Sunny
+   - Cartoon portrait assets added for several friends from the approved Sodafom sticker artwork
+   - Tapping a friend reads the stored introduction locally using TTS
+   - Meet All My Friends reads introductions one by one
+
+6. Ask Archie improvements
+   - Existing one-tap continuous conversation mode retained
+   - Speech recognition pauses while Archie speaks and restarts afterwards
+   - Buffered chat response rendering retained to reduce Android WebView flicker
+   - Native Android Text-to-Speech plugin retained and improved with UK-English voice preference plus slightly youthful pitch/rate
+   - Spoken text cleans markdown, repeated X/XXX, URLs, emoji noise, and maths symbols
+   - Local/free router added for basic arithmetic, spelling, several science facts and app navigation help
+   - LOCAL / FREE and OPENAI source badges added
+   - During OPEN_TESTING_MODE, OpenAI is capped at 20 AI requests/day per device; local/free learning still works after the cap
+
+7. Android / security
+   - Main release manifest no longer globally allows cleartext HTTP
+   - Debug manifest allows cleartext HTTP for local laptop-server testing only
+   - ArchieSpeech native plugin remains registered in MainActivity
+
+8. HONOR Magic V3 responsive design targets
+   - Outer display reference: 2376 x 1060
+   - Inner display reference: 2344 x 2156
+   - UI uses responsive grids, large touch targets and no fixed phone-width shell
+
+REFERENCE ART
+- public/assets/cartoon/six-screen-reference.png
+- public/assets/cartoon/complete-design-board.png
+- public/assets/images/archie-character-v2.png
+- public/assets/cartoon/friends/*
+
+TESTS COMPLETED IN THIS ENVIRONMENT
+PASS: TypeScript parser checked all 449 TS/TSX source files: 0 syntax errors.
+PASS: All 36 new World game links were checked against src/routes.tsx: 0 missing routes.
+PASS: Local/free router smoke tests:
+  1 + 1 -> 2
+  What is 10 times 10? -> 100
+  20 divided by 4 -> 5
+  How do you spell elephant? -> E,L,E,P,H,A,N,T
+  Where is Maths? -> local navigation help
+  What is the water cycle? -> local science response
+PASS: Android source contains RECORD_AUDIO permission and ArchieSpeech native plugin registration.
+PASS: No .env file/API key is included in this project package.
+
+BUILD LIMITATIONS OF THIS CHAT ENVIRONMENT
+- npm ci could not complete because external package downloads are blocked/timed out here.
+- Android Gradle compile could not run because the environment cannot reach services.gradle.org.
+- Therefore an APK was NOT built or installed here, and actual microphone/audio output cannot be truthfully verified from this environment.
+
+REQUIRED FINAL DEVICE TEST IN ANDROID STUDIO / GEMINI
+1. npm install (or npm ci)
+2. npm run build
+3. npx cap sync android
+4. Open android project / build debug APK
+5. Install on HONOR Magic V3 (FCP-N49, Android 16 / MagicOS 10)
+6. Test folded and unfolded layouts
+7. Test Home -> Worlds -> each World menu -> game
+8. Test Sticker Book and Archie & Friends
+9. Ask "What is 10 times 10?" -> must show LOCAL / FREE and speak "100"
+10. Without touching mic again, ask "What is five plus five?" -> must answer and speak
+11. Test an OpenAI question -> OPENAI badge and spoken answer
+12. Test "Stop listening" and close Ask Archie -> microphone must stop
+13. Confirm no screen flicker and no spoken markdown/XXX characters
+
+IMPORTANT
+The original/classic homepage is preserved at /classic-home in case it is needed for comparison/recovery.

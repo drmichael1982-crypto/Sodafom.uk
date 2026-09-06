@@ -1,0 +1,121 @@
+{
+  "hero": {
+    "headline": "Everything parents need to know",
+    "subtext": "Sodafom is built with your child's safety, progress, and joy at the centre. Here's how it works — and why thousands of families trust us."
+  },
+  "trustBadges": [
+    {
+      "id": "tb1",
+      "emoji": "🔒",
+      "label": "Safe for children",
+      "detail": "No ads, no in-app purchases, no external links"
+    },
+    {
+      "id": "tb2",
+      "emoji": "📊",
+      "label": "Track progress",
+      "detail": "See exactly what your child is learning each session"
+    },
+    {
+      "id": "tb3",
+      "emoji": "🇬🇧",
+      "label": "UK curriculum aligned",
+      "detail": "Content mapped to KS1 and KS2 national curriculum"
+    },
+    {
+      "id": "tb4",
+      "emoji": "🎮",
+      "label": "Game-based learning",
+      "detail": "Children learn more when they're having fun"
+    }
+  ],
+  "howItHelps": {
+    "heading": "How Sodafom helps your child",
+    "items": [
+      {
+        "id": "h1",
+        "emoji": "🧮",
+        "title": "Maths confidence",
+        "body": "From counting and addition to fractions and times tables, our games build number skills step by step — at exactly the right pace for your child's age."
+      },
+      {
+        "id": "h2",
+        "emoji": "✏️",
+        "title": "Spelling & phonics",
+        "body": "Phonics games, spelling bees, and word hunts help children recognise patterns, build vocabulary, and spell with confidence."
+      },
+      {
+        "id": "h3",
+        "emoji": "📖",
+        "title": "Reading comprehension",
+        "body": "Story builders and reading quests develop inference, understanding, and a genuine love of reading — skills that underpin every subject."
+      }
+    ]
+  },
+  "safetySection": {
+    "heading": "Your child's safety is our priority",
+    "points": [
+      {
+        "id": "s1",
+        "text": "No advertising or sponsored content — ever"
+      },
+      {
+        "id": "s2",
+        "text": "No social features or chat between children"
+      },
+      {
+        "id": "s3",
+        "text": "Fully compliant with UK GDPR and Children's Privacy law"
+      },
+      {
+        "id": "s4",
+        "text": "No personal data collected from children"
+      },
+      {
+        "id": "s5",
+        "text": "Parent account controls all child profiles"
+      },
+      {
+        "id": "s6",
+        "text": "Content reviewed and age-appropriate for 5–13"
+      }
+    ]
+  },
+  "faq": [
+    {
+      "id": "f1",
+      "question": "What age is Sodafom suitable for?",
+      "answer": "Sodafom is designed for children aged 5 to 13. Content is split into three age groups — 5–7, 8–10, and 11–13 — so your child always gets activities matched to their level."
+    },
+    {
+      "id": "f2",
+      "question": "How much does it cost?",
+      "answer": "Sodafom costs just £1 per month or £10 per year — less than a cup of coffee. You can cancel any time, and there are no hidden fees or in-app purchases."
+    },
+    {
+      "id": "f3",
+      "question": "Is there a free trial?",
+      "answer": "Yes — you can explore the games and subjects for free before subscribing. Simply create an account and start playing."
+    },
+    {
+      "id": "f4",
+      "question": "Can I track my child's progress?",
+      "answer": "Absolutely. The Parent & Teacher Hub gives you a full view of your child's activity — which subjects they've practised, their scores, time spent learning, and stars earned."
+    },
+    {
+      "id": "f5",
+      "question": "Is Sodafom aligned with the UK curriculum?",
+      "answer": "Yes. All content is mapped to the KS1 and KS2 national curriculum, covering the core skills children need at school."
+    },
+    {
+      "id": "f6",
+      "question": "Can teachers use Sodafom too?",
+      "answer": "Yes — teachers can create accounts and monitor class progress through the Hub. It works great as a homework tool or classroom supplement."
+    }
+  ],
+  "cta": {
+    "headline": "Ready to unlock your child's potential?",
+    "subtext": "Join thousands of families already learning with Sodafom.",
+    "button": "Start for free"
+  }
+}

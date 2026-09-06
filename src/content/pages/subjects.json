@@ -1,0 +1,313 @@
+{
+  "hero": {
+    "headline": "Choose Your Adventure!",
+    "tagline": "Pick a subject, pick your age, and start learning through play."
+  },
+  "ageGroups": [
+    {
+      "id": "age-5-7",
+      "range": "5–7",
+      "label": "Little Stars",
+      "emoji": "⭐",
+      "color": "yellow"
+    },
+    {
+      "id": "age-8-10",
+      "range": "8–10",
+      "label": "Super Learners",
+      "emoji": "🚀",
+      "color": "blue"
+    },
+    {
+      "id": "age-11-13",
+      "range": "11–13",
+      "label": "Future Stars",
+      "emoji": "🏆",
+      "color": "purple"
+    }
+  ],
+  "subjects": [
+    {
+      "id": "maths",
+      "title": "Maths",
+      "emoji": "🔢",
+      "color": "gold",
+      "description": "Numbers, shapes, times tables and more — made fun through games and challenges.",
+      "readAloud": true,
+      "categories": [
+        {
+          "id": "maths-counting",
+          "title": "Counting & Numbers",
+          "icon": "🔢",
+          "ageGroups": [
+            "5–7"
+          ],
+          "description": "Count objects, learn number order, and practise writing numbers 1–100.",
+          "levels": [
+            "Starter",
+            "Growing",
+            "Champion"
+          ]
+        },
+        {
+          "id": "maths-shapes",
+          "title": "Shapes & Patterns",
+          "icon": "🔷",
+          "ageGroups": [
+            "5–7",
+            "8–10"
+          ],
+          "description": "Identify 2D and 3D shapes, spot patterns, and explore symmetry.",
+          "levels": [
+            "Starter",
+            "Growing",
+            "Champion"
+          ]
+        },
+        {
+          "id": "maths-times-tables",
+          "title": "Times Tables",
+          "icon": "✖️",
+          "ageGroups": [
+            "8–10",
+            "11–13"
+          ],
+          "description": "Master all times tables from 2× to 12× with speed challenges and beat-the-clock games.",
+          "levels": [
+            "2× & 5×",
+            "3× 4× 6×",
+            "7× 8× 9× 12×"
+          ]
+        },
+        {
+          "id": "maths-add-subtract",
+          "title": "Adding & Taking Away",
+          "icon": "➕",
+          "ageGroups": [
+            "5–7",
+            "8–10"
+          ],
+          "description": "Build confidence with addition and subtraction through fun number puzzles.",
+          "levels": [
+            "Up to 20",
+            "Up to 100",
+            "Up to 1000"
+          ]
+        },
+        {
+          "id": "maths-divide",
+          "title": "Division",
+          "icon": "➗",
+          "ageGroups": [
+            "8–10",
+            "11–13"
+          ],
+          "description": "Learn to divide with remainders, short division, and real-world problems.",
+          "levels": [
+            "Sharing equally",
+            "Short division",
+            "Long division"
+          ]
+        },
+        {
+          "id": "maths-fractions",
+          "title": "Fractions & Percentages",
+          "icon": "🍕",
+          "ageGroups": [
+            "8–10",
+            "11–13"
+          ],
+          "description": "Understand halves, quarters, decimals, and percentages through visual games.",
+          "levels": [
+            "Halves & quarters",
+            "Decimals",
+            "Percentages"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spelling",
+      "title": "Spelling",
+      "emoji": "🔤",
+      "color": "red",
+      "description": "Word games, spelling challenges, and vocabulary builders for every age.",
+      "readAloud": true,
+      "categories": [
+        {
+          "id": "spell-phonics",
+          "title": "Phonics & Sounds",
+          "icon": "🔊",
+          "ageGroups": [
+            "5–7"
+          ],
+          "description": "Learn letter sounds, blends, and digraphs through fun listening games.",
+          "levels": [
+            "Single sounds",
+            "Blends",
+            "Digraphs"
+          ]
+        },
+        {
+          "id": "spell-word-families",
+          "title": "Word Families",
+          "icon": "👨‍👩‍👧",
+          "ageGroups": [
+            "5–7",
+            "8–10"
+          ],
+          "description": "Group words by pattern — cat, bat, hat — and build spelling confidence fast.",
+          "levels": [
+            "CVC words",
+            "CVCC words",
+            "Complex patterns"
+          ]
+        },
+        {
+          "id": "spell-vocabulary",
+          "title": "Vocabulary Builder",
+          "icon": "📚",
+          "ageGroups": [
+            "8–10",
+            "11–13"
+          ],
+          "description": "Expand your word bank with themed vocabulary games and spelling bees.",
+          "levels": [
+            "Everyday words",
+            "Topic words",
+            "Advanced vocabulary"
+          ]
+        },
+        {
+          "id": "spell-tricky",
+          "title": "Tricky Words",
+          "icon": "🧩",
+          "ageGroups": [
+            "5–7",
+            "8–10",
+            "11–13"
+          ],
+          "description": "Tackle the words that don't follow the rules — practise until they stick!",
+          "levels": [
+            "Year 1 & 2",
+            "Year 3 & 4",
+            "Year 5 & 6"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "reading",
+      "title": "Reading",
+      "emoji": "📖",
+      "color": "green",
+      "description": "Stories, comprehension, and phonics adventures — with read-aloud support.",
+      "readAloud": true,
+      "categories": [
+        {
+          "id": "read-stories",
+          "title": "Storytelling",
+          "icon": "📜",
+          "ageGroups": [
+            "5–7",
+            "8–10",
+            "11–13"
+          ],
+          "description": "Enjoy interactive stories with characters, choices, and fun endings. Tap the speaker to hear it read aloud!",
+          "levels": [
+            "Picture books",
+            "Chapter starters",
+            "Full stories"
+          ]
+        },
+        {
+          "id": "read-comprehension",
+          "title": "Comprehension",
+          "icon": "🔍",
+          "ageGroups": [
+            "8–10",
+            "11–13"
+          ],
+          "description": "Read passages and answer questions to build understanding and inference skills.",
+          "levels": [
+            "Literal questions",
+            "Inference",
+            "Analysis"
+          ]
+        },
+        {
+          "id": "read-phonics",
+          "title": "Phonics Adventures",
+          "icon": "🎵",
+          "ageGroups": [
+            "5–7"
+          ],
+          "description": "Follow Pip the Parrot through phonics adventures — tap any word to hear it spoken aloud.",
+          "levels": [
+            "Phase 2",
+            "Phase 3",
+            "Phase 4 & 5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "science",
+      "title": "Science",
+      "emoji": "🔬",
+      "color": "blue",
+      "description": "Animals, plants, experiments and the natural world — discover science through hands-on games.",
+      "readAloud": true,
+      "categories": [
+        {
+          "id": "science-animals",
+          "title": "Animal Kingdom",
+          "icon": "🦁",
+          "ageGroups": [
+            "5–7",
+            "8–10",
+            "11–13"
+          ],
+          "description": "Explore habitats, food chains, and animal classification from insects to mammals.",
+          "levels": [
+            "Basic facts",
+            "Classification",
+            "Ecosystems"
+          ]
+        },
+        {
+          "id": "science-plants",
+          "title": "Plants & Nature",
+          "icon": "🌿",
+          "ageGroups": [
+            "5–7",
+            "8–10",
+            "11–13"
+          ],
+          "description": "Discover how plants grow, what they need, and how they fit into the natural world.",
+          "levels": [
+            "Plant parts",
+            "Life cycles",
+            "Ecosystems"
+          ]
+        },
+        {
+          "id": "science-experiments",
+          "title": "Experiments",
+          "icon": "🧪",
+          "ageGroups": [
+            "5–7",
+            "8–10",
+            "11–13"
+          ],
+          "description": "Run virtual experiments and predict what happens next across physics, chemistry and biology.",
+          "levels": [
+            "Simple cause & effect",
+            "Reactions & forces",
+            "Advanced science"
+          ]
+        }
+      ]
+    }
+  ]
+}

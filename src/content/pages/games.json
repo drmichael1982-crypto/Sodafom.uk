@@ -1,0 +1,2851 @@
+{
+  "hero": {
+    "headline": "Games & Activities",
+    "tagline": "Play your way to brilliance! Choose a game and start the fun."
+  },
+  "categories": [
+    {
+      "id": "cat-all",
+      "label": "All Games",
+      "emoji": "🎮"
+    },
+    {
+      "id": "cat-maths",
+      "label": "Maths",
+      "emoji": "🔢"
+    },
+    {
+      "id": "cat-spelling",
+      "label": "Spelling",
+      "emoji": "🔤"
+    },
+    {
+      "id": "cat-reading",
+      "label": "Reading",
+      "emoji": "📖"
+    },
+    {
+      "id": "cat-stories",
+      "label": "Stories",
+      "emoji": "📜"
+    },
+    {
+      "id": "cat-science",
+      "label": "Science",
+      "emoji": "🔬"
+    }
+  ],
+  "games": [
+    {
+      "id": "game-number-pop",
+      "title": "Number Pop!",
+      "subject": "maths",
+      "emoji": "🎈",
+      "description": "Pop the balloons with the right answers before they float away! Great for counting and quick maths.",
+      "ageGroups": [
+        "4–6",
+        "5–7"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": true,
+      "color": "gold",
+      "skills": [
+        "Counting",
+        "Number recognition",
+        "Quick thinking"
+      ],
+      "slug": "number-pop"
+    },
+    {
+      "id": "game-times-table-race",
+      "title": "Times Table Race",
+      "subject": "maths",
+      "emoji": "🏎️",
+      "description": "Race against the clock to answer times table questions. The faster you answer, the faster your car goes!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": true,
+      "color": "gold",
+      "skills": [
+        "Times tables",
+        "Mental maths",
+        "Speed"
+      ],
+      "slug": "times-table-race"
+    },
+    {
+      "id": "game-fraction-pizza",
+      "title": "Fraction Pizza",
+      "subject": "maths",
+      "emoji": "🍕",
+      "description": "Slice the pizza into the right fractions and serve your customers before they get hungry!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Fractions",
+        "Division",
+        "Visual maths"
+      ],
+      "slug": "fraction-pizza"
+    },
+    {
+      "id": "game-shape-sorter",
+      "title": "Shape Sorter",
+      "subject": "maths",
+      "emoji": "🔷",
+      "description": "Sort 2D and 3D shapes into the right boxes before the conveyor belt runs out of space!",
+      "ageGroups": [
+        "4–6",
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Shapes",
+        "Sorting",
+        "Spatial awareness"
+      ],
+      "slug": "shape-sorter"
+    },
+    {
+      "id": "game-number-bonds",
+      "title": "Number Bonds",
+      "subject": "maths",
+      "emoji": "🧩",
+      "isNew": true,
+      "description": "Learn number bonds to 10 and 20 with colourful snap blocks! See the numbers visually and find the missing piece.",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": false,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Number bonds",
+        "Addition",
+        "Mental maths"
+      ],
+      "slug": "number-bonds"
+    },
+    {
+      "id": "game-punctuation-patrol",
+      "title": "Punctuation Patrol",
+      "subject": "spelling",
+      "emoji": "🛡️",
+      "isNew": true,
+      "description": "Spot the missing punctuation and fix the sentence! Full stops, commas, apostrophes, question marks and more.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": false,
+      "featured": false,
+      "color": "indigo",
+      "skills": [
+        "Punctuation",
+        "Grammar",
+        "Sentence structure"
+      ],
+      "slug": "punctuation-patrol"
+    },
+    {
+      "id": "game-animal-habitats",
+      "title": "Animal Habitats",
+      "subject": "science",
+      "emoji": "🌍",
+      "isNew": true,
+      "description": "Match each animal to its correct habitat! From Arctic tundra to coral reefs — learn where animals live and why.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": false,
+      "featured": true,
+      "color": "green",
+      "skills": [
+        "Habitats",
+        "Animals",
+        "Science knowledge"
+      ],
+      "slug": "animal-habitats"
+    },
+    {
+      "id": "game-times-tables-challenge",
+      "title": "Times Tables Challenge",
+      "subject": "maths",
+      "emoji": "⚡",
+      "isNew": true,
+      "description": "Rapid-fire times table quiz! Beat the clock and earn speed bonuses for lightning-fast answers.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": false,
+      "featured": true,
+      "color": "yellow",
+      "skills": [
+        "Times tables",
+        "Mental maths",
+        "Speed"
+      ],
+      "slug": "times-tables-challenge"
+    },
+    {
+      "id": "game-sentence-scramble",
+      "title": "Sentence Scramble",
+      "subject": "reading",
+      "emoji": "📝",
+      "isNew": true,
+      "description": "Put the jumbled words back in the right order to make a proper sentence. Tap words to build your answer!",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": false,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Sentence structure",
+        "Grammar",
+        "Reading"
+      ],
+      "slug": "sentence-scramble"
+    },
+    {
+      "id": "game-science-lab",
+      "title": "Science Lab",
+      "subject": "science",
+      "emoji": "🔬",
+      "isNew": true,
+      "description": "Explore cause and effect in science! Answer questions about plants, space, materials, the human body and more.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": false,
+      "featured": false,
+      "color": "orange",
+      "skills": [
+        "Science knowledge",
+        "Cause and effect",
+        "Critical thinking"
+      ],
+      "slug": "science-lab"
+    },
+    {
+      "id": "game-word-scramble",
+      "title": "Word Scramble",
+      "subject": "spelling",
+      "emoji": "🔤",
+      "isNew": true,
+      "description": "Unscramble jumbled letters to spell the correct word! Tap the tiles to build your answer.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "purple",
+      "skills": [
+        "Spelling",
+        "Letter order",
+        "Vocabulary"
+      ],
+      "slug": "word-scramble"
+    },
+    {
+      "id": "game-word-wizard",
+      "title": "Word Wizard",
+      "subject": "spelling",
+      "emoji": "🧙",
+      "description": "Cast spelling spells by unscrambling letters to form the correct word. Each correct spell earns you a star!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": true,
+      "color": "red",
+      "skills": [
+        "Spelling",
+        "Letter order",
+        "Vocabulary"
+      ],
+      "slug": "word-wizard"
+    },
+    {
+      "id": "game-spelling-bee",
+      "title": "Spelling Bee",
+      "subject": "spelling",
+      "emoji": "🐝",
+      "description": "Listen to the word, then type it correctly to help the bee collect honey. Tap the speaker to hear it again!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": true,
+      "color": "red",
+      "skills": [
+        "Spelling",
+        "Listening",
+        "Vocabulary"
+      ],
+      "slug": "spelling-bee"
+    },
+    {
+      "id": "game-tricky-words",
+      "title": "Tricky Word Hunt",
+      "subject": "spelling",
+      "emoji": "🔍",
+      "description": "Find the tricky words hidden in the picture. Tap each one to hear it read aloud and spell it out!",
+      "ageGroups": [
+        "4–6",
+        "5–7"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Tricky words",
+        "Recognition",
+        "Phonics"
+      ],
+      "slug": "tricky-word-hunt"
+    },
+    {
+      "id": "game-story-builder",
+      "title": "Story Builder",
+      "subject": "stories",
+      "emoji": "📜",
+      "description": "Choose your character, setting, and adventure — then read the story that unfolds! Tap any word to hear it read aloud.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": true,
+      "color": "green",
+      "skills": [
+        "Reading",
+        "Comprehension",
+        "Creativity"
+      ],
+      "slug": "story-builder"
+    },
+    {
+      "id": "game-phonics-parrot",
+      "title": "Phonics Parrot",
+      "subject": "reading",
+      "emoji": "🦜",
+      "description": "Help Pip the Parrot learn new sounds! Tap the letters to hear their sounds and build words together.",
+      "ageGroups": [
+        "4–6",
+        "5–7"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": true,
+      "color": "green",
+      "skills": [
+        "Phonics",
+        "Letter sounds",
+        "Blending"
+      ],
+      "slug": "phonics-parrot"
+    },
+    {
+      "id": "game-reading-quest",
+      "title": "Reading Quest",
+      "subject": "reading",
+      "emoji": "🗺️",
+      "description": "Go on a reading adventure! Read the passage, answer questions, and unlock the next chapter of the story.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Comprehension",
+        "Inference",
+        "Vocabulary"
+      ],
+      "slug": "reading-quest"
+    },
+    {
+      "id": "game-word-search",
+      "title": "Word Search",
+      "subject": "spelling",
+      "emoji": "🔍",
+      "description": "Find hidden words in the grid! Click letters to spell out animals, colours or numbers hidden in every direction.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": true,
+      "color": "red",
+      "skills": [
+        "Spelling",
+        "Vocabulary",
+        "Pattern recognition"
+      ],
+      "slug": "word-search"
+    },
+    {
+      "id": "game-crossword",
+      "title": "Crossword",
+      "subject": "spelling",
+      "emoji": "✏️",
+      "description": "Read the clues and fill in the crossword grid! Original puzzles on animals, colours and numbers.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": true,
+      "color": "red",
+      "skills": [
+        "Spelling",
+        "Vocabulary",
+        "Clue reading"
+      ],
+      "slug": "crossword"
+    },
+    {
+      "id": "game-sudoku",
+      "title": "Number Sudoku",
+      "subject": "maths",
+      "emoji": "🧩",
+      "description": "Fill the 4×4 grid so every row, column and 2×2 box contains 1, 2, 3 and 4. A brilliant logic puzzle for young mathematicians!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": true,
+      "color": "gold",
+      "skills": [
+        "Logic",
+        "Number patterns",
+        "Problem solving"
+      ],
+      "slug": "sudoku"
+    },
+    {
+      "id": "game-colour-book",
+      "title": "Colour-In Book",
+      "subject": "art",
+      "emoji": "🎨",
+      "description": "Pick a colour and tap the picture to colour it in! Houses, butterflies, rockets and fish — all waiting for your colours!",
+      "ageGroups": [
+        "4–6",
+        "5–7"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": true,
+      "color": "green",
+      "skills": [
+        "Creativity",
+        "Colour recognition",
+        "Fine motor skills"
+      ],
+      "slug": "colour-book"
+    },
+    {
+      "id": "game-alphabet-explorer",
+      "title": "Alphabet Explorer",
+      "subject": "spelling",
+      "emoji": "🔤",
+      "description": "Explore every letter A to Z — see the picture, hear the sound, learn the word. Then take the quiz to earn your stars!",
+      "ageGroups": [
+        "4–6",
+        "5–7"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": true,
+      "color": "red",
+      "skills": [
+        "Alphabet",
+        "Letter sounds",
+        "Vocabulary"
+      ],
+      "slug": "alphabet-explorer"
+    },
+    {
+      "id": "game-times-tables-reader",
+      "title": "Times Tables Reader",
+      "subject": "maths",
+      "emoji": "📖",
+      "description": "Browse all 12 times tables, tap any fact to hear it read aloud, then test yourself with a quick quiz. Great for all ages!",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": true,
+      "color": "gold",
+      "skills": [
+        "Times tables",
+        "Mental maths",
+        "Memory"
+      ],
+      "slug": "times-tables-reader"
+    },
+    {
+      "id": "game-sentence-builder",
+      "title": "Sentence Builder",
+      "subject": "reading",
+      "emoji": "📝",
+      "description": "Tap the word tiles to put them in the right order and build a proper sentence. Easy, medium and hard levels!",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": true,
+      "color": "green",
+      "skills": [
+        "Sentence structure",
+        "Grammar",
+        "Reading"
+      ],
+      "slug": "sentence-builder"
+    },
+    {
+      "id": "game-animal-kingdom",
+      "title": "Animal Kingdom",
+      "subject": "science",
+      "emoji": "🦁",
+      "description": "Test your animal knowledge! From habitats to food chains, explore the animal kingdom in this fun science quiz.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": true,
+      "color": "green",
+      "skills": [
+        "Animal facts",
+        "Habitats",
+        "Classification"
+      ],
+      "slug": "animal-kingdom"
+    },
+    {
+      "id": "game-nature-explorer",
+      "title": "Nature Explorer",
+      "subject": "science",
+      "emoji": "🌿",
+      "description": "Match plants to their habitats, discover life cycles, and explore ecosystems in this nature science game.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": true,
+      "color": "green",
+      "skills": [
+        "Plant life",
+        "Habitats",
+        "Ecosystems"
+      ],
+      "slug": "nature-explorer"
+    },
+    {
+      "id": "game-geography-quiz",
+      "title": "Geography Quiz",
+      "subject": "science",
+      "emoji": "🗺️",
+      "isNew": true,
+      "description": "How well do you know the world? Test your knowledge of capitals, countries, flags and landmarks!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": true,
+      "color": "blue",
+      "skills": [
+        "World capitals",
+        "Countries",
+        "Landmarks"
+      ],
+      "slug": "geography-quiz"
+    },
+    {
+      "id": "game-mental-maths-sprint",
+      "title": "Mental Maths Sprint",
+      "subject": "maths",
+      "emoji": "⚡",
+      "isNew": true,
+      "description": "Race the clock! Answer rapid-fire sums as fast as you can. How many can you get right before time runs out?",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": true,
+      "color": "yellow",
+      "skills": [
+        "Speed arithmetic",
+        "Mental calculation",
+        "Times tables"
+      ],
+      "slug": "mental-maths-sprint"
+    },
+    {
+      "id": "game-colour-learn",
+      "title": "Colour & Learn",
+      "subject": "art",
+      "emoji": "🎨",
+      "description": "Pick a colour and tap the matching number to fill in the picture. A fun creative activity that teaches colours and number recognition!",
+      "ageGroups": [
+        "4–6",
+        "5–7"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "pink",
+      "skills": [
+        "Colour recognition",
+        "Number matching",
+        "Creativity"
+      ],
+      "slug": "colour-learn"
+    },
+    {
+      "id": "game-number-puzzle",
+      "title": "Number Grid",
+      "subject": "maths",
+      "emoji": "🔢",
+      "isNew": true,
+      "description": "Fill the number grid using logic and deduction. A brilliant puzzle that sharpens number skills and problem-solving for all ages!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": true,
+      "color": "gold",
+      "skills": [
+        "Logic",
+        "Number patterns",
+        "Problem solving"
+      ],
+      "slug": "number-puzzle"
+    },
+    {
+      "id": "game-maths-bingo",
+      "title": "Maths Bingo",
+      "subject": "maths",
+      "emoji": "🎱",
+      "isNew": true,
+      "description": "Mark off the answers on your bingo card as the sums are called out. First to shout BINGO wins!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Addition",
+        "Number recognition",
+        "Quick thinking"
+      ],
+      "slug": "maths-bingo"
+    },
+    {
+      "id": "game-coin-counter",
+      "title": "Coin Counter",
+      "subject": "maths",
+      "emoji": "🪙",
+      "isNew": true,
+      "description": "Count the coins and find the right total. Learn about UK money with pennies, 5p, 10p, 20p and 50p coins!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Money",
+        "Counting",
+        "Addition"
+      ],
+      "slug": "coin-counter"
+    },
+    {
+      "id": "game-odd-even",
+      "title": "Odd or Even?",
+      "subject": "maths",
+      "emoji": "🔀",
+      "isNew": true,
+      "description": "Sort the numbers into odd and even buckets before the timer runs out. How fast can you sort them all?",
+      "ageGroups": [
+        "4–6",
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Odd and even",
+        "Number recognition",
+        "Sorting"
+      ],
+      "slug": "odd-even"
+    },
+    {
+      "id": "game-geography-uk",
+      "title": "UK Geography",
+      "subject": "science",
+      "emoji": "🗺️",
+      "isNew": true,
+      "description": "Learn about UK countries, capitals, flags and landmarks! From Big Ben to Ben Nevis.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": false,
+      "featured": true,
+      "color": "blue",
+      "skills": [
+        "Geography",
+        "UK capitals",
+        "Landmarks",
+        "Flags"
+      ],
+      "slug": "geography-uk"
+    },
+    {
+      "id": "game-synonyms-antonyms",
+      "title": "Synonyms & Antonyms",
+      "subject": "spelling",
+      "emoji": "🔗",
+      "isNew": true,
+      "description": "Match words with the same or opposite meanings! Build your vocabulary from easy to tricky.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": false,
+      "featured": false,
+      "color": "purple",
+      "skills": [
+        "Vocabulary",
+        "Synonyms",
+        "Antonyms",
+        "Word meanings"
+      ],
+      "slug": "synonyms-antonyms"
+    },
+    {
+      "id": "game-place-value",
+      "title": "Place Value Pop",
+      "subject": "maths",
+      "emoji": "💯",
+      "isNew": true,
+      "description": "Pop the balloon that shows the correct hundreds, tens or units digit. Master place value with this fun game!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Place value",
+        "Hundreds",
+        "Tens and units"
+      ],
+      "slug": "place-value"
+    },
+    {
+      "id": "game-multiplication-grid",
+      "title": "Multiplication Grid",
+      "subject": "maths",
+      "emoji": "✖️",
+      "isNew": true,
+      "description": "Fill in the missing products on the multiplication grid. A great way to practise all your times tables at once!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Multiplication",
+        "Times tables",
+        "Grid method"
+      ],
+      "slug": "multiplication-grid"
+    },
+    {
+      "id": "game-division-dash",
+      "title": "Division Dash",
+      "subject": "maths",
+      "emoji": "➗",
+      "isNew": true,
+      "description": "Divide the numbers as fast as you can! Three difficulty levels from simple halving to long division.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Division",
+        "Mental maths",
+        "Speed"
+      ],
+      "slug": "division-dash"
+    },
+    {
+      "id": "game-number-line",
+      "title": "Number Line Jump",
+      "subject": "maths",
+      "emoji": "📏",
+      "isNew": true,
+      "description": "Jump to the right position on the number line! Estimate and place numbers from 0–100 and 0–1000.",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Number lines",
+        "Estimation",
+        "Ordering"
+      ],
+      "slug": "number-line"
+    },
+    {
+      "id": "game-maths-mystery",
+      "title": "Maths Mystery",
+      "subject": "maths",
+      "emoji": "🕵️",
+      "isNew": true,
+      "description": "Solve the clues using maths to crack the mystery! Each correct answer reveals part of the hidden picture.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Problem solving",
+        "Mixed operations",
+        "Logic"
+      ],
+      "slug": "maths-mystery"
+    },
+    {
+      "id": "game-pattern-maker",
+      "title": "Pattern Maker",
+      "subject": "maths",
+      "emoji": "🔷",
+      "isNew": true,
+      "description": "Spot the pattern and choose what comes next! Colour patterns, shape patterns and number sequences.",
+      "ageGroups": [
+        "4–6",
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Patterns",
+        "Sequences",
+        "Prediction"
+      ],
+      "slug": "pattern-maker"
+    },
+    {
+      "id": "game-angle-explorer",
+      "title": "Angle Explorer",
+      "subject": "maths",
+      "emoji": "📐",
+      "isNew": true,
+      "description": "Identify acute, obtuse and right angles hidden in shapes and real-world objects. Become an angle expert!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Angles",
+        "Geometry",
+        "Measurement"
+      ],
+      "slug": "angle-explorer"
+    },
+    {
+      "id": "game-perimeter-quest",
+      "title": "Perimeter Quest",
+      "subject": "maths",
+      "emoji": "📦",
+      "isNew": true,
+      "description": "Calculate the perimeter of shapes to build fences around the farm. Add up all the sides correctly!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Perimeter",
+        "Addition",
+        "Measurement"
+      ],
+      "slug": "perimeter-quest"
+    },
+    {
+      "id": "game-area-adventure",
+      "title": "Area Adventure",
+      "subject": "maths",
+      "emoji": "🗺️",
+      "isNew": true,
+      "description": "Count the squares to find the area of each shape. Then use the formula to calculate bigger areas!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Area",
+        "Multiplication",
+        "Measurement"
+      ],
+      "slug": "area-adventure"
+    },
+    {
+      "id": "game-data-detective",
+      "title": "Data Detective",
+      "subject": "maths",
+      "emoji": "📊",
+      "isNew": true,
+      "description": "Read bar charts, pictograms and tally charts to answer questions. Become a data detective!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Data handling",
+        "Charts",
+        "Statistics"
+      ],
+      "slug": "data-detective"
+    },
+    {
+      "id": "game-fraction-match",
+      "title": "Fraction Match",
+      "subject": "maths",
+      "emoji": "½",
+      "isNew": true,
+      "description": "Match equivalent fractions, decimals and percentages. Flip the cards to find the matching pairs!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Fractions",
+        "Decimals",
+        "Percentages"
+      ],
+      "slug": "fraction-match"
+    },
+    {
+      "id": "game-speed-tables",
+      "title": "Speed Tables",
+      "subject": "maths",
+      "emoji": "⚡",
+      "isNew": true,
+      "description": "Answer as many times table questions as possible in 60 seconds. Beat your personal best each time!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Times tables",
+        "Speed",
+        "Mental maths"
+      ],
+      "slug": "speed-tables"
+    },
+    {
+      "id": "game-rounding-rocket",
+      "title": "Rounding Rocket",
+      "subject": "maths",
+      "emoji": "🚀",
+      "isNew": true,
+      "description": "Round numbers to the nearest 10, 100 or 1000 to fuel the rocket. The more accurate you are, the higher it flies!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Rounding",
+        "Estimation",
+        "Place value"
+      ],
+      "slug": "rounding-rocket"
+    },
+    {
+      "id": "game-negative-numbers",
+      "title": "Negative Numbers",
+      "subject": "maths",
+      "emoji": "🌡️",
+      "isNew": true,
+      "description": "Order temperatures on a thermometer and solve problems with negative numbers. Perfect for ages 10+!",
+      "ageGroups": [
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Negative numbers",
+        "Ordering",
+        "Temperature"
+      ],
+      "slug": "negative-numbers"
+    },
+    {
+      "id": "game-coordinates-grid",
+      "title": "Coordinates Grid",
+      "subject": "maths",
+      "emoji": "🎯",
+      "isNew": true,
+      "description": "Plot and read coordinates in all four quadrants. Find the treasure by following the coordinate clues!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Coordinates",
+        "Grids",
+        "Mapping"
+      ],
+      "slug": "coordinates-grid"
+    },
+    {
+      "id": "game-symmetry-studio",
+      "title": "Symmetry Studio",
+      "subject": "maths",
+      "emoji": "🪞",
+      "isNew": true,
+      "description": "Complete the symmetrical pattern by reflecting shapes across the mirror line. Create beautiful symmetrical art!",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Symmetry",
+        "Reflection",
+        "Shapes"
+      ],
+      "slug": "symmetry-studio"
+    },
+    {
+      "id": "game-time-teller",
+      "title": "Time Teller",
+      "subject": "maths",
+      "emoji": "🕐",
+      "isNew": true,
+      "description": "Read analogue and digital clocks, calculate time differences and solve time word problems!",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Telling time",
+        "Analogue",
+        "Digital clocks"
+      ],
+      "slug": "time-teller"
+    },
+    {
+      "id": "game-maths-word-problems",
+      "title": "Word Problem Wizard",
+      "subject": "maths",
+      "emoji": "📖",
+      "isNew": true,
+      "description": "Read the story and solve the maths problem hidden inside. Real-world maths made fun!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Word problems",
+        "Mixed operations",
+        "Reading maths"
+      ],
+      "slug": "maths-word-problems"
+    },
+    {
+      "id": "game-ordering-numbers",
+      "title": "Ordering Numbers",
+      "subject": "maths",
+      "emoji": "🔢",
+      "isNew": true,
+      "description": "Drag the numbers into the correct order from smallest to largest. Whole numbers, decimals and fractions!",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Ordering",
+        "Comparing",
+        "Number sense"
+      ],
+      "slug": "ordering-numbers"
+    },
+    {
+      "id": "game-missing-numbers",
+      "title": "Missing Numbers",
+      "subject": "maths",
+      "emoji": "❓",
+      "isNew": true,
+      "description": "Find the missing number in each equation. Inverse operations, algebra basics and number puzzles!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Inverse operations",
+        "Algebra",
+        "Equations"
+      ],
+      "slug": "missing-numbers"
+    },
+    {
+      "id": "game-maths-snap",
+      "title": "Maths Snap",
+      "subject": "maths",
+      "emoji": "👏",
+      "isNew": true,
+      "description": "Snap when two cards show the same answer! Quick mental maths in a classic card game format.",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Mental maths",
+        "Quick thinking",
+        "Equivalence"
+      ],
+      "slug": "maths-snap"
+    },
+    {
+      "id": "game-ratio-recipe",
+      "title": "Ratio Recipe",
+      "subject": "maths",
+      "emoji": "🍰",
+      "isNew": true,
+      "description": "Scale up the recipe using ratios and proportions. How much flour do you need for 12 cakes instead of 4?",
+      "ageGroups": [
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Ratio",
+        "Proportion",
+        "Scaling"
+      ],
+      "slug": "ratio-recipe"
+    },
+    {
+      "id": "game-prime-numbers",
+      "title": "Prime Number Hunt",
+      "subject": "maths",
+      "emoji": "🔍",
+      "isNew": true,
+      "description": "Identify prime numbers on the grid and cross out the composites. Can you find all the primes up to 100?",
+      "ageGroups": [
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Prime numbers",
+        "Factors",
+        "Multiples"
+      ],
+      "slug": "prime-numbers"
+    },
+    {
+      "id": "game-algebra-quest",
+      "title": "Algebra Quest",
+      "subject": "maths",
+      "emoji": "🧮",
+      "isNew": true,
+      "description": "Solve for x in simple equations and inequalities. An adventure through the world of algebra!",
+      "ageGroups": [
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Algebra",
+        "Equations",
+        "Variables"
+      ],
+      "slug": "algebra-quest"
+    },
+    {
+      "id": "game-maths-challenge",
+      "title": "Maths Challenge",
+      "subject": "maths",
+      "emoji": "🏆",
+      "isNew": true,
+      "description": "A mixed bag of maths questions across all topics. The ultimate maths challenge for top mathematicians!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Mixed maths",
+        "Problem solving",
+        "All topics"
+      ],
+      "slug": "maths-challenge"
+    },
+    {
+      "id": "game-letter-sounds",
+      "title": "Letter Sounds",
+      "subject": "spelling",
+      "emoji": "🔊",
+      "isNew": true,
+      "description": "Tap the letter to hear its sound, then find the picture that starts with that sound. Great for early readers!",
+      "ageGroups": [
+        "4–6",
+        "5–7"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Phonics",
+        "Letter sounds",
+        "Initial sounds"
+      ],
+      "slug": "letter-sounds"
+    },
+    {
+      "id": "game-rhyme-time",
+      "title": "Rhyme Time",
+      "subject": "spelling",
+      "emoji": "🎵",
+      "isNew": true,
+      "description": "Find the word that rhymes! Listen to the word and pick the matching rhyme from the options.",
+      "ageGroups": [
+        "4–6",
+        "5–7"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Rhyming",
+        "Phonics",
+        "Word families"
+      ],
+      "slug": "rhyme-time"
+    },
+    {
+      "id": "game-syllable-split",
+      "title": "Syllable Split",
+      "subject": "spelling",
+      "emoji": "✂️",
+      "isNew": true,
+      "description": "Clap out the syllables and choose the right number. Helps children break words into manageable chunks!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Syllables",
+        "Word structure",
+        "Phonics"
+      ],
+      "slug": "syllable-split"
+    },
+    {
+      "id": "game-prefix-power",
+      "title": "Prefix Power",
+      "subject": "spelling",
+      "emoji": "⚡",
+      "isNew": true,
+      "description": "Add the right prefix to make a new word. Un-, re-, pre-, mis- and more — unlock the power of prefixes!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Prefixes",
+        "Word building",
+        "Vocabulary"
+      ],
+      "slug": "prefix-power"
+    },
+    {
+      "id": "game-suffix-quest",
+      "title": "Suffix Quest",
+      "subject": "spelling",
+      "emoji": "🔚",
+      "isNew": true,
+      "description": "Choose the correct suffix to complete the word. -ing, -ed, -er, -est, -tion and more!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Suffixes",
+        "Word endings",
+        "Grammar"
+      ],
+      "slug": "suffix-quest"
+    },
+    {
+      "id": "game-homophones",
+      "title": "Homophones Hunt",
+      "subject": "spelling",
+      "emoji": "👂",
+      "isNew": true,
+      "description": "Choose the correct spelling — there/their/they're, to/too/two, your/you're and more tricky homophones!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Homophones",
+        "Spelling",
+        "Context"
+      ],
+      "slug": "homophones"
+    },
+    {
+      "id": "game-compound-words",
+      "title": "Compound Words",
+      "subject": "spelling",
+      "emoji": "🔗",
+      "isNew": true,
+      "description": "Join two words together to make a compound word! Sunshine, football, rainbow — how many can you make?",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Compound words",
+        "Vocabulary",
+        "Word building"
+      ],
+      "slug": "compound-words"
+    },
+    {
+      "id": "game-spelling-challenge",
+      "title": "Spelling Challenge",
+      "subject": "spelling",
+      "emoji": "🏆",
+      "isNew": true,
+      "description": "Spell the word correctly after hearing it read aloud. Progressively harder words across three difficulty levels!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Spelling",
+        "Vocabulary",
+        "Listening"
+      ],
+      "slug": "spelling-challenge"
+    },
+    {
+      "id": "game-word-families",
+      "title": "Word Families",
+      "subject": "spelling",
+      "emoji": "👨‍👩‍👧",
+      "isNew": true,
+      "description": "Group words that belong to the same family — cat, bat, hat, mat. Build word family trees!",
+      "ageGroups": [
+        "4–6",
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Word families",
+        "Rhyming",
+        "Phonics"
+      ],
+      "slug": "word-families"
+    },
+    {
+      "id": "game-missing-letters",
+      "title": "Missing Letters",
+      "subject": "spelling",
+      "emoji": "🔡",
+      "isNew": true,
+      "description": "Fill in the missing letters to complete the word. The picture gives you a clue — can you spell it?",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Spelling",
+        "Letter patterns",
+        "Vocabulary"
+      ],
+      "slug": "missing-letters"
+    },
+    {
+      "id": "game-anagram-attack",
+      "title": "Anagram Attack",
+      "subject": "spelling",
+      "emoji": "🔀",
+      "isNew": true,
+      "description": "Unscramble the jumbled letters to find the hidden word before the timer runs out!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Anagrams",
+        "Spelling",
+        "Problem solving"
+      ],
+      "slug": "anagram-attack"
+    },
+    {
+      "id": "game-silent-letters",
+      "title": "Silent Letters",
+      "subject": "spelling",
+      "emoji": "🤫",
+      "isNew": true,
+      "description": "Identify the silent letter in each word — knight, wrap, gnome. Master these tricky spelling patterns!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Silent letters",
+        "Spelling patterns",
+        "Phonics"
+      ],
+      "slug": "silent-letters"
+    },
+    {
+      "id": "game-double-letters",
+      "title": "Double Letters",
+      "subject": "spelling",
+      "emoji": "✌️",
+      "isNew": true,
+      "description": "Decide if the word needs a double letter or not — rabbit or rabit? Butter or buter? Spell it right!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Double letters",
+        "Spelling rules",
+        "Patterns"
+      ],
+      "slug": "double-letters"
+    },
+    {
+      "id": "game-vowel-sounds",
+      "title": "Vowel Sounds",
+      "subject": "spelling",
+      "emoji": "🗣️",
+      "isNew": true,
+      "description": "Sort words by their vowel sound — long a, short a, oo, ow and more. A fun phonics sorting game!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Vowel sounds",
+        "Phonics",
+        "Sorting"
+      ],
+      "slug": "vowel-sounds"
+    },
+    {
+      "id": "game-spelling-snap",
+      "title": "Spelling Snap",
+      "subject": "spelling",
+      "emoji": "👏",
+      "isNew": true,
+      "description": "Snap when you see a correctly spelled word! Quick-fire spelling in a classic card game format.",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Spelling",
+        "Quick thinking",
+        "Recognition"
+      ],
+      "slug": "spelling-snap"
+    },
+    {
+      "id": "game-word-builder",
+      "title": "Word Builder",
+      "subject": "spelling",
+      "emoji": "🧱",
+      "isNew": true,
+      "description": "Use the letter tiles to build as many words as possible. Score points for longer words!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Vocabulary",
+        "Spelling",
+        "Word building"
+      ],
+      "slug": "word-builder"
+    },
+    {
+      "id": "game-dictionary-dash",
+      "title": "Dictionary Dash",
+      "subject": "spelling",
+      "emoji": "📚",
+      "isNew": true,
+      "description": "Put the words in alphabetical order before the time runs out. Race to the top of the dictionary!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Alphabetical order",
+        "Dictionary skills",
+        "Spelling"
+      ],
+      "slug": "dictionary-dash"
+    },
+    {
+      "id": "game-contraction-station",
+      "title": "Contraction Station",
+      "subject": "spelling",
+      "emoji": "🚉",
+      "isNew": true,
+      "description": "Match the contraction to the two words it comes from — can't = can not, I'm = I am. All aboard!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Contractions",
+        "Apostrophes",
+        "Grammar"
+      ],
+      "slug": "contraction-station"
+    },
+    {
+      "id": "game-plural-rules",
+      "title": "Plural Rules",
+      "subject": "spelling",
+      "emoji": "📝",
+      "isNew": true,
+      "description": "Make the word plural using the right rule — add s, es, ies or change the word entirely!",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Plurals",
+        "Spelling rules",
+        "Grammar"
+      ],
+      "slug": "plural-rules"
+    },
+    {
+      "id": "game-word-match",
+      "title": "Word Match",
+      "subject": "spelling",
+      "emoji": "🃏",
+      "isNew": true,
+      "description": "Match the word to its picture in this memory card game. Flip, remember and match!",
+      "ageGroups": [
+        "4–6",
+        "5–7"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Vocabulary",
+        "Memory",
+        "Word recognition"
+      ],
+      "slug": "word-match"
+    },
+    {
+      "id": "game-spelling-race",
+      "title": "Spelling Race",
+      "subject": "spelling",
+      "emoji": "🏁",
+      "isNew": true,
+      "description": "Race against the clock to spell as many words correctly as possible. Can you beat your high score?",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "red",
+      "skills": [
+        "Spelling",
+        "Speed",
+        "Vocabulary"
+      ],
+      "slug": "spelling-race"
+    },
+    {
+      "id": "game-comprehension-quest",
+      "title": "Comprehension Quest",
+      "subject": "reading",
+      "emoji": "📖",
+      "isNew": true,
+      "description": "Read the passage and answer questions about what you've read. Build your comprehension skills step by step!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Comprehension",
+        "Inference",
+        "Reading"
+      ],
+      "slug": "comprehension-quest"
+    },
+    {
+      "id": "game-story-sequence",
+      "title": "Story Sequence",
+      "subject": "reading",
+      "emoji": "🎬",
+      "isNew": true,
+      "description": "Put the story pictures in the right order to retell the tale. What happened first, next and last?",
+      "ageGroups": [
+        "4–6",
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Sequencing",
+        "Story structure",
+        "Comprehension"
+      ],
+      "slug": "story-sequence"
+    },
+    {
+      "id": "game-reading-detective",
+      "title": "Reading Detective",
+      "subject": "reading",
+      "emoji": "🔍",
+      "isNew": true,
+      "description": "Find the clues in the text to answer the detective questions. Inference and deduction skills!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Inference",
+        "Deduction",
+        "Comprehension"
+      ],
+      "slug": "reading-detective"
+    },
+    {
+      "id": "game-grammar-garage",
+      "title": "Grammar Garage",
+      "subject": "reading",
+      "emoji": "🔧",
+      "isNew": true,
+      "description": "Fix the broken sentences in the grammar garage! Nouns, verbs, adjectives and adverbs all need sorting.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Grammar",
+        "Nouns",
+        "Verbs"
+      ],
+      "slug": "grammar-garage"
+    },
+    {
+      "id": "game-noun-spotter",
+      "title": "Noun Spotter",
+      "subject": "reading",
+      "emoji": "👁️",
+      "isNew": true,
+      "description": "Spot all the nouns in the sentence and tap them! Common nouns, proper nouns and collective nouns.",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Nouns",
+        "Grammar",
+        "Identification"
+      ],
+      "slug": "noun-spotter"
+    },
+    {
+      "id": "game-verb-volcano",
+      "title": "Verb Volcano",
+      "subject": "reading",
+      "emoji": "🌋",
+      "isNew": true,
+      "description": "Throw the verbs into the volcano before it erupts! Identify action words and tense changes.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Verbs",
+        "Tenses",
+        "Grammar"
+      ],
+      "slug": "verb-volcano"
+    },
+    {
+      "id": "game-adjective-adventure",
+      "title": "Adjective Adventure",
+      "subject": "reading",
+      "emoji": "🌈",
+      "isNew": true,
+      "description": "Describe the pictures using adjectives! Colour, size, shape and feeling words to bring stories to life.",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Adjectives",
+        "Descriptive writing",
+        "Vocabulary"
+      ],
+      "slug": "adjective-adventure"
+    },
+    {
+      "id": "game-synonym-swap",
+      "title": "Synonym Swap",
+      "subject": "reading",
+      "emoji": "🔄",
+      "isNew": true,
+      "description": "Swap the word for a synonym that means the same thing. Expand your vocabulary with this word swap game!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Synonyms",
+        "Vocabulary",
+        "Word choice"
+      ],
+      "slug": "synonym-swap"
+    },
+    {
+      "id": "game-antonym-arena",
+      "title": "Antonym Arena",
+      "subject": "reading",
+      "emoji": "⚔️",
+      "isNew": true,
+      "description": "Battle the antonyms! Match each word with its opposite in this fast-paced word game.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Antonyms",
+        "Vocabulary",
+        "Opposites"
+      ],
+      "slug": "antonym-arena"
+    },
+    {
+      "id": "game-reading-speed",
+      "title": "Speed Reader",
+      "subject": "reading",
+      "emoji": "💨",
+      "isNew": true,
+      "description": "Read the passage as fast as you can, then answer questions to check you understood it. Build reading fluency!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Reading speed",
+        "Fluency",
+        "Comprehension"
+      ],
+      "slug": "reading-speed"
+    },
+    {
+      "id": "game-poetry-corner",
+      "title": "Poetry Corner",
+      "subject": "reading",
+      "emoji": "🎭",
+      "isNew": true,
+      "description": "Read the poem and answer questions about rhyme, rhythm and meaning. Explore different types of poetry!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Poetry",
+        "Rhyme",
+        "Comprehension"
+      ],
+      "slug": "poetry-corner"
+    },
+    {
+      "id": "game-text-types",
+      "title": "Text Types",
+      "subject": "reading",
+      "emoji": "📄",
+      "isNew": true,
+      "description": "Identify the text type — is it a letter, a recipe, a newspaper article or a story? Sort them correctly!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Text types",
+        "Non-fiction",
+        "Reading"
+      ],
+      "slug": "text-types"
+    },
+    {
+      "id": "game-reading-map",
+      "title": "Reading Map",
+      "subject": "reading",
+      "emoji": "🗺️",
+      "isNew": true,
+      "description": "Follow the reading map through a non-fiction text. Answer questions at each checkpoint to move forward!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Non-fiction",
+        "Comprehension",
+        "Skimming"
+      ],
+      "slug": "reading-map"
+    },
+    {
+      "id": "game-word-meaning",
+      "title": "Word Meaning",
+      "subject": "reading",
+      "emoji": "💡",
+      "isNew": true,
+      "description": "Use the context clues in the sentence to work out what the tricky word means. Vocabulary in context!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Vocabulary",
+        "Context clues",
+        "Inference"
+      ],
+      "slug": "word-meaning"
+    },
+    {
+      "id": "game-speech-marks",
+      "title": "Speech Marks",
+      "subject": "reading",
+      "emoji": "💬",
+      "isNew": true,
+      "description": "Add the speech marks in the right places. Who is saying what? Direct speech made easy!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Speech marks",
+        "Punctuation",
+        "Direct speech"
+      ],
+      "slug": "speech-marks"
+    },
+    {
+      "id": "game-connectives-bridge",
+      "title": "Connectives Bridge",
+      "subject": "reading",
+      "emoji": "🌉",
+      "isNew": true,
+      "description": "Choose the right connective to join the sentences — because, however, although, therefore and more!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Connectives",
+        "Conjunctions",
+        "Sentence structure"
+      ],
+      "slug": "connectives-bridge"
+    },
+    {
+      "id": "game-reading-fluency",
+      "title": "Reading Fluency",
+      "subject": "reading",
+      "emoji": "📻",
+      "isNew": true,
+      "description": "Read the passage aloud at the right pace. Tap the words as you read to build fluency and confidence!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Fluency",
+        "Reading aloud",
+        "Confidence"
+      ],
+      "slug": "reading-fluency"
+    },
+    {
+      "id": "game-book-review",
+      "title": "Book Review",
+      "subject": "reading",
+      "emoji": "⭐",
+      "isNew": true,
+      "description": "Read a short extract and write a mini book review. What did you like? Who would you recommend it to?",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Book reviews",
+        "Opinion writing",
+        "Reading"
+      ],
+      "slug": "book-review"
+    },
+    {
+      "id": "game-reading-bingo",
+      "title": "Reading Bingo",
+      "subject": "reading",
+      "emoji": "🎱",
+      "isNew": true,
+      "description": "Mark off the reading features on your bingo card as you spot them in the text. First to BINGO wins!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Reading features",
+        "Comprehension",
+        "Spotting"
+      ],
+      "slug": "reading-bingo"
+    },
+    {
+      "id": "game-story-map",
+      "title": "Story Map",
+      "subject": "reading",
+      "emoji": "🗺️",
+      "isNew": true,
+      "description": "Map out the beginning, middle and end of the story. Identify characters, setting and plot!",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Story structure",
+        "Characters",
+        "Setting"
+      ],
+      "slug": "story-map"
+    },
+    {
+      "id": "game-reading-challenge",
+      "title": "Reading Challenge",
+      "subject": "reading",
+      "emoji": "🏆",
+      "isNew": true,
+      "description": "The ultimate reading challenge! Mixed comprehension, grammar and vocabulary questions across all levels.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "green",
+      "skills": [
+        "Mixed reading",
+        "Comprehension",
+        "All skills"
+      ],
+      "slug": "reading-challenge"
+    },
+    {
+      "id": "game-money-maths",
+      "title": "Money Maths",
+      "subject": "maths",
+      "emoji": "💰",
+      "isNew": true,
+      "description": "Count UK coins and notes, make change, and solve money problems! From 1p coins to £20 notes.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": false,
+      "featured": true,
+      "color": "green",
+      "skills": [
+        "Money",
+        "Addition",
+        "Subtraction",
+        "Problem solving"
+      ],
+      "slug": "money-maths"
+    },
+    {
+      "id": "game-parts-of-speech",
+      "title": "Parts of Speech",
+      "subject": "spelling",
+      "emoji": "📚",
+      "isNew": true,
+      "description": "Identify nouns, verbs, adjectives and adverbs in real sentences! Build your grammar knowledge.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": false,
+      "featured": false,
+      "color": "purple",
+      "skills": [
+        "Grammar",
+        "Nouns",
+        "Verbs",
+        "Adjectives",
+        "Adverbs"
+      ],
+      "slug": "parts-of-speech"
+    },
+    {
+      "id": "game-telling-time",
+      "title": "Telling the Time",
+      "subject": "maths",
+      "emoji": "🕐",
+      "isNew": true,
+      "description": "Read analogue and digital clocks! O'clock, half past, quarter past, quarter to and 5-minute intervals.",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": false,
+      "featured": true,
+      "color": "blue",
+      "skills": [
+        "Time",
+        "Clocks",
+        "Analogue",
+        "Digital"
+      ],
+      "slug": "telling-time"
+    },
+    {
+      "id": "game-human-body",
+      "title": "Human Body",
+      "subject": "science",
+      "emoji": "🫀",
+      "isNew": true,
+      "description": "Label the parts of the human body and learn what each organ does. From bones to the brain!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Human body",
+        "Organs",
+        "Biology"
+      ],
+      "slug": "human-body"
+    },
+    {
+      "id": "game-solar-system",
+      "title": "Solar System",
+      "subject": "science",
+      "emoji": "🪐",
+      "isNew": true,
+      "description": "Explore the planets of our solar system! Order them from the Sun and learn amazing facts about each one.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Planets",
+        "Space",
+        "Solar system"
+      ],
+      "slug": "solar-system"
+    },
+    {
+      "id": "game-food-chains",
+      "title": "Food Chains",
+      "subject": "science",
+      "emoji": "🌿",
+      "isNew": true,
+      "description": "Build food chains by connecting producers, consumers and predators. Who eats who in the wild?",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Food chains",
+        "Ecosystems",
+        "Predators"
+      ],
+      "slug": "food-chains"
+    },
+    {
+      "id": "game-states-of-matter",
+      "title": "States of Matter",
+      "subject": "science",
+      "emoji": "💧",
+      "isNew": true,
+      "description": "Sort materials into solid, liquid and gas. Then explore what happens when they change state!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "States of matter",
+        "Solids",
+        "Liquids and gases"
+      ],
+      "slug": "states-of-matter"
+    },
+    {
+      "id": "game-forces-lab",
+      "title": "Forces Lab",
+      "subject": "science",
+      "emoji": "🔬",
+      "isNew": true,
+      "description": "Investigate push, pull, gravity and friction in the virtual forces lab. Predict and test!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Forces",
+        "Gravity",
+        "Friction"
+      ],
+      "slug": "forces-lab"
+    },
+    {
+      "id": "game-electricity-circuit",
+      "title": "Electricity Circuit",
+      "subject": "science",
+      "emoji": "⚡",
+      "isNew": true,
+      "description": "Build a working circuit! Connect the battery, bulb and switch to light up the room.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Electricity",
+        "Circuits",
+        "Physics"
+      ],
+      "slug": "electricity-circuit"
+    },
+    {
+      "id": "game-plant-parts",
+      "title": "Plant Parts",
+      "subject": "science",
+      "emoji": "🌱",
+      "isNew": true,
+      "description": "Label the parts of a plant and learn what each part does. Roots, stem, leaves, flower and seed!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Plants",
+        "Biology",
+        "Life processes"
+      ],
+      "slug": "plant-parts"
+    },
+    {
+      "id": "game-life-cycles",
+      "title": "Life Cycles",
+      "subject": "science",
+      "emoji": "🦋",
+      "isNew": true,
+      "description": "Put the life cycle stages in the right order — butterfly, frog, plant and human life cycles!",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Life cycles",
+        "Biology",
+        "Sequencing"
+      ],
+      "slug": "life-cycles"
+    },
+    {
+      "id": "game-weather-watch",
+      "title": "Weather Watch",
+      "subject": "science",
+      "emoji": "⛅",
+      "isNew": true,
+      "description": "Identify weather types, read weather maps and predict tomorrow's weather. Become a meteorologist!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Weather",
+        "Climate",
+        "Observation"
+      ],
+      "slug": "weather-watch"
+    },
+    {
+      "id": "game-rock-detective",
+      "title": "Rock Detective",
+      "subject": "science",
+      "emoji": "🪨",
+      "isNew": true,
+      "description": "Identify igneous, sedimentary and metamorphic rocks. Use the clues to classify each rock sample!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Rocks",
+        "Geology",
+        "Classification"
+      ],
+      "slug": "rock-detective"
+    },
+    {
+      "id": "game-light-shadows",
+      "title": "Light and Shadows",
+      "subject": "science",
+      "emoji": "💡",
+      "isNew": true,
+      "description": "Explore how light travels and creates shadows. Predict shadow shapes and learn about reflection!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Light",
+        "Shadows",
+        "Physics"
+      ],
+      "slug": "light-shadows"
+    },
+    {
+      "id": "game-sound-science",
+      "title": "Sound Science",
+      "subject": "science",
+      "emoji": "🔊",
+      "isNew": true,
+      "description": "Investigate how sound travels, what makes sounds louder and how we hear. A sonic science adventure!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Sound",
+        "Vibrations",
+        "Physics"
+      ],
+      "slug": "sound-science"
+    },
+    {
+      "id": "game-materials-sort",
+      "title": "Materials Sort",
+      "subject": "science",
+      "emoji": "🧪",
+      "isNew": true,
+      "description": "Sort materials by their properties — hard or soft, magnetic or not, transparent or opaque!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Materials",
+        "Properties",
+        "Classification"
+      ],
+      "slug": "materials-sort"
+    },
+    {
+      "id": "game-skeleton-builder",
+      "title": "Skeleton Builder",
+      "subject": "science",
+      "emoji": "💀",
+      "isNew": true,
+      "description": "Drag the bones into the right place to build a human skeleton. Learn the names of major bones!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Skeleton",
+        "Bones",
+        "Human body"
+      ],
+      "slug": "skeleton-builder"
+    },
+    {
+      "id": "game-healthy-eating",
+      "title": "Healthy Eating",
+      "subject": "science",
+      "emoji": "🥗",
+      "isNew": true,
+      "description": "Sort foods into the right food groups and build a balanced meal. Learn about nutrition and healthy choices!",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Nutrition",
+        "Food groups",
+        "Health"
+      ],
+      "slug": "healthy-eating"
+    },
+    {
+      "id": "game-microhabitats",
+      "title": "Microhabitats",
+      "subject": "science",
+      "emoji": "🐛",
+      "isNew": true,
+      "description": "Explore minibeasts and their microhabitats. Where does each creature live and why?",
+      "ageGroups": [
+        "5–7",
+        "8–10"
+      ],
+      "difficulty": "Easy",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Habitats",
+        "Minibeasts",
+        "Ecosystems"
+      ],
+      "slug": "microhabitats"
+    },
+    {
+      "id": "game-magnets-magic",
+      "title": "Magnets Magic",
+      "subject": "science",
+      "emoji": "🧲",
+      "isNew": true,
+      "description": "Test which materials are magnetic and which are not. Explore north and south poles and magnetic fields!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Magnets",
+        "Forces",
+        "Materials"
+      ],
+      "slug": "magnets-magic"
+    },
+    {
+      "id": "game-water-cycle",
+      "title": "Water Cycle",
+      "subject": "science",
+      "emoji": "🌊",
+      "isNew": true,
+      "description": "Follow a water droplet through evaporation, condensation and precipitation. Label the water cycle!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Water cycle",
+        "Evaporation",
+        "Weather"
+      ],
+      "slug": "water-cycle"
+    },
+    {
+      "id": "game-classification-keys",
+      "title": "Classification Keys",
+      "subject": "science",
+      "emoji": "🔑",
+      "isNew": true,
+      "description": "Use branching keys to classify animals and plants. Answer yes/no questions to identify each organism!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Classification",
+        "Keys",
+        "Biology"
+      ],
+      "slug": "classification-keys"
+    },
+    {
+      "id": "game-earth-space",
+      "title": "Earth and Space",
+      "subject": "science",
+      "emoji": "🌍",
+      "isNew": true,
+      "description": "Explore the Earth, Moon and Sun system. Day and night, seasons and the phases of the Moon!",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Medium",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Earth",
+        "Moon",
+        "Space"
+      ],
+      "slug": "earth-space"
+    },
+    {
+      "id": "game-evolution-explorer",
+      "title": "Evolution Explorer",
+      "subject": "science",
+      "emoji": "🦕",
+      "isNew": true,
+      "description": "Explore adaptation and evolution. How do animals change over time to survive in their environment?",
+      "ageGroups": [
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Evolution",
+        "Adaptation",
+        "Biology"
+      ],
+      "slug": "evolution-explorer"
+    },
+    {
+      "id": "game-science-quiz",
+      "title": "Science Quiz",
+      "subject": "science",
+      "emoji": "🏆",
+      "isNew": true,
+      "description": "The ultimate science quiz! Questions across biology, chemistry, physics and earth science for all levels.",
+      "ageGroups": [
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Hard",
+      "readAloud": true,
+      "featured": false,
+      "color": "blue",
+      "skills": [
+        "Mixed science",
+        "All topics",
+        "Quiz"
+      ],
+      "slug": "science-quiz"
+    }
+  ],
+  "readAloudBanner": {
+    "headline": "Every game talks to you!",
+    "description": "Tap the 🔊 speaker on any game card to hear the instructions read aloud. Perfect for children who are still building their reading confidence."
+  },
+  "weeklyChallenge": {
+    "gameId": "game-mental-maths-sprint",
+    "title": "Mental Maths Sprint",
+    "emoji": "⚡",
+    "tagline": "This week's challenge — race the clock and beat your best score!",
+    "prize": "Earn a special Weekly Champion badge for 3 stars ⭐⭐⭐"
+  }
+}

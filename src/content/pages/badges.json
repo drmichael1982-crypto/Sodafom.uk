@@ -1,0 +1,28 @@
+{
+  "CATEGORIES": [
+    {
+      "id": "all",
+      "label": "All"
+    },
+    {
+      "id": "milestone",
+      "label": "🏅 Milestones"
+    },
+    {
+      "id": "stars",
+      "label": "⭐ Stars"
+    },
+    {
+      "id": "streak",
+      "label": "🔥 Streaks"
+    },
+    {
+      "id": "subject",
+      "label": "📚 Subjects"
+    },
+    {
+      "id": "social",
+      "label": "🤝 Social"
+    }
+  ]
+}

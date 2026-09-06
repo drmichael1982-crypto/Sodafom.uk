@@ -1,0 +1,61 @@
+{
+  "hero": {
+    "eyebrow": "Sodafom Preview",
+    "headline": "Full access enabled for testing",
+    "subtext": "This is a development build. All games and features are currently unlocked for evaluation."
+  },
+  "toggle": {
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "saveBadge": "N/A"
+  },
+  "plans": [
+    {
+      "id": "plan-free",
+      "name": "Testing Access",
+      "emoji": "🚀",
+      "monthlyPrice": "£0",
+      "annualPrice": "£0",
+      "period": "forever",
+      "description": "Full access to all 118 games is enabled in this build.",
+      "cta": "Start learning",
+      "ctaHref": "/auth",
+      "highlight": true,
+      "features": [
+        {
+          "id": "ff-1",
+          "text": "All 118 games unlocked",
+          "included": true
+        },
+        {
+          "id": "ff-2",
+          "text": "All features active",
+          "included": true
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "headline": "Preview Features",
+    "rows": [
+      {
+        "id": "cr-1",
+        "feature": "Number of games",
+        "free": "118",
+        "family": "118",
+        "school": "118"
+      }
+    ]
+  },
+  "faqs": [
+    {
+      "id": "faq-1",
+      "question": "Is this the final pricing?",
+      "answer": "No, this is a testing build with all paywalls removed."
+    }
+  ],
+  "guarantee": {
+    "headline": "Development Build",
+    "text": "This version is for testing and verification only."
+  }
+}
