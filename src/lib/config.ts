@@ -22,7 +22,6 @@ function detectCapacitor() {
     };
     (window as any)._SODAFOM_DIAG = diag;
     if (result && !localStorage.getItem('sodafom_diag_shown')) {
-       // alert('Sodafom Mobile Detected!\n' + JSON.stringify(diag, null, 2));
        localStorage.setItem('sodafom_diag_shown', '1');
     }
   }
@@ -33,7 +32,7 @@ function detectCapacitor() {
 export const isCapacitor = detectCapacitor();
 
 // The production backend URL (Railway)
-export const PRODUCTION_URL = 'https://sodafomuk-production.up.railway.app';
+export const PRODUCTION_URL = 'https://sodafomuk-production-3f3a.up.railway.app';
 
 // Phone builds use the hosted backend by default, or VITE_API_BASE_URL when specified for local testing.
 const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim();

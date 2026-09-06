@@ -72,19 +72,40 @@ export default async function handler(req: Request, res: Response) {
     }
 
     const openai = new OpenAI({ apiKey, timeout: 40_000, maxRetries: 2 });
-    console.log('[chat] Calling the OpenAI Chat Completions API (gpt-4o-mini)...');
+    console.log('[chat] Calling OpenAI Chat Completions API...');
 
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT + (systemExtra ? `\n\n${systemExtra}` : '') },
-        ...safeMessages.map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
-      ],
-      max_tokens: 500,
-    });
+    const chatMessages = [
+      { role: 'system' as const, content: SYSTEM_PROMPT + (systemExtra ? `\n\n${systemExtra}` : '') },
+      ...safeMessages.map((message) => ({
+        role: message.role as 'user' | 'assistant',
+        content: message.content,
+      })),
+    ];
+
+    let response;
+    try {
+      response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: chatMessages,
+        max_tokens: 500,
+      });
+    } catch (e1) {
+      console.warn('[chat] gpt-4o-mini failed, trying gpt-3.5-turbo fallback...', e1 instanceof Error ? e1.message : e1);
+      try {
+        response = await openai.chat.completions.create({
+          model: 'gpt-3.5-turbo',
+          messages: chatMessages,
+          max_tokens: 500,
+        });
+      } catch (e2) {
+        console.warn('[chat] gpt-3.5-turbo failed, trying gpt-4o fallback...', e2 instanceof Error ? e2.message : e2);
+        response = await openai.chat.completions.create({
+          model: 'gpt-4o',
+          messages: chatMessages,
+          max_tokens: 500,
+        });
+      }
+    }
 
     const text = response.choices[0]?.message?.content?.trim();
     console.log(`[chat] AI Response generated. Length: ${text?.length || 0}`);
