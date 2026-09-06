@@ -8,6 +8,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "vite build && vite build --ssr src/server/entry.ts",
+    "start": "node dist/server.bundle.mjs",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
