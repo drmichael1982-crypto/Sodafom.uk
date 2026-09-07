@@ -19,6 +19,7 @@ import { ArchieCharacter } from '../components/ArchieCharacter';
 import { useSession } from '@/lib/auth/auth-client';
 import { useSearchParams } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
+import { prepareLocalAdminPassword, hashAdminPassword, saveLocalAdminPassword, clearLocalAdminPassword } from '@/lib/local-admin-auth';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PlanBreakdown {
@@ -796,10 +797,10 @@ export default function AdminPanel() {
 
   const [code, setCode]             = useState('');
   const [authed, setAuthed]         = useState(true); // Open directly without password gate
-  const [customPassword, setCustomPassword] = useState(() => {
-    if (typeof window === 'undefined') return '';
-    return localStorage.getItem('sodafom_admin_custom_password') || '';
-  });
+  const [customPassword, setCustomPassword] = useState(() => prepareLocalAdminPassword());
+  const [adminUnlocked, setAdminUnlocked] = useState(() => !prepareLocalAdminPassword());
+  const [unlockPassword, setUnlockPassword] = useState('');
+  const [unlockError, setUnlockError] = useState('');
   const [newPasswordInput, setNewPasswordInput] = useState('');
   const [passwordSavedMsg, setPasswordSavedMsg] = useState('');
   const [stats, setStats]           = useState<Stats | null>(null);
@@ -827,7 +828,7 @@ export default function AdminPanel() {
 
   // Fetch stats immediately on open (no password gate)
   React.useEffect(() => {
-    fetchStats('');
+    fetchStats('1182');
   }, []);
 
   async function fetchStats(adminCode: string) {
@@ -910,6 +911,24 @@ export default function AdminPanel() {
         <p className="text-muted-foreground font-black animate-pulse">Checking access...</p>
       </div>
     </div>;
+  }
+
+  if (!adminUnlocked && customPassword) {
+    return (
+      <main className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-card border-2 border-primary/30 rounded-3xl p-7 shadow-xl">
+          <div className="flex items-center gap-3 mb-4"><Lock className="text-primary" /><h1 className="text-xl font-black">Admin Hub</h1></div>
+          <p className="text-sm text-muted-foreground mb-4">Enter the admin password saved on this device.</p>
+          <input type="password" value={unlockPassword} onChange={e => setUnlockPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background font-bold" placeholder="Admin password" />
+          {unlockError && <p className="mt-2 text-sm font-bold text-red-600">{unlockError}</p>}
+          <button type="button" onClick={async () => {
+            const enteredHash = await hashAdminPassword(unlockPassword);
+            if (enteredHash === customPassword) { setAdminUnlocked(true); setUnlockError(''); setUnlockPassword(''); }
+            else setUnlockError('Incorrect admin password.');
+          }} className="mt-4 w-full py-3 rounded-xl bg-primary text-primary-foreground font-black">Open Admin Hub</button>
+        </div>
+      </main>
+    );
   }
 
   // ── Access Denied for non-admin users ───────────────────────────────────────
@@ -1160,10 +1179,10 @@ export default function AdminPanel() {
                       )}
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={async () => {
                           if (!newPasswordInput.trim()) return;
-                          localStorage.setItem('sodafom_admin_custom_password', newPasswordInput.trim());
-                          setCustomPassword(newPasswordInput.trim());
+                          const hash = await saveLocalAdminPassword(newPasswordInput.trim());
+                          setCustomPassword(hash);
                           setPasswordSavedMsg('Admin password created and saved successfully!');
                           setNewPasswordInput('');
                           setTimeout(() => setPasswordSavedMsg(''), 3000);
@@ -1172,6 +1191,20 @@ export default function AdminPanel() {
                       >
                         Save New Admin Password
                       </button>
+                      {customPassword && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            clearLocalAdminPassword();
+                            setCustomPassword('');
+                            setAdminUnlocked(true);
+                            setPasswordSavedMsg('Admin password cleared. The Admin Hub is open until you create a new one.');
+                          }}
+                          className="py-2.5 px-5 rounded-xl border-2 border-red-200 text-red-700 font-black text-xs"
+                        >
+                          Clear Admin Password
+                        </button>
+                      )}
                       {customPassword && (
                         <p className="text-[11px] text-muted-foreground italic">
                           Status: Custom admin password is currently saved and active.

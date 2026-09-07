@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router";
 import { motion } from 'motion/react';
@@ -16,11 +16,21 @@ export default function LoginPage() {
       pathname: string;
     };
   })?.from?.pathname ?? '/hub';
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('sodafom_remembered_login_email') || '');
+  const [rememberMe, setRememberMe] = useState(true);
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const resetSavedLogin = () => {
+    localStorage.removeItem('sodafom_remembered_login_email');
+    localStorage.removeItem('sodafom_free_access');
+    setEmail('');
+    setPassword('');
+    setError('Saved login details on this device have been cleared. Enter your details again.');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -53,6 +63,8 @@ export default function LoginPage() {
       }
 
       console.log('Sign in successful, navigating to:', from);
+      if (rememberMe) localStorage.setItem('sodafom_remembered_login_email', email.trim().toLowerCase());
+      else localStorage.removeItem('sodafom_remembered_login_email');
 
       // Auto-redeem promo code if one was passed in the URL
       if (promoFromUrl) {
@@ -161,6 +173,14 @@ export default function LoginPage() {
                   </Link>
                 </div>
               </div>
+              <label className="flex items-center gap-2 text-sm font-bold text-foreground">
+                <input type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="h-4 w-4" />
+                Remember my email on this phone
+              </label>
+              <button type="button" onClick={resetSavedLogin} className="text-left text-xs font-black text-red-600 hover:underline">
+                Reset saved login on this device
+              </button>
+              <p className="text-[11px] text-muted-foreground">For security, Sodafom remembers your email and signed-in session, not your raw password.</p>
               {error && <p className="text-destructive text-sm font-bold">{error}</p>}
               <button type="submit" disabled={loading} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity disabled:opacity-60">
                 {loading ? 'Signing in…' : 'Sign in'}

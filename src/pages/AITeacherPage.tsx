@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from 'react';
-import { ArrowLeft, BookOpen, Camera, PenLine, Send, Sparkles, Volume2 } from 'lucide-react';
+import { ArrowLeft, BookOpen, Camera, PenLine, Send, Sparkles, Volume2, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
 import { getActiveChild, setActiveChild, type AgeGroup } from '@/hooks/useChildAge';
+import { rememberOnlineAnswer } from '@/lib/archie-device-memory';
 
 const CURRICULUM = [
   { age: 5, year: 'Year 1', stage: 'Key Stage 1', topics: 'phonics, number bonds, addition and subtraction, shapes, plants and animals' },
@@ -56,6 +57,12 @@ export default function AITeacherPage() {
     });
   };
 
+  const startLesson = (subject: string) => {
+    localStorage.setItem('sodafom_lesson_subject', subject);
+    localStorage.setItem('sodafom_lesson_minutes', '30');
+    navigate('/tutor');
+  };
+
   const askTeacher = async () => {
     if (!question.trim() || busy) return;
     setBusy(true); setError('');
@@ -70,6 +77,7 @@ export default function AITeacherPage() {
       clearTimeout(timeoutId);
       if (!response.ok) throw new Error('Online teacher is not connected yet.');
       const text = await response.text();
+      rememberOnlineAnswer(question, text);
       setAnswer(text); ttsSpeak(text);
     } catch (e) {
       clearTimeout(timeoutId);
@@ -135,7 +143,17 @@ export default function AITeacherPage() {
         </section>
 
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {SUBJECTS.map(subject => <button key={subject.name} onClick={() => { ttsSpeak(subject.prompt); navigate(subject.route); }} className="min-h-28 rounded-3xl border-2 border-white bg-white p-4 text-center shadow-lg active:scale-95"><span className="text-4xl">{subject.emoji}</span><p className="mt-2 font-black text-sky-950">{subject.name}</p></button>)}
+          {SUBJECTS.map(subject => (
+            <button
+              key={subject.name}
+              onClick={() => { ttsSpeak(`Starting a 30 minute ${subject.name} lesson.`); startLesson(subject.name); }}
+              className="min-h-32 rounded-3xl border-2 border-white bg-white p-4 text-center shadow-lg active:scale-95"
+            >
+              <span className="text-4xl">{subject.emoji}</span>
+              <p className="mt-2 font-black text-sky-950">{subject.name}</p>
+              <p className="mt-1 flex items-center justify-center gap-1 text-xs font-black text-purple-700"><Clock3 size={14}/> 30-minute lesson</p>
+            </button>
+          ))}
         </section>
 
         <section className="mt-5 rounded-3xl bg-white p-5 shadow-xl">

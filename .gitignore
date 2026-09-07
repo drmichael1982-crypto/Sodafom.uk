@@ -1,4 +1,12 @@
-# Using Android gitignore template: https://github.com/github/gitignore/blob/HEAD/Android.gitignore
+# Node & Build Outputs
+node_modules/
+dist/
+.vite/
+.pnpm-store/
+
+# Environment files
+.env.local
+.env.*.local
 
 # Built application files
 *.apk

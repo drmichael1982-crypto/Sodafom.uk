@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Volume2, Mic, MicOff, Lightbulb, RotateCcw, HelpCircle, Pause, Play, Settings, Sparkles, Award } from 'lucide-react';
+import { ArrowLeft, Volume2, Mic, MicOff, Lightbulb, RotateCcw, HelpCircle, Pause, Play, Settings, Sparkles, Award, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { ArchieCharacter } from '@/components/ArchieCharacter';
 import { Blackboard } from '@/components/Blackboard';
@@ -9,6 +9,7 @@ import { ChildProfileManager } from '@/components/ChildProfileManager';
 import { loadTutorMemory, ChildTutorProfile, recordQuestionAnswer, saveTutorMemory } from '@/lib/tutor/memory';
 import { CURRICULUM_LESSONS, TopicLesson, LessonQuestion } from '@/lib/tutor/curriculum';
 import { parseTutorVoiceCommand } from '@/lib/tutor/voice-commands';
+import { buildMathsPracticeLesson } from '@/lib/tutor/maths-practice';
 import { ttsSpeak, stopTts } from '@/lib/voice-context';
 
 export default function TeacherModePage() {
@@ -16,7 +17,17 @@ export default function TeacherModePage() {
   const [profile, setProfile] = useState<ChildTutorProfile>(() => loadTutorMemory());
   const [showProfileSetup, setShowProfileSetup] = useState<boolean>(!profile.childName);
 
+  const [selectedSubject] = useState<string>(() => localStorage.getItem('sodafom_lesson_subject') || 'Any Subject');
+  const lessonSubject = ['Reading', 'Writing', 'Spelling'].includes(selectedSubject) ? 'English' : selectedSubject;
+  const lessonPool = lessonSubject === 'Any Subject'
+    ? CURRICULUM_LESSONS
+    : CURRICULUM_LESSONS.filter((lesson) => lesson.subject.toLowerCase() === lessonSubject.toLowerCase());
+  const ageGroup = profile.ageGroup ?? '8-10';
+  const lessons = lessonSubject === 'Maths'
+    ? [...lessonPool, buildMathsPracticeLesson(ageGroup)]
+    : (lessonPool.length ? lessonPool : CURRICULUM_LESSONS);
   const [currentLessonIndex, setCurrentLessonIndex] = useState<number>(0);
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(() => Number(localStorage.getItem('sodafom_lesson_minutes') || '30') * 60);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [typedInput, setTypedInput] = useState<string>('');
@@ -28,7 +39,7 @@ export default function TeacherModePage() {
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const recognitionRef = useRef<any>(null);
 
-  const currentLesson: TopicLesson = CURRICULUM_LESSONS[currentLessonIndex] ?? CURRICULUM_LESSONS[0];
+  const currentLesson: TopicLesson = lessons[currentLessonIndex] ?? lessons[0] ?? CURRICULUM_LESSONS[0];
   const currentQuestion: LessonQuestion | undefined = currentLesson.questions[currentQuestionIndex];
 
   const speakText = useCallback((text: string) => {
@@ -64,11 +75,11 @@ export default function TeacherModePage() {
       setCurrentQuestionIndex(prev => prev + 1);
       const nextQ = currentLesson.questions[currentQuestionIndex + 1];
       if (nextQ) speakText(`Next question: ${nextQ.question}`);
-    } else if (currentLessonIndex + 1 < CURRICULUM_LESSONS.length) {
+    } else if (currentLessonIndex + 1 < lessons.length) {
       setCurrentLessonIndex(prev => prev + 1);
       setCurrentQuestionIndex(0);
     } else {
-      // Loop or finish
+      // Continue revising the selected subject for the full lesson.
       setCurrentLessonIndex(0);
       setCurrentQuestionIndex(0);
     }
@@ -156,6 +167,19 @@ export default function TeacherModePage() {
     stopTts();
   }, []);
 
+  useEffect(() => {
+    if (showProfileSetup || isPaused || secondsRemaining <= 0) return;
+    const timer = window.setInterval(() => setSecondsRemaining((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearInterval(timer);
+  }, [showProfileSetup, isPaused, secondsRemaining]);
+
+  useEffect(() => {
+    if (secondsRemaining !== 0) return;
+    speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! Your 30 minute lesson is complete.`);
+  }, [secondsRemaining]);
+
+  const minutes = Math.floor(secondsRemaining / 60);
+  const seconds = secondsRemaining % 60;
   const progressPercent = ((currentQuestionIndex + 1) / Math.max(1, currentLesson.questions.length)) * 100;
 
   return (
@@ -224,11 +248,21 @@ export default function TeacherModePage() {
                   <p className="text-xs font-bold text-amber-600">
                     {currentLesson.subject} • Level {profile.ageGroup ?? '8-10'}
                   </p>
+                  <p className="mt-1 flex items-center gap-1 text-xs font-black text-purple-700">
+                    <Clock3 size={14} /> {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')} · {selectedSubject}
+                  </p>
                 </div>
               </div>
 
               {/* Toolbar Controls */}
               <div className="flex flex-wrap gap-2 justify-end">
+                <button
+                  onClick={() => setIsPaused((value) => !value)}
+                  className="p-2.5 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-2xl border border-purple-300 font-bold text-xs flex items-center gap-1"
+                  title={isPaused ? 'Resume lesson' : 'Pause lesson'}
+                >
+                  {isPaused ? <Play size={16} /> : <Pause size={16} />} {isPaused ? 'Resume' : 'Pause'}
+                </button>
                 <button
                   onClick={() => speakText(`${currentLesson.explanation}. Question: ${currentQuestion?.question ?? ''}`)}
                   className="p-2.5 bg-yellow-100 hover:bg-yellow-200 text-amber-900 rounded-2xl border border-yellow-300 font-bold text-xs flex items-center gap-1"

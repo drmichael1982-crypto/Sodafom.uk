@@ -12,7 +12,8 @@ import { useVoice } from '@/lib/voice-context';
 import { API_PREFIX } from '@/lib/config';
 import { ArchieCharacter } from './ArchieCharacter';
 import { useArchieContext } from '@/contexts/ArchieContext';
-import { tryLocalArchieResponse } from '@/lib/archie-local';
+import { tryLocalArchieResponse, getRememberedChildName } from '@/lib/archie-local';
+import { findLearnedAnswer, rememberOnlineAnswer } from '@/lib/archie-device-memory';
 import { games as gamesContent } from 'virtual:content';
 
 type State = 'idle' | 'listening' | 'thinking' | 'speaking';
@@ -151,9 +152,10 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
         return;
       }
       const local = tryLocalArchieResponse(trimmed);
+      const learned = !local ? findLearnedAnswer(trimmed) : null;
       const hintRequest = /\b(hint|help|what do i have to do|instructions?)\b/i.test(trimmed);
-      if (local || (gameTitle && hintRequest)) {
-        const localText = local?.text ?? (currentQuestion
+      if (local || learned || (gameTitle && hintRequest)) {
+        const localText = local?.text ?? learned ?? (currentQuestion
           ? `Let's work it out together. Read this carefully: ${currentQuestion}. Look at each choice, rule out the ones that cannot be right, then choose your best answer.`
           : `You are playing ${gameTitle}. Read the instructions carefully, take your time, and try one step at a time. I'm right here if you need me.`);
         setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: localText } : m));
@@ -163,10 +165,13 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
 
       console.log('[Archie Diagnostic] 8. AI response received');
       console.log(`[Archie] START sendMessage: "${trimmed}"`);
-      // Build context-aware prompt if in a game
-      let contextPrompt = "";
+      // Build context-aware prompt if in a game, and keep the learner's name consistent.
+      const rememberedName = getRememberedChildName();
+      let contextPrompt = rememberedName
+        ? `\n\nLEARNER: The child's remembered name is ${rememberedName}. Use it naturally, but not in every sentence.`
+        : "";
       if (gameTitle) {
-        contextPrompt = `\n\nCONTEXT: The child is currently playing "${gameTitle}" (${subject}).`;
+        contextPrompt += `\n\nCONTEXT: The child is currently playing "${gameTitle}" (${subject}).`;
         if (currentQuestion) {
           contextPrompt += ` The current question is: "${currentQuestion}".`;
         }
@@ -258,6 +263,9 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
           prev.map((m) => (m.id === assistantId ? { ...m, content: fullContent } : m))
         );
       }
+
+      // Save useful online Q&A on this device so Local Archie can reuse it offline.
+      rememberOnlineAnswer(trimmed, fullContent);
 
       console.log(`[Archie] Parsing Archie message...`);
       const { text } = parseArchieMessage(fullContent);
@@ -353,6 +361,15 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
       const text = `The choices are: ${currentOptions.map((o, i) => `${i + 1}: ${o}`).join('. ')}`;
       speak(text);
     }
+  };
+
+  const handleArchieButton = () => {
+    console.log('ARCHIE_BUTTON_PRESSED');
+    // A single tap should always open Archie. If he is speaking, stop him first.
+    if (isSpeaking) stopSpeaking();
+    const willOpen = !open;
+    setOpen(willOpen);
+    if (willOpen) window.setTimeout(() => startListening(), 300);
   };
 
   return (
@@ -534,25 +551,7 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
 
       {/* Floating Toggle Button */}
       <motion.button
-        onClick={() => {
-          console.log('ARCHIE_BUTTON_PRESSED');
-          if (isSpeaking) { stopSpeaking(); return; }
-          const willOpen = !open;
-          setOpen(willOpen);
-          if (willOpen) {
-            setTimeout(() => startListening(), 300);
-          }
-        }}
-        onTouchEnd={(e) => {
-          e.preventDefault();
-          console.log('ARCHIE_BUTTON_PRESSED');
-          if (isSpeaking) { stopSpeaking(); return; }
-          const willOpen = !open;
-          setOpen(willOpen);
-          if (willOpen) {
-            setTimeout(() => startListening(), 300);
-          }
-        }}
+        onClick={handleArchieButton}
         style={{ touchAction: 'manipulation' }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
