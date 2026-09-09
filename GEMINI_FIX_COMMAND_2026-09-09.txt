@@ -1,0 +1,49 @@
+SODAFOM — GEMINI FIX COMMAND
+Date: 9 September 2026
+
+Project:
+GitHub repo: drmichael1982-crypto/Sodafom.uk
+Railway service: Sodafom.uk
+
+GOAL
+Make the live app look like the approved Sodafom picture designs, not the current temporary/generic wireframe screens.
+
+IMPORTANT
+Do not delete existing working features or routes.
+Do not replace the approved visual designs with generic buttons/emojis.
+Use the supplied approved artwork from the handoff ZIP as the visual source of truth.
+
+CURRENT PROBLEMS TO FIX
+1. The app currently injects an "Approved design preview" above old/generic controls.
+2. Some approved images fail to load.
+3. The live Home page does not match the approved Home design.
+4. Generic orange doors/chairs/game cards are still visible instead of the approved themed pages.
+5. Startup can fail with: Cannot read properties of null (reading 'totalSignups').
+6. There are duplicated controls underneath the approved preview.
+7. src/lib/approvedArtworkPreviews.ts is temporary and is not the final solution.
+
+WORK IN THIS ORDER
+1. HOME PAGE: use the approved Home artwork as the source of truth. Remove the temporary preview block and duplicate generic controls. Keep real navigation working and make the visible approved menu items clickable.
+2. APPROVED ASSETS: place supplied images in a stable folder such as public/assets/approved-v2/. Use production-safe URLs and verify assets load on Railway.
+3. STORIES / LESSONS / ASK ARCHIE / GAMES / HOMEWORK: progressively replace placeholder visual shells with the supplied approved visual style while preserving existing business logic and routes.
+4. STARTUP ERROR: find every totalSignups access and guard against null/undefined stats data. The app must boot with safe defaults even if the stats endpoint is empty or unavailable.
+5. MOBILE: test around 360–430 px width, no horizontal overflow, all text stays inside controls, finger-friendly buttons.
+6. BUILD TEST: run normal install/build/test commands and confirm Home, Stories, Lessons, Ask Archie, Games, Homework Helper and Teacher Classroom routes load.
+7. COMMIT after the build passes. Suggested message: Replace preview wireframes with approved Sodafom visuals and fix startup null crash
+
+DO NOT
+- Do not redesign the approved Home page from scratch.
+- Do not add random new characters.
+- Do not remove existing AI, lesson, game, parent or teacher logic.
+- Do not leave a preview image above a different old interface.
+- Do not claim completion until the live Railway build visually matches the supplied approved reference.
+
+FINAL CHECKLIST
+[ ] Home matches approved artwork closely
+[ ] Approved images load in Railway
+[ ] No broken image boxes
+[ ] No duplicate old controls below the design
+[ ] totalSignups null crash fixed
+[ ] Main routes still work
+[ ] Mobile layout works
+[ ] Production build passes
