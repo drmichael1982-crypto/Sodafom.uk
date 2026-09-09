@@ -1,5 +1,4 @@
 import './lib/i18n';
-import './lib/approvedArtworkPreviews';
 import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
