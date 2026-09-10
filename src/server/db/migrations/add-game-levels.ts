@@ -3,6 +3,7 @@
  * Run once on startup via runGameLevelsMigration().
  */
 import { db } from '@/server/db/client';
+import { runEducationCloudSeed } from './education-cloud-seed';
 
 export async function runGameLevelsMigration() {
   try {
@@ -23,4 +24,8 @@ export async function runGameLevelsMigration() {
   } catch (err) {
     console.error('[Migration] game_levels migration error:', err);
   }
+
+  // Keep the shared Railway curriculum/knowledge library ready on every deploy.
+  // The seed uses idempotent upserts, so this never deletes users or resets data.
+  await runEducationCloudSeed();
 }
