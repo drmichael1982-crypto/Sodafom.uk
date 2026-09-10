@@ -3,6 +3,7 @@
  * Run once on startup via runGameLevelsMigration().
  */
 import { db } from '@/server/db/client';
+import { runEducationCloudSeed } from './education-cloud-seed';
 
 export async function runGameLevelsMigration() {
   try {
@@ -23,4 +24,7 @@ export async function runGameLevelsMigration() {
   } catch (err) {
     console.error('[Migration] game_levels migration error:', err);
   }
+
+  // Seed/update shared curriculum content in Railway MySQL without touching user data.
+  await runEducationCloudSeed();
 }
