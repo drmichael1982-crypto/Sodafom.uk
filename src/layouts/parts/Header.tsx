@@ -7,7 +7,6 @@ import { useCart } from '@/contexts/use-cart';
 import { SiteSearch, SearchButton } from '@/components/SiteSearch';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useSession, signOut } from '@/lib/auth/auth-client';
-import { ArchieCharacter } from '../../components/ArchieCharacter';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 
 // ── Archie voice helper ────────────────────────────────────────────────────────
@@ -45,7 +44,7 @@ function archieSpeak(text: string): void {
 const navLinks = [
   { label: 'Home',            href: '/' },
   { label: '1-to-1 Tutor',    href: '/tutor' },
-  { label: 'Games',           href: '/' },
+  { label: 'Games',           href: '/games' },
   { label: 'Cartoons',        href: '/cartoons' },
   { label: 'Daily Challenge', href: '/daily-challenge' },
   { label: 'Leaderboard',     href: '/leaderboard' },

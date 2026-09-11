@@ -46,7 +46,7 @@ const SEARCH_INDEX: SearchItem[] = [
   // Pages
   { id: 'page-menu',           title: "Archie's Menu",       description: 'Open all Sodafom learning and family features', href: '/archie-menu',               emoji: '🌈', category: 'Page',    tags: ['menu', 'features', 'home'] },
   { id: 'page-lessons',        title: "Archie's Lessons",    description: 'Choose a subject and lesson length',            href: '/lessons',                   emoji: '🎓', category: 'Page',    tags: ['lessons', 'tutor', 'subjects'] },
-  { id: 'page-games',          title: 'All Games',           description: 'Browse every game on Sodafom',                 href: '/classic-home',              emoji: '🎮', category: 'Page',    tags: ['games', 'all', 'browse'] },
+  { id: 'page-games',          title: 'All Games',           description: 'Browse every game on Sodafom',                 href: '/games',                     emoji: '🎮', category: 'Page',    tags: ['games', 'all', 'browse'] },
   { id: 'page-maths',          title: 'Maths Hub',           description: 'All maths games in one place',                 href: '/games/maths',               emoji: '🔢', category: 'Page',    tags: ['maths', 'hub', 'games'] },
   { id: 'page-reading',        title: 'Reading Hub',         description: 'All reading games in one place',               href: '/games/reading',             emoji: '📖', category: 'Page',    tags: ['reading', 'hub', 'games'] },
   { id: 'page-spelling',       title: 'Spelling Hub',        description: 'All spelling games in one place',              href: '/games/spelling',            emoji: '✏️', category: 'Page',    tags: ['spelling', 'hub', 'games'] },
@@ -103,7 +103,7 @@ const CATEGORY_STYLE: Record<string, string> = {
 
 // ── Quick links shown when query is empty ─────────────────────────────────────
 const QUICK_LINKS = [
-  { label: 'All Games',    href: '/classic-home',   emoji: '🎮' },
+  { label: 'All Games',    href: '/games',          emoji: '🎮' },
   { label: 'Maths',        href: '/games/maths',    emoji: '🔢' },
   { label: 'Reading',      href: '/games/reading',  emoji: '📖' },
   { label: 'Spelling',     href: '/games/spelling', emoji: '✏️' },

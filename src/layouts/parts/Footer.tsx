@@ -1,7 +1,8 @@
 import { Link, useNavigate } from "react-router";
 import { Youtube, Lock, Instagram } from 'lucide-react';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { API_PREFIX } from '@/lib/config';
+import { games as gamesContent } from 'virtual:content';
 
 // Hidden admin access logic (triggered by clicking the bottom copyright year)
 
@@ -115,7 +116,7 @@ function TikTokIcon({ size = 16 }: { size?: number }) {
 
 const footerLinks = {
   Learn: [
-    { label: 'All Games',          href: '/' },
+    { label: 'All Games',          href: '/games' },
     { label: '⭐ Game of the Week', href: '/game-of-the-week' },
     { label: 'Maths Games',        href: '/subjects/maths' },
     { label: 'Spelling Games',     href: '/subjects/spelling' },
@@ -248,7 +249,7 @@ export default function Footer() {
       <div className="bg-primary/90 border-b border-primary-foreground/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-wrap items-center justify-center gap-6 text-primary-foreground/80 text-sm font-bold">
-            <span className="flex items-center gap-1.5"><span className="text-accent">🎮</span> 118 learning games</span>
+            <span className="flex items-center gap-1.5"><span className="text-accent">🎮</span> {gamesContent.games.length} learning games</span>
             <span className="hidden sm:block w-px h-4 bg-primary-foreground/20" />
             <span className="flex items-center gap-1.5"><span className="text-accent">👧</span> Ages 5–13</span>
             <span className="hidden sm:block w-px h-4 bg-primary-foreground/20" />
