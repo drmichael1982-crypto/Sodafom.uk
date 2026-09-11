@@ -384,6 +384,10 @@ export const routes: RouteObject[] = [{
   path: '/games/number-puzzle',
   element: <NumberPuzzleGame />,
 }, {
+  // Older game lists call this "Number Grid". Keep both addresses working.
+  path: '/games/number-grid',
+  element: <NumberPuzzleGame />,
+}, {
   path: '/games/colour-book',
   element: <ColourBookGame />,
 }, {
