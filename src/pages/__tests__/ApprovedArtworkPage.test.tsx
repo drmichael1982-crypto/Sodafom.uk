@@ -21,7 +21,7 @@ describe('Approved artwork navigation', () => {
       </HelmetProvider>,
     );
 
-    expect(screen.getByRole('img')).toHaveAttribute('src', '/assets/approved/home.png');
+    expect(screen.getByRole('img')).toHaveAttribute('src', '/assets/approved/home-fire-v2.png');
     expect(screen.getByRole('button', { name: "Open Archie's Stories" })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: "Open Archie's Lessons" })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Ask Archie' })).toBeInTheDocument();
