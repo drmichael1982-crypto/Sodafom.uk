@@ -1,0 +1,30 @@
+import { Helmet } from '@dr.pogodin/react-helmet';
+import { useState } from 'react';
+import { useNavigate } from 'react-router';
+import ArchieCharacter from '@/components/ArchieCharacter';
+
+const MUSEUMS = {
+  dinosaurs: { title: 'Dinosaur Museum', emoji: '🦖', colour: 'from-emerald-400 to-green-800', welcome: 'Roar! What dinosaur shall we discover first?', galleries: [['Fossil Hall', '🦴', 'Fossils are the remains or traces of living things from long ago.'], ['Dino Giants', '🦕', 'Some of the biggest dinosaurs ate plants, while other dinosaurs hunted meat.'], ['Dino Lab', '🔎', 'Palaeontologists study bones and rocks to learn about the past.']] },
+  egypt: { title: 'British Museum: Ancient Egypt', emoji: '𓂀', colour: 'from-amber-300 to-orange-800', welcome: 'Welcome to Ancient Egypt. Let’s explore its amazing artefacts together.', galleries: [['Mummy Gallery', '⚱️', 'Ancient Egyptians wrapped mummies because they believed life continued after death.'], ['Pharaoh’s Hall', '👑', 'A pharaoh was the ruler of Ancient Egypt.'], ['Writing Room', '📜', 'Hieroglyphs were picture symbols used as writing in Ancient Egypt.']] },
+  romans: { title: 'Roman Britain Museum', emoji: '🏺', colour: 'from-rose-400 to-red-900', welcome: 'Salve! Let’s see how Romans lived and built in Britain.', galleries: [['Roman Home', '🏛️', 'Romans built strong homes, roads and public baths.'], ['Soldier Station', '🛡️', 'Roman soldiers wore armour and marched long distances.'], ['Archaeology Table', '⛏️', 'Archaeologists find clues in the ground to tell us about Roman life.']] },
+  vikings: { title: 'Viking Museum', emoji: '⛵', colour: 'from-blue-400 to-indigo-900', welcome: 'Ahoy! Let’s sail into Viking life, longships and York.', galleries: [['Longship Dock', '⛵', 'Viking longships were fast and could travel on shallow rivers.'], ['Viking Home', '🔥', 'Viking families often lived in longhouses with a fire in the middle.'], ['York Dig', '🪙', 'Archaeologists in York have found objects that teach us about Viking Britain.']] },
+} as const;
+type MuseumId = keyof typeof MUSEUMS;
+
+export default function MuseumExplorerPage() {
+  const navigate = useNavigate();
+  const [museum, setMuseum] = useState<MuseumId | null>(null);
+  const [gallery, setGallery] = useState<number | null>(null);
+  const [question, setQuestion] = useState('');
+  const chosen = museum ? MUSEUMS[museum] : null;
+  const speak = (words: string) => window.speechSynthesis?.speak(new SpeechSynthesisUtterance(words));
+  const open = (id: MuseumId) => { setMuseum(id); setGallery(null); setQuestion(''); speak(MUSEUMS[id].welcome); };
+  const findMuseum = () => open(/egypt|mumm|british|pharaoh/.test(question.toLowerCase()) ? 'egypt' : /roman/.test(question.toLowerCase()) ? 'romans' : /viking|york|longship/.test(question.toLowerCase()) ? 'vikings' : 'dinosaurs');
+
+  return <main className="min-h-[100svh] bg-gradient-to-b from-sky-400 via-cyan-100 to-amber-100 px-3 pb-8 pt-4 text-slate-900">
+    <Helmet><title>Museum Explorer — Sodafom</title></Helmet>
+    <div className="mx-auto max-w-5xl"><button onClick={() => museum ? setMuseum(null) : navigate('/')} className="rounded-full border-4 border-white bg-white px-5 py-3 text-lg font-black shadow-lg active:scale-95">← {museum ? 'Choose a museum' : 'Home'}</button>
+      {!chosen ? <section className="mt-4 rounded-[2rem] border-4 border-white bg-white/95 p-5 shadow-2xl"><div className="grid items-center gap-3 sm:grid-cols-[160px_1fr]"><div className="mx-auto"><ArchieCharacter size={150} /></div><div className="rounded-[2rem] border-4 border-cyan-700 bg-cyan-50 p-5 text-center text-xl font-black text-blue-950">What museum would you like to see today?<div className="mt-4 flex gap-2"><input value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={e => e.key === 'Enter' && findMuseum()} placeholder="Say or type: dinosaur museum" className="min-w-0 flex-1 rounded-2xl border-2 border-cyan-400 bg-white px-4 py-3 text-base"/><button onClick={findMuseum} className="rounded-2xl bg-cyan-700 px-5 py-3 font-black text-white">Go</button></div></div></div><div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">{(Object.entries(MUSEUMS) as [MuseumId, typeof MUSEUMS[MuseumId]][]).map(([id, item]) => <button key={id} onClick={() => open(id)} className={`aspect-square rounded-full border-8 border-white bg-gradient-to-br ${item.colour} p-3 text-center text-white shadow-xl transition hover:-translate-y-1 active:scale-95`}><div className="text-5xl">{item.emoji}</div><div className="mt-2 text-sm font-black">{item.title}</div></button>)}</div></section> : <section className="mt-4 overflow-hidden rounded-[2rem] border-8 border-white bg-slate-900 shadow-2xl"><div className="min-h-[540px] bg-[radial-gradient(circle_at_50%_8%,#fff7cc_0%,#f59e0b_3%,transparent_19%),linear-gradient(to_bottom,#075985_0%,#0f766e_40%,#78350f_41%,#b45309_100%)] p-5 text-white"><div className="mx-auto max-w-2xl rounded-[2rem] border-4 border-white bg-white p-4 text-center font-black text-blue-950"><div className="flex items-center justify-center gap-3"><ArchieCharacter size={70} /><p>{gallery === null ? chosen.welcome : chosen.galleries[gallery][2]}</p></div></div><h1 className="mt-5 text-center text-3xl font-black">{chosen.emoji} {chosen.title}</h1><p className="mt-2 text-center font-bold">Tap a gallery door to walk inside.</p><div className="mx-auto mt-10 grid max-w-4xl gap-5 sm:grid-cols-3">{chosen.galleries.map(([name, emoji, fact], index) => <button key={name} onClick={() => { setGallery(index); speak(`${name}. ${fact}`); }} className={`min-h-60 rounded-t-[5rem] border-8 p-5 shadow-2xl transition hover:-translate-y-2 active:scale-95 ${gallery === index ? 'border-yellow-200 bg-amber-500' : 'border-amber-200 bg-gradient-to-b from-amber-100 to-amber-700'}`}><div className="text-7xl">{emoji}</div><div className="mt-5 rounded-xl bg-white p-3 font-black text-slate-900">{name}</div><div className="mt-2 text-xs font-bold">Tap to explore</div></button>)}</div></div></section>}
+    </div>
+  </main>;
+}
