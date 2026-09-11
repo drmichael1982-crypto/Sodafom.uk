@@ -21,6 +21,10 @@ function isFounderUser(email?: string | null): boolean {
   return Boolean(founderEmail && email && founderEmail === email.trim().toLowerCase());
 }
 
+function adminOpenModeEnabled(): boolean {
+  return process.env.ADMIN_OPEN_MODE?.trim().toLowerCase() === 'true';
+}
+
 export function isConfiguredAdminCode(code: string): boolean {
   const configured = requiredSecret('ADMIN_MASTER_CODE');
   return Boolean(configured && code && safeEqual(code, configured));
@@ -71,6 +75,10 @@ export function issueFounderSession(res: Response): boolean {
 }
 
 export async function hasAdminAccess(req: Request): Promise<boolean> {
+  // Temporary owner testing mode. This deliberately opens the Admin Hub while
+  // ADMIN_OPEN_MODE=true in Railway. Switch the flag off once an admin password
+  // has been configured so normal founder/admin checks resume immediately.
+  if (adminOpenModeEnabled()) return true;
   if (hasFounderSession(req)) return true;
   try {
     const auth = getAuth();
