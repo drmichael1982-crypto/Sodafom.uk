@@ -1,6 +1,7 @@
 import { redirect, type RouteObject } from "react-router";
 import { lazy } from 'react';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
+import MuseumExplorerPage from './pages/MuseumExplorerPage';
 import ApprovedArtworkPage from './pages/ApprovedArtworkPage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
 import AITeacherPage from './pages/AITeacherPage';
@@ -218,6 +219,9 @@ const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
 export const routes: RouteObject[] = [{
   path: '/',
   element: <ApprovedArtworkPage variant="home" />
+}, {
+  path: '/museum',
+  element: <MuseumExplorerPage />
 }, {
   path: '/stories',
   element: <ApprovedArtworkPage variant="stories" />
