@@ -1,4 +1,4 @@
-import { redirect, type RouteObject } from "react-router";
+import { Navigate, redirect, type RouteObject } from "react-router";
 import { lazy } from 'react';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
 import MuseumExplorerPage from './pages/MuseumExplorerPage';
