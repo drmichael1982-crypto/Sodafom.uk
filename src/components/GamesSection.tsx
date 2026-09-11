@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, Volume2, VolumeX, Play, Lock, Zap } from 'lucide-react';
 import { useNavigate } from "react-router";
@@ -16,6 +16,10 @@ const GAME_ROUTES = new Map<string, string>([
   ['game-phonics-parrot', '/games/phonics-parrot'],
   ['game-reading-quest', '/games/reading-quest'],
 ]);
+
+function routeForGame(gameId: string): string {
+  return GAME_ROUTES.get(gameId) ?? `/games/${gameId.replace(/^game-/, '')}`;
+}
 const AGE_ALL = 'All ages';
 const AGE_OPTIONS = [AGE_ALL, '5–7', '8–10', '11–13'];
 const ageConfig: Record<string, {
@@ -151,7 +155,7 @@ export default function GamesSection() {
           <h2 className="text-3xl sm:text-4xl font-black text-foreground mb-2" style={{
           fontFamily: 'var(--font-heading)'
         }}>
-            🎮 All 10 Games Included
+            🎮 All {games.games.length} Games Included
           </h2>
           <p className="text-muted-foreground text-lg">Every game available on the app — play now in your browser or on the go</p>
         </div>
@@ -273,8 +277,7 @@ export default function GamesSection() {
                 }} whileTap={{
                   scale: 0.97
                 }} onClick={() => {
-                  const route = GAME_ROUTES.get(game.id);
-                  if (route) navigate(isLocked ? '/subscribe' : route);
+                  navigate(isLocked ? '/subscribe' : routeForGame(game.id));
                 }} className={`w-full py-2.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-colors ${isLocked ? 'bg-muted text-muted-foreground hover:bg-muted/80' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}>
                       {isLocked ? <><Lock size={14} /> Unlock with Trial</> : <><Zap size={14} /> Play Now</>}
                     </motion.button>

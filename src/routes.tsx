@@ -1,10 +1,11 @@
-import { RouteObject } from "react-router";
+import { redirect, type RouteObject } from "react-router";
 import { lazy } from 'react';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
 import AITeacherPage from './pages/AITeacherPage';
 import TeacherModePage from './pages/tutor/TeacherModePage';
 import SubjectsPage from './pages/subjects';
+import GamesPage from './pages/games';
 import MathsSubjectPage from './pages/subjects/maths';
 import SpellingSubjectPage from './pages/subjects/spelling';
 import ReadingSubjectPage from './pages/subjects/reading';
@@ -34,7 +35,7 @@ import HolidayTravelPage from './pages/HolidayTravelPage';
 import DailyChallengePage from './pages/daily-challenge';
 import CheckoutSuccess from './pages/checkout/success';
 import CheckoutCancel from './pages/checkout/cancel';
-import ProdNotFoundPage from './pages/_404';
+import NotFoundPage from './pages/_404';
 // Game pages
 import NumberPopGame from './pages/games/number-pop';
 import TimesTableRaceGame from './pages/games/times-table-race';
@@ -52,7 +53,6 @@ import PhonicsParrotGame from './pages/games/phonics-parrot';
 import ReadingQuestGame from './pages/games/reading-quest';
 import WordSearchGame from './pages/games/word-search';
 import CrosswordGame from './pages/games/crossword';
-import Header from './layouts/parts/Header';
 import SudokuGame from './pages/games/sudoku';
 import NumberPuzzleGame from './pages/games/number-puzzle';
 import ColourBookGame from './pages/games/colour-book';
@@ -70,7 +70,6 @@ import AnimalHabitatsGame from './pages/games/animal-habitats';
 import SentenceBuilderGame from './pages/games/sentence-builder';
 import CertificatesPage from './pages/certificates';
 import MockExamsPage from './pages/mock-exams/index';
-import AdminPortal from './pages/admin/AdminPortal';
 import SodafomBotPage from './pages/chatbot/SodafomBotPage';
 import AdminPanelPage from './pages/admin-panel';
 import TeacherHubDashboard from './pages/teacher-hub/index';
@@ -200,10 +199,19 @@ import ClassificationKeysGame from './pages/games/classification-keys';
 import EarthSpaceGame from './pages/games/earth-space';
 import EvolutionExplorerGame from './pages/games/evolution-explorer';
 import ScienceQuizGame from './pages/games/science-quiz';
+import {
+  BasketballGrammarGame,
+  ClinicScienceGame,
+  ClockQuestGame,
+  FootballTimesTablesGame,
+  NetballSpellingGame,
+  PoolScienceGame,
+  ShopkeeperChangeGame,
+  TrainTimetableGame,
+} from './pages/games/learning-arena';
 import BackToSchoolShopPage from './pages/shop/back-to-school';
 import ChoresPage, { ParentChoresPage } from './pages/ChoresPage';
 const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
-const NotFoundPage = ProdNotFoundPage;
 export const routes: RouteObject[] = [{
   path: '/',
   element: <SodafomAdventurePage />
@@ -218,10 +226,10 @@ export const routes: RouteObject[] = [{
   element: <HomeworkHelperPage />
 }, {
   path: '/pocket-money',
-  element: <ChoresPage />
+  loader: () => redirect('/chores')
 }, {
   path: '/pocket-money/setup',
-  element: <ParentChoresPage />
+  loader: () => redirect('/parent-dashboard/chores')
 }, {
   path: '/birthday',
   element: <BirthdayPage />
@@ -254,7 +262,7 @@ export const routes: RouteObject[] = [{
   element: <AdminPanelPage />
 }, {
   path: '/admin/sodafom-bot',
-  element: <AdminPanelPage />
+  loader: () => redirect('/admin-panel?tab=bot')
 }, {
   path: '/tutor',
   element: <TeacherModePage />
@@ -263,7 +271,7 @@ export const routes: RouteObject[] = [{
   element: <TeacherModePage />
 }, {
   path: '/classic-home',
-  element: <SodafomAdventurePage />
+  loader: () => redirect('/')
 }, {
   path: '/subjects',
   element: <SubjectsPage />
@@ -281,7 +289,7 @@ export const routes: RouteObject[] = [{
   element: <ScienceSubjectPage />
 }, {
   path: '/games',
-  element: <SodafomAdventurePage />,
+  element: <GamesPage />,
 }, {
   path: '/demo',
   element: <DemoPage />
@@ -405,7 +413,7 @@ export const routes: RouteObject[] = [{
   element: <MathsMysteryGame />,
 }, {
   path: '/games/game-pattern-maker',
-  element: <PatternMakerGame />,
+  loader: () => redirect('/games/pattern-maker'),
 }, {
   path: '/games/pattern-maker',
   element: <PatternMakerGame />,
@@ -472,6 +480,30 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/games/coin-counter',
   element: <CoinCounterGame />,
+}, {
+  path: '/games/football-times-tables',
+  element: <FootballTimesTablesGame />,
+}, {
+  path: '/games/basketball-grammar',
+  element: <BasketballGrammarGame />,
+}, {
+  path: '/games/netball-spelling',
+  element: <NetballSpellingGame />,
+}, {
+  path: '/games/pool-science',
+  element: <PoolScienceGame />,
+}, {
+  path: '/games/shopkeeper-change',
+  element: <ShopkeeperChangeGame />,
+}, {
+  path: '/games/clock-quest',
+  element: <ClockQuestGame />,
+}, {
+  path: '/games/train-timetable',
+  element: <TrainTimetableGame />,
+}, {
+  path: '/games/clinic-science',
+  element: <ClinicScienceGame />,
 },
 // Spelling games (new)
 {
@@ -810,7 +842,7 @@ export const routes: RouteObject[] = [{
   element: <AITeacherPage />
 }, {
   path: '/reading',
-  element: <ReadingSubjectPage />
+  loader: () => redirect('/subjects/reading')
 }, {
   path: '/chores',
   element: <ChoresPage />
@@ -819,10 +851,10 @@ export const routes: RouteObject[] = [{
   element: <ParentChoresPage />
 }, {
   path: '/design-archie-outfit',
-  element: <ArchieOutfitPage />
+  loader: () => redirect('/archie-outfit')
 }, {
   path: '/birthday-party',
-  element: <BirthdayPage />
+  loader: () => redirect('/birthday')
 }, {
   path: '/mock-exams',
   element: <MockExamsPage />

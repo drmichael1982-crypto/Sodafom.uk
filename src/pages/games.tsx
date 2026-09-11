@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
-import { Volume2, VolumeX, Star, Zap, Play, Lock, Swords, X, ChevronRight, MessageCircle, Key, CheckCircle2, AlertCircle, Loader2, UserPlus, XCircle, Crown, CreditCard, Search, Shuffle, LogIn, Eye, EyeOff, Mail, ShieldCheck } from 'lucide-react';
+import { Volume2, VolumeX, Star, Zap, Play, Lock, Swords, X, ChevronRight, Key, CheckCircle2, AlertCircle, Loader2, UserPlus, XCircle, Crown, CreditCard, Search, Shuffle, LogIn, Eye, EyeOff, Mail, ShieldCheck } from 'lucide-react';
 import { ArchieCharacter } from '../components/ArchieCharacter';
 import { useNavigate, useSearchParams, Link } from "react-router";
 import { signIn, signUp, useSession } from '@/lib/auth/auth-client';
@@ -48,6 +48,14 @@ const GAME_ROUTES: Record<string, string> = {
   // 30 new maths games
   'game-maths-bingo':         '/games/maths-bingo',
   'game-coin-counter':        '/games/coin-counter',
+  'game-football-times-tables': '/games/football-times-tables',
+  'game-basketball-grammar':    '/games/basketball-grammar',
+  'game-netball-spelling':      '/games/netball-spelling',
+  'game-pool-science':          '/games/pool-science',
+  'game-shopkeeper-change':     '/games/shopkeeper-change',
+  'game-clock-quest':           '/games/clock-quest',
+  'game-train-timetable':       '/games/train-timetable',
+  'game-clinic-science':        '/games/clinic-science',
   'game-odd-even':            '/games/odd-even',
   'game-place-value':         '/games/place-value',
   'game-multiplication-grid': '/games/multiplication-grid',
