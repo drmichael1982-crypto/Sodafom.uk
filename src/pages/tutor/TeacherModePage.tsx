@@ -27,7 +27,8 @@ export default function TeacherModePage() {
     ? [...lessonPool, buildMathsPracticeLesson(ageGroup)]
     : (lessonPool.length ? lessonPool : CURRICULUM_LESSONS);
   const [currentLessonIndex, setCurrentLessonIndex] = useState<number>(0);
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(() => Number(localStorage.getItem('sodafom_lesson_minutes') || '30') * 60);
+  const lessonDurationMinutes = Number(localStorage.getItem('sodafom_lesson_minutes') || '30');
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(() => lessonDurationMinutes * 60);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [typedInput, setTypedInput] = useState<string>('');
@@ -175,7 +176,7 @@ export default function TeacherModePage() {
 
   useEffect(() => {
     if (secondsRemaining !== 0) return;
-    speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! Your 30 minute lesson is complete.`);
+    speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! Your ${lessonDurationMinutes} minute lesson is complete.`);
   }, [secondsRemaining]);
 
   const minutes = Math.floor(secondsRemaining / 60);

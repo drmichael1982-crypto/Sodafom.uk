@@ -3,12 +3,13 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft, BookOpen, Home, Settings, Sparkles, Star, Trophy, Bot,
-  Users, Volume2, BarChart3, Music, ChevronRight, Film
+  Users, Volume2, BarChart3, Music, ChevronRight, Film, Menu
 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import ArchieCharacter from '@/components/ArchieCharacter';
 import { CartoonRobot } from '@/components/CartoonRobot';
 import { ttsSpeak, stopTts } from '@/lib/voice-context';
+import { getSeasonalTheme } from './SeasonalThemesPage';
 
 import { useProgression } from '@/contexts/ProgressionContext';
 
@@ -232,6 +233,7 @@ export default function SodafomAdventurePage() {
   const [stickerFilter, setStickerFilter] = useState('All');
   const [earned, setEarned] = useState<string[]>(getEarnedStickers);
   const [selectedFriend, setSelectedFriend] = useState<(typeof FRIENDS)[number] | null>(null);
+  const [seasonalTheme] = useState(getSeasonalTheme);
 
   const activeWorld = WORLDS_V2[worldId];
   const filteredStickers = useMemo(() => stickerFilter === 'All' ? STICKERS : STICKERS.filter(s => s.category === stickerFilter), [stickerFilter]);
@@ -293,6 +295,20 @@ export default function SodafomAdventurePage() {
            className="h-full w-full object-cover object-center"
          />
          <div className="absolute inset-0 bg-gradient-to-b from-blue-700/10 via-transparent to-emerald-950/15" />
+         {seasonalTheme === 'christmas' && (
+           <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+             <span className="absolute left-[8%] top-[18%] text-5xl drop-shadow-lg">❄️</span>
+             <span className="absolute right-[8%] top-[22%] text-5xl drop-shadow-lg">🎄</span>
+             <span className="absolute bottom-[22%] left-[12%] text-5xl drop-shadow-lg">🎁</span>
+           </div>
+         )}
+         {seasonalTheme === 'easter' && (
+           <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+             <span className="absolute left-[8%] top-[18%] text-5xl drop-shadow-lg">🌷</span>
+             <span className="absolute right-[8%] top-[22%] text-5xl drop-shadow-lg">🐣</span>
+             <span className="absolute bottom-[22%] left-[12%] text-5xl drop-shadow-lg">🥚</span>
+           </div>
+         )}
       </div>
 
       {/* Top Corners: Settings, Music, Sound */}
@@ -328,6 +344,11 @@ export default function SodafomAdventurePage() {
                LEARN • PLAY • GROW
             </span>
          </div>
+         {seasonalTheme !== 'everyday' && (
+           <button type="button" onClick={() => navigate('/seasonal-themes')} className="mt-2 rounded-full border-2 border-white/70 bg-white/90 px-4 py-1 text-xs font-black uppercase text-blue-900 shadow-lg">
+             {seasonalTheme === 'christmas' ? '🎄 Christmas theme' : '🐣 Easter theme'}
+           </button>
+         )}
       </div>
 
       {/* Center Group: keep Archie fully visible. His greeting is spoken aloud;
@@ -365,6 +386,14 @@ export default function SodafomAdventurePage() {
            className="w-full bg-gradient-to-b from-lime-400 to-green-600 border-b-[10px] border-green-800 text-white font-black text-3xl md:text-4xl py-6 rounded-3xl shadow-2xl flex items-center justify-center gap-3 tracking-tighter"
          >
            EXPLORE MY WORLD! <Sparkles size={34} />
+         </motion.button>
+         <motion.button
+           whileHover={{ scale: 1.03 }}
+           whileTap={{ scale: 0.96 }}
+           onClick={() => navigate('/archie-menu')}
+           className="mt-3 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-4 border-white/80 bg-blue-700/90 px-5 text-lg font-black text-white shadow-2xl backdrop-blur-sm"
+         >
+           <Menu size={24} /> OPEN ARCHIE&apos;S MENU
          </motion.button>
       </div>
 

@@ -249,5 +249,141 @@ export const CURRICULUM_LESSONS: TopicLesson[] = [
         difficulty: 1
       }
     ]
+  },
+
+  // ── HISTORY ───────────────────────────────────────────────────────────────
+  {
+    id: 'history-stonehenge',
+    subject: 'History',
+    topic: 'Stone Age Britain',
+    ageGroup: '8-10',
+    title: 'Stonehenge and Prehistoric Britain',
+    explanation: 'Stonehenge is a prehistoric monument in Wiltshire. Its stones were raised in stages thousands of years ago, before written records in Britain.',
+    simplerExplanation: 'People long ago moved huge stones and arranged them in a circle. Historians use evidence to work out how and why.',
+    examples: ['Archaeologists study objects and places from the past.', 'Prehistory means the time before written records.'],
+    questions: [
+      {
+        id: 'hist-1',
+        question: 'What does prehistory mean?',
+        options: ['Before written records', 'After the Romans', 'A made-up story', 'Last year'],
+        answer: 'Before written records',
+        hint: 'Think about a time before people wrote events down.',
+        explanation: 'Prehistory is the period before written records were made.',
+        simplerExplanation: 'It means a very long time ago, before history was written down.',
+        difficulty: 1
+      },
+      {
+        id: 'hist-2',
+        question: 'Who studies objects and places to learn about people from the past?',
+        options: ['Archaeologists', 'Astronauts', 'Dentists', 'Meteorologists'],
+        answer: 'Archaeologists',
+        hint: 'They may carefully excavate the ground.',
+        explanation: 'Archaeologists use physical evidence to investigate the past.',
+        simplerExplanation: 'Archaeologists are history detectives who study old objects and places.',
+        difficulty: 1
+      }
+    ]
+  },
+
+  // ── PHYSICAL EDUCATION ────────────────────────────────────────────────────
+  {
+    id: 'pe-heart-fitness',
+    subject: 'PE',
+    topic: 'healthy movement',
+    ageGroup: '8-10',
+    title: 'Movement, Warm-ups and Fitness',
+    explanation: 'A warm-up gradually raises your heart rate and prepares muscles and joints for activity. A cool-down helps the body return towards its resting state.',
+    simplerExplanation: 'Start gently before exercise, move safely, drink water and slow down at the end.',
+    examples: ['Warm-up: brisk walking and gentle movement.', 'Cool-down: slower movement and calm breathing.'],
+    questions: [
+      {
+        id: 'pe-1',
+        question: 'Why should we warm up before energetic exercise?',
+        options: ['To prepare the body', 'To make shoes heavier', 'To avoid drinking water', 'To finish immediately'],
+        answer: 'To prepare the body',
+        hint: 'Think about your muscles, joints and heart rate.',
+        explanation: 'A gradual warm-up prepares the body for more energetic movement.',
+        simplerExplanation: 'Warming up gets your body ready to move safely.',
+        difficulty: 1
+      },
+      {
+        id: 'pe-2',
+        question: 'Which is a sensible cool-down?',
+        options: ['Slower movement and calm breathing', 'Stopping suddenly after a sprint', 'Holding your breath', 'Skipping water all day'],
+        answer: 'Slower movement and calm breathing',
+        hint: 'A cool-down should be gentle.',
+        explanation: 'Gentle movement and controlled breathing help the body recover gradually.',
+        simplerExplanation: 'Slow down bit by bit and breathe calmly.',
+        difficulty: 1
+      }
+    ]
+  },
+
+  // ── FRENCH ────────────────────────────────────────────────────────────────
+  {
+    id: 'french-greetings',
+    subject: 'French',
+    topic: 'greetings',
+    ageGroup: '8-10',
+    title: 'Bonjour! French Greetings',
+    explanation: 'In French, bonjour means hello or good day, au revoir means goodbye, and merci means thank you.',
+    simplerExplanation: 'Bonjour is hello. Merci is thank you. Au revoir is goodbye.',
+    examples: ['Bonjour, Archie!', 'Merci beaucoup.', 'Au revoir!'],
+    questions: [
+      {
+        id: 'fr-1',
+        question: 'What does “bonjour” mean?',
+        options: ['Hello', 'Goodbye', 'Please', 'Night'],
+        answer: 'Hello',
+        hint: 'You can say it when you meet someone.',
+        explanation: 'Bonjour is a common French greeting meaning hello or good day.',
+        simplerExplanation: 'Bonjour means hello.',
+        difficulty: 1
+      },
+      {
+        id: 'fr-2',
+        question: 'Which French word means “thank you”?',
+        options: ['Merci', 'Bonjour', 'Rouge', 'Chat'],
+        answer: 'Merci',
+        hint: 'It begins with M.',
+        explanation: 'Merci is the French word for thank you.',
+        simplerExplanation: 'Say “merci” when somebody helps you.',
+        difficulty: 1
+      }
+    ]
+  },
+
+  // ── GERMAN ────────────────────────────────────────────────────────────────
+  {
+    id: 'german-greetings',
+    subject: 'German',
+    topic: 'greetings',
+    ageGroup: '8-10',
+    title: 'Hallo! German Greetings',
+    explanation: 'In German, hallo means hello, danke means thank you, and auf Wiedersehen means goodbye.',
+    simplerExplanation: 'Hallo is hello. Danke is thank you. Auf Wiedersehen is goodbye.',
+    examples: ['Hallo, Archie!', 'Danke schön.', 'Auf Wiedersehen!'],
+    questions: [
+      {
+        id: 'de-1',
+        question: 'What does “hallo” mean?',
+        options: ['Hello', 'Goodbye', 'Please', 'Morning'],
+        answer: 'Hello',
+        hint: 'It looks a little like the English word.',
+        explanation: 'Hallo is a common German greeting meaning hello.',
+        simplerExplanation: 'Hallo means hello.',
+        difficulty: 1
+      },
+      {
+        id: 'de-2',
+        question: 'Which German word means “thank you”?',
+        options: ['Danke', 'Hallo', 'Blau', 'Hund'],
+        answer: 'Danke',
+        hint: 'It begins with D.',
+        explanation: 'Danke is the German word for thank you.',
+        simplerExplanation: 'Say “danke” when somebody helps you.',
+        difficulty: 1
+      }
+    ]
   }
 ];

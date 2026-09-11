@@ -26,6 +26,15 @@ import CartPage from './pages/cart';
 import ForgotPasswordPage from './pages/hub/forgot-password';
 import ResetPasswordPage from './pages/hub/reset-password';
 import ParentDashboardPage from './pages/parent-dashboard';
+import FeatureHubPage from './pages/FeatureHubPage';
+import LessonsPage from './pages/LessonsPage';
+import HomeworkHelperPage from './pages/HomeworkHelperPage';
+import PocketMoneyPage from './pages/PocketMoneyPage';
+import ParentChoresPage from './pages/ParentChoresPage';
+import BirthdayPage from './pages/BirthdayPage';
+import ArchieOutfitPage from './pages/ArchieOutfitPage';
+import SeasonalThemesPage from './pages/SeasonalThemesPage';
+import HolidayTravelPage from './pages/HolidayTravelPage';
 import DailyChallengePage from './pages/daily-challenge';
 import CheckoutSuccess from './pages/checkout/success';
 import CheckoutCancel from './pages/checkout/cancel';
@@ -201,6 +210,33 @@ const NotFoundPage = ProdNotFoundPage;
 export const routes: RouteObject[] = [{
   path: '/',
   element: <SodafomAdventurePage />
+}, {
+  path: '/archie-menu',
+  element: <FeatureHubPage />
+}, {
+  path: '/lessons',
+  element: <LessonsPage />
+}, {
+  path: '/homework-helper',
+  element: <HomeworkHelperPage />
+}, {
+  path: '/pocket-money',
+  element: <PocketMoneyPage />
+}, {
+  path: '/pocket-money/setup',
+  element: <ParentChoresPage />
+}, {
+  path: '/birthday',
+  element: <BirthdayPage />
+}, {
+  path: '/archie-outfit',
+  element: <ArchieOutfitPage />
+}, {
+  path: '/seasonal-themes',
+  element: <SeasonalThemesPage />
+}, {
+  path: '/holiday-travel',
+  element: <HolidayTravelPage />
 }, {
   path: '/about',
   element: <AboutPage />
