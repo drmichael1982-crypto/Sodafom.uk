@@ -39,6 +39,9 @@ import daily_challenge_get_26 from "./api/daily-challenge/GET";
 import daily_challenge_claim_post_27 from "./api/daily-challenge/claim/POST";
 import daily_challenge_history_get_28 from "./api/daily-challenge/history/GET";
 import health_get_29 from "./api/health/GET";
+import homework_scan_get from "./api/homework-scan/GET";
+import homework_scan_post from "./api/homework-scan/POST";
+import homework_scan_delete from "./api/homework-scan/DELETE";
 import leaderboard_get_30 from "./api/leaderboard/GET";
 import leaderboard_opt_in_post_31 from "./api/leaderboard/opt-in/POST";
 import newsletter_migrate_post_32 from "./api/newsletter/migrate/POST";
@@ -249,7 +252,7 @@ app.use((req, res, next) => {
 // the sitemap origin in robots.txt.
 app.set("trust proxy", true);
 
-app.use(express.json());
+app.use(express.json({ limit: "8mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 // <api-registrations>
@@ -294,6 +297,9 @@ app.get("/api/daily-challenge", daily_challenge_get_26);
 app.post("/api/daily-challenge/claim", daily_challenge_claim_post_27);
 app.get("/api/daily-challenge/history", daily_challenge_history_get_28);
 app.get("/api/health", health_get_29);
+app.get("/api/homework-scan", homework_scan_get);
+app.post("/api/homework-scan", homework_scan_post);
+app.delete("/api/homework-scan", homework_scan_delete);
 app.get("/api/leaderboard", leaderboard_get_30);
 app.post("/api/leaderboard/opt-in", leaderboard_opt_in_post_31);
 app.post("/api/newsletter/migrate", newsletter_migrate_post_32);
