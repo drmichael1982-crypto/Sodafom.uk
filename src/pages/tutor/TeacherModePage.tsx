@@ -1,36 +1,49 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
-import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Volume2, Mic, MicOff, Lightbulb, RotateCcw, HelpCircle, Pause, Play, Settings, Sparkles, Award, Clock3 } from 'lucide-react';
+import { ArrowLeft, Volume2, Mic, MicOff, Lightbulb, RotateCcw, Pause, Play, Settings, Award, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { ArchieCharacter } from '@/components/ArchieCharacter';
 import { Blackboard } from '@/components/Blackboard';
 import { ChildProfileManager } from '@/components/ChildProfileManager';
-import { loadTutorMemory, ChildTutorProfile, recordQuestionAnswer, saveTutorMemory } from '@/lib/tutor/memory';
+import { loadTutorMemory, ChildTutorProfile, recordQuestionAnswer } from '@/lib/tutor/memory';
 import { CURRICULUM_LESSONS, TopicLesson, LessonQuestion } from '@/lib/tutor/curriculum';
 import { parseTutorVoiceCommand } from '@/lib/tutor/voice-commands';
 import { buildMathsPracticeLesson } from '@/lib/tutor/maths-practice';
 import { ttsSpeak, stopTts } from '@/lib/voice-context';
+import {
+  buildDailyCurriculumLesson,
+  CURRICULUM_SUBJECTS,
+  type CurriculumAgeGroup,
+  type CurriculumSubject,
+} from '@/lib/tutor/curriculum-year-plan';
 
 export default function TeacherModePage() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ChildTutorProfile>(() => loadTutorMemory());
   const [showProfileSetup, setShowProfileSetup] = useState<boolean>(!profile.childName);
 
-  const [selectedSubject, setSelectedSubject] = useState<string>(() => localStorage.getItem('sodafom_lesson_subject') || 'Any Subject');
-  const [lessonMinutes, setLessonMinutes] = useState<15 | 20 | 30 | 60>(() => {
-    const stored = Number(localStorage.getItem('sodafom_lesson_minutes') || '30');
-    return ([15, 20, 30, 60] as const).includes(stored as 15 | 20 | 30 | 60) ? stored as 15 | 20 | 30 | 60 : 30;
-  });
-  const ageGroup = profile.ageGroup ?? '8-10';
+  const [selectedSubject, setSelectedSubject] = useState<string>('Any Subject');
+  const [lessonMinutes, setLessonMinutes] = useState<15 | 20 | 30 | 60>(30);
+  const [requestedAgeGroup, setRequestedAgeGroup] = useState<CurriculumAgeGroup | null>(null);
+  const [lessonDay, setLessonDay] = useState(1);
+  const ageGroup: CurriculumAgeGroup = requestedAgeGroup ?? profile.ageGroup ?? '8-10';
+  const normalisedSubject = selectedSubject === 'Writing' ? 'English' : selectedSubject === 'Technology' ? 'Computing' : selectedSubject;
+  const curriculumSubject = CURRICULUM_SUBJECTS.includes(normalisedSubject as CurriculumSubject)
+    ? normalisedSubject as CurriculumSubject
+    : null;
   const lessonSubject = ['Reading', 'Writing', 'Spelling'].includes(selectedSubject) ? 'English' : selectedSubject;
   const ageLessons = CURRICULUM_LESSONS.filter((lesson) => lesson.ageGroup === ageGroup);
   const lessonPool = lessonSubject === 'Any Subject'
     ? ageLessons
     : ageLessons.filter((lesson) => lesson.subject.toLowerCase() === lessonSubject.toLowerCase());
-  const lessons = lessonSubject === 'Maths'
-    ? [...lessonPool, buildMathsPracticeLesson(ageGroup)]
-    : (lessonPool.length ? lessonPool : ageLessons.length ? ageLessons : CURRICULUM_LESSONS);
+  const dailyLesson = curriculumSubject
+    ? buildDailyCurriculumLesson({ subject: curriculumSubject, ageGroup, day: lessonDay, durationMinutes: lessonMinutes })
+    : null;
+  const lessons = dailyLesson
+    ? [dailyLesson]
+    : lessonSubject === 'Maths'
+      ? [...lessonPool, buildMathsPracticeLesson(ageGroup)]
+      : (lessonPool.length ? lessonPool : ageLessons.length ? ageLessons : CURRICULUM_LESSONS);
   const [currentLessonIndex, setCurrentLessonIndex] = useState<number>(0);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(() => lessonMinutes * 60);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
@@ -46,6 +59,28 @@ export default function TeacherModePage() {
   const [voiceStatus, setVoiceStatus] = useState('Microphone ready');
   const [answerSource, setAnswerSource] = useState<'Local AI' | 'OpenAI'>('Local AI');
   const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    const storedSubject = localStorage.getItem('sodafom_lesson_subject');
+    if (storedSubject) setSelectedSubject(storedSubject);
+
+    const storedMinutes = Number(localStorage.getItem('sodafom_lesson_minutes') || '30');
+    if (([15, 20, 30, 60] as const).includes(storedMinutes as 15 | 20 | 30 | 60)) {
+      const validMinutes = storedMinutes as 15 | 20 | 30 | 60;
+      setLessonMinutes(validMinutes);
+      setSecondsRemaining(validMinutes * 60);
+    }
+
+    const storedAgeGroup = localStorage.getItem('sodafom_lesson_age');
+    if (storedAgeGroup === '5-7' || storedAgeGroup === '8-10' || storedAgeGroup === '11-13') {
+      setRequestedAgeGroup(storedAgeGroup);
+    }
+
+    const storedLessonDay = Number(localStorage.getItem('sodafom_lesson_day') || '1');
+    if (Number.isInteger(storedLessonDay)) {
+      setLessonDay(Math.min(365, Math.max(1, storedLessonDay)));
+    }
+  }, []);
 
   const currentLesson: TopicLesson = lessons[currentLessonIndex] ?? lessons[0] ?? CURRICULUM_LESSONS[0];
   const currentQuestion: LessonQuestion | undefined = currentLesson.questions[currentQuestionIndex];
@@ -144,14 +179,23 @@ export default function TeacherModePage() {
         return;
       }
 
-      const subjectMatch = phrase.match(/\b(maths|math|english|reading|writing|spelling|science|geography|technology|religious education|r\.?e\.?)\b/i);
+      const subjectMatch = phrase.match(/\b(maths|math|english|reading|writing|spelling|science|history|geography|computing|technology|design and technology|art and design|music|physical education|p\.?e\.?|religious education|r\.?e\.?|p\.?s\.?h\.?e\.?|french|german)\b/i);
       if (subjectMatch && /\b(?:switch|change|learn|teach|do|start)\b/i.test(phrase)) {
         const spoken = subjectMatch[1].toLowerCase();
-        const nextSubject = spoken === 'math'
-          ? 'Maths'
-          : (spoken === 'religious education' || /^r\.?e\.?$/.test(spoken))
-            ? 'RE'
-            : spoken.charAt(0).toUpperCase() + spoken.slice(1);
+        const subjectAliases: Record<string, string> = {
+          math: 'Maths',
+          maths: 'Maths',
+          technology: 'Computing',
+          'design and technology': 'Design & Technology',
+          'art and design': 'Art & Design',
+          'physical education': 'PE',
+          'religious education': 'RE',
+        };
+        const nextSubject = subjectAliases[spoken]
+          ?? (/^p\.?e\.?$/.test(spoken) ? 'PE' : null)
+          ?? (/^r\.?e\.?$/.test(spoken) ? 'RE' : null)
+          ?? (/^p\.?s\.?h\.?e\.?$/.test(spoken) ? 'PSHE' : null)
+          ?? spoken.charAt(0).toUpperCase() + spoken.slice(1);
         setSelectedSubject(nextSubject);
         localStorage.setItem('sodafom_lesson_subject', nextSubject);
         setCurrentLessonIndex(0);
@@ -229,7 +273,7 @@ export default function TeacherModePage() {
     setLessonComplete(true);
     setIsPaused(true);
     speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! Your ${lessonMinutes} minute lesson is complete.`);
-  }, [secondsRemaining]);
+  }, [lessonMinutes, profile.childName, secondsRemaining, speakText]);
 
   const minutes = Math.floor(secondsRemaining / 60);
   const seconds = secondsRemaining % 60;
@@ -299,7 +343,7 @@ export default function TeacherModePage() {
                     Tutor: {profile.preferredTutor === 'soda' ? 'Soda' : profile.preferredTutor === 'bella' ? 'Bella' : profile.preferredTutor === 'rocky' ? 'Rocky' : 'Archie'}
                   </h2>
                   <p className="text-xs font-bold text-amber-600">
-                    {currentLesson.subject} • Level {profile.ageGroup ?? '8-10'}
+                    {currentLesson.subject} • Ages {ageGroup.replace('-', '–')}
                   </p>
                   <p className="mt-1 flex items-center gap-1 text-xs font-black text-purple-700">
                     <Clock3 size={14} /> {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')} · {selectedSubject}
