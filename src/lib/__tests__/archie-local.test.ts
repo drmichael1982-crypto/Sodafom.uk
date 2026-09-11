@@ -89,6 +89,18 @@ describe('Archie Local Maths & Name Memory', () => {
       expect(res?.text).toContain('Michael Davis');
     });
 
+    it('handles a common voice transcription without using paid AI', () => {
+      const res = tryLocalFounderKnowledge('Who set up soda from?');
+      expect(res?.text).toContain('Michael Davis');
+    });
+
+    it('knows the founder career history', () => {
+      const res = tryLocalFounderKnowledge('What jobs did Michael Davis do?');
+      expect(res?.text).toContain('electrician');
+      expect(res?.text).toContain('train driver');
+      expect(res?.text).toContain('Ipswich railway station');
+    });
+
     it('knows the founder birth details supplied by Michael', () => {
       const res = tryLocalFounderKnowledge('When and where was Michael Davis born?');
       expect(res?.text).toContain('11 November 1982');

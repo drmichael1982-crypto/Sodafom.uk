@@ -120,8 +120,16 @@ const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> 
     { label: 'Open the Back-to-School Shop', left: 23, top: 18, width: 60, height: 67, route: '/shop/back-to-school' },
   ],
   settings: [
-    { label: 'Return home', left: 0, top: 0, width: 9, height: 12, route: '/' },
-    { label: 'Open account and accessibility settings', left: 8, top: 18, width: 84, height: 72, route: '/hub/profile' },
+    { label: 'Return home', left: 2, top: 82, width: 22, height: 15, route: '/' },
+    { label: 'Open Audio and Voice settings', left: 31, top: 25, width: 15, height: 20, route: '/hub/profile?section=audio' },
+    { label: 'Open Child Profile settings', left: 46, top: 24, width: 15, height: 20, route: '/hub/profile?section=child' },
+    { label: 'Open Display settings', left: 61, top: 24, width: 15, height: 20, route: '/hub/profile?section=display' },
+    { label: 'Open Language settings', left: 28, top: 43, width: 16, height: 20, route: '/hub/profile?section=language' },
+    { label: 'Open Sodafom settings', left: 44, top: 42, width: 18, height: 22, route: '/hub/profile' },
+    { label: 'Open Privacy and Safety settings', left: 64, top: 43, width: 16, height: 20, route: '/parent-area' },
+    { label: 'Open Learning Preferences', left: 34, top: 61, width: 16, height: 20, route: '/tutor' },
+    { label: 'Open Account settings', left: 49, top: 63, width: 16, height: 21, route: '/hub/profile?section=account' },
+    { label: 'Open protected Admin Access', left: 63, top: 61, width: 17, height: 21, route: '/admin-panel' },
   ],
   stories: [
     { label: 'Return home', left: 0, top: 0, width: 9, height: 12, route: '/' },
@@ -144,15 +152,14 @@ export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtw
         <div className="relative h-full w-full">
           <img src={artwork.src} alt={artwork.alt} className="block h-full w-full object-fill" draggable={false} />
           {variant === 'home' && (
-            <button
-              type="button"
-              onClick={() => navigate('/birthday-party')}
-              aria-label="Open Birthday and Parties"
-              className="absolute right-[2%] top-[37%] flex aspect-square w-[18%] min-w-16 flex-col items-center justify-center rounded-[28%] border-4 border-white bg-gradient-to-b from-pink-300 via-pink-500 to-fuchsia-700 px-1 text-center text-[10px] font-black leading-tight text-white shadow-2xl active:scale-95 sm:text-base"
-            >
-              <span aria-hidden="true" className="text-2xl sm:text-4xl">🎂</span>
-              <span>Birthday &amp; Parties</span>
-            </button>
+            <>
+              <button type="button" onClick={() => navigate('/tutor?subject=History&direct=1')} aria-label="Open Virtual Museum" className="absolute left-[2%] top-[37%] flex aspect-square w-[18%] min-w-16 flex-col items-center justify-center rounded-[28%] border-4 border-white bg-gradient-to-b from-cyan-300 via-blue-500 to-indigo-700 px-1 text-center text-[10px] font-black leading-tight text-white shadow-2xl active:scale-95 sm:text-base">
+                <span aria-hidden="true" className="text-2xl sm:text-4xl">🏛️</span><span>Virtual Museum</span>
+              </button>
+              <button type="button" onClick={() => navigate('/birthday-party')} aria-label="Open Birthday and Parties" className="absolute right-[2%] top-[37%] flex aspect-square w-[18%] min-w-16 flex-col items-center justify-center rounded-[28%] border-4 border-white bg-gradient-to-b from-pink-300 via-pink-500 to-fuchsia-700 px-1 text-center text-[10px] font-black leading-tight text-white shadow-2xl active:scale-95 sm:text-base">
+                <span aria-hidden="true" className="text-2xl sm:text-4xl">🎂</span><span>Birthday &amp; Parties</span>
+              </button>
+            </>
           )}
           {hotspots.map((hotspot) => (
             <button

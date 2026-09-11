@@ -116,7 +116,7 @@ export default function SubscribePage() {
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Link to="/games" className="rounded-xl bg-primary px-5 py-3 font-black text-primary-foreground">Test the games</Link>
-            <Link to="/hub/signin" className="rounded-xl border-2 border-border px-5 py-3 font-black text-foreground">Test sign in</Link>
+            <Link to="/hub/login" className="rounded-xl border-2 border-border px-5 py-3 font-black text-foreground">Test sign in</Link>
           </div>
         </section>
       </main>

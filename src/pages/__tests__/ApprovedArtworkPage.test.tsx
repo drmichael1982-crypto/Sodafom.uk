@@ -45,4 +45,18 @@ describe('Approved artwork navigation', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start a Maths lesson' }));
     expect(screen.getByLabelText('current route')).toHaveTextContent('/tutor?subject=Maths&direct=1');
   });
+
+  it('connects the Settings admin cog to protected Admin Access', () => {
+    render(
+      <HelmetProvider>
+        <MemoryRouter initialEntries={['/sodafom-settings']}>
+          <ApprovedArtworkPage variant="settings" />
+          <LocationProbe />
+        </MemoryRouter>
+      </HelmetProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open protected Admin Access' }));
+    expect(screen.getByLabelText('current route')).toHaveTextContent('/admin-panel');
+  });
 });
