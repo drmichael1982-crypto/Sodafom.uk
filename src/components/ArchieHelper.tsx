@@ -528,6 +528,7 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
                     className="w-full px-3 py-2 rounded-xl border border-border focus:border-primary outline-none text-xs bg-muted/30"
                   />
                   <button
+                    type="submit"
                     disabled={!input.trim() || isLoading}
                     className="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center disabled:opacity-40 transition-opacity"
                   >

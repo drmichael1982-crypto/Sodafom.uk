@@ -100,7 +100,7 @@ function ChoresScreen({ parentMode }: { parentMode: boolean }) {
             <input value={title} onChange={(event) => setTitle(event.target.value)} maxLength={120} placeholder="e.g. Feed the dogs" className="mt-1 w-full rounded-xl border-2 border-slate-200 p-3 font-semibold" />
             <label className="mt-3 block text-sm font-black">Pocket-money value (£)</label>
             <input type="number" min="0" max="1000" step="0.01" value={value} onChange={(event) => setValue(event.target.value)} className="mt-1 w-full rounded-xl border-2 border-slate-200 p-3 font-semibold" />
-            <button disabled={busy || title.trim().length < 2} className="mt-4 w-full rounded-xl bg-purple-600 p-3 font-black text-white disabled:opacity-50">Add chore</button>
+            <button type="submit" disabled={busy || title.trim().length < 2} className="mt-4 w-full rounded-xl bg-purple-600 p-3 font-black text-white disabled:opacity-50">Add chore</button>
           </form>
         )}
 

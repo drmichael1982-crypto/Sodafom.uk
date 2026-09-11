@@ -7,6 +7,7 @@ describe('SSR route redirects', () => {
     ['/pocket-money', '/chores'],
     ['/pocket-money/setup', '/parent-dashboard/chores'],
     ['/admin/sodafom-bot', '/admin-panel?tab=bot'],
+    ['/sodafom-bot', '/ask-archie'],
     ['/classic-home', '/'],
     ['/games/game-pattern-maker', '/games/pattern-maker'],
     ['/reading', '/subjects/reading'],

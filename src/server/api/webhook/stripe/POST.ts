@@ -79,7 +79,7 @@ export default async function handler(req: Request, res: Response): Promise<void
   const webhookSecret = getSecret('STRIPE_WEBHOOK_SECRET');
 
   if (!webhookSecret || typeof webhookSecret !== 'string') {
-    console.error('[stripe-webhook] STRIPE_WEBHOOK_SECRET is not configured');
+    console.warn('[stripe-webhook] STRIPE_WEBHOOK_SECRET is not configured');
     res.status(503).json({ error: 'Webhook verification is not configured' });
     return;
   }

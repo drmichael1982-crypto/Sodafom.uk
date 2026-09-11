@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import {
   Calculator, BookOpen, Pencil, FlaskConical, Sparkles, Star, Cloud, Sun,
-  ArrowLeft, Home, Trophy, Settings, BarChart2, ShoppingCart, Globe, Grid, Music, Heart,
-  Tent, Trees, Rocket, Ghost, GraduationCap, Map as MapIcon, ChevronRight, Search, Zap
+  ArrowLeft, Home, Trophy, Settings, BarChart2, Globe, Grid, Music, Heart,
+  Tent, Trees, Rocket, Map as MapIcon, ChevronRight, Search, Zap
 } from 'lucide-react';
 import { ArchieCharacter } from '../components/ArchieCharacter';
 import { CartoonRobot } from '../components/CartoonRobot';
@@ -120,7 +120,7 @@ const FUTURE_WORLDS = [
 
 // ── Components ───────────────────────────────────────────────────────────────
 
-const TopBar = ({ title, onBack, stars = 1250 }: { title: string; onBack?: () => void, stars?: number }) => (
+const TopBar = ({ title, onBack, stars = 0 }: { title: string; onBack?: () => void, stars?: number }) => (
   <div className="flex justify-between items-center mb-6 md:mb-10">
     <div className="flex items-center gap-3">
       {onBack && (
@@ -144,19 +144,19 @@ const TopBar = ({ title, onBack, stars = 1250 }: { title: string; onBack?: () =>
   </div>
 );
 
-const BottomNav = ({ activeWorld, onHome }: { activeWorld: WorldId, onHome: () => void }) => (
+const BottomNav = ({ activeWorld, onHome, onNavigate }: { activeWorld: WorldId, onHome: () => void, onNavigate: (route: string) => void }) => (
   <div className="fixed bottom-0 left-0 w-full p-4 z-50 flex justify-center pointer-events-none">
     <div className="bg-white/90 backdrop-blur-xl border-4 border-white rounded-[32px] md:rounded-[40px] px-6 py-3 md:px-12 md:py-4 flex gap-6 md:gap-16 shadow-2xl pointer-events-auto">
       <NavButton icon={Home} label="HOME" active={activeWorld === 'map'} onClick={onHome} />
-      <NavButton icon={BarChart2} label="PROGRESS" />
-      <NavButton icon={Star} label="BADGES" />
-      <NavButton icon={Settings} label="SETTINGS" />
+      <NavButton icon={BarChart2} label="PROGRESS" onClick={() => onNavigate('/hub/progress')} />
+      <NavButton icon={Star} label="BADGES" onClick={() => onNavigate('/rewards')} />
+      <NavButton icon={Settings} label="SETTINGS" onClick={() => onNavigate('/hub/profile')} />
     </div>
   </div>
 );
 
 const NavButton = ({ icon: Icon, label, active = false, onClick }: { icon: any; label: string; active?: boolean; onClick?: () => void }) => (
-  <button onClick={onClick} className={`flex flex-col items-center gap-0.5 md:gap-1 group`}>
+  <button type="button" onClick={onClick} className={`flex flex-col items-center gap-0.5 md:gap-1 group`}>
     <div className={`p-1.5 md:p-2 rounded-xl md:rounded-2xl transition-all ${active ? 'bg-sky-500 text-white shadow-lg' : 'text-sky-400 hover:bg-sky-50'}`}>
       <Icon size={20} md:size={24} strokeWidth={active ? 3 : 2} />
     </div>
@@ -169,14 +169,11 @@ const NavButton = ({ icon: Icon, label, active = false, onClick }: { icon: any; 
 export default function CartoonModePage() {
   const navigate = useNavigate();
   const [currentWorld, setCurrentWorld] = useState<WorldId>('map');
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const handleEnterWorld = (id: WorldId) => {
-    setIsTransitioning(true);
     setTimeout(() => {
       setCurrentWorld(id);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      setIsTransitioning(false);
     }, 400);
   };
 
@@ -283,7 +280,7 @@ export default function CartoonModePage() {
                 ))}
 
                 {/* Expandable/Future World Cards */}
-                {FUTURE_WORLDS.map((world, i) => (
+                {FUTURE_WORLDS.map((world) => (
                   <div key={world.id} className="opacity-50 grayscale cursor-not-allowed">
                     <div className="bg-slate-700/20 backdrop-blur-md p-1.5 rounded-[40px] border-b-[10px] border-black/10">
                       <div className="bg-white/40 rounded-[34px] p-6 md:p-8 flex flex-col items-center gap-4 border-4 border-dashed border-white/60">
@@ -303,11 +300,11 @@ export default function CartoonModePage() {
               {/* Extra Map UI */}
               <div className="mt-16 flex flex-wrap justify-center gap-4">
                  {[
-                   { icon: Heart, label: 'PARENT AREA', color: 'bg-blue-600' },
-                   { icon: Star, label: 'MY REWARDS', color: 'bg-amber-500' },
-                   { icon: CartoonRobot, label: 'ASK ARCHIE', color: 'bg-sky-500', isRobot: true },
-                 ].map((item, i) => (
-                   <button key={item.label} className={`${item.color} px-8 py-4 rounded-3xl flex items-center gap-3 text-white font-black text-sm shadow-xl hover:scale-105 active:scale-95 transition-transform border-b-6 border-black/20 uppercase tracking-tight`}>
+                   { icon: Heart, label: 'PARENT AREA', color: 'bg-blue-600', route: '/parent-dashboard' },
+                   { icon: Star, label: 'MY REWARDS', color: 'bg-amber-500', route: '/rewards' },
+                   { icon: CartoonRobot, label: 'ASK ARCHIE', color: 'bg-sky-500', route: '/ask-archie', isRobot: true },
+                 ].map((item) => (
+                   <button type="button" key={item.label} onClick={() => navigate(item.route)} className={`${item.color} px-8 py-4 rounded-3xl flex items-center gap-3 text-white font-black text-sm shadow-xl hover:scale-105 active:scale-95 transition-transform border-b-6 border-black/20 uppercase tracking-tight`}>
                      {item.isRobot ? <item.icon size={32} /> : <item.icon size={22} strokeWidth={3} />}
                      {item.label}
                    </button>
@@ -394,7 +391,7 @@ export default function CartoonModePage() {
 
       </main>
 
-      <BottomNav activeWorld={currentWorld} onHome={handleBackToMap} />
+      <BottomNav activeWorld={currentWorld} onHome={handleBackToMap} onNavigate={navigate} />
 
       {/* ── Decorative Illustrated Ground ── */}
       <div className="fixed bottom-0 left-0 w-full h-[18vh] pointer-events-none z-0">

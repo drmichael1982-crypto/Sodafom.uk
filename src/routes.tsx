@@ -70,7 +70,6 @@ import AnimalHabitatsGame from './pages/games/animal-habitats';
 import SentenceBuilderGame from './pages/games/sentence-builder';
 import CertificatesPage from './pages/certificates';
 import MockExamsPage from './pages/mock-exams/index';
-import SodafomBotPage from './pages/chatbot/SodafomBotPage';
 import AdminPanelPage from './pages/admin-panel';
 import TeacherHubDashboard from './pages/teacher-hub/index';
 import TeacherHubLoginPage from './pages/teacher-hub/login';
@@ -860,7 +859,7 @@ export const routes: RouteObject[] = [{
   element: <MockExamsPage />
 }, {
   path: '/sodafom-bot',
-  element: <SodafomBotPage />
+  loader: () => redirect('/ask-archie')
 }, {
   path: '/certificates',
   element: <CertificatesPage />,

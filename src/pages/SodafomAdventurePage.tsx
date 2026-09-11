@@ -321,7 +321,13 @@ export default function SodafomAdventurePage() {
          </div>
       </div>
       <div className="absolute top-6 right-6 z-20 flex flex-col gap-4">
-         <button className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-2 border-white/40 shadow-lg active:scale-90 text-white">
+         <button
+           type="button"
+           disabled
+           aria-label="Background music coming soon"
+           title="Background music coming soon"
+           className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border-2 border-white/40 shadow-lg text-white opacity-60 cursor-not-allowed"
+         >
             <Music size={28} />
          </button>
          <button
