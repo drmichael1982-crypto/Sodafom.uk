@@ -919,6 +919,12 @@ export const routes: RouteObject[] = [{
   path: '/chat',
   element: <ChatbotPage />
 }, {
+  // A child must never land on a technical 404 from an old saved "Play Next"
+  // link. Static game routes above win first; unknown legacy game links return
+  // safely to the Game Islands chooser.
+  path: '/games/:legacyGame',
+  element: <Navigate to="/games" replace />,
+}, {
   path: '*',
   // Broken/legacy links must never strand a child on a 404 screen.
   // Show the child-friendly recovery page without causing an SSR redirect error.
