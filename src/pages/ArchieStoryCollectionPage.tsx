@@ -1,10 +1,3 @@
-$ vite build && vite build --ssr src/server/entry.ts
-Generated an empty chunk: "react-vendor".
-
-(!) Some chunks are larger than 500 kB after minification. Consider:
-- Using dynamic import() to code-split the application
-- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
-- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
 import { useEffect, useState } from 'react';
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, Eye, Volume2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
