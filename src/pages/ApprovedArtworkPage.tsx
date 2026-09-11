@@ -63,21 +63,28 @@ const ARTWORK: Record<ApprovedArtworkVariant, { src: string; title: string; alt:
   },
 };
 
+const HOME_COMPACT_ITEMS = [
+  ['📚', "Archie's Stories", '/stories'], ['🎓', "Archie's Lessons", '/lessons'], ['🤖', 'Ask Archie', '/ask-archie'], ['🎮', 'Game Islands', '/game-islands'], ['📷', 'Homework Helper', '/homework-helper'],
+  ['🏛️', 'Museum Explorer', '/museum'], ['🎬', 'Archie Theatre', '/archie-theatre'], ['👪', "Parents' Evening", '/parent-area'], ['👩‍🏫', 'Teacher Classroom', '/teacher-hub'], ['🛍️', 'Sodafom Shop', '/sodafom-shop'],
+  ['⭐', "Archie's Sticker Book", '/rewards'], ['⚙️', 'Settings', '/sodafom-settings'], ['🏆', 'Progress', '/hub/progress'], ['🌟', 'Rewards', '/rewards'], ['👫', 'Friends', '/archie-friends'],
+] as const;
+
 const HOME_HOTSPOTS: Hotspot[] = [
-  { label: "Open Archie's Stories", left: 1, top: 45, width: 19, height: 15, route: '/stories' },
-  { label: "Open Archie's Lessons", left: 20, top: 45, width: 20, height: 15, route: '/lessons' },
-  { label: 'Ask Archie', left: 40, top: 45, width: 20, height: 15, route: '/ask-archie' },
-  { label: 'Open Game Islands', left: 60, top: 45, width: 20, height: 15, route: '/game-islands' },
-  { label: 'Open Homework Helper', left: 80, top: 45, width: 19, height: 15, route: '/homework-helper' },
-  { label: 'Open Archie Theatre', left: 0, top: 60, width: 17, height: 16, route: '/archie-theatre' },
-  { label: "Open Parents' Evening", left: 17, top: 60, width: 17, height: 16, route: '/parent-area' },
-  { label: 'Open Teacher Classroom', left: 34, top: 60, width: 16, height: 16, route: '/teacher-hub' },
-  { label: 'Open Sodafom Shop', left: 50, top: 60, width: 17, height: 16, route: '/sodafom-shop' },
-  { label: "Open Archie's Sticker Book", left: 67, top: 60, width: 17, height: 16, route: '/rewards' },
-  { label: 'Open Settings', left: 84, top: 60, width: 16, height: 16, route: '/sodafom-settings' },
-  { label: 'Open My Progress', left: 1, top: 77, width: 13, height: 10, route: '/hub/progress' },
-  { label: 'Open Rewards', left: 14, top: 77, width: 13, height: 10, route: '/rewards' },
-  { label: 'Meet Archie and Friends', left: 27, top: 77, width: 14, height: 10, route: '/archie-friends' },
+  { label: "Open Archie's Stories", left: 3, top: 45, width: 18, height: 14, route: '/stories' },
+  { label: "Open Archie's Lessons", left: 22, top: 45, width: 18, height: 14, route: '/lessons' },
+  { label: 'Ask Archie', left: 41, top: 45, width: 18, height: 14, route: '/ask-archie' },
+  { label: 'Open Game Islands', left: 60, top: 45, width: 18, height: 14, route: '/game-islands' },
+  { label: 'Open Homework Helper', left: 79, top: 45, width: 18, height: 14, route: '/homework-helper' },
+  { label: 'Open Museum Explorer', left: 3, top: 60, width: 18, height: 14, route: '/museum' },
+  { label: 'Open Archie Theatre', left: 22, top: 60, width: 18, height: 14, route: '/archie-theatre' },
+  { label: "Open Parents' Evening", left: 41, top: 60, width: 18, height: 14, route: '/parent-area' },
+  { label: 'Open Teacher Classroom', left: 60, top: 60, width: 18, height: 14, route: '/teacher-hub' },
+  { label: 'Open Sodafom Shop', left: 79, top: 60, width: 18, height: 14, route: '/sodafom-shop' },
+  { label: "Open Archie's Sticker Book", left: 3, top: 75, width: 18, height: 14, route: '/rewards' },
+  { label: 'Open Settings', left: 22, top: 75, width: 18, height: 14, route: '/sodafom-settings' },
+  { label: 'Open My Progress', left: 41, top: 75, width: 18, height: 14, route: '/hub/progress' },
+  { label: 'Open Rewards', left: 60, top: 75, width: 18, height: 14, route: '/rewards' },
+  { label: 'Meet Archie and Friends', left: 79, top: 75, width: 18, height: 14, route: '/archie-friends' },
 ];
 
 const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> = {
@@ -151,16 +158,9 @@ export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtw
       <div className="mx-auto h-full w-full max-w-[1536px] overflow-hidden bg-white shadow-2xl">
         <div className="relative h-full w-full">
           <img src={artwork.src} alt={artwork.alt} className="block h-full w-full object-fill" draggable={false} />
-          {variant === 'home' && (
-            <>
-              <button type="button" onClick={() => navigate('/tutor?subject=History&direct=1')} aria-label="Open Virtual Museum" className="absolute left-[2%] top-[37%] flex aspect-square w-[18%] min-w-16 flex-col items-center justify-center rounded-[28%] border-4 border-white bg-gradient-to-b from-cyan-300 via-blue-500 to-indigo-700 px-1 text-center text-[10px] font-black leading-tight text-white shadow-2xl active:scale-95 sm:text-base">
-                <span aria-hidden="true" className="text-2xl sm:text-4xl">🏛️</span><span>Virtual Museum</span>
-              </button>
-              <button type="button" onClick={() => navigate('/birthday-party')} aria-label="Open Birthday and Parties" className="absolute right-[2%] top-[37%] flex aspect-square w-[18%] min-w-16 flex-col items-center justify-center rounded-[28%] border-4 border-white bg-gradient-to-b from-pink-300 via-pink-500 to-fuchsia-700 px-1 text-center text-[10px] font-black leading-tight text-white shadow-2xl active:scale-95 sm:text-base">
-                <span aria-hidden="true" className="text-2xl sm:text-4xl">🎂</span><span>Birthday &amp; Parties</span>
-              </button>
-            </>
-          )}
+          {variant === 'home' && <div className="absolute inset-x-[1%] top-[43%] grid grid-cols-5 gap-1 rounded-[2rem] bg-white/88 p-2 shadow-2xl backdrop-blur-sm sm:gap-3 sm:p-4">
+            {HOME_COMPACT_ITEMS.map(([icon, label, route]) => <button key={label} type="button" onClick={() => navigate(route)} className="flex aspect-square min-h-0 flex-col items-center justify-center rounded-[1.35rem] border-2 border-white bg-gradient-to-b from-sky-400 via-blue-600 to-indigo-800 p-1 text-center text-[8px] font-black leading-tight text-white shadow-lg transition active:scale-95 sm:rounded-[2rem] sm:border-4 sm:text-sm"><span className="text-xl sm:text-4xl">{icon}</span><span className="mt-0.5">{label}</span></button>)}
+          </div>}
           {hotspots.map((hotspot) => (
             <button
               key={hotspot.label}
