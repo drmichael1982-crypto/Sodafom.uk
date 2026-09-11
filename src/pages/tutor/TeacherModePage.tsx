@@ -121,6 +121,15 @@ export default function TeacherModePage() {
     } else if (currentLessonIndex + 1 < lessons.length) {
       setCurrentLessonIndex(prev => prev + 1);
       setCurrentQuestionIndex(0);
+    } else if (curriculumSubject && secondsRemaining > 0) {
+      // A timed curriculum lesson contains several short teach/practise blocks.
+      // Move to the next unique daily block rather than ending after three questions.
+      const nextDay = lessonDay >= 365 ? 1 : lessonDay + 1;
+      setLessonDay(nextDay);
+      setCurrentLessonIndex(0);
+      setCurrentQuestionIndex(0);
+      localStorage.setItem('sodafom_lesson_day', String(nextDay));
+      speakText(`Brilliant. Now let's continue with a fresh ${curriculumSubject} activity.`);
     } else {
       // Never repeat questions in the same lesson session.
       setLessonComplete(true);
@@ -283,7 +292,12 @@ export default function TeacherModePage() {
 
   const minutes = Math.floor(secondsRemaining / 60);
   const seconds = secondsRemaining % 60;
-  const progressPercent = ((currentQuestionIndex + 1) / Math.max(1, currentLesson.questions.length)) * 100;
+  // Progress represents the chosen lesson duration, not the number of questions
+  // in one short curriculum block. This starts at 0% and reaches 100% at time.
+  const totalLessonSeconds = lessonMinutes * 60;
+  const progressPercent = Math.min(100, Math.max(0,
+    ((totalLessonSeconds - secondsRemaining) / totalLessonSeconds) * 100,
+  ));
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-sky-800 flex flex-col font-sans">

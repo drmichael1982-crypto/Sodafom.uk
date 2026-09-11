@@ -151,6 +151,8 @@ export default function ChatbotPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const recorderStreamRef = useRef<MediaStream | null>(null);
   const conversationModeRef = useRef(false);
   const processingRef = useRef(false);
   const speakingRef = useRef(false);
@@ -178,6 +180,8 @@ export default function ChatbotPage() {
       conversationModeRef.current = false;
       if (restartTimerRef.current !== null) window.clearTimeout(restartTimerRef.current);
       try { recognitionRef.current?.abort?.(); } catch { /* ignore */ }
+      try { recorderRef.current?.stop(); } catch { /* ignore */ }
+      recorderStreamRef.current?.getTracks().forEach(track => track.stop());
       recognitionRef.current = null;
       stopTts();
     };
@@ -425,8 +429,7 @@ export default function ChatbotPage() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     console.log('SpeechRecognition check:', { supported: !!SpeechRecognition });
     if (!SpeechRecognition) {
-      setError("Voice input is not supported on this device. You can still type to Archie.");
-      setConversationEnabled(false);
+      void recordAndTranscribeForFire();
       return;
     }
 
@@ -513,6 +516,66 @@ export default function ChatbotPage() {
       recognitionRef.current = null;
       console.warn('ARCHIE_RECOGNITION_ERROR start', err);
       if (conversationModeRef.current) scheduleListeningRestart(700);
+    }
+  }
+
+  async function recordAndTranscribeForFire() {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      setError('This browser cannot record speech. You can still type to Archie.');
+      setConversationEnabled(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      recorderStreamRef.current = stream;
+      const preferred = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg'];
+      const mimeType = preferred.find(type => MediaRecorder.isTypeSupported(type));
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      recorderRef.current = recorder;
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = event => { if (event.data.size) chunks.push(event.data); };
+      recorder.onstart = () => {
+        setIsListening(true);
+        setError('Listening on your Fire tablet… speak now.');
+      };
+      recorder.onstop = async () => {
+        stream.getTracks().forEach(track => track.stop());
+        recorderStreamRef.current = null;
+        recorderRef.current = null;
+        setIsListening(false);
+        try {
+          const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+          const audio = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result));
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(blob);
+          });
+          const response = await fetch(`${API_PREFIX}/ai/transcribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ audio }),
+          });
+          const result = await response.json() as { text?: string; error?: string };
+          if (!response.ok || !result.text) throw new Error(result.error || 'I could not hear that.');
+          setInput(result.text);
+          setError(null);
+          sendMessage(result.text, true);
+        } catch (problem) {
+          setError(problem instanceof Error ? problem.message : 'I could not hear that. Please try again.');
+          setConversationEnabled(false);
+        }
+      };
+      recorder.start();
+      window.setTimeout(() => {
+        if (recorder.state === 'recording') recorder.stop();
+      }, 6500);
+    } catch (problem) {
+      setIsListening(false);
+      setConversationEnabled(false);
+      setError(problem instanceof DOMException && problem.name === 'NotAllowedError'
+        ? 'Microphone permission was denied. Allow microphone access in Silk settings, then try again.'
+        : 'The microphone could not start. You can still type to Archie.');
     }
   }
 

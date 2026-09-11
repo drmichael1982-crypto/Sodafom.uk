@@ -1,5 +1,60 @@
 import { Helmet } from '@dr.pogodin/react-helmet';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { ArchieCharacter } from '@/components/ArchieCharacter';
+
+function buttonWords(label: string) {
+  return label
+    .replace(/^Open protected /, '')
+    .replace(/^Open /, '')
+    .replace(/^Meet /, '')
+    .replace(/^Return /, '')
+    .trim();
+}
+
+/** Child-friendly feedback that needs no downloaded audio file and also works offline. */
+export function playButtonFeedback(label: string) {
+  if (typeof window === 'undefined') return;
+  if (window.localStorage.getItem('sodafom_sound_enabled') === 'false') return;
+
+  // A short two-note chime. Older browsers simply skip it if Web Audio is absent.
+  const AudioContextClass = window.AudioContext
+    ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (AudioContextClass) {
+    try {
+      const context = new AudioContextClass();
+      if (context.state === 'suspended') void context.resume();
+      const gain = context.createGain();
+      gain.gain.setValueAtTime(0.0001, context.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.13, context.currentTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.24);
+      gain.connect(context.destination);
+      [659.25, 783.99].forEach((frequency, index) => {
+        const oscillator = context.createOscillator();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+        oscillator.connect(gain);
+        oscillator.start(context.currentTime + index * 0.07);
+        oscillator.stop(context.currentTime + 0.24);
+      });
+      window.setTimeout(() => void context.close(), 350);
+    } catch { /* Speech still provides feedback when audio context is unavailable. */ }
+  }
+
+  if ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
+    window.speechSynthesis.cancel();
+    const words = buttonWords(label);
+    const utterance = new SpeechSynthesisUtterance(
+      label.startsWith('Return') ? `Going ${words}` : `Opening ${words}`,
+    );
+    utterance.lang = 'en-GB';
+    utterance.rate = 0.92;
+    utterance.pitch = 1.12;
+    window.speechSynthesis.speak(utterance);
+  }
+
+  window.navigator.vibrate?.(18);
+}
 
 export type ApprovedArtworkVariant =
   | 'home'
@@ -20,46 +75,54 @@ type Hotspot = {
   route?: string;
 };
 
-const ARTWORK: Record<ApprovedArtworkVariant, { src: string; title: string; alt: string }> = {
+const ARTWORK: Record<ApprovedArtworkVariant, { src: string; title: string; alt: string; ratio: number }> = {
   home: {
     src: '/assets/approved/home.png',
     title: 'Sodafom — A brighter future for every child',
     alt: 'The approved Sodafom family home screen with Archie, his family, the dogs and the main learning buttons.',
+    ratio: 1086 / 1448,
   },
   lessons: {
     src: '/assets/approved/lessons.png',
     title: "Archie's Lessons",
     alt: "The approved illustrated Archie's Lessons classroom with colourful subject doors.",
+    ratio: 1536 / 1151,
   },
   'game-islands': {
     src: '/assets/approved/game-islands.png',
     title: 'Sodafom Game Islands',
     alt: 'The approved illustrated Sodafom Game Islands learning map.',
+    ratio: 1536 / 1151,
   },
   'homework-helper': {
     src: '/assets/approved/homework-helper.png',
     title: 'Homework Helper',
     alt: 'The approved illustrated Homework Helper classroom with Archie and the homework tools.',
+    ratio: 1536 / 1405,
   },
   'archie-theatre': {
     src: '/assets/approved/archie-theatre.png',
     title: 'Archie Theatre',
     alt: 'The approved illustrated Archie Theatre screen.',
+    ratio: 1536 / 1024,
   },
   shop: {
     src: '/assets/approved/shop.png',
     title: 'Sodafom Shop',
     alt: 'The approved illustrated Sodafom Shop screen.',
+    ratio: 1536 / 1024,
   },
   settings: {
     src: '/assets/approved/settings.png',
     title: 'Sodafom Settings',
     alt: 'The approved illustrated Sodafom Settings screen.',
+    ratio: 1536 / 1061,
   },
   stories: {
     src: '/assets/approved/stories.png',
     title: "Archie's Stories",
     alt: "The approved illustrated Archie's Stories library.",
+    ratio: 1536 / 1151,
   },
 };
 
@@ -142,25 +205,58 @@ const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> 
 
 export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtworkVariant }) {
   const navigate = useNavigate();
+  const [doorTransition, setDoorTransition] = useState<string | null>(null);
   const artwork = ARTWORK[variant];
   const hotspots = variant === 'home' ? HOME_HOTSPOTS : PAGE_HOTSPOTS[variant];
+
+  function activate(hotspot: Hotspot) {
+    const isLessonDoor = variant === 'lessons' && hotspot.route?.startsWith('/tutor?subject=');
+    if (isLessonDoor && hotspot.route) {
+      const childName = window.localStorage.getItem('sodafom_child_name')?.trim();
+      const subject = new URLSearchParams(hotspot.route.split('?')[1]).get('subject') ?? 'next';
+      const learner = childName || 'young learner';
+      const invitation = `The key is unlocking the door. Come on, ${learner}, let's go to our ${subject} lesson! Your ${subject} teacher says, hello Archie, and hello ${learner}.`;
+      setDoorTransition(invitation);
+      playButtonFeedback(hotspot.label);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(invitation);
+        utterance.lang = 'en-GB';
+        utterance.rate = 0.92;
+        utterance.pitch = 1.12;
+        window.speechSynthesis.speak(utterance);
+      }
+      window.setTimeout(() => navigate(hotspot.route!), 1550);
+      return;
+    }
+    playButtonFeedback(hotspot.label);
+    if (hotspot.route) navigate(hotspot.route);
+  }
 
   return (
     <main className="h-[100svh] w-full overflow-hidden bg-sky-500 p-0">
       <Helmet>
         <title>{artwork.title}</title>
       </Helmet>
-      <div className="mx-auto h-full w-full max-w-[1536px] overflow-hidden bg-white shadow-2xl">
-        <div className="relative h-full w-full">
-          <img src={artwork.src} alt={artwork.alt} className="block h-full w-full object-cover object-top" draggable={false} />
+      <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
+        <img src={artwork.src} alt="" aria-hidden="true" className="absolute -inset-8 h-[calc(100%+4rem)] w-[calc(100%+4rem)] scale-110 object-cover opacity-70 blur-2xl" draggable={false} />
+        <div
+          className="relative z-10 max-h-full max-w-full overflow-hidden shadow-2xl"
+          style={{
+            width: `min(100vw, calc(100svh * ${artwork.ratio}))`,
+            height: `min(100svh, calc(100vw / ${artwork.ratio}))`,
+            aspectRatio: artwork.ratio,
+          }}
+        >
+          <img src={artwork.src} alt={artwork.alt} className="block h-full w-full" draggable={false} />
           {hotspots.map((hotspot) => (
             <button
               key={hotspot.label}
               type="button"
               aria-label={hotspot.label}
               title={hotspot.label}
-              onClick={() => hotspot.route && navigate(hotspot.route)}
-              className="absolute cursor-pointer rounded-2xl bg-transparent focus-visible:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300"
+              onClick={() => activate(hotspot)}
+              className="absolute cursor-pointer rounded-2xl bg-transparent transition-transform duration-150 hover:scale-105 active:scale-95 focus-visible:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300"
               style={{
                 left: `${hotspot.left}%`,
                 top: `${hotspot.top}%`,
@@ -171,6 +267,17 @@ export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtw
               <span className="sr-only">{hotspot.label}</span>
             </button>
           ))}
+          {doorTransition && (
+            <div role="status" aria-live="polite" className="absolute inset-0 z-20 flex items-end justify-center bg-sky-950/30 p-5 backdrop-blur-[2px]">
+              <div className="mb-8 flex w-full max-w-xl items-center gap-3 rounded-[2rem] border-4 border-yellow-200 bg-white/95 p-4 text-sky-950 shadow-2xl">
+                <div className="relative shrink-0 animate-[bounce_0.7s_ease-in-out_infinite]">
+                  <ArchieCharacter size={92} />
+                  <span aria-hidden="true" className="absolute -right-1 top-0 animate-spin text-4xl">🔑</span>
+                </div>
+                <p className="text-lg font-black sm:text-2xl">{doorTransition}</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </main>

@@ -1,7 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { MemoryRouter, useLocation } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import ApprovedArtworkPage from '../ApprovedArtworkPage';
 
@@ -33,6 +33,7 @@ describe('Approved artwork navigation', () => {
   });
 
   it('connects an illustrated subject door directly to its lesson', () => {
+    vi.useFakeTimers();
     render(
       <HelmetProvider>
         <MemoryRouter initialEntries={['/lessons']}>
@@ -43,7 +44,10 @@ describe('Approved artwork navigation', () => {
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Start a Maths lesson' }));
+    expect(screen.getByText(/let's go to our Maths lesson/i)).toBeInTheDocument();
+    act(() => vi.advanceTimersByTime(1550));
     expect(screen.getByLabelText('current route')).toHaveTextContent('/tutor?subject=Maths&direct=1');
+    vi.useRealTimers();
   });
 
   it('connects the Settings admin cog to protected Admin Access', () => {
