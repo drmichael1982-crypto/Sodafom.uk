@@ -56,6 +56,10 @@ export default function ArchieStoryCollectionPage() {
   useEffect(() => () => stopTts(), []);
   const words = story ? story.pages[page].split(/\s+/) : [];
   const clean = (word: string) => word.toLowerCase().replace(/[^a-z0-9']/g, '');
+  const soundOut = (word: string) => {
+    const sounds = clean(word).match(/tion|igh|air|ear|ure|oo|ee|ai|ay|oa|ow|oi|oy|ch|sh|th|ph|ck|ng|qu|[a-z]/g) ?? [];
+    return sounds.join(' … ');
+  };
   const resetReadAlong = () => { recognitionRef.current?.stop?.(); setListening(false); setWordStates(words.map(() => 'pending')); setWordIndex(0); };
   const open = (index: number) => { setStoryIndex(index); setPage(0); setWelcome(true); setWordStates(STORIES[index].pages[0].split(/\s+/).map(() => 'pending')); setWordIndex(0); };
   const close = () => { resetReadAlong(); stopTts(); setStoryIndex(null); };
@@ -64,12 +68,12 @@ export default function ArchieStoryCollectionPage() {
     if (!story) return;
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) { ttsSpeak('Your browser does not support reading aloud yet.'); return; }
-    const recognition = new SpeechRecognition(); recognition.lang = 'en-GB'; recognition.continuous = false; recognition.interimResults = false;
+    const recognition = new SpeechRecognition(); recognition.lang = 'en-GB'; recognition.continuous = true; recognition.interimResults = false;
     recognition.onresult = (event: any) => {
       const heard = String(event.results[event.results.length - 1][0].transcript).split(/\s+/).map(clean).filter(Boolean);
       let position = wordIndex; const nextStates = [...(wordStates.length ? wordStates : words.map(() => 'pending' as const))];
-      for (const spoken of heard) { if (position >= words.length) break; if (spoken === clean(words[position])) { nextStates[position] = 'correct'; position += 1; } else { nextStates[position] = 'wrong'; ttsSpeak(`Let us sound this out together: ${words[position]}`); break; } }
-      setWordStates(nextStates); setWordIndex(position); setListening(false);
+      for (const spoken of heard) { if (position >= words.length) break; if (spoken === clean(words[position])) { nextStates[position] = 'correct'; position += 1; } else { nextStates[position] = 'wrong'; ttsSpeak(`Let us sound it out: ${soundOut(words[position])}. Your turn.`); break; } }
+      setWordStates(nextStates); setWordIndex(position); if (position >= words.length) recognition.stop();
       if (position >= words.length && page < 9) window.setTimeout(() => changePage(page + 1), 1100);
     };
     recognition.onerror = () => setListening(false); recognition.onend = () => setListening(false); recognitionRef.current = recognition; setListening(true); recognition.start();
