@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { ArrowLeft, Volume2, Mic, MicOff, Lightbulb, RotateCcw, Pause, Play, Settings, Award, Clock3 } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { ArchieCharacter } from '@/components/ArchieCharacter';
 import { Blackboard } from '@/components/Blackboard';
 import { ChildProfileManager } from '@/components/ChildProfileManager';
@@ -19,12 +19,18 @@ import {
 
 export default function TeacherModePage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const directLesson = searchParams.get('direct') === '1';
+  const requestedSubject = searchParams.get('subject');
+  const requestedAge = searchParams.get('age');
   const [profile, setProfile] = useState<ChildTutorProfile>(() => loadTutorMemory());
-  const [showProfileSetup, setShowProfileSetup] = useState<boolean>(!profile.childName);
+  const [showProfileSetup, setShowProfileSetup] = useState<boolean>(() => !directLesson && !profile.childName);
 
-  const [selectedSubject, setSelectedSubject] = useState<string>('Any Subject');
+  const [selectedSubject, setSelectedSubject] = useState<string>(() => requestedSubject || 'Any Subject');
   const [lessonMinutes, setLessonMinutes] = useState<15 | 20 | 30 | 60>(30);
-  const [requestedAgeGroup, setRequestedAgeGroup] = useState<CurriculumAgeGroup | null>(null);
+  const [requestedAgeGroup, setRequestedAgeGroup] = useState<CurriculumAgeGroup | null>(() =>
+    requestedAge === '5-7' || requestedAge === '8-10' || requestedAge === '11-13' ? requestedAge : null
+  );
   const [lessonDay, setLessonDay] = useState(1);
   const ageGroup: CurriculumAgeGroup = requestedAgeGroup ?? profile.ageGroup ?? '8-10';
   const normalisedSubject = selectedSubject === 'Writing' ? 'English' : selectedSubject === 'Technology' ? 'Computing' : selectedSubject;
@@ -62,7 +68,7 @@ export default function TeacherModePage() {
 
   useEffect(() => {
     const storedSubject = localStorage.getItem('sodafom_lesson_subject');
-    if (storedSubject) setSelectedSubject(storedSubject);
+    if (!requestedSubject && storedSubject) setSelectedSubject(storedSubject);
 
     const storedMinutes = Number(localStorage.getItem('sodafom_lesson_minutes') || '30');
     if (([15, 20, 30, 60] as const).includes(storedMinutes as 15 | 20 | 30 | 60)) {
@@ -72,7 +78,7 @@ export default function TeacherModePage() {
     }
 
     const storedAgeGroup = localStorage.getItem('sodafom_lesson_age');
-    if (storedAgeGroup === '5-7' || storedAgeGroup === '8-10' || storedAgeGroup === '11-13') {
+    if (!requestedAge && (storedAgeGroup === '5-7' || storedAgeGroup === '8-10' || storedAgeGroup === '11-13')) {
       setRequestedAgeGroup(storedAgeGroup);
     }
 
@@ -80,7 +86,7 @@ export default function TeacherModePage() {
     if (Number.isInteger(storedLessonDay)) {
       setLessonDay(Math.min(365, Math.max(1, storedLessonDay)));
     }
-  }, []);
+  }, [requestedAge, requestedSubject]);
 
   const currentLesson: TopicLesson = lessons[currentLessonIndex] ?? lessons[0] ?? CURRICULUM_LESSONS[0];
   const currentQuestion: LessonQuestion | undefined = currentLesson.questions[currentQuestionIndex];

@@ -421,10 +421,30 @@ export function tryLocalReading(input: string): LocalArchieResult | null {
   return null;
 }
 
+export function tryLocalFounderKnowledge(input: string): LocalArchieResult | null {
+  const t = input.toLowerCase();
+  if (!/(sodafom|sodafoam|founder|michael davis)/.test(t)) return null;
+
+  if (/who (?:is|was).*(?:founder|made|created|started)|who.*(?:sodafom|sodafoam)/.test(t)) {
+    return {
+      text: 'Michael Davis is the founder and creator of Sodafom. He built it to help his son Archie and other children enjoy learning.',
+      intent: 'app-help',
+    };
+  }
+  if (/born|birthday|age|old|grew up|broxbourne|chase farm/.test(t)) {
+    return {
+      text: 'Sodafom founder Michael Davis was born at Chase Farm Hospital at 2:30 in the morning on 11 November 1982. He grew up in Broxbourne and is 43 years old in 2026.',
+      intent: 'app-help',
+    };
+  }
+  return null;
+}
+
 import { tryLocalTutor } from './tutor/engine';
 
 export function tryLocalArchieResponse(input: string): LocalArchieResult | null {
   return tryLocalChildName(input)
+    ?? tryLocalFounderKnowledge(input)
     ?? tryLocalMaths(input)
     ?? tryLocalTutor(input)
     ?? tryLocalSpelling(input)

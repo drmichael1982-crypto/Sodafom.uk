@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 import ApprovedArtworkPage from '../ApprovedArtworkPage';
 
 function LocationProbe() {
-  return <output aria-label="current route">{useLocation().pathname}</output>;
+  const location = useLocation();
+  return <output aria-label="current route">{location.pathname}{location.search}</output>;
 }
 
 describe('Approved artwork navigation', () => {
@@ -31,7 +32,7 @@ describe('Approved artwork navigation', () => {
     expect(screen.getByLabelText('current route')).toHaveTextContent('/lessons');
   });
 
-  it('connects the illustrated lesson classroom to the working lesson chooser', () => {
+  it('connects an illustrated subject door directly to its lesson', () => {
     render(
       <HelmetProvider>
         <MemoryRouter initialEntries={['/lessons']}>
@@ -41,7 +42,7 @@ describe('Approved artwork navigation', () => {
       </HelmetProvider>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Choose a structured lesson' }));
-    expect(screen.getByLabelText('current route')).toHaveTextContent('/lesson-library');
+    fireEvent.click(screen.getByRole('button', { name: 'Start a Maths lesson' }));
+    expect(screen.getByLabelText('current route')).toHaveTextContent('/tutor?subject=Maths&direct=1');
   });
 });

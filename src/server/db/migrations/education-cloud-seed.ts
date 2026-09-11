@@ -38,6 +38,13 @@ const egyptFacts: Array<[string, string]> = [
   ['Why is chronology important in Ancient Egypt?', 'Ancient Egypt lasted so long that famous people and monuments can be separated by thousands of years. For example, Cleopatra lived much closer to our time than to the building of the Great Pyramid.'],
 ];
 
+const founderFacts: Array<[string, string]> = [
+  ['Who founded Sodafom?', 'Michael Davis is the founder and creator of Sodafom. He built it to help his son Archie and other children enjoy learning.'],
+  ['When was Sodafom founder Michael Davis born?', 'Michael Davis was born on 11 November 1982 at 2:30 in the morning at Chase Farm Hospital.'],
+  ['Where did Sodafom founder Michael Davis grow up?', 'Michael Davis grew up in Broxbourne.'],
+  ['How old is Sodafom founder Michael Davis?', 'Michael Davis is 43 years old in 2026.'],
+];
+
 const maths: Record<AgeBand, Topic[]> = {
   '5-7': [
     ['number-to-100','Numbers to 100','Read, write, compare and order numbers to 100',['number','digit','tens','ones']],
@@ -222,6 +229,17 @@ export async function runEducationCloudSeed() {
       `);
     }
 
+    for (let i = 0; i < founderFacts.length; i++) {
+      const [question, answer] = founderFacts[i];
+      const key = `sodafom-founder-${String(i + 1).padStart(2, '0')}`;
+      await db.execute(sql`
+        INSERT INTO education_cloud_knowledge
+          (knowledge_key, subject, topic, age_band, question, answer, source_type, confidence, active)
+        VALUES (${key}, 'sodafom', 'founder', 'all', ${question}, ${answer}, 'founder_verified', 1.000, 1)
+        ON DUPLICATE KEY UPDATE question=VALUES(question), answer=VALUES(answer), active=1, updated_at=CURRENT_TIMESTAMP
+      `);
+    }
+
     let mathsCount = 0, englishCount = 0, historyCount = 0;
     for (const ageBand of ['5-7','8-10','11-13'] as AgeBand[]) {
       for (const topic of maths[ageBand]) {
@@ -248,7 +266,7 @@ export async function runEducationCloudSeed() {
       }
     }
 
-    console.log(`[EducationCloud] ready: ${egyptFacts.length} Ancient Egypt knowledge items; ${mathsCount} Maths 60-minute lessons; ${englishCount} English 60-minute lessons; ${historyCount} Ancient Egypt 60-minute lessons.`);
+    console.log(`[EducationCloud] ready: ${egyptFacts.length} Ancient Egypt knowledge items; ${founderFacts.length} founder facts; ${mathsCount} Maths 60-minute lessons; ${englishCount} English 60-minute lessons; ${historyCount} Ancient Egypt 60-minute lessons.`);
   } catch (err) {
     console.error('[EducationCloud] seed failed:', err);
   }

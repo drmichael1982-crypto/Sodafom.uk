@@ -4,7 +4,7 @@ import {
   tryLocalChildName,
   getRememberedChildName,
   saveRememberedChildName,
-  clearRememberedChildName
+  tryLocalFounderKnowledge,
 } from '../archie-local';
 
 describe('Archie Local Maths & Name Memory', () => {
@@ -80,6 +80,21 @@ describe('Archie Local Maths & Name Memory', () => {
       expect(res).not.toBeNull();
       expect(res?.text).toContain('Well done, Sophie!');
       expect(res?.text).toContain('2,000,000');
+    });
+  });
+
+  describe('Verified founder knowledge', () => {
+    it('knows who founded Sodafom', () => {
+      const res = tryLocalFounderKnowledge('Who founded Sodafom?');
+      expect(res?.text).toContain('Michael Davis');
+    });
+
+    it('knows the founder birth details supplied by Michael', () => {
+      const res = tryLocalFounderKnowledge('When and where was Michael Davis born?');
+      expect(res?.text).toContain('11 November 1982');
+      expect(res?.text).toContain('Chase Farm Hospital');
+      expect(res?.text).toContain('2:30 in the morning');
+      expect(res?.text).toContain('Broxbourne');
     });
   });
 });
