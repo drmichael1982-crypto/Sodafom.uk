@@ -253,7 +253,7 @@ export default function Footer() {
             <span className="hidden sm:block w-px h-4 bg-primary-foreground/20" />
             <span className="flex items-center gap-1.5"><span className="text-accent">👧</span> Ages 5–13</span>
             <span className="hidden sm:block w-px h-4 bg-primary-foreground/20" />
-            <span className="flex items-center gap-1.5"><span className="text-accent">⭐</span> Millions of stars earned</span>
+            <span className="flex items-center gap-1.5"><span className="text-accent">⭐</span> Stars and badges to earn</span>
             <span className="hidden sm:block w-px h-4 bg-primary-foreground/20" />
             <span className="flex items-center gap-1.5"><span className="text-accent">🇬🇧</span> UK curriculum aligned</span>
           </div>

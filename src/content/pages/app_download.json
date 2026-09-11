@@ -25,31 +25,12 @@
       "id": "OU0jAgyFX-ngR8o4wynoD"
     }
   ],
-  "REVIEWS": [
-    {
-      "name": "Sarah M.",
-      "stars": 5,
-      "text": "My daughter asks to use Sodafom every evening. The games are brilliant and she's come on leaps and bounds in maths!",
-      "id": "ax_NVz82nezO3x6jmbXXR"
-    },
-    {
-      "name": "James T.",
-      "stars": 5,
-      "text": "As a primary school teacher I recommend this to all my parents. The curriculum alignment is spot on.",
-      "id": "3RlXRIoEPU_zfHZrGy3au"
-    },
-    {
-      "name": "Priya K.",
-      "stars": 5,
-      "text": "Three kids, one subscription. The offline mode is a lifesaver on long car journeys!",
-      "id": "BuSoknbVneQzxpIQOAdz2"
-    }
-  ],
+  "REVIEWS": [],
   "STEPS": [
     {
       "num": "1",
-      "title": "Download the app",
-      "desc": "Free to download on iOS and Android.",
+      "title": "Use Sodafom on the web",
+      "desc": "Open the live web app on a phone, tablet or computer.",
       "id": "UY_ahxvSNb5R9E5U4zcJp"
     },
     {

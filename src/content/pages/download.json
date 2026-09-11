@@ -1,18 +1,18 @@
 {
   "hero": {
-    "eyebrow": "Available on all devices",
+    "eyebrow": "Mobile app planned",
     "headline": "Learning on the go",
-    "subtext": "Download the Sodafom app and let your child learn anywhere — on the bus, at the kitchen table, or snuggled up at bedtime. All 118 games, offline-ready.",
-    "appStoreCta": "Download on the App Store",
-    "playStoreCta": "Get it on Google Play",
-    "badge": "Free to download"
+    "subtext": "Use Sodafom in a web browser today. Mobile store releases and offline play are planned, not live.",
+    "appStoreCta": "App Store planned",
+    "playStoreCta": "Google Play planned",
+    "badge": "Coming later"
   },
   "features": [
     {
       "id": "feat-1",
       "emoji": "📶",
-      "title": "Works offline",
-      "description": "Games load without Wi-Fi once downloaded — perfect for car journeys and commutes."
+      "title": "Offline play planned",
+      "description": "Downloaded lessons are a goal for a future tested mobile release."
     },
     {
       "id": "feat-2",
@@ -51,8 +51,8 @@
       {
         "id": "step-1",
         "number": "1",
-        "title": "Download the app",
-        "description": "Search 'Sodafom' on the App Store or Google Play and tap Install."
+        "title": "Open the web app",
+        "description": "Use Sodafom in a supported phone, tablet or computer browser."
       },
       {
         "id": "step-2",
@@ -105,7 +105,7 @@
   },
   "cta": {
     "headline": "Ready to start learning?",
-    "subtext": "Join over 10,000 children already using Sodafom to build confidence in maths, spelling and reading.",
+    "subtext": "Try the live web app while the mobile versions are being planned and tested.",
     "button": "Try it free in your browser"
   }
 }
