@@ -417,6 +417,19 @@ const initializeProject = async () => {
     )
   `);
 
+  // Admin dashboard reviews table for older Railway databases.
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS site_reviews (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      author_name VARCHAR(128) NOT NULL,
+      author_role VARCHAR(64) DEFAULT 'Parent',
+      stars INT NOT NULL DEFAULT 5,
+      body TEXT NOT NULL,
+      approved TINYINT(1) NOT NULL DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   // Add phone_number and role columns to user table (in case table already existed without them)
   db.execute(sql`ALTER TABLE user ADD COLUMN role VARCHAR(32) DEFAULT 'parent'`).catch(() => {});
   db.execute(sql`ALTER TABLE user ADD COLUMN is_admin TINYINT(1) DEFAULT 0`).catch(() => {});
