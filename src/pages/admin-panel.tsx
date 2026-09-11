@@ -825,10 +825,8 @@ export default function AdminPanel() {
     window.dispatchEvent(new Event('sodafom_research_mode_change'));
   };
 
-  // Fetch stats immediately on open (no password gate)
-  React.useEffect(() => {
-    fetchStats('');
-  }, []);
+  // Keep the test panel open on arrival. Protected cloud statistics are
+  // requested only after the owner enters a valid admin access code.
 
   async function fetchStats(adminCode: string) {
     setLoading(true);
