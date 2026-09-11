@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
-import { CalendarDays, PartyPopper, Save, Volume2 } from 'lucide-react';
+import { CalendarDays, PartyPopper, Paintbrush, Save, Star, Volume2 } from 'lucide-react';
+import { useNavigate } from 'react-router';
 import FeaturePageShell from '@/components/FeaturePageShell';
 import { getActiveChild } from '@/hooks/useChildAge';
 import { ttsSpeak } from '@/lib/voice-context';
@@ -31,6 +32,7 @@ function birthdayCountdown(dateText: string) {
 }
 
 export default function BirthdayPage() {
+  const navigate = useNavigate();
   const initial = useMemo(loadBirthday, []);
   const [childName, setChildName] = useState(initial.childName);
   const [date, setDate] = useState(initial.date);
@@ -62,6 +64,17 @@ export default function BirthdayPage() {
             <p className="mt-3 text-xs font-bold text-slate-500">This birthday is stored on this device. It is not added to the Sodafom account database.</p>
             <button type="submit" className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-pink-600 font-black text-white shadow-lg"><Save /> Save birthday</button>
           </form>
+        </section>
+
+        <section className="mb-5 grid grid-cols-2 gap-3" aria-label="Birthday activities">
+          <button type="button" onClick={() => navigate('/games/colour-book')} className="min-h-36 rounded-[2rem] border-4 border-white bg-gradient-to-br from-cyan-400 via-blue-500 to-violet-700 p-4 text-white shadow-xl active:scale-95">
+            <Paintbrush className="mx-auto" size={42} />
+            <span className="mt-2 block text-lg font-black">Birthday Colouring Book</span>
+          </button>
+          <button type="button" onClick={() => navigate('/rewards')} className="min-h-36 rounded-[2rem] border-4 border-white bg-gradient-to-br from-yellow-300 via-pink-500 to-fuchsia-700 p-4 text-white shadow-xl active:scale-95">
+            <Star className="mx-auto fill-yellow-200 text-yellow-100" size={42} />
+            <span className="mt-2 block text-lg font-black">Birthday Sticker Book</span>
+          </button>
         </section>
 
         {countdown && (

@@ -63,28 +63,23 @@ const ARTWORK: Record<ApprovedArtworkVariant, { src: string; title: string; alt:
   },
 };
 
-const HOME_COMPACT_ITEMS = [
-  ['📚', "Archie's Stories", '/stories'], ['🎓', "Archie's Lessons", '/lessons'], ['🤖', 'Ask Archie', '/ask-archie'], ['🎮', 'Game Islands', '/game-islands'], ['📷', 'Homework Helper', '/homework-helper'],
-  ['🏛️', 'Museum Explorer', '/museum'], ['🎬', 'Archie Theatre', '/archie-theatre'], ['👪', "Parents' Evening", '/parent-area'], ['👩‍🏫', 'Teacher Classroom', '/teacher-hub'], ['🛍️', 'Sodafom Shop', '/sodafom-shop'],
-  ['⭐', "Archie's Sticker Book", '/rewards'], ['⚙️', 'Settings', '/sodafom-settings'], ['🏆', 'Progress', '/hub/progress'], ['🌟', 'Rewards', '/rewards'], ['👫', 'Friends', '/archie-friends'],
-] as const;
-
 const HOME_HOTSPOTS: Hotspot[] = [
-  { label: "Open Archie's Stories", left: 3, top: 45, width: 18, height: 14, route: '/stories' },
-  { label: "Open Archie's Lessons", left: 22, top: 45, width: 18, height: 14, route: '/lessons' },
-  { label: 'Ask Archie', left: 41, top: 45, width: 18, height: 14, route: '/ask-archie' },
-  { label: 'Open Game Islands', left: 60, top: 45, width: 18, height: 14, route: '/game-islands' },
-  { label: 'Open Homework Helper', left: 79, top: 45, width: 18, height: 14, route: '/homework-helper' },
-  { label: 'Open Museum Explorer', left: 3, top: 60, width: 18, height: 14, route: '/museum' },
-  { label: 'Open Archie Theatre', left: 22, top: 60, width: 18, height: 14, route: '/archie-theatre' },
-  { label: "Open Parents' Evening", left: 41, top: 60, width: 18, height: 14, route: '/parent-area' },
-  { label: 'Open Teacher Classroom', left: 60, top: 60, width: 18, height: 14, route: '/teacher-hub' },
-  { label: 'Open Sodafom Shop', left: 79, top: 60, width: 18, height: 14, route: '/sodafom-shop' },
-  { label: "Open Archie's Sticker Book", left: 3, top: 75, width: 18, height: 14, route: '/rewards' },
-  { label: 'Open Settings', left: 22, top: 75, width: 18, height: 14, route: '/sodafom-settings' },
-  { label: 'Open My Progress', left: 41, top: 75, width: 18, height: 14, route: '/hub/progress' },
-  { label: 'Open Rewards', left: 60, top: 75, width: 18, height: 14, route: '/rewards' },
-  { label: 'Meet Archie and Friends', left: 79, top: 75, width: 18, height: 14, route: '/archie-friends' },
+  { label: "Open Archie's Stories", left: 9, top: 43, width: 20, height: 11, route: '/stories' },
+  { label: "Open Archie's Lessons", left: 30, top: 43, width: 20, height: 11, route: '/lessons' },
+  { label: 'Ask Archie', left: 51, top: 43, width: 19, height: 11, route: '/ask-archie' },
+  { label: 'Open Game Islands', left: 71, top: 43, width: 20, height: 11, route: '/game-islands' },
+  { label: 'Open Homework Helper', left: 9, top: 55, width: 20, height: 11, route: '/homework-helper' },
+  { label: 'Open Museum Explorer', left: 30, top: 55, width: 20, height: 11, route: '/museum' },
+  { label: 'Open Archie Theatre', left: 51, top: 55, width: 19, height: 11, route: '/archie-theatre' },
+  { label: 'Open Birthday and Parties', left: 71, top: 55, width: 20, height: 11, route: '/birthday-party' },
+  { label: "Open Parents' Evening", left: 9, top: 67, width: 20, height: 11, route: '/parent-area' },
+  { label: 'Open Teacher Classroom', left: 30, top: 67, width: 20, height: 11, route: '/teacher-hub' },
+  { label: 'Open Sodafom Shop', left: 51, top: 67, width: 19, height: 11, route: '/sodafom-shop' },
+  { label: "Open Archie's Sticker Book", left: 71, top: 67, width: 20, height: 11, route: '/rewards' },
+  { label: 'Open Settings', left: 9, top: 79, width: 20, height: 11, route: '/sodafom-settings' },
+  { label: 'Open My Progress', left: 30, top: 79, width: 20, height: 11, route: '/hub/progress' },
+  { label: 'Open Rewards', left: 51, top: 79, width: 19, height: 11, route: '/rewards' },
+  { label: 'Meet Archie and Friends', left: 71, top: 79, width: 20, height: 11, route: '/archie-friends' },
 ];
 
 const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> = {
@@ -157,10 +152,7 @@ export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtw
       </Helmet>
       <div className="mx-auto h-full w-full max-w-[1536px] overflow-hidden bg-white shadow-2xl">
         <div className="relative h-full w-full">
-          <img src={artwork.src} alt={artwork.alt} className="block h-full w-full object-fill" draggable={false} />
-          {variant === 'home' && <div className="absolute inset-x-[1%] top-[43%] grid grid-cols-5 gap-1 rounded-[2rem] bg-white/88 p-2 shadow-2xl backdrop-blur-sm sm:gap-3 sm:p-4">
-            {HOME_COMPACT_ITEMS.map(([icon, label, route]) => <button key={label} type="button" onClick={() => navigate(route)} className="flex aspect-square min-h-0 flex-col items-center justify-center rounded-[1.35rem] border-2 border-white bg-gradient-to-b from-sky-400 via-blue-600 to-indigo-800 p-1 text-center text-[8px] font-black leading-tight text-white shadow-lg transition active:scale-95 sm:rounded-[2rem] sm:border-4 sm:text-sm"><span className="text-xl sm:text-4xl">{icon}</span><span className="mt-0.5">{label}</span></button>)}
-          </div>}
+          <img src={artwork.src} alt={artwork.alt} className="block h-full w-full object-cover object-top" draggable={false} />
           {hotspots.map((hotspot) => (
             <button
               key={hotspot.label}
