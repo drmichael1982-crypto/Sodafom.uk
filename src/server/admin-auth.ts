@@ -16,6 +16,11 @@ function requiredSecret(name: 'ADMIN_MASTER_CODE' | 'BETTER_AUTH_SECRET'): strin
   return value ? value : null;
 }
 
+function isFounderUser(email?: string | null): boolean {
+  const founderEmail = process.env.FOUNDER_EMAIL?.trim().toLowerCase();
+  return Boolean(founderEmail && email && founderEmail === email.trim().toLowerCase());
+}
+
 export function isConfiguredAdminCode(code: string): boolean {
   const configured = requiredSecret('ADMIN_MASTER_CODE');
   return Boolean(configured && code && safeEqual(code, configured));
@@ -70,7 +75,8 @@ export async function hasAdminAccess(req: Request): Promise<boolean> {
   try {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-    return Boolean((session?.user as { isAdmin?: boolean } | undefined)?.isAdmin);
+    const account = session?.user as { isAdmin?: boolean; email?: string | null } | undefined;
+    return Boolean(account?.isAdmin || isFounderUser(account?.email));
   } catch {
     return false;
   }
