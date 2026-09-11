@@ -42,15 +42,15 @@ export function Blackboard({
   isLocalMode = true
 }: BlackboardProps) {
   return (
-    <div className="w-full bg-[#1a2e22] text-amber-50 rounded-3xl p-5 border-8 border-[#5c3a21] shadow-2xl relative font-sans overflow-hidden">
+    <div className="relative w-full overflow-hidden rounded-[2rem] border-4 border-white bg-gradient-to-br from-sky-500 via-blue-600 to-violet-600 p-5 font-sans text-slate-900 shadow-2xl">
       {/* Wooden frame top header */}
-      <div className="flex items-center justify-between border-b border-green-700/60 pb-3 mb-4">
+      <div className="mb-4 flex items-center justify-between border-b border-white/50 pb-3">
         <div className="flex items-center gap-2">
           <span className="px-2.5 py-0.5 bg-yellow-400 text-amber-950 font-black text-[10px] uppercase rounded-full tracking-wider shadow">
             {subject}
           </span>
           <span className={`px-2.5 py-0.5 font-black text-[10px] uppercase rounded-full border tracking-wider ${
-            isLocalMode ? 'bg-emerald-900/80 text-emerald-200 border-emerald-500' : 'bg-blue-900/80 text-blue-200 border-blue-500'
+            isLocalMode ? 'bg-white text-blue-800 border-sky-200' : 'bg-white text-violet-800 border-violet-200'
           }`}>
             {isLocalMode ? 'LOCAL / FREE TUTOR' : 'OPENAI AI'}
           </span>
@@ -58,19 +58,19 @@ export function Blackboard({
 
         {/* Progress bar */}
         <div className="flex items-center gap-2 min-w-[100px]">
-          <div className="flex-1 h-2.5 bg-green-950 rounded-full overflow-hidden border border-green-700">
+          <div className="h-2.5 flex-1 overflow-hidden rounded-full border border-white/70 bg-white/40">
             <div
               className="h-full bg-yellow-400 transition-all duration-500"
               style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
             />
           </div>
-          <span className="text-[10px] font-black text-amber-300">{Math.round(progressPercent)}%</span>
+          <span className="text-[10px] font-black text-white">{Math.round(progressPercent)}%</span>
         </div>
       </div>
 
       {/* Lesson Title */}
-      <h3 className="text-lg font-black text-yellow-300 mb-3 flex items-center gap-2">
-        <BookOpen size={18} className="text-yellow-400" />
+      <h3 className="mb-3 flex items-center gap-2 text-lg font-black text-white">
+        <BookOpen size={18} className="text-yellow-300" />
         {topicTitle}
       </h3>
 
@@ -78,10 +78,10 @@ export function Blackboard({
       <div className="space-y-4">
         {/* Explanation & Example Box */}
         {(mode === 'explain' || mode === 'question' || mode === 'summary') && (
-          <div className="bg-green-950/60 border border-green-700/50 rounded-2xl p-4 leading-relaxed text-sm">
-            <p className="font-medium text-green-100">{explanationText}</p>
+          <div className="rounded-2xl border-2 border-sky-100 bg-white/95 p-4 text-sm leading-relaxed shadow-lg">
+            <p className="font-semibold text-slate-800">{explanationText}</p>
             {exampleText && (
-              <div className="mt-3 p-2.5 bg-green-900/40 border-l-4 border-yellow-400 rounded-r-xl text-xs font-mono text-yellow-200">
+              <div className="mt-3 rounded-r-xl border-l-4 border-yellow-400 bg-yellow-50 p-2.5 font-mono text-xs text-blue-900">
                 <strong>Worked Example:</strong> {exampleText}
               </div>
             )}
@@ -117,8 +117,8 @@ export function Blackboard({
 
         {/* Current Question & Options/Input */}
         {questionText && (
-          <div className="bg-green-900/40 border border-yellow-400/30 rounded-2xl p-4">
-            <p className="text-sm font-black text-white mb-3 flex items-center gap-2">
+          <div className="rounded-2xl border-2 border-yellow-200 bg-white/95 p-4 shadow-lg">
+            <p className="mb-3 flex items-center gap-2 text-sm font-black text-blue-950">
               <HelpCircle size={16} className="text-yellow-400" />
               {questionText}
             </p>
@@ -134,7 +134,7 @@ export function Blackboard({
                     className={`p-3 rounded-xl text-xs font-extrabold border-2 transition-all ${
                       selectedOption === opt
                         ? 'bg-yellow-400 text-amber-950 border-yellow-500 font-black shadow-lg scale-[1.02]'
-                        : 'bg-green-950/80 border-green-700 text-green-100 hover:bg-green-900'
+                        : 'border-sky-300 bg-gradient-to-b from-sky-50 to-blue-100 text-blue-950 hover:from-yellow-50 hover:to-yellow-100'
                     }`}
                   >
                     {opt}
@@ -150,7 +150,7 @@ export function Blackboard({
                   onChange={(e) => onTypedInputChange && onTypedInputChange(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && onSubmitAnswer && onSubmitAnswer()}
                   placeholder="Type your answer here..."
-                  className="flex-1 px-4 py-2.5 bg-green-950/90 border-2 border-green-600 rounded-xl text-xs font-bold text-white placeholder-green-400 focus:outline-none focus:border-yellow-400"
+                  className="flex-1 rounded-xl border-2 border-sky-300 bg-white px-4 py-2.5 text-xs font-bold text-blue-950 placeholder-slate-400 focus:border-yellow-400 focus:outline-none"
                 />
                 <button
                   type="button"

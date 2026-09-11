@@ -136,21 +136,22 @@ export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtw
   const hotspots = variant === 'home' ? HOME_HOTSPOTS : PAGE_HOTSPOTS[variant];
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-950 via-sky-800 to-emerald-900 px-0 py-0 sm:px-4 sm:py-4">
+    <main className="h-[100svh] w-full overflow-hidden bg-sky-500 p-0">
       <Helmet>
         <title>{artwork.title}</title>
       </Helmet>
-      <div className="mx-auto w-full max-w-[1536px] overflow-hidden bg-white shadow-2xl sm:rounded-3xl">
-        <div className="relative w-full">
-          <img src={artwork.src} alt={artwork.alt} className="block h-auto w-full" draggable={false} />
+      <div className="mx-auto h-full w-full max-w-[1536px] overflow-hidden bg-white shadow-2xl">
+        <div className="relative h-full w-full">
+          <img src={artwork.src} alt={artwork.alt} className="block h-full w-full object-fill" draggable={false} />
           {variant === 'home' && (
             <button
               type="button"
               onClick={() => navigate('/birthday-party')}
               aria-label="Open Birthday and Parties"
-              className="absolute right-[2%] top-[38%] flex min-h-11 items-center gap-1 rounded-full border-4 border-white bg-gradient-to-b from-pink-400 to-fuchsia-700 px-3 py-2 text-xs font-black text-white shadow-2xl active:scale-95 sm:text-base"
+              className="absolute right-[2%] top-[37%] flex aspect-square w-[18%] min-w-16 flex-col items-center justify-center rounded-[28%] border-4 border-white bg-gradient-to-b from-pink-300 via-pink-500 to-fuchsia-700 px-1 text-center text-[10px] font-black leading-tight text-white shadow-2xl active:scale-95 sm:text-base"
             >
-              <span aria-hidden="true">🎂</span> Birthday &amp; Parties
+              <span aria-hidden="true" className="text-2xl sm:text-4xl">🎂</span>
+              <span>Birthday &amp; Parties</span>
             </button>
           )}
           {hotspots.map((hotspot) => (
