@@ -268,6 +268,22 @@ export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtw
               <span className="sr-only">{hotspot.label}</span>
             </button>
           ))}
+          {variant === 'home' && (
+            <button
+              onClick={() => navigate('/museum?trip=1')}
+              className="absolute z-10 flex items-center gap-1 rounded-full border-2 border-yellow-100 bg-gradient-to-r from-yellow-400 to-amber-500 px-3 py-2 text-xs font-black text-blue-950 shadow-lg transition hover:scale-105 active:scale-95"
+              style={{ right: '3%', top: '15%' }}
+              aria-label="Open School Trip Adventure"
+            >🚌 School Trip</button>
+          )}
+          {variant === 'game-islands' && (
+            <button
+              onClick={() => navigate('/games/colour-book')}
+              className="absolute z-10 flex items-center gap-1 rounded-full border-2 border-white bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 px-4 py-2 text-sm font-black text-white shadow-xl transition hover:scale-105 active:scale-95"
+              style={{ right: '4%', bottom: '8%' }}
+              aria-label="Open Colouring Book on Games Island"
+            >🎨 Colouring Book</button>
+          )}
           {doorTransition && (
             <div role="status" aria-live="polite" className="absolute inset-0 z-20 flex items-end justify-center bg-sky-950/30 p-5 backdrop-blur-[2px]">
               <div className="mb-8 flex w-full max-w-xl items-center gap-3 rounded-[2rem] border-4 border-yellow-200 bg-white/95 p-4 text-sky-950 shadow-2xl">
