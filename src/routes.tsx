@@ -223,6 +223,15 @@ export const routes: RouteObject[] = [{
   path: '/museum',
   element: <MuseumExplorerPage />
 }, {
+  // The Home-screen School Trip icon and any saved School Trip links use the
+  // same child-friendly museum and trip chooser. Keep this alias so an old
+  // link can never show the technical not-found page.
+  path: '/school-trip',
+  loader: () => redirect('/museum')
+}, {
+  path: '/school-trip-adventure',
+  loader: () => redirect('/museum')
+}, {
   path: '/stories',
   element: <ApprovedArtworkPage variant="stories" />
 }, {
