@@ -78,7 +78,7 @@ type Hotspot = {
 const ARTWORK: Record<ApprovedArtworkVariant, { src: string; title: string; alt: string; ratio: number }> = {
   home: {
     // Versioned because an earlier Railway copy was corrupt and cached by Silk.
-    src: '/assets/approved/home-fire-v2.png',
+    src: '/assets/approved/home-fire-v3.jpg',
     title: 'Sodafom — A brighter future for every child',
     alt: 'The approved Sodafom family home screen with Archie, his family, the dogs and the main learning buttons.',
     ratio: 1086 / 1448,
