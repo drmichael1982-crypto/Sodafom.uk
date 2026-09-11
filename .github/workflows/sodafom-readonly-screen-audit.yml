@@ -20,8 +20,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - name: Remove runner Git credential and ignore malformed Android gitlink locally
+        run: |
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git update-index --force-remove android
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
