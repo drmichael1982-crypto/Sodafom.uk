@@ -403,6 +403,20 @@ const initializeProject = async () => {
 
   await initAuthTables();
 
+  // Admin statistics use this table to count free/promo accounts. Older
+  // Railway databases may pre-date it, so create it safely at startup.
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS promo_activations (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      promo_code_id INT NOT NULL,
+      code VARCHAR(32) NOT NULL,
+      redeemed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_promo_user (user_id),
+      INDEX idx_promo_code (promo_code_id)
+    )
+  `);
+
   // Add phone_number and role columns to user table (in case table already existed without them)
   db.execute(sql`ALTER TABLE user ADD COLUMN role VARCHAR(32) DEFAULT 'parent'`).catch(() => {});
   db.execute(sql`ALTER TABLE user ADD COLUMN is_admin TINYINT(1) DEFAULT 0`).catch(() => {});
