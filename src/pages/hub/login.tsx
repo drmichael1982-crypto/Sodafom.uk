@@ -22,6 +22,18 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [archiePrank, setArchiePrank] = useState(false);
+
+  useEffect(() => {
+    // A harmless one-time welcome joke. It never changes, clears or submits
+    // login details; it only animates Archie past the Cancel link.
+    if (sessionStorage.getItem('sodafom_login_archie_prank')) return;
+    const timer = window.setTimeout(() => {
+      setArchiePrank(true);
+      sessionStorage.setItem('sodafom_login_archie_prank', '1');
+    }, 900);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const resetSavedLogin = () => {
     localStorage.removeItem('sodafom_remembered_login_email');
@@ -145,7 +157,8 @@ export default function LoginPage() {
               </div>
             </motion.div>}
 
-          <div className="bg-card rounded-3xl border-2 border-border p-8 shadow-sm">
+          <div className="relative bg-card rounded-3xl border-2 border-border p-8 shadow-sm">
+            {archiePrank && <motion.div aria-label="Archie runs past the cancel button as a one-time welcome joke" initial={{ x: -80, opacity: 0 }} animate={{ x: 280, opacity: [0, 1, 1, 0] }} transition={{ duration: 2.2, ease: 'easeInOut' }} className="pointer-events-none absolute -top-12 left-0 z-10 text-5xl">🏃‍♂️🔑</motion.div>}
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div>
                 <label className="block text-sm font-bold text-foreground mb-1.5">Email address</label>
@@ -184,6 +197,7 @@ export default function LoginPage() {
                 Create one free
               </Link>
             </p>
+            <p className="mt-4 text-center text-xs font-bold text-muted-foreground"><Link to="/" className="rounded-full border border-border px-3 py-1.5 hover:bg-muted">Cancel and go home</Link></p>
           </div>
           <p className="text-center text-xs text-muted-foreground mt-6">
             <Link to="/" className="hover:underline">← Back to Sodafom</Link>
