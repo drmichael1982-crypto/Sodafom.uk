@@ -1,6 +1,5 @@
 import { RouteObject } from "react-router";
 import { lazy } from 'react';
-import { Navigate } from 'react-router';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
 import AITeacherPage from './pages/AITeacherPage';
@@ -219,10 +218,10 @@ export const routes: RouteObject[] = [{
   element: <HomeworkHelperPage />
 }, {
   path: '/pocket-money',
-  element: <Navigate to="/chores" replace />
+  element: <ChoresPage />
 }, {
   path: '/pocket-money/setup',
-  element: <Navigate to="/parent-dashboard/chores" replace />
+  element: <ParentChoresPage />
 }, {
   path: '/birthday',
   element: <BirthdayPage />
@@ -255,7 +254,7 @@ export const routes: RouteObject[] = [{
   element: <AdminPanelPage />
 }, {
   path: '/admin/sodafom-bot',
-  element: <Navigate to="/admin-panel?tab=bot" replace />
+  element: <AdminPanelPage />
 }, {
   path: '/tutor',
   element: <TeacherModePage />
@@ -264,7 +263,7 @@ export const routes: RouteObject[] = [{
   element: <TeacherModePage />
 }, {
   path: '/classic-home',
-  element: <Navigate to="/" replace />
+  element: <SodafomAdventurePage />
 }, {
   path: '/subjects',
   element: <SubjectsPage />
@@ -282,7 +281,7 @@ export const routes: RouteObject[] = [{
   element: <ScienceSubjectPage />
 }, {
   path: '/games',
-  element: <Navigate to="/" replace />,
+  element: <SodafomAdventurePage />,
 }, {
   path: '/demo',
   element: <DemoPage />
@@ -406,7 +405,7 @@ export const routes: RouteObject[] = [{
   element: <MathsMysteryGame />,
 }, {
   path: '/games/game-pattern-maker',
-  element: <Navigate to="/games/pattern-maker" replace />,
+  element: <PatternMakerGame />,
 }, {
   path: '/games/pattern-maker',
   element: <PatternMakerGame />,
@@ -811,7 +810,7 @@ export const routes: RouteObject[] = [{
   element: <AITeacherPage />
 }, {
   path: '/reading',
-  element: <Navigate to="/subjects/reading" replace />
+  element: <ReadingSubjectPage />
 }, {
   path: '/chores',
   element: <ChoresPage />
@@ -820,10 +819,10 @@ export const routes: RouteObject[] = [{
   element: <ParentChoresPage />
 }, {
   path: '/design-archie-outfit',
-  element: <Navigate to="/archie-outfit" replace />
+  element: <ArchieOutfitPage />
 }, {
   path: '/birthday-party',
-  element: <Navigate to="/birthday" replace />
+  element: <BirthdayPage />
 }, {
   path: '/mock-exams',
   element: <MockExamsPage />
@@ -852,8 +851,8 @@ export const routes: RouteObject[] = [{
 }, {
   path: '*',
   // Broken/legacy links must never strand a child on a 404 screen.
-  // Send unknown in-app routes back to the safe home screen instead.
-  element: <Navigate to="/" replace />
+  // Show the child-friendly recovery page without causing an SSR redirect error.
+  element: <NotFoundPage />
 }];
 export type Path = '/' | '/subjects' | '/games' | '/pricing' | '/hub' | '/hub/login' | '/hub/signup';
 export type Params = Record<string, string | undefined>;
