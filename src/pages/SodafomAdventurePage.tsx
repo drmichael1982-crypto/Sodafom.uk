@@ -3,7 +3,7 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { useNavigate } from 'react-router';
 import ArchieCharacter from '@/components/ArchieCharacter';
 
-type Screen = 'home' | 'stories' | 'lessons' | 'ask' | 'games' | 'homework' | 'theatre' | 'parents' | 'teacher' | 'shop' | 'stickers' | 'settings';
+type Screen = 'home' | 'stories' | 'lessons' | 'ask' | 'games' | 'homework' | 'museum' | 'theatre' | 'parents' | 'teacher' | 'shop' | 'stickers' | 'settings';
 
 const MENU: Array<[string,string,Screen,string]> = [
   ["Archie’s Stories",'📚','stories','#178adf'],
@@ -11,6 +11,7 @@ const MENU: Array<[string,string,Screen,string]> = [
   ['Ask Archie','🤖','ask','#16b96b'],
   ['Game Islands','🏝️','games','#ef3c63'],
   ['Homework Helper','📷','homework','#f47c20'],
+  ['Museum Explorer','🏛️','museum','#0f766e'],
   ['Archie Theatre','🎬','theatre','#efb324'],
   ["Parents’ Evening",'🔒','parents','#ef4e9b'],
   ['Teacher Classroom','🏫','teacher','#16a6a0'],
@@ -38,6 +39,14 @@ const GAME_ISLANDS = [
   ['PE Island','🏃','/ai-teacher'],['Technology Island','🤖','/ai-teacher'],['French Island','🇫🇷','/ai-teacher'],['German Island','🇩🇪','/ai-teacher']
 ];
 
+const MUSEUMS = {
+  dinosaurs: { title: 'Dinosaur Museum', icon: '🦖', colour: '#26834a', welcome: 'Roar! Let’s explore the dinosaur museum. Which creature shall we visit first?', rooms: [['Fossil Hall','🦴','A fossil is the preserved remains or trace of a living thing from long ago.'],['Dino Giants','🦕','The biggest dinosaurs ate plants, while some smaller dinosaurs hunted meat.'],['Dino Lab','🔎','Palaeontologists carefully study bones and rocks to learn about the past.']] },
+  british: { title: 'British Museum: Ancient Egypt', icon: '𓂀', colour: '#a16207', welcome: 'Welcome to Ancient Egypt. Let’s discover the stories behind these incredible objects.', rooms: [['Mummy Gallery','⚱️','Ancient Egyptians carefully wrapped mummies because they believed life continued after death.'],['Pharaoh’s Hall','👑','A pharaoh was the ruler of Ancient Egypt.'],['Writing Room','📜','Hieroglyphs were pictures and symbols used as writing in Ancient Egypt.']] },
+  romans: { title: 'Roman Britain Museum', icon: '🏺', colour: '#9f1239', welcome: 'Salve! Welcome to Roman Britain. Let’s see how Romans lived, travelled and built.', rooms: [['Roman Home','🏛️','Romans built strong homes, roads and public baths.'],['Soldier Station','🛡️','Roman soldiers wore armour and marched long distances.'],['Archaeology Table','⛏️','Archaeologists find clues in the ground to tell us about Roman life.']] },
+  vikings: { title: 'Viking Museum', icon: '⛵', colour: '#1d4ed8', welcome: 'Ahoy! Let’s sail into Viking life, from longships to trading towns.', rooms: [['Longship Dock','⛵','Viking longships were fast and could travel on seas and shallow rivers.'],['Viking Home','🔥','Many Viking families lived in longhouses with a fire in the middle.'],['York Dig','🪙','Archaeologists in York have found objects which teach us about Viking Britain.']] },
+} as const;
+type MuseumKey = keyof typeof MUSEUMS;
+
 const shell = 'min-h-screen bg-gradient-to-b from-sky-200 via-white to-emerald-100 text-slate-900';
 const panel = 'rounded-[2rem] border-4 border-white bg-white/95 shadow-xl';
 const button = 'rounded-2xl px-4 py-3 font-black shadow-lg active:scale-95 transition-transform';
@@ -56,6 +65,10 @@ export default function SodafomAdventurePage() {
   const [parentOpen,setParentOpen] = useState(false);
   const [classCode,setClassCode] = useState('');
   const [stickerTab,setStickerTab] = useState('Geography');
+  const [museumChoice,setMuseumChoice] = useState<MuseumKey | null>(null);
+  const [museumQuestion,setMuseumQuestion] = useState('');
+  const [museumMessage,setMuseumMessage] = useState('What museum would you like to see today? You can choose a gallery below, type one, or tell Archie.');
+  const [museumRoom,setMuseumRoom] = useState<number | null>(null);
   const recognitionRef = useRef<any>(null);
 
   const speak = (text:string) => {
@@ -97,7 +110,7 @@ export default function SodafomAdventurePage() {
       </div>
     </section>
     <section className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-4 py-6 sm:grid-cols-3 lg:grid-cols-4">
-      {MENU.map(([label,icon,target,color])=><button key={label} onClick={()=>setScreen(target)} style={{background:color}} className="min-h-36 rounded-[2rem] border-4 border-white p-4 text-white shadow-xl transition hover:-translate-y-1 active:scale-95"><div className="text-5xl">{icon}</div><div className="mt-2 font-black">{label}</div></button>)}
+      {MENU.map(([label,icon,target,color])=><button key={label} onClick={()=>setScreen(target)} style={{background:color}} className={`min-h-36 border-4 border-white p-4 text-white shadow-xl transition hover:-translate-y-1 active:scale-95 ${target==='museum'?'aspect-square rounded-full':'rounded-[2rem]'}`}><div className="text-5xl">{icon}</div><div className="mt-2 font-black">{label}</div></button>)}
     </section>
     <section className="mx-auto mb-6 grid max-w-5xl grid-cols-3 gap-3 px-4 text-center font-black text-blue-950"><button onClick={()=>navigate('/hub/progress')} className={`${panel} p-3`}>🏆 Progress</button><button onClick={()=>navigate('/rewards')} className={`${panel} p-3`}>⭐ Rewards</button><button onClick={()=>setScreen('stickers')} className={`${panel} p-3`}>📘 Sticker Book</button></section>
     <footer className="bg-gradient-to-r from-blue-700 via-purple-600 to-pink-500 px-4 py-4 text-center font-black text-white">Together, we can give children a brighter future. ❤️</footer>
@@ -127,6 +140,31 @@ export default function SodafomAdventurePage() {
   const Homework = () => <main className={shell}>{top('Homework Helper','Scan homework, put it on the desk and work through it with Archie')}
     <div className="mx-auto max-w-5xl px-4 pb-8"><div className={`${panel} grid gap-6 p-6 md:grid-cols-2`}><div className="rounded-3xl bg-amber-100 p-4"><div className="mb-3 flex justify-center"><ArchieCharacter size={160}/></div><p className="text-center font-black text-blue-950">Tell Archie your answer. He can read the question aloud and help one step at a time.</p></div><div className="rounded-3xl border-8 border-slate-700 bg-slate-950 p-3 text-center text-white"><div className="mb-2 font-black">Homework Screen</div>{homeworkImage?<img src={homeworkImage} alt="Scanned homework" className="mx-auto max-h-80 rounded-xl bg-white object-contain"/>:<div className="flex min-h-60 items-center justify-center rounded-xl bg-white text-slate-500">Your photographed homework appears here</div>}<label className="mt-3 block cursor-pointer rounded-2xl bg-orange-500 p-3 font-black">📷 Scan Homework<input type="file" accept="image/*" capture="environment" className="hidden" onChange={e=>{const f=e.target.files?.[0]; if(f) setHomeworkImage(URL.createObjectURL(f))}}/></label></div></div></div></main>;
 
+  const openMuseum = (key:MuseumKey) => {
+    const chosen = MUSEUMS[key];
+    setMuseumChoice(key); setMuseumRoom(null); setMuseumQuestion(''); setMuseumMessage(chosen.welcome); speak(chosen.welcome);
+  };
+  const chooseMuseumFromWords = () => {
+    const words = museumQuestion.toLowerCase();
+    const key: MuseumKey = /dino|t.rex|fossil/.test(words) ? 'dinosaurs' : /egypt|british|mumm|pharaoh/.test(words) ? 'british' : /roman/.test(words) ? 'romans' : /viking|york|longship/.test(words) ? 'vikings' : 'dinosaurs';
+    openMuseum(key);
+  };
+  const Museum = () => {
+    const chosen = museumChoice ? MUSEUMS[museumChoice] : null;
+    return <main className="min-h-screen bg-gradient-to-b from-sky-200 via-cyan-50 to-amber-100 text-slate-900">{top('Museum Explorer','Walk through a virtual museum with Archie')}
+      {!chosen ? <div className="mx-auto max-w-5xl px-4 pb-8"><div className={`${panel} overflow-hidden bg-gradient-to-b from-cyan-50 to-white p-5`}>
+        <div className="grid items-center gap-4 md:grid-cols-[180px_1fr]"><div className="mx-auto"><ArchieCharacter size={170}/></div><div className="rounded-[2rem] border-4 border-teal-700 bg-white p-5 text-center text-xl font-black text-blue-950 shadow-lg">{museumMessage}<div className="mt-4 flex gap-2"><input value={museumQuestion} onChange={e=>setMuseumQuestion(e.target.value)} onKeyDown={e=>e.key==='Enter'&&chooseMuseumFromWords()} placeholder="For example: dinosaur museum" className="min-w-0 flex-1 rounded-2xl border-2 border-teal-400 px-4 py-3 text-base font-bold"/><button onClick={chooseMuseumFromWords} className={`${button} bg-teal-700 text-white`}>Enter</button></div></div></div>
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">{(Object.entries(MUSEUMS) as [MuseumKey, typeof MUSEUMS[MuseumKey]][]).map(([key,museum])=><button key={key} onClick={()=>openMuseum(key)} style={{background:`linear-gradient(145deg, ${museum.colour}, #0f172a)`}} className="aspect-square rounded-full border-8 border-white p-4 text-white shadow-xl transition hover:-translate-y-1 active:scale-95"><div className="text-5xl">{museum.icon}</div><div className="mt-2 font-black">{museum.title}</div></button>)}</div>
+      </div></div> : <div className="mx-auto max-w-6xl px-4 pb-8"><div className="overflow-hidden rounded-[2rem] border-8 border-white bg-slate-900 shadow-2xl">
+        <div className="relative min-h-[520px] overflow-hidden bg-[radial-gradient(circle_at_50%_10%,#fef3c7_0%,#a16207_2%,transparent_22%),linear-gradient(180deg,#0f766e_0%,#164e63_42%,#78350f_43%,#b45309_100%)] p-5 text-white">
+          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/20 to-transparent"/><div className="relative flex flex-wrap items-center justify-between gap-3"><button onClick={()=>{setMuseumChoice(null);setMuseumRoom(null)}} className={`${button} bg-white text-teal-900`}>← Choose a museum</button><div className="rounded-full border-2 border-white bg-black/30 px-4 py-2 font-black">{chosen.icon} {chosen.title}</div></div>
+          <div className="relative mx-auto mt-7 max-w-2xl rounded-[2rem] border-4 border-white bg-white p-4 text-center font-black text-blue-950 shadow-xl"><div className="flex items-center justify-center gap-3"><ArchieCharacter size={72}/><p>{museumRoom===null ? museumMessage : chosen.rooms[museumRoom][2]}</p></div></div>
+          <div className="relative mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3">{chosen.rooms.map(([name,icon,fact],index)=><button key={name} onClick={()=>{setMuseumRoom(index);setMuseumMessage(fact);speak(`${name}. ${fact}`)}} className={`min-h-56 rounded-t-[5rem] border-8 p-5 shadow-2xl transition hover:-translate-y-2 active:scale-95 ${museumRoom===index?'border-yellow-300 bg-amber-500':'border-amber-200 bg-gradient-to-b from-amber-200 to-amber-700'}`}><div className="text-7xl drop-shadow">{icon}</div><div className="mt-4 rounded-xl bg-white/90 p-2 font-black text-slate-900">{name}</div><div className="mt-2 text-xs font-bold">Tap to walk in</div></button>)}</div>
+          <div className="relative mx-auto mt-8 max-w-2xl rounded-2xl bg-black/30 p-3 text-center text-sm font-bold">Walk around by tapping a gallery door. Archie explains each artefact and reads it aloud.</div>
+        </div></div></div>}
+    </main>;
+  };
+
   const Theatre = () => <main className="min-h-screen bg-gradient-to-b from-red-900 via-purple-950 to-slate-950 text-white">{top('Archie Theatre','Choose a cartoon episode')}
     <div className="mx-auto max-w-5xl px-4 pb-8"><div className="rounded-[2rem] border-8 border-yellow-400 bg-black p-6 shadow-2xl"><div className="flex min-h-72 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-purple-700 text-center"><div><div className="text-7xl">🎬</div><h2 className="mt-3 text-3xl font-black">{episode}</h2><button onClick={()=>speak(`Now playing ${episode}`)} className={`${button} mt-4 bg-yellow-400 text-slate-950`}>▶ Play</button></div></div><div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">{['Archie and the Secret Shell','The Great Kindness Quest','Archie Explores Space','The Lost Puppy Adventure'].map(e=><button key={e} onClick={()=>setEpisode(e)} className="rounded-2xl bg-red-700 p-4 font-black shadow">📺 {e}</button>)}</div></div></div></main>;
 
@@ -145,7 +183,7 @@ export default function SodafomAdventurePage() {
   const Settings = () => <main className="min-h-screen bg-gradient-to-b from-amber-100 via-white to-emerald-100 text-slate-900">{top('Sodafom Settings','The windmill workshop')}
     <div className="mx-auto max-w-5xl px-4 pb-8"><div className={`${panel} overflow-hidden bg-gradient-to-b from-amber-100 to-amber-50 p-6`}><div className="text-center"><div className="animate-spin text-8xl [animation-duration:12s]">🌬️</div><h2 className="mt-2 text-3xl font-black text-amber-900">Windmill Settings</h2></div><div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">{[['🔊','Audio & Voice'],['👤','Child Profile'],['🖥️','Display'],['🌐','Language'],['🛡️','Privacy & Safety'],['📚','Learning Preferences'],['👨‍👩‍👧','Account'],['🔒','Admin Access']].map(([icon,label],i)=><button key={label} onClick={()=>label==='Admin Access'?navigate('/admin-panel'):label==='Account'?navigate('/hub/subscription'):undefined} className={`relative aspect-square rounded-full border-8 border-amber-700 bg-amber-300 p-4 font-black text-amber-950 shadow-xl transition hover:rotate-6 active:scale-95 ${i%2?'animate-[spin_18s_linear_infinite_reverse]':''}`}><div className="text-4xl">{icon}</div><div className="mt-2 text-sm">{label}</div></button>)}</div><div className="mt-5 rounded-3xl bg-white p-4 text-center font-bold text-blue-950">Subscription management and cancellation are inside Account. Admin is separately protected.</div></div></div></main>;
 
-  const current = useMemo(()=>({home:<Home/>,stories:<Stories/>,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,listening,homeworkImage,episode,parentPin,parentOpen,classCode,stickerTab]);
+  const current = useMemo(()=>({home:<Home/>,stories:<Stories/>,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,museum:<Museum/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,listening,homeworkImage,episode,parentPin,parentOpen,classCode,stickerTab,museumChoice,museumQuestion,museumMessage,museumRoom]);
 
   return <><Helmet><title>Sodafom — Archie Learning</title></Helmet>{current}</>;
 }
