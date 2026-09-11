@@ -39,12 +39,60 @@ const GAME_ISLANDS = [
   ['PE Island','🏃','/ai-teacher'],['Technology Island','🤖','/ai-teacher'],['French Island','🇫🇷','/ai-teacher'],['German Island','🇩🇪','/ai-teacher']
 ];
 
-const MUSEUMS = {
-  dinosaurs: { title: 'Dinosaur Museum', icon: '🦖', colour: '#26834a', welcome: 'Roar! Let’s explore the dinosaur museum. Which creature shall we visit first?', rooms: [['Fossil Hall','🦴','A fossil is the preserved remains or trace of a living thing from long ago.'],['Dino Giants','🦕','The biggest dinosaurs ate plants, while some smaller dinosaurs hunted meat.'],['Dino Lab','🔎','Palaeontologists carefully study bones and rocks to learn about the past.']] },
-  british: { title: 'British Museum: Ancient Egypt', icon: '𓂀', colour: '#a16207', welcome: 'Welcome to Ancient Egypt. Let’s discover the stories behind these incredible objects.', rooms: [['Mummy Gallery','⚱️','Ancient Egyptians carefully wrapped mummies because they believed life continued after death.'],['Pharaoh’s Hall','👑','A pharaoh was the ruler of Ancient Egypt.'],['Writing Room','📜','Hieroglyphs were pictures and symbols used as writing in Ancient Egypt.']] },
-  romans: { title: 'Roman Britain Museum', icon: '🏺', colour: '#9f1239', welcome: 'Salve! Welcome to Roman Britain. Let’s see how Romans lived, travelled and built.', rooms: [['Roman Home','🏛️','Romans built strong homes, roads and public baths.'],['Soldier Station','🛡️','Roman soldiers wore armour and marched long distances.'],['Archaeology Table','⛏️','Archaeologists find clues in the ground to tell us about Roman life.']] },
-  vikings: { title: 'Viking Museum', icon: '⛵', colour: '#1d4ed8', welcome: 'Ahoy! Let’s sail into Viking life, from longships to trading towns.', rooms: [['Longship Dock','⛵','Viking longships were fast and could travel on seas and shallow rivers.'],['Viking Home','🔥','Many Viking families lived in longhouses with a fire in the middle.'],['York Dig','🪙','Archaeologists in York have found objects which teach us about Viking Britain.']] },
-} as const;
+type Artefact = { name: string; icon: string; fact: string; challenge: string };
+type Museum = { title: string; icon: string; colour: string; welcome: string; artefacts: Artefact[] };
+
+// Each item is a real object or find children can investigate, not just a decorative door.
+const MUSEUMS: Record<string, Museum> = {
+  dinosaurs: { title: 'Dinosaur Museum', icon: '🦖', colour: '#26834a', welcome: 'Roar! Choose an incredible dinosaur find and Archie will tell you its story.', artefacts: [
+    { name: 'T. rex tooth', icon: '🦷', fact: 'A Tyrannosaurus rex tooth could be longer than a banana. Its serrated edges helped it slice meat.', challenge: 'Why would a meat-eater need sharp, jagged teeth?' },
+    { name: 'Triceratops skull', icon: '🦏', fact: 'Triceratops had three horns and a huge bony frill at the back of its head.', challenge: 'Can you spot the three horns?' },
+    { name: 'Giant sauropod footprint', icon: '👣', fact: 'A giant plant-eater left this footprint in soft mud. Over time, the mud hardened into rock.', challenge: 'How did a footprint turn into a fossil?' },
+    { name: 'Ammonite fossil', icon: '🐚', fact: 'Ammonites were sea animals with spiral shells. They lived at the same time as dinosaurs.', challenge: 'What shape can you see in the shell?' },
+    { name: 'Dinosaur egg', icon: '🥚', fact: 'Some dinosaur eggs were laid in nests. Scientists use their shells to learn about dinosaur families.', challenge: 'What do baby animals need in a safe nest?' },
+    { name: 'Meteorite fragment', icon: '☄️', fact: 'This rock came from space. A giant asteroid impact is linked to the end of the non-bird dinosaurs.', challenge: 'What clues could a space rock leave on Earth?' },
+  ] },
+  british: { title: 'Ancient Egypt Museum', icon: '𓂀', colour: '#a16207', welcome: 'Welcome to Ancient Egypt. Tap an object to uncover a story from thousands of years ago.', artefacts: [
+    { name: 'Rosetta Stone', icon: '🪨', fact: 'The Rosetta Stone has the same message written in three scripts. It helped scholars understand hieroglyphs.', challenge: 'Why would three versions of one message be useful?' },
+    { name: 'Canopic jar', icon: '🏺', fact: 'Canopic jars were used during mummification. Their lids often showed protective figures.', challenge: 'What details would you draw on a protective jar lid?' },
+    { name: 'Pharaoh’s gold mask', icon: '👑', fact: 'Gold was important in Ancient Egypt because it shone like the sun and did not rust.', challenge: 'Why might a pharaoh choose gold for a mask?' },
+    { name: 'Papyrus letter', icon: '📜', fact: 'Papyrus was made from a plant that grew beside the Nile. Egyptians used it for writing and drawing.', challenge: 'What message would you write to a friend in hieroglyphs?' },
+    { name: 'Cat amulet', icon: '🐈', fact: 'Small amulets were worn or carried for luck and protection. Cats were admired in Ancient Egypt.', challenge: 'What animal would you choose for a lucky charm?' },
+    { name: 'Model boat', icon: '⛵', fact: 'Boats carried people and goods along the River Nile, which was vital for life in Egypt.', challenge: 'Name one thing a river can help a country do.' },
+  ] },
+  romans: { title: 'Roman Britain Museum', icon: '🏺', colour: '#9f1239', welcome: 'Salve! Explore objects Romans left behind in Britain.', artefacts: [
+    { name: 'Roman soldier helmet', icon: '⛑️', fact: 'A Roman helmet protected a soldier’s head while still allowing him to see and hear.', challenge: 'What two things must protective clothing do?' },
+    { name: 'Mosaic floor tile', icon: '🟦', fact: 'Romans made colourful pictures on floors from tiny pieces of stone, glass or tile called tesserae.', challenge: 'What pattern would you make with tiny squares?' },
+    { name: 'Writing tablet', icon: '🪵', fact: 'Some Roman messages were scratched into wax-covered wooden tablets and could be smoothed out to use again.', challenge: 'How is this like a reusable whiteboard?' },
+    { name: 'Roman coin', icon: '🪙', fact: 'Roman coins often showed the emperor’s face and travelled across the empire with traders and soldiers.', challenge: 'What picture is on a modern coin?' },
+    { name: 'Bath house strigil', icon: '🪥', fact: 'A strigil was a curved tool Romans used to scrape oil and dirt from their skin after exercise.', challenge: 'How do people keep clean after sport today?' },
+    { name: 'Clay lamp', icon: '🪔', fact: 'Before electric lights, Romans used small oil lamps. The wick soaked up oil and made a flame.', challenge: 'Why must flames be used carefully?' },
+  ] },
+  vikings: { title: 'Viking Museum', icon: '⛵', colour: '#1d4ed8', welcome: 'Ahoy! Choose a Viking object from a home, ship or trading town.', artefacts: [
+    { name: 'Longship model', icon: '⛵', fact: 'Viking longships were fast and shallow, so they could cross seas and travel up rivers.', challenge: 'Why would a shallow boat be useful on a river?' },
+    { name: 'Silver arm ring', icon: '💍', fact: 'Silver arm rings could be worn as jewellery and cut into pieces to use as payment.', challenge: 'How is this different from using coins or a card?' },
+    { name: 'Viking comb', icon: '🪮', fact: 'Vikings used combs made from bone or antler. Finds show that looking tidy mattered to them.', challenge: 'What everyday object might archaeologists find from us?' },
+    { name: 'Runestone', icon: '🪨', fact: 'Runes were letters used by Vikings. They could be carved into stone, wood or metal.', challenge: 'Try making a secret message from simple lines.' },
+    { name: 'Trading scales', icon: '⚖️', fact: 'Traders used small scales and weights to measure silver fairly.', challenge: 'Why is it important that traders measure fairly?' },
+    { name: 'Shield boss', icon: '🛡️', fact: 'The round metal bump in the middle of a shield protected the hand holding it.', challenge: 'Where would you put strength in a shield design?' },
+  ] },
+  space: { title: 'Space & Inventions Museum', icon: '🚀', colour: '#6d28d9', welcome: 'Blast off! These objects show how people explored space and changed everyday life.', artefacts: [
+    { name: 'Moon rock', icon: '🌑', fact: 'Moon rocks were brought back by Apollo astronauts. They help scientists compare the Moon with Earth.', challenge: 'What would you want to test in a Moon rock?' },
+    { name: 'Apollo spacesuit glove', icon: '🧤', fact: 'A spacesuit protects astronauts from no air, extreme temperatures and tiny space dust.', challenge: 'What does an astronaut need that we do not need on Earth?' },
+    { name: 'Satellite model', icon: '🛰️', fact: 'Satellites orbit Earth and help with maps, weather forecasts and communication.', challenge: 'Which satellite job would help your family most?' },
+    { name: 'Early telephone', icon: '☎️', fact: 'Early telephones sent sound along wires. Today phones can send voices, pictures and maps.', challenge: 'What could an old telephone not do?' },
+    { name: 'Steam engine valve', icon: '⚙️', fact: 'Steam engines helped power trains, factories and ships during the Industrial Revolution.', challenge: 'What do machines need in order to move?' },
+    { name: 'First computer memory', icon: '💾', fact: 'Early computers filled rooms, but modern devices can hold far more information in a tiny space.', challenge: 'What would you save in a digital time capsule?' },
+  ] },
+  nature: { title: 'Natural World Museum', icon: '🌍', colour: '#047857', welcome: 'Let’s investigate amazing objects from the natural world.', artefacts: [
+    { name: 'Blue whale jawbone', icon: '🐋', fact: 'Blue whales are the largest animals known to have lived. Their jawbones are enormous.', challenge: 'Why might a huge animal need a huge jaw?' },
+    { name: 'Meteorite', icon: '☄️', fact: 'Meteorites are pieces of rock from space that land on Earth.', challenge: 'How can scientists tell a meteorite from an ordinary rock?' },
+    { name: 'Coral skeleton', icon: '🪸', fact: 'Coral animals build hard homes that grow into reefs, which provide shelter for many sea creatures.', challenge: 'Why are reefs important underwater neighbourhoods?' },
+    { name: 'Mammoth tusk', icon: '🐘', fact: 'Woolly mammoths had long curved tusks. They used them to move snow and find food.', challenge: 'How do animals use different body parts as tools?' },
+    { name: 'Butterfly collection', icon: '🦋', fact: 'Butterfly wing patterns can help with camouflage, warning colours or finding a mate.', challenge: 'Design wings that would help a butterfly hide.' },
+    { name: 'Giant crystal', icon: '💎', fact: 'Crystals form when atoms arrange themselves in repeating patterns as minerals grow.', challenge: 'Can you find a repeating shape in the crystal?' },
+  ] },
+};
 type MuseumKey = keyof typeof MUSEUMS;
 
 const shell = 'min-h-screen bg-gradient-to-b from-sky-200 via-white to-emerald-100 text-slate-900';
@@ -68,7 +116,7 @@ export default function SodafomAdventurePage() {
   const [museumChoice,setMuseumChoice] = useState<MuseumKey | null>(null);
   const [museumQuestion,setMuseumQuestion] = useState('');
   const [museumMessage,setMuseumMessage] = useState('What museum would you like to see today? You can choose a gallery below, type one, or tell Archie.');
-  const [museumRoom,setMuseumRoom] = useState<number | null>(null);
+  const [museumArtefact,setMuseumArtefact] = useState<number | null>(null);
   const recognitionRef = useRef<any>(null);
 
   const speak = (text:string) => {
@@ -142,11 +190,11 @@ export default function SodafomAdventurePage() {
 
   const openMuseum = (key:MuseumKey) => {
     const chosen = MUSEUMS[key];
-    setMuseumChoice(key); setMuseumRoom(null); setMuseumQuestion(''); setMuseumMessage(chosen.welcome); speak(chosen.welcome);
+    setMuseumChoice(key); setMuseumArtefact(null); setMuseumQuestion(''); setMuseumMessage(chosen.welcome); speak(chosen.welcome);
   };
   const chooseMuseumFromWords = () => {
     const words = museumQuestion.toLowerCase();
-    const key: MuseumKey = /dino|t.rex|fossil/.test(words) ? 'dinosaurs' : /egypt|british|mumm|pharaoh/.test(words) ? 'british' : /roman/.test(words) ? 'romans' : /viking|york|longship/.test(words) ? 'vikings' : 'dinosaurs';
+    const key: MuseumKey = /dino|t.rex|fossil|ammonite/.test(words) ? 'dinosaurs' : /egypt|british|mumm|pharaoh|rosetta/.test(words) ? 'british' : /roman/.test(words) ? 'romans' : /viking|york|longship|rune/.test(words) ? 'vikings' : /space|moon|rocket|invent/.test(words) ? 'space' : /nature|whale|coral|mammoth/.test(words) ? 'nature' : 'dinosaurs';
     openMuseum(key);
   };
   const Museum = () => {
@@ -157,10 +205,10 @@ export default function SodafomAdventurePage() {
         <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">{(Object.entries(MUSEUMS) as [MuseumKey, typeof MUSEUMS[MuseumKey]][]).map(([key,museum])=><button key={key} onClick={()=>openMuseum(key)} style={{background:`linear-gradient(145deg, ${museum.colour}, #0f172a)`}} className="aspect-square rounded-full border-8 border-white p-4 text-white shadow-xl transition hover:-translate-y-1 active:scale-95"><div className="text-5xl">{museum.icon}</div><div className="mt-2 font-black">{museum.title}</div></button>)}</div>
       </div></div> : <div className="mx-auto max-w-6xl px-4 pb-8"><div className="overflow-hidden rounded-[2rem] border-8 border-white bg-slate-900 shadow-2xl">
         <div className="relative min-h-[520px] overflow-hidden bg-[radial-gradient(circle_at_50%_10%,#fef3c7_0%,#a16207_2%,transparent_22%),linear-gradient(180deg,#0f766e_0%,#164e63_42%,#78350f_43%,#b45309_100%)] p-5 text-white">
-          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/20 to-transparent"/><div className="relative flex flex-wrap items-center justify-between gap-3"><button onClick={()=>{setMuseumChoice(null);setMuseumRoom(null)}} className={`${button} bg-white text-teal-900`}>← Choose a museum</button><div className="rounded-full border-2 border-white bg-black/30 px-4 py-2 font-black">{chosen.icon} {chosen.title}</div></div>
-          <div className="relative mx-auto mt-7 max-w-2xl rounded-[2rem] border-4 border-white bg-white p-4 text-center font-black text-blue-950 shadow-xl"><div className="flex items-center justify-center gap-3"><ArchieCharacter size={72}/><p>{museumRoom===null ? museumMessage : chosen.rooms[museumRoom][2]}</p></div></div>
-          <div className="relative mx-auto mt-12 grid max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3">{chosen.rooms.map(([name,icon,fact],index)=><button key={name} onClick={()=>{setMuseumRoom(index);setMuseumMessage(fact);speak(`${name}. ${fact}`)}} className={`min-h-56 rounded-t-[5rem] border-8 p-5 shadow-2xl transition hover:-translate-y-2 active:scale-95 ${museumRoom===index?'border-yellow-300 bg-amber-500':'border-amber-200 bg-gradient-to-b from-amber-200 to-amber-700'}`}><div className="text-7xl drop-shadow">{icon}</div><div className="mt-4 rounded-xl bg-white/90 p-2 font-black text-slate-900">{name}</div><div className="mt-2 text-xs font-bold">Tap to walk in</div></button>)}</div>
-          <div className="relative mx-auto mt-8 max-w-2xl rounded-2xl bg-black/30 p-3 text-center text-sm font-bold">Walk around by tapping a gallery door. Archie explains each artefact and reads it aloud.</div>
+          <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-white/20 to-transparent"/><div className="relative flex flex-wrap items-center justify-between gap-3"><button onClick={()=>{setMuseumChoice(null);setMuseumArtefact(null)}} className={`${button} bg-white text-teal-900`}>← Choose a museum</button><div className="rounded-full border-2 border-white bg-black/30 px-4 py-2 font-black">{chosen.icon} {chosen.title}</div></div>
+          <div className="relative mx-auto mt-7 max-w-3xl rounded-[2rem] border-4 border-white bg-white p-4 text-center font-black text-blue-950 shadow-xl"><div className="flex items-center justify-center gap-3"><ArchieCharacter size={72}/><p>{museumMessage}</p></div>{museumArtefact !== null && <div className="mt-3 rounded-2xl bg-yellow-100 p-3 text-sm text-amber-950">🔍 Archie asks: {chosen.artefacts[museumArtefact].challenge}</div>}</div>
+          <div className="relative mx-auto mt-8 grid max-w-5xl grid-cols-2 gap-4 sm:grid-cols-3">{chosen.artefacts.map((artefact,index)=><button key={artefact.name} onClick={()=>{setMuseumArtefact(index);setMuseumMessage(artefact.fact);speak(`${artefact.name}. ${artefact.fact} ${artefact.challenge}`)}} className={`min-h-48 rounded-[2rem] border-8 p-4 shadow-2xl transition hover:-translate-y-2 active:scale-95 ${museumArtefact===index?'border-yellow-300 bg-amber-500':'border-amber-200 bg-gradient-to-b from-amber-100 to-amber-700'}`}><div className="text-6xl drop-shadow">{artefact.icon}</div><div className="mt-3 rounded-xl bg-white/90 p-2 text-sm font-black text-slate-900">{artefact.name}</div><div className="mt-2 text-xs font-bold">Tap to investigate</div></button>)}</div>
+          <div className="relative mx-auto mt-8 max-w-2xl rounded-2xl bg-black/30 p-3 text-center text-sm font-bold">Choose every artefact to fill Archie’s Museum Explorer collection. Each one includes a spoken fact and a thinking question.</div>
         </div></div></div>}
     </main>;
   };
@@ -183,7 +231,7 @@ export default function SodafomAdventurePage() {
   const Settings = () => <main className="min-h-screen bg-gradient-to-b from-amber-100 via-white to-emerald-100 text-slate-900">{top('Sodafom Settings','The windmill workshop')}
     <div className="mx-auto max-w-5xl px-4 pb-8"><div className={`${panel} overflow-hidden bg-gradient-to-b from-amber-100 to-amber-50 p-6`}><div className="text-center"><div className="animate-spin text-8xl [animation-duration:12s]">🌬️</div><h2 className="mt-2 text-3xl font-black text-amber-900">Windmill Settings</h2></div><div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">{[['🔊','Audio & Voice'],['👤','Child Profile'],['🖥️','Display'],['🌐','Language'],['🛡️','Privacy & Safety'],['📚','Learning Preferences'],['👨‍👩‍👧','Account'],['🔒','Admin Access']].map(([icon,label],i)=><button key={label} onClick={()=>label==='Admin Access'?navigate('/admin-panel'):label==='Account'?navigate('/hub/subscription'):undefined} className={`relative aspect-square rounded-full border-8 border-amber-700 bg-amber-300 p-4 font-black text-amber-950 shadow-xl transition hover:rotate-6 active:scale-95 ${i%2?'animate-[spin_18s_linear_infinite_reverse]':''}`}><div className="text-4xl">{icon}</div><div className="mt-2 text-sm">{label}</div></button>)}</div><div className="mt-5 rounded-3xl bg-white p-4 text-center font-bold text-blue-950">Subscription management and cancellation are inside Account. Admin is separately protected.</div></div></div></main>;
 
-  const current = useMemo(()=>({home:<Home/>,stories:<Stories/>,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,museum:<Museum/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,listening,homeworkImage,episode,parentPin,parentOpen,classCode,stickerTab,museumChoice,museumQuestion,museumMessage,museumRoom]);
+  const current = useMemo(()=>({home:<Home/>,stories:<Stories/>,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,museum:<Museum/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,listening,homeworkImage,episode,parentPin,parentOpen,classCode,stickerTab,museumChoice,museumQuestion,museumMessage,museumArtefact]);
 
   return <><Helmet><title>Sodafom — Archie Learning</title></Helmet>{current}</>;
 }
