@@ -7,6 +7,7 @@
     { "id": "security",  "label": "Access Codes" },
     { "id": "insurance", "label": "Insurance" },
     { "id": "promo",     "label": "🎟️ Promo Codes" },
+    { "id": "vouchers",  "label": "✨ AI Vouchers" },
     { "id": "push",      "label": "🔔 Push" }
   ]
 }

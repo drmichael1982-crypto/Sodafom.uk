@@ -233,6 +233,18 @@ export const promoActivations = mysqlTable('promo_activations', {
   redeemedAt: timestamp('redeemed_at').defaultNow(),
 });
 
+/** Parent-only external-AI packs; intentionally separate from subscriptions. */
+export const aiVoucherPacks = mysqlTable('ai_voucher_packs', {
+  id: int('id').primaryKey().autoincrement(),
+  slug: varchar('slug', { length: 32 }).notNull().unique(),
+  credits: int('credits').notNull(),
+  displayName: varchar('display_name', { length: 80 }).notNull(),
+  stripeTestPriceId: varchar('stripe_test_price_id', { length: 255 }),
+  enabled: boolean('enabled').notNull().default(false),
+  sortOrder: int('sort_order').notNull().default(0),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+});
+
 /**
  * Catalogue of reward characters that can be unlocked using stars.
  */

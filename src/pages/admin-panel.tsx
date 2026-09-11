@@ -585,8 +585,41 @@ function PromoAdminTab() {
   );
 }
 
+// ── AI voucher controls (separate from the £4.99 subscription route) ─────────
+type VoucherPack = { id: number; credits: number; displayName: string; stripeTestPriceId: string | null; enabled: boolean };
+
+function VoucherAdminTab() {
+  const [packs, setPacks] = useState<VoucherPack[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<number | null>(null);
+  const [message, setMessage] = useState('');
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_PREFIX}/admin/vouchers`, { credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not load voucher packs');
+      setPacks(data.packs);
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not load voucher packs'); }
+    finally { setLoading(false); }
+  };
+  useEffect(() => { void load(); }, []);
+  const update = (id: number, change: Partial<VoucherPack>) => setPacks(current => current.map(pack => pack.id === id ? { ...pack, ...change } : pack));
+  const save = async (pack: VoucherPack) => {
+    setSaving(pack.id); setMessage('');
+    try {
+      const res = await fetch(`${API_PREFIX}/admin/vouchers`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pack) });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save voucher pack');
+      setMessage(`${pack.credits}-credit voucher saved.`); await load();
+    } catch (error) { setMessage(error instanceof Error ? error.message : 'Could not save voucher pack'); }
+    finally { setSaving(null); }
+  };
+  return <div className="space-y-5"><section className="rounded-3xl border-2 border-violet-200 bg-gradient-to-br from-violet-50 to-sky-50 p-6 shadow-sm"><div className="flex items-start gap-3"><Ticket className="mt-1 text-violet-700" /><div><h3 className="text-lg font-black text-foreground">AI Voucher Route — Test Mode</h3><p className="mt-1 text-sm font-semibold text-muted-foreground">Separate from the £4.99 monthly route. Add a Stripe test Price ID, then switch on each pack you want to test.</p></div></div></section>{message && <p className="rounded-xl bg-muted p-3 text-sm font-bold">{message}</p>}{loading ? <p className="font-bold text-muted-foreground">Loading voucher packs…</p> : <div className="grid gap-4 md:grid-cols-2">{packs.map(pack => <section key={pack.id} className="rounded-3xl border border-border bg-card p-5 shadow-sm"><div className="flex items-center justify-between gap-3"><h4 className="text-xl font-black">{pack.credits} AI credits</h4><button onClick={() => update(pack.id, { enabled: !pack.enabled })} className={`rounded-full px-3 py-1 text-xs font-black ${pack.enabled ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}`}>{pack.enabled ? 'ON' : 'OFF'}</button></div><label className="mt-4 block text-xs font-black uppercase text-muted-foreground">Parent-facing name</label><input value={pack.displayName} onChange={event => update(pack.id, { displayName: event.target.value })} className="mt-1 w-full rounded-xl border border-border bg-background p-2.5 font-bold" /><label className="mt-3 block text-xs font-black uppercase text-muted-foreground">Stripe test Price ID</label><input value={pack.stripeTestPriceId || ''} onChange={event => update(pack.id, { stripeTestPriceId: event.target.value || null })} placeholder="price_…" className="mt-1 w-full rounded-xl border border-border bg-background p-2.5 font-mono text-sm" /><button onClick={() => void save(pack)} disabled={saving === pack.id} className="mt-4 w-full rounded-xl bg-violet-700 py-2.5 font-black text-white disabled:opacity-50">{saving === pack.id ? 'Saving…' : 'Save this voucher route'}</button></section>)}</div>}</div>;
+}
+
 // ── Tab button ────────────────────────────────────────────────────────────────
-type Tab = 'overview' | 'revenue' | 'traffic' | 'reviews' | 'security' | 'insurance' | 'push' | 'promo' | 'evaluation' | 'bot' | 'founder';
+type Tab = 'overview' | 'revenue' | 'traffic' | 'reviews' | 'security' | 'insurance' | 'push' | 'promo' | 'vouchers' | 'evaluation' | 'bot' | 'founder';
 
 // ── Bot Admin Tab ─────────────────────────────────────────────────────────────
 function BotAdminTab() {
@@ -1201,6 +1234,7 @@ export default function AdminPanel() {
               {activeTab === 'insurance' && <InsuranceTab stats={stats} />}
 
               {activeTab === 'promo' && <PromoAdminTab />}
+              {activeTab === 'vouchers' && <VoucherAdminTab />}
 
               {activeTab === 'push' && <PushAdminTab />}
 

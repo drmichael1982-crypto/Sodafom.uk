@@ -13,6 +13,8 @@ import admin_promo_get from "./api/admin/promo/GET";
 import admin_promo_post from "./api/admin/promo/POST";
 import admin_promo_toggle_post from "./api/admin/promo/toggle/POST";
 import admin_verify_post_extra from "./api/admin/verify/POST";
+import admin_vouchers_get from "./api/admin/vouchers/GET";
+import admin_vouchers_post from "./api/admin/vouchers/POST";
 import admin_founder_changes_get from "./api/admin/founder-changes/GET";
 import admin_founder_changes_post from "./api/admin/founder-changes/POST";
 import auth_change_password_post_4 from "./api/auth/change-password/POST";
@@ -233,6 +235,8 @@ app.get("/api/admin/promo", admin_promo_get);
 app.post("/api/admin/promo", admin_promo_post);
 app.post("/api/admin/promo/toggle", admin_promo_toggle_post);
 app.post("/api/admin/verify", admin_verify_post_extra);
+app.get("/api/admin/vouchers", admin_vouchers_get);
+app.post("/api/admin/vouchers", admin_vouchers_post);
 app.get("/api/admin/founder-changes", admin_founder_changes_get);
 app.post("/api/admin/founder-changes", admin_founder_changes_post);
 app.post("/api/auth/change-password", auth_change_password_post_4);
@@ -501,6 +505,27 @@ const initializeProject = async () => {
     )
   `).then(() => console.log('✅ push_subscriptions table ready'))
     .catch((err: unknown) => console.warn('⚠️  push_subscriptions migration skipped:', (err as Error).message));
+
+  db.execute(sql`
+    CREATE TABLE IF NOT EXISTS ai_voucher_packs (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      slug VARCHAR(32) NOT NULL UNIQUE,
+      credits INT NOT NULL,
+      display_name VARCHAR(80) NOT NULL,
+      stripe_test_price_id VARCHAR(255) DEFAULT NULL,
+      enabled TINYINT(1) NOT NULL DEFAULT 0,
+      sort_order INT NOT NULL DEFAULT 0,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `).then(async () => {
+    for (const credits of [5, 10, 15, 20, 25, 30]) {
+      await db.execute(sql`
+        INSERT IGNORE INTO ai_voucher_packs (slug, credits, display_name, sort_order)
+        VALUES (${`ai-${credits}`}, ${credits}, ${`${credits} AI credits`}, ${credits})
+      `);
+    }
+    console.log('✅ AI voucher packs ready (off until enabled in Admin)');
+  }).catch((err: unknown) => console.warn('⚠️ AI voucher migration skipped:', (err as Error).message));
 
   // Seed reward characters — 100-star intervals, all original Sodafom characters
   // runCharacterMigration also adds active_character_id column to children (safe re-run)
