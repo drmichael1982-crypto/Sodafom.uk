@@ -36,14 +36,6 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    // MASTER ACCESS CODE BYPASS
-    if (password === '1182') {
-      // Set a flag in localStorage for "free access"
-      localStorage.setItem('sodafom_free_access', 'true');
-      navigate(from, { replace: true });
-      return;
-    }
-
     try {
       console.log('Attempting sign in for:', email);
       const result = await signIn.email({

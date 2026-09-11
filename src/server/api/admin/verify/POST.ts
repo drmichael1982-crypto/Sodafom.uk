@@ -1,6 +1,6 @@
 import type { Request, Response } from 'express';
-import { isValidAdminCode } from '../code/GET';
 import { getAuth } from '@/lib/auth/auth';
+import { isValidAdminCode } from '@/server/lib/admin-access';
 
 export default async function handler(req: Request, res: Response) {
   const auth = getAuth();

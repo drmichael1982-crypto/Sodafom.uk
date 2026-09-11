@@ -18,7 +18,7 @@ export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
 
   useEffect(() => {
-    const isResearch = localStorage.getItem('sodafom_research_mode') === 'true' || localStorage.getItem('sodafom_free_access') === 'true';
+    const isResearch = localStorage.getItem('sodafom_research_mode') === 'true';
     if (isResearch) navigate('/', { replace: true });
   }, [navigate]);
 

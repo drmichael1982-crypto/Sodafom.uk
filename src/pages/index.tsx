@@ -237,14 +237,12 @@ export default function HomePage() {
   const [researchMode, setResearchMode] = useState(() => {
     if (OPEN_TESTING_MODE) return true;
     if (typeof window === 'undefined') return false;
-    const isFreeAccess = localStorage.getItem('sodafom_free_access') === 'true';
-    return isFreeAccess || localStorage.getItem('sodafom_research_mode') === 'true';
+    return localStorage.getItem('sodafom_research_mode') === 'true';
   });
 
   React.useEffect(() => {
     const handleResearchChange = () => {
-      const isFreeAccess = localStorage.getItem('sodafom_free_access') === 'true';
-      setResearchMode(OPEN_TESTING_MODE || isFreeAccess || localStorage.getItem('sodafom_research_mode') === 'true');
+      setResearchMode(OPEN_TESTING_MODE || localStorage.getItem('sodafom_research_mode') === 'true');
     };
     window.addEventListener('sodafom_research_mode_change', handleResearchChange);
     return () => window.removeEventListener('sodafom_research_mode_change', handleResearchChange);

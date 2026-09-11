@@ -9,6 +9,7 @@ import { db } from '../../../db/client.js';
 import { sql } from 'drizzle-orm';
 import { getOrCreateVapidKeys } from '../../../push-keys.js';
 import { getAuth } from '@/lib/auth/auth';
+import { isValidAdminCode } from '@/server/lib/admin-access';
 
 interface PushRow {
   endpoint: string;
@@ -32,10 +33,8 @@ export default async function handler(req: Request, res: Response) {
     }
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-    const masterCodeEnv = process.env.ADMIN_MASTER_CODE || '040718';
-
-    // Allow access if user is a signed-in admin OR provides the correct master code
-    if (!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin && code !== masterCodeEnv) {
+    // Allow access if user is a signed-in admin or provides a configured admin code.
+    if (!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin && !isValidAdminCode(code)) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

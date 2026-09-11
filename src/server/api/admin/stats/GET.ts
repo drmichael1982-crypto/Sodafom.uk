@@ -9,8 +9,8 @@ import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { user, subscriptions, promoActivations, siteReviews } from '@/server/db/schema';
 import { sql, count, desc } from 'drizzle-orm';
-import { isValidAdminCode } from '../code/GET';
 import { getAuth } from '@/lib/auth/auth';
+import { isValidAdminCode } from '@/server/lib/admin-access';
 
 // Price → plan label + monthly GBP value (for revenue estimate)
 const PRICE_MAP: Record<string, { label: string; monthlyGBP: number }> = {

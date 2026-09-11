@@ -796,7 +796,7 @@ export default function AdminPanel() {
   const initialTab = searchParams.get('tab') as Tab;
 
   const [code, setCode]             = useState('');
-  const [authed, setAuthed]         = useState(true); // Open directly without password gate
+  const [authed, setAuthed]         = useState(false);
   const [customPassword, setCustomPassword] = useState(() => prepareLocalAdminPassword());
   const [adminUnlocked, setAdminUnlocked] = useState(() => !prepareLocalAdminPassword());
   const [unlockPassword, setUnlockPassword] = useState('');
@@ -826,10 +826,12 @@ export default function AdminPanel() {
     window.dispatchEvent(new Event('sodafom_research_mode_change'));
   };
 
-  // Fetch stats immediately on open (no password gate)
+  // Signed-in administrators can load the dashboard without entering a code.
   React.useEffect(() => {
-    fetchStats('1182');
-  }, []);
+    if (!isPending && isAuthenticated && user?.isAdmin) {
+      void fetchStats('');
+    }
+  }, [isPending, isAuthenticated, user?.isAdmin]);
 
   async function fetchStats(adminCode: string) {
     setLoading(true);
@@ -837,8 +839,11 @@ export default function AdminPanel() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 7000);
     try {
+      const headers: HeadersInit = {};
+      if (adminCode) headers['x-admin-code'] = adminCode;
       const res  = await fetch(`${API_PREFIX}/admin/stats`, {
-        headers: { 'x-admin-code': adminCode },
+        headers,
+        credentials: 'include',
         signal: controller.signal
       });
       clearTimeout(timeoutId);
@@ -868,18 +873,18 @@ export default function AdminPanel() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (code === '1182') {
-      setAuthed(true);
-      fetchStats('1182');
-      return;
-    }
-    fetchStats(code);
+    void fetchStats(code.trim());
   }
 
   async function fetchRollingCode() {
     setCodeLoading(true);
     try {
-      const res  = await fetch(`${API_PREFIX}/admin/code`);
+      const headers: HeadersInit = {};
+      if (code) headers['x-admin-code'] = code;
+      const res  = await fetch(`${API_PREFIX}/admin/code`, {
+        headers,
+        credentials: 'include',
+      });
       const data = await res.json();
       if (data.success) setRollingCode(data);
     } catch { /* silent */ } finally {
@@ -931,9 +936,51 @@ export default function AdminPanel() {
     );
   }
 
-  // ── Access Denied for non-admin users ───────────────────────────────────────
-  // REMOVED: Allow all authenticated users to see the code input fallback
-  // if (isAuthenticated && !user?.isAdmin && !authed) { ... }
+  if (!authed) {
+    return (
+      <main className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+        <form onSubmit={handleSubmit} className="w-full max-w-md bg-card border-2 border-primary/30 rounded-3xl p-7 shadow-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <ShieldCheck className="text-primary" />
+            <h1 className="text-xl font-black">Founder/Admin Access</h1>
+          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            {isAuthenticated && user?.isAdmin
+              ? 'Opening your secure admin dashboard…'
+              : 'Enter the founder/admin code. It is checked securely by the server.'}
+          </p>
+          {!(isAuthenticated && user?.isAdmin) && (
+            <>
+              <input
+                type="password"
+                value={code}
+                onChange={(event) => setCode(event.target.value)}
+                autoComplete="current-password"
+                className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background font-bold"
+                placeholder="Founder/admin code"
+              />
+              {wrongCode && <p className="mt-2 text-sm font-bold text-red-600">{error || 'Invalid access code.'}</p>}
+              <button
+                type="submit"
+                disabled={loading || !code.trim()}
+                className="mt-4 w-full py-3 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50"
+              >
+                {loading ? 'Checking…' : 'Open Admin Hub'}
+              </button>
+            </>
+          )}
+          {isAuthenticated && user?.isAdmin && loading && (
+            <div className="flex items-center justify-center gap-2 font-bold text-primary">
+              <Loader2 className="animate-spin" size={18} /> Securely loading…
+            </div>
+          )}
+          {isAuthenticated && user?.isAdmin && error && (
+            <p className="mt-2 text-sm font-bold text-red-600">{error}</p>
+          )}
+        </form>
+      </main>
+    );
+  }
 
   // ── Dashboard ───────────────────────────────────────────────────────────────
   return (

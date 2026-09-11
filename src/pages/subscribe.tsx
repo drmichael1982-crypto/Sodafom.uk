@@ -89,7 +89,7 @@ export default function SubscribePage() {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    const isResearch = localStorage.getItem('sodafom_research_mode') === 'true' || localStorage.getItem('sodafom_free_access') === 'true';
+    const isResearch = localStorage.getItem('sodafom_research_mode') === 'true';
     if (isResearch) navigate('/', { replace: true });
   }, [navigate]);
 

@@ -38,13 +38,12 @@ export function useSubscription(): SubscriptionState {
   const [state, setState] = useState<SubscriptionState>(DEFAULT);
   const [researchMode, setResearchMode] = useState(() => {
     if (typeof window === 'undefined') return false;
-    const isFreeAccess = localStorage.getItem('sodafom_free_access') === 'true';
-    return isFreeAccess || localStorage.getItem('sodafom_research_mode') === 'true';
+    return localStorage.getItem('sodafom_research_mode') === 'true';
   });
 
   React.useEffect(() => {
     const handleResearchChange = () => {
-      setResearchMode(localStorage.getItem('sodafom_research_mode') === 'true' || localStorage.getItem('sodafom_free_access') === 'true');
+      setResearchMode(localStorage.getItem('sodafom_research_mode') === 'true');
     };
     window.addEventListener('sodafom_research_mode_change', handleResearchChange);
     return () => window.removeEventListener('sodafom_research_mode_change', handleResearchChange);
