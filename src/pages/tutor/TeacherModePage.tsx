@@ -280,40 +280,42 @@ export default function TeacherModePage() {
   const progressPercent = ((currentQuestionIndex + 1) / Math.max(1, currentLesson.questions.length)) * 100;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-yellow-50 via-amber-50 to-green-50 flex flex-col font-sans">
+    <div className="relative min-h-screen overflow-hidden bg-sky-800 flex flex-col font-sans">
       <Helmet>
         <title>Sodafom One-to-One Tutor Mode</title>
       </Helmet>
+      <div className="fixed inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/assets/cartoon/home-landscape-v2.png')" }} aria-hidden="true" />
+      <div className="fixed inset-0 bg-gradient-to-b from-blue-500/55 via-indigo-800/75 to-blue-950/95" aria-hidden="true" />
 
       {/* Header */}
-      <header className="p-4 bg-white/90 backdrop-blur border-b border-yellow-200 sticky top-0 z-20 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <header className="relative z-20 m-3 flex flex-col gap-3 rounded-[1.75rem] border-4 border-white/80 bg-gradient-to-r from-sky-500 via-blue-600 to-purple-700 p-3 text-white shadow-2xl sm:m-4 sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <div className="flex w-full items-center gap-3 sm:w-auto">
           <button
             onClick={() => { stopTts(); navigate('/'); }}
-            className="w-10 h-10 rounded-full bg-green-600 text-white flex items-center justify-center shadow active:scale-95"
+            className="w-11 h-11 rounded-full border-2 border-white/80 bg-white text-sky-900 flex items-center justify-center shadow active:scale-95"
           >
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-base font-black text-gray-900 leading-tight flex items-center gap-2">
+            <h1 className="text-base font-black text-white leading-tight flex items-center gap-2 sm:text-xl">
               1-to-1 Tutor <Award size={16} className="text-yellow-500" />
             </h1>
-            <p className="text-[11px] font-extrabold text-amber-700">
+            <p className="text-[11px] font-extrabold text-yellow-200 sm:text-sm">
               {profile.childName ? `Learning with ${profile.childName}` : 'Child Profile Ready'} · {answerSource}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="grid w-full grid-cols-2 items-center gap-2 sm:flex sm:w-auto">
           <button
             onClick={() => setShowProfileSetup(true)}
-            className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-xs rounded-full border border-amber-300 flex items-center gap-1.5"
+            className="px-3 py-2 bg-white/95 text-purple-900 font-extrabold text-xs rounded-full border-2 border-white flex items-center gap-1.5 shadow"
           >
             <Settings size={14} /> Profile
           </button>
           <button
             onClick={() => navigate('/parent-dashboard')}
-            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs rounded-full shadow flex items-center gap-1.5"
+            className="px-3 py-2 bg-yellow-400 text-indigo-950 font-extrabold text-xs rounded-full border-2 border-yellow-200 shadow flex items-center gap-1.5"
           >
             Parent Report
           </button>
@@ -321,7 +323,7 @@ export default function TeacherModePage() {
       </header>
 
       {/* Main Body */}
-      <main className="flex-1 max-w-4xl w-full mx-auto p-4 flex flex-col gap-4">
+      <main className="relative z-10 flex-1 max-w-4xl w-full mx-auto p-4 pt-1 flex flex-col gap-4 pb-24">
         {showProfileSetup ? (
           <ChildProfileManager
             onComplete={handleProfileComplete}
@@ -331,7 +333,7 @@ export default function TeacherModePage() {
         ) : (
           <>
             {/* Top Classroom Row: Mascot + Control Toolbar */}
-            <div className="flex items-center justify-between bg-white/80 p-4 rounded-3xl border-2 border-yellow-200 shadow-sm">
+            <div className="flex flex-col gap-4 overflow-hidden bg-gradient-to-br from-white via-sky-50 to-yellow-100 p-4 rounded-[2rem] border-4 border-white/90 shadow-2xl sm:flex-row sm:items-center sm:justify-between sm:p-5">
               <div className="flex items-center gap-3">
                 <ArchieCharacter
                   size={90}

@@ -10,6 +10,8 @@ import BirthdayPage from '../BirthdayPage';
 import ArchieOutfitPage from '../ArchieOutfitPage';
 import SeasonalThemesPage from '../SeasonalThemesPage';
 import HolidayTravelPage from '../HolidayTravelPage';
+import ReadingPage from '../ReadingPage';
+import ParentAreaPage from '../ParentAreaPage';
 
 function renderPage(page: React.ReactNode) {
   return render(<HelmetProvider><MemoryRouter>{page}</MemoryRouter></HelmetProvider>);
@@ -55,6 +57,8 @@ describe("Archie's new feature menu", () => {
     ["Design Archie's Outfit", <ArchieOutfitPage />],
     ['Seasonal Themes', <SeasonalThemesPage />],
     ['Holiday & Travel', <HolidayTravelPage />],
+    ['Reading With Archie', <ReadingPage />],
+    ['Parent Area', <ParentAreaPage />],
   ])('renders the %s page without crashing', (heading, page) => {
     renderPage(page);
     expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();

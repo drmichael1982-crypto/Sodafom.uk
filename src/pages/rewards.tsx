@@ -117,7 +117,7 @@ function StarBank({ child, nextMilestone, milestones }: {
             <div className="text-right">
               <p className="text-primary-foreground/60 text-xs font-bold uppercase tracking-wide">{rewards.starBank.balanceLabel}</p>
               <p className="font-black text-4xl leading-none" style={{ fontFamily: 'var(--font-heading)' }}>
-                {child.totalStars.toLocaleString()}
+                {Number(child.totalStars ?? 0).toLocaleString()}
               </p>
               <p className="text-primary-foreground/70 text-xs">⭐ {rewards.starBank.starsUnit}</p>
             </div>
@@ -722,7 +722,7 @@ function RewardsContent() {
                       </h2>
                     </div>
                     <div className="text-xs font-bold text-muted-foreground bg-muted px-3 py-1 rounded-full">
-                      ⭐ {selectedChild?.totalStars.toLocaleString()} stars
+                      ⭐ {Number(selectedChild?.totalStars ?? 0).toLocaleString()} stars
                     </div>
                   </div>
 

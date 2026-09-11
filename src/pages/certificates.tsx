@@ -129,7 +129,7 @@ function StarCollectorCert({ child, date }: { child: Child; date: string }) {
         {child.avatarEmoji && <span className="mr-2">{child.avatarEmoji}</span>}{child.name}
       </h2>
       <p className="text-sm text-foreground mb-4 max-w-md">
-        for collecting an incredible <strong className="text-purple-700 text-lg">{child.total_stars.toLocaleString()} stars</strong> through dedicated learning and gameplay
+        for collecting an incredible <strong className="text-purple-700 text-lg">{Number(child.total_stars ?? 0).toLocaleString()} stars</strong> through dedicated learning and gameplay
       </p>
       <div className="flex justify-center gap-1 flex-wrap max-w-xs mb-2">
         {Array.from({ length: Math.min(child.total_stars, 15) }).map((_, i) => <span key={i} className="text-lg">⭐</span>)}

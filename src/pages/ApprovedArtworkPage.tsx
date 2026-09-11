@@ -70,7 +70,7 @@ const HOME_HOTSPOTS: Hotspot[] = [
   { label: 'Open Game Islands', left: 60, top: 48, width: 17, height: 20, route: '/game-islands' },
   { label: 'Open Homework Helper', left: 78, top: 48, width: 18, height: 20, route: '/homework-helper' },
   { label: 'Open Archie Theatre', left: 1, top: 68, width: 18, height: 21, route: '/archie-theatre' },
-  { label: "Open Parents' Evening", left: 19, top: 68, width: 18, height: 21, route: '/parent-dashboard' },
+  { label: "Open Parents' Evening", left: 19, top: 68, width: 18, height: 21, route: '/parent-area' },
   { label: 'Open Teacher Classroom', left: 36, top: 68, width: 18, height: 21, route: '/teacher-hub' },
   { label: 'Open Sodafom Shop', left: 53, top: 68, width: 17, height: 21, route: '/sodafom-shop' },
   { label: "Open Archie's Sticker Book", left: 70, top: 68, width: 17, height: 21, route: '/rewards' },
@@ -83,7 +83,7 @@ const HOME_HOTSPOTS: Hotspot[] = [
 const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> = {
   lessons: [
     { label: 'Return home', left: 0, top: 0, width: 9, height: 12, route: '/' },
-    { label: 'Start a structured lesson', left: 8, top: 25, width: 84, height: 65, route: '/tutor' },
+    { label: 'Choose a structured lesson', left: 8, top: 25, width: 84, height: 65, route: '/lesson-library' },
   ],
   'game-islands': [
     { label: 'Return home', left: 0, top: 0, width: 9, height: 12, route: '/' },
@@ -91,7 +91,7 @@ const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> 
   ],
   'homework-helper': [
     { label: 'Return home', left: 0, top: 0, width: 9, height: 10, route: '/' },
-    { label: 'Scan or explain homework', left: 7, top: 60, width: 86, height: 28, route: '/ai-teacher' },
+    { label: 'Scan or explain homework', left: 7, top: 60, width: 86, height: 28, route: '/homework-tools' },
   ],
   'archie-theatre': [
     { label: 'Return home', left: 0, top: 0, width: 9, height: 12, route: '/' },
@@ -107,7 +107,7 @@ const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> 
   ],
   stories: [
     { label: 'Return home', left: 0, top: 0, width: 9, height: 12, route: '/' },
-    { label: "Open Archie's reading collection", left: 7, top: 24, width: 86, height: 60, route: '/subjects/reading' },
+    { label: "Open Archie's reading collection", left: 7, top: 24, width: 86, height: 60, route: '/reading' },
     { label: 'Write your own story', left: 70, top: 74, width: 24, height: 19, route: '/story-writer' },
   ],
 };

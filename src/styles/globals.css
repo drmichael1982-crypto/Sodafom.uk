@@ -4,6 +4,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared illustrated canvas for the child app and its signed-in companion
+   pages. Individual feature pages can layer their own world artwork above it. */
+.sodafom-immersive-route {
+  min-height: 100vh;
+  background-color: #1d4ed8;
+  background-image:
+    linear-gradient(rgba(37, 99, 235, 0.64), rgba(30, 27, 75, 0.94)),
+    url('/assets/cartoon/home-landscape-v2.png');
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+}
+
+.sodafom-immersive-route main.bg-background,
+.sodafom-immersive-route div.bg-background.min-h-screen {
+  background-color: transparent !important;
+}
+
 @layer base {
   :root {
     /* Core Colors */

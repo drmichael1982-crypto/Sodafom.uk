@@ -52,7 +52,7 @@ export default function HubStatsBar() {
   const items = [
     {
       icon: <Star size={18} className="fill-accent text-accent" />,
-      value: stats.totalStars.toLocaleString(),
+      value: Number(stats.totalStars ?? 0).toLocaleString(),
       label: 'Total stars',
       href: '/star-bank',
       color: 'hover:bg-accent/10',

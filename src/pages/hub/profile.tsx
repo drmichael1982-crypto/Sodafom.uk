@@ -104,7 +104,7 @@ function ChildCard({
           <p className="text-muted-foreground text-xs">Age {child.ageGroup}</p>
         </div>
         <div className="text-right">
-          <p className="font-black text-yellow-600 text-lg leading-none">⭐ {child.totalStars.toLocaleString()}</p>
+          <p className="font-black text-yellow-600 text-lg leading-none">⭐ {Number(child.totalStars ?? 0).toLocaleString()}</p>
           <p className="text-muted-foreground text-xs">total stars</p>
         </div>
       </div>

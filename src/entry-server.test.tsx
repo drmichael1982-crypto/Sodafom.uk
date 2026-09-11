@@ -10,7 +10,6 @@ describe('SSR route redirects', () => {
     ['/sodafom-bot', '/ask-archie'],
     ['/classic-home', '/'],
     ['/games/game-pattern-maker', '/games/pattern-maker'],
-    ['/reading', '/subjects/reading'],
     ['/design-archie-outfit', '/archie-outfit'],
     ['/birthday-party', '/birthday'],
   ])('returns an HTTP redirect for %s', async (source, destination) => {
@@ -27,6 +26,15 @@ describe('SSR route redirects', () => {
     expect(result.status).toBe(200);
     expect(result.redirect).toBeUndefined();
     expect(result.html).toContain('Games &amp; Activities');
+  });
+
+  it('renders the illustrated reading area instead of the legacy marketing page', async () => {
+    const result = await render('/reading');
+
+    expect(result.status).toBe(200);
+    expect(result.redirect).toBeUndefined();
+    expect(result.html).toContain('Reading With Archie');
+    expect(result.html).toContain('/assets/cartoon/worlds/reading.png');
   });
 
   it('renders the child-friendly recovery page for an unknown route', async () => {

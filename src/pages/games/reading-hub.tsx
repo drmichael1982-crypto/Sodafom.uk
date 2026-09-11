@@ -77,7 +77,7 @@ export default function ReadingHubPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background pb-20">
+    <main className="min-h-screen bg-cover bg-center bg-fixed pb-20" style={{ backgroundImage: "linear-gradient(rgba(37,99,235,.76),rgba(30,27,75,.94)),url('/assets/cartoon/home-landscape-v2.png')" }}>
       <Helmet>
         <title>Reading Hub — Sodafom | Fun Learning Games for Kids</title>
         <meta name="description" content="Your reading learning hub on Sodafom. Browse all reading and comprehension games for ages 5–13." />
@@ -95,7 +95,7 @@ export default function ReadingHubPage() {
       </Helmet>
 
       {/* Hero banner — blue */}
-      <div className="bg-primary text-primary-foreground">
+      <div className="border-b-4 border-white/70 bg-cover bg-center text-white shadow-2xl" style={{ backgroundImage: "linear-gradient(rgba(30,64,175,.60),rgba(49,46,129,.88)),url('/assets/cartoon/worlds/reading.png')" }}>
         <div className="max-w-5xl mx-auto px-4 py-10">
           <div className="flex items-center gap-2 text-primary-foreground/70 text-sm mb-4">
             <Link to="/" className="hover:text-primary-foreground transition-colors">Home</Link>

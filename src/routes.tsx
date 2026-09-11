@@ -26,6 +26,9 @@ import CartPage from './pages/cart';
 import ForgotPasswordPage from './pages/hub/forgot-password';
 import ResetPasswordPage from './pages/hub/reset-password';
 import ParentDashboardPage from './pages/parent-dashboard';
+import ParentAreaPage from './pages/ParentAreaPage';
+import ReadingPage from './pages/ReadingPage';
+import ArchieFriendsPage from './pages/ArchieFriendsPage';
 import FeatureHubPage from './pages/FeatureHubPage';
 import LessonsPage from './pages/LessonsPage';
 import HomeworkHelperPage from './pages/HomeworkHelperPage';
@@ -230,6 +233,9 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/sodafom-settings',
   element: <ApprovedArtworkPage variant="settings" />
+}, {
+  path: '/archie-friends',
+  element: <ArchieFriendsPage />
 }, {
   path: '/archie-menu',
   element: <FeatureHubPage />
@@ -829,6 +835,9 @@ export const routes: RouteObject[] = [{
   path: '/parent-dashboard',
   element: <ParentDashboardPage />,
 }, {
+  path: '/parent-area',
+  element: <ParentAreaPage />,
+}, {
   path: '/daily-challenge',
   element: <DailyChallengePage />,
 }, {
@@ -863,7 +872,7 @@ export const routes: RouteObject[] = [{
   element: <AITeacherPage />
 }, {
   path: '/reading',
-  loader: () => redirect('/subjects/reading')
+  element: <ReadingPage />
 }, {
   path: '/chores',
   element: <ChoresPage />

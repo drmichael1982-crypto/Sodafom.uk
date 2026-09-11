@@ -87,7 +87,7 @@ export default function StreakFreezeButton({ childId, compact = false }: StreakF
           </div>
           <div className="flex items-center gap-1 text-sm font-black text-yellow-600">
             <Star size={14} className="fill-yellow-400 text-yellow-400" />
-            {data.totalStars.toLocaleString()} stars
+            {Number(data.totalStars ?? 0).toLocaleString()} stars
           </div>
         </div>
 

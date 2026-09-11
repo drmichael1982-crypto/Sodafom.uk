@@ -31,7 +31,7 @@ describe('Approved artwork navigation', () => {
     expect(screen.getByLabelText('current route')).toHaveTextContent('/lessons');
   });
 
-  it('connects the illustrated lesson classroom to the working tutor', () => {
+  it('connects the illustrated lesson classroom to the working lesson chooser', () => {
     render(
       <HelmetProvider>
         <MemoryRouter initialEntries={['/lessons']}>
@@ -41,7 +41,7 @@ describe('Approved artwork navigation', () => {
       </HelmetProvider>,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start a structured lesson' }));
-    expect(screen.getByLabelText('current route')).toHaveTextContent('/tutor');
+    fireEvent.click(screen.getByRole('button', { name: 'Choose a structured lesson' }));
+    expect(screen.getByLabelText('current route')).toHaveTextContent('/lesson-library');
   });
 });

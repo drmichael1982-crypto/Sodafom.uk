@@ -15,29 +15,25 @@ interface StreakRow {
   freeze_used_at: string | null;
 }
 
-interface StarRow { total_stars: number }
+interface ChildRow { id: number; total_stars: number }
 
 export default async function handler(req: Request, res: Response) {
   try {
     const session = await getAuth().api.getSession({ headers: req.headers as Record<string, string> });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
 
-    const childId = req.query['childId'] as string | undefined;
-    if (!childId) return res.status(400).json({ error: 'childId required' });
+    const childId = Number(req.query['childId']);
+    if (!Number.isInteger(childId) || childId <= 0) return res.status(400).json({ error: 'Valid childId required' });
 
     const childRows = (await db.execute(sql`
-      SELECT id FROM children WHERE id = ${childId} AND user_id = ${session.user.id} LIMIT 1
-    `))[0] as unknown as { id: string }[];
+      SELECT id, total_stars FROM children WHERE id = ${childId} AND parent_id = ${session.user.id} LIMIT 1
+    `))[0] as unknown as ChildRow[];
     if (!childRows.length) return res.status(404).json({ error: 'Child not found' });
 
     const streakRows = (await db.execute(sql`
       SELECT current_streak, max_streak, last_played_date, freeze_active, freeze_used_at
       FROM streak_tracker WHERE child_id = ${childId} LIMIT 1
     `))[0] as unknown as StreakRow[];
-
-    const starRows = (await db.execute(sql`
-      SELECT COALESCE(SUM(stars), 0) as total_stars FROM child_progress WHERE child_id = ${childId}
-    `))[0] as unknown as StarRow[];
 
     const streak = streakRows[0] ?? { current_streak: 0, max_streak: 0, last_played_date: null, freeze_active: 0, freeze_used_at: null };
 
@@ -47,7 +43,7 @@ export default async function handler(req: Request, res: Response) {
       lastPlayedDate: streak.last_played_date,
       freezeActive: Boolean(streak.freeze_active),
       freezeUsedAt: streak.freeze_used_at,
-      totalStars: Number(starRows[0]?.total_stars ?? 0),
+      totalStars: Number(childRows[0]?.total_stars ?? 0),
       freezeCost: 50,
     });
   } catch (err) {

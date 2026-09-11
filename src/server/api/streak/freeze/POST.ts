@@ -9,7 +9,7 @@ import { sql } from 'drizzle-orm';
 
 const FREEZE_COST = 50;
 
-interface StarRow { total_stars: number }
+interface ChildRow { id: number; total_stars: number }
 interface StreakRow { current_streak: number; freeze_active: number; freeze_used_at: string | null }
 
 export default async function handler(req: Request, res: Response) {
@@ -17,20 +17,16 @@ export default async function handler(req: Request, res: Response) {
     const session = await getAuth().api.getSession({ headers: req.headers as Record<string, string> });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
 
-    const { childId } = req.body as { childId: string };
-    if (!childId) return res.status(400).json({ error: 'childId required' });
+    const childId = Number((req.body as { childId?: string | number }).childId);
+    if (!Number.isInteger(childId) || childId <= 0) return res.status(400).json({ error: 'Valid childId required' });
 
     // Verify ownership
     const childRows = (await db.execute(sql`
-      SELECT id FROM children WHERE id = ${childId} AND user_id = ${session.user.id} LIMIT 1
-    `))[0] as unknown as { id: string }[];
+      SELECT id, total_stars FROM children WHERE id = ${childId} AND parent_id = ${session.user.id} LIMIT 1
+    `))[0] as unknown as ChildRow[];
     if (!childRows.length) return res.status(404).json({ error: 'Child not found' });
 
-    // Check current stars
-    const starRows = (await db.execute(sql`
-      SELECT COALESCE(SUM(stars), 0) as total_stars FROM child_progress WHERE child_id = ${childId}
-    `))[0] as unknown as StarRow[];
-    const totalStars = Number(starRows[0]?.total_stars ?? 0);
+    const totalStars = Number(childRows[0]?.total_stars ?? 0);
 
     if (totalStars < FREEZE_COST) {
       return res.status(400).json({ error: `Not enough stars. You need ${FREEZE_COST} stars to buy a freeze.`, totalStars });
@@ -46,7 +42,18 @@ export default async function handler(req: Request, res: Response) {
       return res.status(400).json({ error: 'A streak freeze is already active.' });
     }
 
-    // Deduct stars
+    // Deduct from the same running balance displayed by the child UI read everywhere else.
+    // The ownership and balance predicates make this safe if two requests race.
+    const updateResult = (await db.execute(sql`
+      UPDATE children
+      SET total_stars = total_stars - ${FREEZE_COST}
+      WHERE id = ${childId} AND parent_id = ${session.user.id} AND total_stars >= ${FREEZE_COST}
+    `))[0] as unknown as { affectedRows?: number };
+    if (!updateResult?.affectedRows) {
+      return res.status(409).json({ error: 'Star balance changed. Please try again.' });
+    }
+
+    // Keep the legacy progress ledger as an audit record.
     await db.execute(sql`
       INSERT INTO child_progress (child_id, game_title, subject, stars, score, completed_at)
       VALUES (${childId}, '__streak_freeze__', 'system', ${-FREEZE_COST}, 0, NOW())

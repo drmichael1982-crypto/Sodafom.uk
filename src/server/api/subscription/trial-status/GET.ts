@@ -16,10 +16,14 @@ import { subscriptions } from '@/server/db/schema';
 import { eq, desc } from 'drizzle-orm';
 import { getSecret } from '#airo/secrets';
 
-function getStripe(): Stripe {
-  const key = getSecret('STRIPE_SECRET_KEY');
-  if (!key || typeof key !== 'string') throw new Error('STRIPE_SECRET_KEY not configured');
-  return new Stripe(key, { apiVersion: '2026-02-25.clover' });
+function getStripe(): Stripe | null {
+  try {
+    const key = getSecret('STRIPE_SECRET_KEY');
+    if (!key || typeof key !== 'string') return null;
+    return new Stripe(key, { apiVersion: '2026-02-25.clover' });
+  } catch {
+    return null;
+  }
 }
 
 export default async function handler(req: Request, res: Response) {
@@ -53,6 +57,12 @@ export default async function handler(req: Request, res: Response) {
 
     // Check Stripe for live subscription/trial state
     const stripe = getStripe();
+    if (!stripe) {
+      // A missing optional Stripe connection must not crash the signed-in app.
+      // Checkout still refuses to run until its secret is configured.
+      res.json({ subscribed: false, status: 'none', trialEndsAt: null, daysLeft: null, plan: null, configured: false });
+      return;
+    }
     const customers = await stripe.customers.list({ email: session.user.email, limit: 1 });
     if (customers.data.length === 0) {
       res.json({ subscribed: false, status: 'none', trialEndsAt: null, daysLeft: null, plan: null });

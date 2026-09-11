@@ -57,6 +57,89 @@ async function ensureCoreAppTables() {
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
   `);
 
+  // Progress/reward tables existed in the Drizzle schema but several older
+  // Railway databases were created before their SQL migrations were added.
+  // These statements are additive only and preserve every existing record.
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS activity_sessions (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      child_id INT NOT NULL,
+      subject VARCHAR(32) NOT NULL,
+      activity_id VARCHAR(64) NOT NULL,
+      activity_title VARCHAR(255) NOT NULL,
+      score INT DEFAULT 0,
+      max_score INT DEFAULT 100,
+      duration_seconds INT DEFAULT 0,
+      stars_earned INT NOT NULL DEFAULT 0,
+      completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_activity_child (child_id),
+      INDEX idx_activity_completed (completed_at)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS progress_summaries (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      child_id INT NOT NULL,
+      subject VARCHAR(32) NOT NULL,
+      week_start TIMESTAMP NOT NULL,
+      total_sessions INT DEFAULT 0,
+      avg_score DECIMAL(5,2) DEFAULT 0,
+      total_minutes INT DEFAULT 0,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_progress_summary_child (child_id),
+      INDEX idx_progress_summary_week (week_start)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS child_progress (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      child_id INT NOT NULL,
+      game_title VARCHAR(255) NOT NULL,
+      subject VARCHAR(32) NOT NULL,
+      stars INT NOT NULL DEFAULT 0,
+      score INT NOT NULL DEFAULT 0,
+      completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_child_progress_child (child_id),
+      INDEX idx_child_progress_completed (completed_at)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS streak_tracker (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      child_id INT NOT NULL UNIQUE,
+      current_streak INT NOT NULL DEFAULT 0,
+      max_streak INT NOT NULL DEFAULT 0,
+      last_played_date DATE NULL,
+      freeze_active TINYINT(1) NOT NULL DEFAULT 0,
+      freeze_used_at TIMESTAMP NULL DEFAULT NULL
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS child_characters (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      child_id INT NOT NULL,
+      character_id INT NOT NULL,
+      unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_child_character (child_id, character_id),
+      INDEX idx_child_characters_child (child_id)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS star_milestones (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      child_id INT NOT NULL,
+      milestone INT NOT NULL,
+      promo_code VARCHAR(32) NULL,
+      claimed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uq_child_milestone (child_id, milestone)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS promo_codes (
       id INT PRIMARY KEY AUTO_INCREMENT,

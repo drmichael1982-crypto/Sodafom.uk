@@ -72,7 +72,7 @@ export default function MathsHubPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background pb-20">
+    <main className="min-h-screen bg-cover bg-center bg-fixed pb-20" style={{ backgroundImage: "linear-gradient(rgba(37,99,235,.76),rgba(30,27,75,.94)),url('/assets/cartoon/home-landscape-v2.png')" }}>
       <Helmet>
         <title>Maths Hub — Sodafom | Fun Learning Games for Kids</title>
         <meta name="description" content="Your maths learning hub on Sodafom. Browse all maths games for children aged 5–13." />
@@ -90,7 +90,7 @@ export default function MathsHubPage() {
       </Helmet>
 
       {/* Hero banner — green (accent) */}
-      <div className="bg-accent text-accent-foreground">
+      <div className="border-b-4 border-white/70 bg-cover bg-center text-white shadow-2xl" style={{ backgroundImage: "linear-gradient(rgba(29,78,216,.55),rgba(76,29,149,.88)),url('/assets/cartoon/worlds/maths.png')" }}>
         <div className="max-w-5xl mx-auto px-4 py-10">
           <div className="flex items-center gap-2 text-accent-foreground/70 text-sm mb-4">
             <Link to="/" className="hover:text-accent-foreground transition-colors">Home</Link>

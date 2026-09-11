@@ -75,9 +75,11 @@ function ChoresScreen({ parentMode }: { parentMode: boolean }) {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-sky-100 via-white to-yellow-100 px-4 py-6 text-slate-900">
+    <main className="relative min-h-screen overflow-hidden bg-sky-800 px-4 py-6 text-slate-900">
       <Helmet><title>{parentMode ? 'Manage Chores' : 'Pocket Money & Chores'} — Sodafom</title></Helmet>
-      <div className="mx-auto max-w-3xl">
+      <div className="fixed inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/assets/cartoon/home-landscape-v2.png')" }} aria-hidden="true" />
+      <div className="fixed inset-0 bg-gradient-to-b from-cyan-500/55 via-blue-800/75 to-blue-950/95" aria-hidden="true" />
+      <div className="relative z-10 mx-auto max-w-3xl">
         <div className="mb-5 flex items-center justify-between gap-3">
           <button onClick={() => navigate(parentMode ? '/parent-dashboard' : '/')} className="flex min-h-11 items-center gap-2 rounded-full bg-blue-700 px-4 py-2 font-black text-white"><ArrowLeft size={18} /> Back</button>
           {!parentMode && <button onClick={() => navigate('/parent-dashboard/chores')} className="rounded-full bg-purple-600 px-4 py-2 text-sm font-black text-white">Parent controls</button>}

@@ -23,8 +23,16 @@ export default function FeaturePageShell({
   const navigate = useNavigate();
 
   return (
-    <main className={`min-h-screen bg-gradient-to-b ${accent} px-4 py-5 pb-28`}>
-      <div className="mx-auto max-w-5xl">
+    <main className={`relative min-h-screen overflow-hidden bg-gradient-to-b ${accent} px-4 py-5 pb-28`}>
+      <div
+        className="fixed inset-0 bg-cover bg-center"
+        style={{ backgroundImage: "url('/assets/cartoon/home-landscape-v2.png')" }}
+        aria-hidden="true"
+      />
+      <div className={`fixed inset-0 bg-gradient-to-b ${accent} opacity-70 mix-blend-multiply`} aria-hidden="true" />
+      <div className="fixed inset-0 bg-gradient-to-b from-sky-400/10 via-blue-950/10 to-blue-950/70" aria-hidden="true" />
+
+      <div className="relative z-10 mx-auto max-w-5xl">
         <div className="mb-5 flex items-center justify-between gap-3">
           <button
             type="button"
@@ -43,7 +51,8 @@ export default function FeaturePageShell({
           </button>
         </div>
 
-        <section className="mb-6 overflow-hidden rounded-[2rem] border-4 border-white/70 bg-white/95 p-5 text-sky-950 shadow-2xl sm:p-7">
+        <section className="relative mb-6 overflow-hidden rounded-[2rem] border-4 border-white/80 bg-gradient-to-r from-white via-sky-50 to-yellow-100 p-5 text-sky-950 shadow-2xl sm:p-7">
+          <div className="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-yellow-300/35 blur-2xl" aria-hidden="true" />
           <div className="flex items-center gap-4">
             <div className="relative shrink-0">
               <ArchieCharacter size={90} />

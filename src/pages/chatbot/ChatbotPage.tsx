@@ -3,7 +3,7 @@
  * Kid-friendly chat interface powered by OpenAI via /api/chat
  */
 
-import React, { useState, useRef, useEffect, type FormEvent } from 'react';
+import React, { useState, useRef, type FormEvent } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
 import { Send, Sparkles, RotateCcw, BookOpen, Calculator, FlaskConical, Pencil, Palette, History, X, Play, Mic, Square, ArrowLeft } from 'lucide-react';
@@ -516,10 +516,6 @@ export default function ChatbotPage() {
     }
   }
 
-  function stopListening() {
-    stopConversation();
-  }
-
   function handleReset() {
     stopConversation();
     setMessages([]);
@@ -553,31 +549,33 @@ export default function ChatbotPage() {
         <meta name="twitter:image" content="https://sodafom.uk/og-image.png" />
       </Helmet>
 
-      <main className="min-h-screen bg-gradient-to-b from-yellow-50 via-white to-green-50 flex flex-col">
+      <main className="relative min-h-screen overflow-hidden bg-sky-800 flex flex-col">
+        <div className="fixed inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/assets/cartoon/home-landscape-v2.png')" }} aria-hidden="true" />
+        <div className="fixed inset-0 bg-gradient-to-b from-blue-500/65 via-indigo-800/80 to-blue-950/95" aria-hidden="true" />
         {/* Header */}
-        <div className="bg-white border-b border-yellow-200 shadow-sm sticky top-0 z-10">
+        <div className="relative z-10 m-3 rounded-[1.75rem] border-4 border-white/80 bg-gradient-to-r from-sky-500 via-blue-600 to-purple-700 text-white shadow-2xl sm:m-4">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => { stopConversation(); navigate('/'); }}
                 aria-label="Back to Sodafom home"
-                className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full bg-green-600 text-white shadow-md active:scale-95"
+                className="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full border-2 border-white bg-white text-sky-900 shadow-md active:scale-95"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
               {/* Archie avatar */}
               <div className="relative">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-100 to-green-100 flex items-center justify-center shadow-md border-2 border-yellow-300 overflow-hidden">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-yellow-100 to-sky-100 flex items-center justify-center shadow-md border-2 border-yellow-300 overflow-hidden">
                   <ArchieCharacter size={48} speaking={false} />
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-400 rounded-full border-2 border-white" />
               </div>
               <div>
-                <h1 className="font-extrabold text-gray-900 text-lg leading-tight">
+                <h1 className="font-extrabold text-white text-lg leading-tight">
                   {archie_chat.hero.title}
                 </h1>
-                <p className="text-xs text-green-600 font-semibold flex items-center gap-1">
+                <p className="text-xs text-yellow-200 font-semibold flex items-center gap-1">
                   <Sparkles className="w-3 h-3" />
                   <span>{archie_chat.hero.tagline}</span>
                 </p>
@@ -587,7 +585,7 @@ export default function ChatbotPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowHistory(h => !h)}
-                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-100"
+                  className="flex items-center gap-1.5 text-xs text-white/85 transition-colors px-3 py-1.5 rounded-full hover:bg-white/20"
                   aria-label="View chat history"
                 >
                   <History className="w-3.5 h-3.5" />
@@ -595,7 +593,7 @@ export default function ChatbotPage() {
                 </button>
                 <button
                   onClick={handleReset}
-                  className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors px-3 py-1.5 rounded-full hover:bg-gray-100"
+                  className="flex items-center gap-1.5 text-xs text-white/85 transition-colors px-3 py-1.5 rounded-full hover:bg-white/20"
                   aria-label="Start a new chat"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
@@ -607,13 +605,13 @@ export default function ChatbotPage() {
         </div>
 
         {/* Chat area */}
-        <div className="flex-1 max-w-2xl w-full mx-auto px-4 py-4 flex flex-col">
+        <div className="relative z-10 flex-1 max-w-2xl w-full mx-auto px-4 py-4 flex flex-col">
           {/* Welcome state */}
           {showSuggestions && (
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex-1 flex flex-col items-center justify-center text-center py-8"
+              className="flex-1 flex flex-col items-center justify-center rounded-[2rem] border-4 border-white/80 bg-white/95 px-4 py-8 text-center shadow-2xl backdrop-blur-sm"
             >
               <div
                 className="mb-4 animate-bounce cursor-pointer"
@@ -722,7 +720,7 @@ export default function ChatbotPage() {
         </div>
 
         {/* Input bar — sticky at bottom */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 shadow-lg">
+        <div className="sticky bottom-0 z-20 border-t-4 border-white/70 bg-white/95 shadow-2xl backdrop-blur-md">
           {/* Subject quick-prompts (shown when chatting) */}
           {messages.length > 0 && (
             <div className="max-w-2xl mx-auto px-4 pt-2 pb-0">

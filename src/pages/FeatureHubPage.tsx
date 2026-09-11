@@ -7,7 +7,7 @@ import FeaturePageShell from '@/components/FeaturePageShell';
 const FEATURES = [
   { title: "Archie's Lessons", description: 'Choose a subject and a 15, 20, 30 or 60-minute lesson.', emoji: '🎓', route: '/lessons', colour: 'from-blue-500 to-indigo-700' },
   { title: 'Games', description: 'Maths, reading, spelling, science and more learning games.', emoji: '🎮', route: '/classic-home', colour: 'from-fuchsia-500 to-purple-700' },
-  { title: 'Reading', description: 'Reading practice, phonics, stories and comprehension.', emoji: '📚', route: '/games/reading', colour: 'from-emerald-500 to-green-700' },
+  { title: 'Reading', description: 'Reading practice, phonics, stories and comprehension.', emoji: '📚', route: '/reading', colour: 'from-emerald-500 to-green-700' },
   { title: 'Homework Helper', description: 'Photograph homework and ask Archie for a clear explanation.', emoji: '📸', route: '/homework-helper', colour: 'from-orange-500 to-amber-700' },
   { title: 'Ask Archie', description: 'Ask a learning question by typing or speaking.', emoji: '🗝️', route: '/ask-archie', colour: 'from-cyan-500 to-blue-700' },
   { title: 'Birthday', description: 'Save a birthday on this device and see the countdown.', emoji: '🎂', route: '/birthday', colour: 'from-pink-500 to-rose-700' },
@@ -15,7 +15,7 @@ const FEATURES = [
   { title: 'Parent Chore Setup', description: 'Parents create chores, choose rewards and approve completion.', emoji: '👨‍👩‍👧', route: '/pocket-money/setup', colour: 'from-teal-500 to-cyan-700' },
   { title: "Design Archie's Outfit", description: 'Choose colours, a badge and a fun accessory.', emoji: '🎨', route: '/archie-outfit', colour: 'from-violet-500 to-fuchsia-700' },
   { title: 'Seasonal Themes', description: 'Choose Everyday, Christmas or Easter decorations.', emoji: '🎄', route: '/seasonal-themes', colour: 'from-red-500 to-green-700' },
-  { title: 'Parent Area', description: 'Open progress, child profiles and account controls.', emoji: '📊', route: '/parent-dashboard', colour: 'from-slate-600 to-sky-800' },
+  { title: 'Parent Area', description: 'Open progress, child profiles and account controls.', emoji: '📊', route: '/parent-area', colour: 'from-slate-600 to-sky-800' },
   { title: 'Holiday & Travel', description: 'A future learning section — clearly marked as planned.', emoji: '✈️', route: '/holiday-travel', colour: 'from-amber-500 to-sky-700', planned: true },
 ] as const;
 

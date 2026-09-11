@@ -71,7 +71,7 @@ export default function SpellingHubPage() {
   );
 
   return (
-    <main className="min-h-screen bg-background pb-20">
+    <main className="min-h-screen bg-cover bg-center bg-fixed pb-20" style={{ backgroundImage: "linear-gradient(rgba(37,99,235,.76),rgba(30,27,75,.94)),url('/assets/cartoon/home-landscape-v2.png')" }}>
       <Helmet>
         <title>Spelling Hub — Sodafom | Fun Learning Games for Kids</title>
         <meta name="description" content="Your spelling learning hub on Sodafom. Browse all spelling and vocabulary games for ages 5–13." />
@@ -89,7 +89,7 @@ export default function SpellingHubPage() {
       </Helmet>
 
       {/* Hero banner — orange (secondary) */}
-      <div className="bg-secondary text-secondary-foreground">
+      <div className="border-b-4 border-white/70 bg-cover bg-center text-white shadow-2xl" style={{ backgroundImage: "linear-gradient(rgba(190,24,93,.48),rgba(76,29,149,.88)),url('/assets/cartoon/worlds/spelling.png')" }}>
         <div className="max-w-5xl mx-auto px-4 py-10">
           <div className="flex items-center gap-2 text-secondary-foreground/70 text-sm mb-4">
             <Link to="/" className="hover:text-secondary-foreground transition-colors">Home</Link>

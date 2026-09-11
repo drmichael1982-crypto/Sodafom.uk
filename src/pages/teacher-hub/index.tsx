@@ -472,7 +472,7 @@ export default function TeacherHubDashboard() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            <span className="font-black text-yellow-600">⭐ {s.totalStars.toLocaleString()}</span>
+                            <span className="font-black text-yellow-600">⭐ {Number(s.totalStars ?? 0).toLocaleString()}</span>
                           </td>
                           <td className="px-4 py-3 text-right hidden sm:table-cell">
                             <span className="font-bold text-foreground">{s.stats.gamesPlayed}</span>
