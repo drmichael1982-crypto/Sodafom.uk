@@ -2166,7 +2166,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                 const cfg = subjectConfig[game.subject] ?? subjectConfig['maths'];
                 const isSpeaking = speakingId === game.id;
                 const isDemo = isDemoGameId(game.id);
-                const isLocked = !Boolean(subscribed) && !isDemo && !researchMode;
+                const isLocked = !Boolean(subscribed) && !isDemo && !OPEN_TESTING_MODE;
                 const popularRank = POPULAR_GAME_IDS.indexOf(game.id);
                 const isTopPopular = sortBy === 'popular' && popularRank >= 0 && gameIndex < 5;
                 return <motion.div key={game.id} variants={cardAnim} whileHover={{

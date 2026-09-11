@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { db } from '../../../db/client';
 import { promoCodes } from '../../../db/schema';
-import { getAuth } from '@/lib/auth/auth';
+import { hasAdminAccess } from '@/server/admin-auth';
 import { randomBytes } from 'crypto';
 
 interface GeneratePromoRequest {
@@ -21,11 +21,7 @@ function generateCode(prefix?: string): string {
 
 export default async function handler(req: Request, res: Response) {
   try {
-    const auth = getAuth();
-    const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-
-    // Security: Only admins can generate codes
-    if (!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin) {
+    if (!(await hasAdminAccess(req))) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

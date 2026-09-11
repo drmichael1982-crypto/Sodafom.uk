@@ -8,8 +8,7 @@ import webpush from 'web-push';
 import { db } from '../../../db/client.js';
 import { sql } from 'drizzle-orm';
 import { getOrCreateVapidKeys } from '../../../push-keys.js';
-import { getAuth } from '@/lib/auth/auth';
-import { isValidAdminCode } from '@/server/lib/admin-access';
+import { hasAdminAccess } from '@/server/admin-auth';
 
 interface PushRow {
   endpoint: string;
@@ -19,8 +18,7 @@ interface PushRow {
 
 export default async function handler(req: Request, res: Response) {
   try {
-    const { code, userId, title, body, url, icon, tag } = req.body as {
-      code?: string;
+    const { userId, title, body, url, icon, tag } = req.body as {
       userId?: string;
       title?: string;
       body?: string;
@@ -31,10 +29,7 @@ export default async function handler(req: Request, res: Response) {
     if (!title?.trim() || !body?.trim()) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
-    const auth = getAuth();
-    const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-    // Allow access if user is a signed-in admin or provides a configured admin code.
-    if (!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin && !isValidAdminCode(code)) {
+    if (!(await hasAdminAccess(req))) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

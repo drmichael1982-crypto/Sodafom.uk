@@ -397,6 +397,26 @@ export default function SodafomAdventurePage() {
          </motion.button>
       </div>
 
+      {/* Every planned main area is visible from the approved colourful home. */}
+      <nav aria-label="Sodafom main areas" className="relative z-20 mt-5 mb-24 grid w-full max-w-3xl grid-cols-3 gap-2 rounded-3xl border-4 border-white/60 bg-blue-950/55 p-3 shadow-2xl backdrop-blur-sm sm:grid-cols-5">
+        {[
+          { label: "Archie's Lessons", emoji: '🎓', route: '/tutor' },
+          { label: 'Games', emoji: '🎮', action: 'worlds' },
+          { label: 'Reading', emoji: '📚', route: '/subjects/reading' },
+          { label: 'Homework Helper', emoji: '📷', route: '/ai-teacher' },
+          { label: 'Ask Archie', emoji: '🗝️', route: '/ask-archie' },
+          { label: 'Birthday / Party', emoji: '🎂', route: '/birthday-party' },
+          { label: 'Pocket Money Chores', emoji: '🪙', route: '/chores' },
+          { label: 'Design Archie Outfit', emoji: '🦸', route: '/design-archie-outfit' },
+          { label: 'Parent Area', emoji: '👪', route: '/parent-dashboard' },
+        ].map((item) => (
+          <button key={item.label} onClick={() => item.action === 'worlds' ? setScreen('worlds') : navigate(item.route!)} className="flex min-h-24 flex-col items-center justify-center rounded-2xl border-2 border-white/70 bg-white/95 p-2 text-center text-blue-950 shadow-lg active:scale-95">
+            <span className="text-3xl" aria-hidden="true">{item.emoji}</span>
+            <span className="mt-1 text-[10px] font-black leading-tight sm:text-xs">{item.label}</span>
+          </button>
+        ))}
+      </nav>
+
       {/* Colorful Bottom Navigation */}
       <div className="fixed bottom-0 left-0 w-full p-4 z-30">
          <div className="max-w-3xl mx-auto grid grid-cols-6 gap-1.5 sm:gap-2">

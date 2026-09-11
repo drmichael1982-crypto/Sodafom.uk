@@ -13,6 +13,8 @@ import admin_promo_get from "./api/admin/promo/GET";
 import admin_promo_post from "./api/admin/promo/POST";
 import admin_promo_toggle_post from "./api/admin/promo/toggle/POST";
 import admin_verify_post_extra from "./api/admin/verify/POST";
+import admin_founder_changes_get from "./api/admin/founder-changes/GET";
+import admin_founder_changes_post from "./api/admin/founder-changes/POST";
 import auth_change_password_post_4 from "./api/auth/change-password/POST";
 import auth_forgot_password_post_5 from "./api/auth/forgot-password/POST";
 import auth_update_profile_post_6 from "./api/auth/update-profile/POST";
@@ -25,6 +27,8 @@ import battle_create_post_12 from "./api/battle/create/POST";
 import battle_id_get_13 from "./api/battle/[id]/GET";
 import battle_id_submit_post_14 from "./api/battle/[id]/submit/POST";
 import chat_post_15 from "./api/chat/POST";
+import chores_get from "./api/chores/GET";
+import chores_post from "./api/chores/POST";
 import children_get_16 from "./api/children/GET";
 import children_post_17 from "./api/children/POST";
 import children_childId_delete_18 from "./api/children/[childId]/DELETE";
@@ -224,6 +228,8 @@ app.get("/api/admin/promo", admin_promo_get);
 app.post("/api/admin/promo", admin_promo_post);
 app.post("/api/admin/promo/toggle", admin_promo_toggle_post);
 app.post("/api/admin/verify", admin_verify_post_extra);
+app.get("/api/admin/founder-changes", admin_founder_changes_get);
+app.post("/api/admin/founder-changes", admin_founder_changes_post);
 app.post("/api/auth/change-password", auth_change_password_post_4);
 app.post("/api/auth/forgot-password", auth_forgot_password_post_5);
 app.post("/api/auth/update-profile", auth_update_profile_post_6);
@@ -236,6 +242,8 @@ app.post("/api/battle/create", battle_create_post_12);
 app.get("/api/battle/:id", battle_id_get_13);
 app.post("/api/battle/:id/submit", battle_id_submit_post_14);
 app.post("/api/chat", chat_post_15);
+app.get("/api/chores", chores_get);
+app.post("/api/chores", chores_post);
 app.get("/api/chat-ping", (req, res) => {
   res.setHeader('Content-Type', 'text/plain; charset=utf-8');
   res.status(200).send(process.env.OPENAI_API_KEY?.trim()
@@ -391,11 +399,12 @@ const initializeProject = async () => {
   db.execute(sql`ALTER TABLE user ADD COLUMN is_admin TINYINT(1) DEFAULT 0`).catch(() => {});
   db.execute(sql`ALTER TABLE user ADD COLUMN phone_number VARCHAR(32) DEFAULT NULL`).catch(() => {});
 
-  // Seed permanent promo codes — runs on every server start (upsert, safe to repeat)
+  // Preserve existing free-access promo entitlements. These codes grant only a
+  // subscription row; they are never accepted by founder/admin authentication.
   for (const [code, description] of [
-    ['1182', 'Permanent founder access code'],
-    ['4718', 'Permanent owner access code'],
-    ['040718', 'Permanent unlimited access code'],
+    ['1182', 'Legacy free-access promo (not admin access)'],
+    ['4718', 'Legacy free-access promo (not admin access)'],
+    ['040718', 'Legacy free-access promo (not admin access)'],
   ] as const) {
     db.insert(promoCodes).values({
       code,
@@ -405,8 +414,8 @@ const initializeProject = async () => {
       active: true,
       expiresAt: null,
     }).onDuplicateKeyUpdate({ set: { active: true, maxUses: null, expiresAt: null } })
-      .then(() => console.log(`✅ Promo code ${code} active (permanent, unlimited)`))
-      .catch((err: unknown) => console.warn(`⚠️  Promo seed ${code} skipped:`, (err as Error).message));
+      .then(() => console.log('✅ Legacy free-access promo active (not admin access)'))
+      .catch((err: unknown) => console.warn('⚠️  Legacy promo seed skipped:', (err as Error).message));
   }
 
   // Create newsletter_subscribers table if it doesn't exist

@@ -5,13 +5,11 @@
 import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { sql } from 'drizzle-orm';
-import { getSecret } from '#airo/secrets';
+import { hasAdminAccess } from '@/server/admin-auth';
 
 export default async function handler(req: Request, res: Response) {
   try {
-    const adminKey = req.query.adminKey as string;
-    const secret = getSecret('BETTER_AUTH_SECRET');
-    if (!adminKey || adminKey !== secret) {
+    if (!(await hasAdminAccess(req))) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 

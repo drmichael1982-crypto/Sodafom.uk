@@ -6,11 +6,7 @@ import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { teacherAccounts, schoolLicences } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { createHash } from 'node:crypto';
-
-function hashPassword(pw: string): string {
-  return createHash('sha256').update(pw + 'sodafom-teacher-salt').digest('hex');
-}
+import { hashTeacherPassword } from '@/server/teacher-password';
 
 export default async function handler(req: Request, res: Response) {
   try {
@@ -20,6 +16,7 @@ export default async function handler(req: Request, res: Response) {
     if (!name || !email || !password || !licenceKey) {
       return res.status(400).json({ error: 'name, email, password and licenceKey are required' });
     }
+    if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
 
     // Validate licence key
     const [licence] = await db.select().from(schoolLicences).where(eq(schoolLicences.licenceKey, licenceKey.trim())).limit(1);
@@ -34,7 +31,7 @@ export default async function handler(req: Request, res: Response) {
       licenceId: licence.id,
       name: name.trim(),
       email: email.toLowerCase().trim(),
-      passwordHash: hashPassword(password),
+      passwordHash: await hashTeacherPassword(password),
       className: className?.trim() || 'My Class',
     }).$returningId();
 

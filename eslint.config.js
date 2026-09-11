@@ -8,6 +8,7 @@ export default [
   {
     ignores: [
       'android/**',
+      'capacitor-android/**',
       'dist/**',
       'node_modules/**',
       'page-previews/**',

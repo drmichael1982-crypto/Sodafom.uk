@@ -11,7 +11,7 @@ import { ProtectedRoute, useSession } from '@/lib/auth/auth-client';
 import {
   Star, BookOpen, FlaskConical, Calculator, Pencil, Trophy,
   TrendingUp, Calendar, Medal, RefreshCw, Mail, Printer,
-  UserPlus, Flame, Award, ExternalLink, ListChecks,
+  UserPlus, Flame, Award, ExternalLink, Coins,
 } from 'lucide-react';
 import { ParentTutorReport } from '@/components/ParentTutorReport';
 
@@ -471,10 +471,10 @@ function ParentDashboardInner() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              to="/pocket-money/setup"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-emerald-100 hover:bg-emerald-200 text-emerald-900 transition-colors"
+              to="/parent-dashboard/chores"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 text-white font-black text-sm hover:opacity-90 transition-opacity"
             >
-              <ListChecks size={14} /> Chores
+              <Coins size={15} /> Manage chores
             </Link>
             <Link
               to="/hub"

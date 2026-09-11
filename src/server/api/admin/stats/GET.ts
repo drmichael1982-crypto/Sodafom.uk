@@ -9,8 +9,7 @@ import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { user, subscriptions, promoActivations, siteReviews } from '@/server/db/schema';
 import { sql, count, desc } from 'drizzle-orm';
-import { getAuth } from '@/lib/auth/auth';
-import { isValidAdminCode } from '@/server/lib/admin-access';
+import { hasAdminAccess } from '@/server/admin-auth';
 
 // Price → plan label + monthly GBP value (for revenue estimate)
 const PRICE_MAP: Record<string, { label: string; monthlyGBP: number }> = {
@@ -20,12 +19,7 @@ const PRICE_MAP: Record<string, { label: string; monthlyGBP: number }> = {
 };
 
 export default async function handler(req: Request, res: Response): Promise<void> {
-  const auth = getAuth();
-  const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-  const isAdmin = (session?.user as { isAdmin?: boolean } | undefined)?.isAdmin;
-
-  const code = req.headers['x-admin-code'] as string | undefined;
-  if (!isAdmin && (!code || !isValidAdminCode(code))) {
+  if (!(await hasAdminAccess(req))) {
     res.status(401).json({ success: false, error: 'Invalid code' });
     return;
   }

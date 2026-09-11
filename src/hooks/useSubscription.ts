@@ -4,7 +4,9 @@
  * Fetches the current user's subscription / trial state from
  * /api/subscription/trial-status and exposes it to the UI.
  *
- * FOR TESTING: Always grant full access.
+ * Access is ultimately determined by the server response. The explicit
+ * OPEN_TESTING_MODE gate remains separate so it cannot be enabled by editing
+ * browser storage.
  */
 import React, { useState, useEffect } from 'react';
 import { API_PREFIX } from '@/lib/config';
@@ -36,19 +38,6 @@ const DEFAULT: SubscriptionState = {
 
 export function useSubscription(): SubscriptionState {
   const [state, setState] = useState<SubscriptionState>(DEFAULT);
-  const [researchMode, setResearchMode] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('sodafom_research_mode') === 'true';
-  });
-
-  React.useEffect(() => {
-    const handleResearchChange = () => {
-      setResearchMode(localStorage.getItem('sodafom_research_mode') === 'true');
-    };
-    window.addEventListener('sodafom_research_mode_change', handleResearchChange);
-    return () => window.removeEventListener('sodafom_research_mode_change', handleResearchChange);
-  }, []);
-
   React.useEffect(() => {
     let cancelled = false;
 
@@ -68,11 +57,11 @@ export function useSubscription(): SubscriptionState {
 
         setState({
           loading: false,
-          subscribed: forceFullAccess || researchMode || data.subscribed,
-          status: forceFullAccess ? 'active' : (researchMode ? 'active' : (data.status as SubscriptionStatus) || 'none'),
+          subscribed: forceFullAccess || data.subscribed,
+          status: forceFullAccess ? 'active' : (data.status as SubscriptionStatus) || 'none',
           trialEndsAt: data.trialEndsAt ? new Date(data.trialEndsAt) : null,
           daysLeft: data.daysLeft ?? 7,
-          plan: data.plan || (researchMode ? 'promo' : 'trial'),
+          plan: data.plan || (forceFullAccess ? 'testing' : null),
         });
       })
       .catch(() => {
@@ -88,7 +77,7 @@ export function useSubscription(): SubscriptionState {
         }
       });
     return () => { cancelled = true; };
-  }, [researchMode]);
+  }, []);
 
   return state;
 }

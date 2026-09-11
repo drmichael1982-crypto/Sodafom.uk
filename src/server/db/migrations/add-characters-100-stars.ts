@@ -91,6 +91,136 @@ async function ensureCoreAppTables() {
     ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
   `);
 
+  // School and teacher tables are created additively in dependency order.
+  // This repairs older Railway databases that had the Drizzle definitions but
+  // never received the corresponding migration.
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS school_licences (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      subscription_id INT NOT NULL,
+      user_id VARCHAR(255) NOT NULL,
+      licence_key VARCHAR(64) NOT NULL UNIQUE,
+      max_devices INT NOT NULL DEFAULT 30,
+      expires_at TIMESTAMP NULL DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_school_licences_user (user_id)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS teacher_accounts (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      licence_id INT NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      password_hash VARCHAR(255) NOT NULL,
+      class_name VARCHAR(128) DEFAULT 'My Class',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_teacher_licence (licence_id)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS students (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      teacher_id INT NOT NULL,
+      student_code VARCHAR(20) NOT NULL UNIQUE,
+      name VARCHAR(255) NOT NULL,
+      age_group VARCHAR(16) NOT NULL DEFAULT '8-10',
+      avatar_emoji VARCHAR(32) DEFAULT '⭐',
+      total_stars INT NOT NULL DEFAULT 0,
+      last_active_at TIMESTAMP NULL DEFAULT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_students_teacher (teacher_id)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS student_notes (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      student_id INT NOT NULL,
+      teacher_id INT NOT NULL,
+      subject VARCHAR(32) DEFAULT 'general',
+      note_text TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_student_notes_student (student_id)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS student_activity (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      student_id INT NOT NULL,
+      game_id VARCHAR(64) NOT NULL,
+      game_title VARCHAR(255) NOT NULL,
+      subject VARCHAR(32) NOT NULL,
+      score INT DEFAULT 0,
+      max_score INT DEFAULT 100,
+      stars_earned INT DEFAULT 0,
+      duration_seconds INT DEFAULT 0,
+      played_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_student_activity_student (student_id)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS teacher_sessions (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      teacher_id INT NOT NULL,
+      token VARCHAR(128) NOT NULL UNIQUE,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_teacher_sessions_teacher (teacher_id),
+      INDEX idx_teacher_sessions_expiry (expires_at)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS chores (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      parent_id VARCHAR(255) NOT NULL,
+      child_id INT NOT NULL,
+      title VARCHAR(120) NOT NULL,
+      value_pence INT NOT NULL DEFAULT 0,
+      active TINYINT(1) NOT NULL DEFAULT 1,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_chores_parent_child (parent_id, child_id)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS chore_completions (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      chore_id INT NOT NULL,
+      parent_id VARCHAR(255) NOT NULL,
+      child_id INT NOT NULL,
+      status VARCHAR(24) NOT NULL DEFAULT 'waiting_for_parent',
+      completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      approved_at TIMESTAMP NULL DEFAULT NULL,
+      INDEX idx_chore_completions_parent (parent_id),
+      INDEX idx_chore_completions_child (child_id)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS founder_change_requests (
+      id INT PRIMARY KEY AUTO_INCREMENT,
+      instruction TEXT NOT NULL,
+      category VARCHAR(48) NOT NULL,
+      risk_level VARCHAR(16) NOT NULL,
+      plan TEXT NOT NULL,
+      test_summary TEXT NOT NULL,
+      status VARCHAR(32) NOT NULL DEFAULT 'prepared',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      approved_at TIMESTAMP NULL DEFAULT NULL,
+      INDEX idx_founder_change_status (status)
+    ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci
+  `);
+
   console.log('[Migration] Core Sodafom app tables ready.');
 }
 

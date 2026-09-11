@@ -5,6 +5,7 @@ import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
 import { getActiveChild, setActiveChild, type AgeGroup } from '@/hooks/useChildAge';
 import { rememberOnlineAnswer } from '@/lib/archie-device-memory';
+import { tryLocalArchieResponse } from '@/lib/archie-local';
 
 const CURRICULUM = [
   { age: 5, year: 'Year 1', stage: 'Key Stage 1', topics: 'phonics, number bonds, addition and subtraction, shapes, plants and animals' },
@@ -37,6 +38,8 @@ export default function AITeacherPage() {
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [answerSource, setAnswerSource] = useState<'Local AI' | 'OpenAI' | null>(null);
+  const [lessonMinutes, setLessonMinutes] = useState<15 | 20 | 30 | 60>(30);
   const [age, setAge] = useState(() => {
     const stored = Number(localStorage.getItem('sodafom_ai_teacher_age'));
     if (stored >= 5 && stored <= 13) return stored;
@@ -59,13 +62,21 @@ export default function AITeacherPage() {
 
   const startLesson = (subject: string) => {
     localStorage.setItem('sodafom_lesson_subject', subject);
-    localStorage.setItem('sodafom_lesson_minutes', '30');
+    localStorage.setItem('sodafom_lesson_minutes', String(lessonMinutes));
     navigate('/tutor');
   };
 
   const askTeacher = async () => {
     if (!question.trim() || busy) return;
     setBusy(true); setError('');
+    const localAnswer = tryLocalArchieResponse(question);
+    if (localAnswer) {
+      setAnswer(localAnswer.text);
+      setAnswerSource('Local AI');
+      ttsSpeak(localAnswer.text);
+      setBusy(false);
+      return;
+    }
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
@@ -78,11 +89,12 @@ export default function AITeacherPage() {
       if (!response.ok) throw new Error('Online teacher is not connected yet.');
       const text = await response.text();
       rememberOnlineAnswer(question, text);
-      setAnswer(text); ttsSpeak(text);
+      setAnswer(text); setAnswerSource('OpenAI'); ttsSpeak(text);
     } catch (e) {
       clearTimeout(timeoutId);
       const fallbackText = `I am helping offline! For a child in ${curriculum.year} learning ${curriculum.topics}, regarding "${question}": Let's break it down into simple steps. Take your time, try a small example, and you'll get it!`;
       setAnswer(fallbackText);
+      setAnswerSource('Local AI');
       ttsSpeak(fallbackText);
       setError('Online teacher is unavailable (offline mode active).');
     }
@@ -93,6 +105,7 @@ export default function AITeacherPage() {
     if (!file || busy) return;
     if (file.size > 6 * 1024 * 1024) { setError('Please choose a photograph smaller than 6 MB.'); return; }
     setBusy(true); setError(''); setAnswer('');
+    setAnswerSource(null);
     const reader = new FileReader();
     reader.onload = async () => {
       const image = String(reader.result || '');
@@ -108,11 +121,12 @@ export default function AITeacherPage() {
         clearTimeout(timeoutId);
         if (!response.ok) throw new Error(await response.text() || 'The page could not be read.');
         const text = await response.text();
-        setAnswer(text); ttsSpeak(text);
+        setAnswer(text); setAnswerSource('OpenAI'); ttsSpeak(text);
       } catch (e) {
         clearTimeout(timeoutId);
         const fallbackText = `I have looked at your book page photo! For year ${curriculum.year}, focus on reading each word clearly, sounding out tricky parts, and asking what happens next in the story.`;
         setAnswer(fallbackText);
+        setAnswerSource('Local AI');
         ttsSpeak(fallbackText);
         setError('Online OCR is unavailable (offline reading guidance active).');
       }
@@ -146,14 +160,19 @@ export default function AITeacherPage() {
           {SUBJECTS.map(subject => (
             <button
               key={subject.name}
-              onClick={() => { ttsSpeak(`Starting a 30 minute ${subject.name} lesson.`); startLesson(subject.name); }}
+              onClick={() => { ttsSpeak(`Starting a ${lessonMinutes} minute ${subject.name} lesson.`); startLesson(subject.name); }}
               className="min-h-32 rounded-3xl border-2 border-white bg-white p-4 text-center shadow-lg active:scale-95"
             >
               <span className="text-4xl">{subject.emoji}</span>
               <p className="mt-2 font-black text-sky-950">{subject.name}</p>
-              <p className="mt-1 flex items-center justify-center gap-1 text-xs font-black text-purple-700"><Clock3 size={14}/> 30-minute lesson</p>
+              <p className="mt-1 flex items-center justify-center gap-1 text-xs font-black text-purple-700"><Clock3 size={14}/> {lessonMinutes}-minute lesson</p>
             </button>
           ))}
+        </section>
+
+        <section className="mt-4 rounded-3xl border-2 border-purple-200 bg-white p-4 shadow">
+          <p className="font-black text-purple-900">Choose lesson time</p>
+          <div className="mt-2 grid grid-cols-4 gap-2">{([15, 20, 30, 60] as const).map((minutes) => <button key={minutes} onClick={() => setLessonMinutes(minutes)} aria-pressed={lessonMinutes === minutes} className={`rounded-xl border-2 p-3 font-black ${lessonMinutes === minutes ? 'border-purple-700 bg-purple-700 text-white' : 'border-purple-100 text-purple-800'}`}>{minutes} min</button>)}</div>
         </section>
 
         <section className="mt-5 rounded-3xl bg-white p-5 shadow-xl">
@@ -169,7 +188,7 @@ export default function AITeacherPage() {
           {preview && <img src={preview} alt="Photographed book page" className="mt-4 max-h-72 w-full rounded-2xl bg-white object-contain"/>}
         </section>
 
-        {answer && <section className="mt-5 rounded-3xl border-2 border-green-200 bg-white p-5 shadow"><h2 className="flex items-center gap-2 font-black text-green-800"><PenLine/> Archie’s lesson</h2><p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{answer}</p><button onClick={() => ttsSpeak(answer)} className="mt-3 flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 font-black text-white"><Volume2/> Read aloud</button></section>}
+        {answer && <section className="mt-5 rounded-3xl border-2 border-green-200 bg-white p-5 shadow"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="flex items-center gap-2 font-black text-green-800"><PenLine/> Archie’s lesson</h2>{answerSource && <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-800">{answerSource}</span>}</div><p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{answer}</p><button onClick={() => ttsSpeak(answer)} className="mt-3 flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 font-black text-white"><Volume2/> Read aloud</button></section>}
         {error && <p role="alert" className="mt-4 rounded-2xl bg-red-50 p-4 font-bold text-red-700">{error}</p>}
       </div>
     </main>

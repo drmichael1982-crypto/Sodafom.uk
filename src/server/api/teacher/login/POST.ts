@@ -2,11 +2,8 @@ import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { teacherAccounts, teacherSessions } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { createHash, randomBytes } from 'node:crypto';
-
-function hashPassword(pw: string): string {
-  return createHash('sha256').update(pw + 'sodafom-teacher-salt').digest('hex');
-}
+import { randomBytes } from 'node:crypto';
+import { hashTeacherPassword, verifyTeacherPassword } from '@/server/teacher-password';
 
 export default async function handler(req: Request, res: Response) {
   try {
@@ -16,13 +13,11 @@ export default async function handler(req: Request, res: Response) {
     const [teacher] = await db.select().from(teacherAccounts).where(eq(teacherAccounts.email, email.toLowerCase().trim())).limit(1);
     if (!teacher) return res.status(401).json({ error: 'Invalid email or password' });
 
-    const hash = hashPassword(password);
-    // Use timingSafeEqual to prevent timing-based enumeration attacks
-    const { timingSafeEqual } = await import('node:crypto');
-    const hashBuf = Buffer.from(hash, 'hex');
-    const storedBuf = Buffer.from(teacher.passwordHash ?? '', 'hex');
-    const match = hashBuf.length === storedBuf.length && timingSafeEqual(hashBuf, storedBuf);
-    if (!match) return res.status(401).json({ error: 'Invalid email or password' });
+    const verification = await verifyTeacherPassword(password, teacher.passwordHash ?? '');
+    if (!verification.valid) return res.status(401).json({ error: 'Invalid email or password' });
+    if (verification.needsUpgrade) {
+      await db.update(teacherAccounts).set({ passwordHash: await hashTeacherPassword(password) }).where(eq(teacherAccounts.id, teacher.id));
+    }
 
     // Create session token
     const token = randomBytes(48).toString('hex');

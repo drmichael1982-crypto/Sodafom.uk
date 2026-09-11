@@ -84,6 +84,7 @@ export default function Header() {
   const sessionData = useSession();
   const isLoggedIn = sessionData.isAuthenticated;
   const user = sessionData.user;
+  const isAdmin = Boolean((user as { isAdmin?: boolean } | null)?.isAdmin);
   const { stars } = useStarCount();
 
   React.useEffect(() => {
@@ -313,7 +314,7 @@ export default function Header() {
                         </Link>
                       ))}
                       <div className="border-t border-border">
-                        {user?.isAdmin && (
+                        {isAdmin && (
                           <>
                             <Link
                               to="/admin-panel"
@@ -461,7 +462,7 @@ export default function Header() {
               )}
 
               {/* Admin Panel — mobile, logged-in admin only */}
-              {isLoggedIn && user?.isAdmin && (
+              {isLoggedIn && isAdmin && (
                 <Link
                   to="/admin-panel"
                   onClick={() => setMenuOpen(false)}
@@ -471,7 +472,7 @@ export default function Header() {
                   Admin Stats
                 </Link>
               )}
-              {isLoggedIn && user?.isAdmin && (
+              {isLoggedIn && isAdmin && (
                 <Link
                   to="/admin/sodafom-bot"
                   onClick={() => setMenuOpen(false)}

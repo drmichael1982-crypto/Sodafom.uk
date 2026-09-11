@@ -19,7 +19,7 @@ import { ArchieCharacter } from '../components/ArchieCharacter';
 import { useSession } from '@/lib/auth/auth-client';
 import { useSearchParams } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
-import { prepareLocalAdminPassword, hashAdminPassword, saveLocalAdminPassword, clearLocalAdminPassword } from '@/lib/local-admin-auth';
+import { FounderVoiceControl } from '@/components/FounderVoiceControl';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PlanBreakdown {
@@ -586,7 +586,7 @@ function PromoAdminTab() {
 }
 
 // ── Tab button ────────────────────────────────────────────────────────────────
-type Tab = 'overview' | 'revenue' | 'traffic' | 'reviews' | 'security' | 'insurance' | 'push' | 'promo' | 'evaluation' | 'bot';
+type Tab = 'overview' | 'revenue' | 'traffic' | 'reviews' | 'security' | 'insurance' | 'push' | 'promo' | 'evaluation' | 'bot' | 'founder';
 
 // ── Bot Admin Tab ─────────────────────────────────────────────────────────────
 function BotAdminTab() {
@@ -791,18 +791,13 @@ function PushAdminTab() {
 }
 
 export default function AdminPanel() {
-  const { user, isAuthenticated, isPending } = useSession();
+  const { isPending } = useSession();
   const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') as Tab;
 
   const [code, setCode]             = useState('');
   const [authed, setAuthed]         = useState(false);
-  const [customPassword, setCustomPassword] = useState(() => prepareLocalAdminPassword());
-  const [adminUnlocked, setAdminUnlocked] = useState(() => !prepareLocalAdminPassword());
-  const [unlockPassword, setUnlockPassword] = useState('');
-  const [unlockError, setUnlockError] = useState('');
-  const [newPasswordInput, setNewPasswordInput] = useState('');
-  const [passwordSavedMsg, setPasswordSavedMsg] = useState('');
+  const [checkingAccess, setCheckingAccess] = useState(true);
   const [stats, setStats]           = useState<Stats | null>(null);
   const [reviews, setReviews]       = useState<Review[]>([]);
   const [loading, setLoading]       = useState(false);
@@ -826,32 +821,24 @@ export default function AdminPanel() {
     window.dispatchEvent(new Event('sodafom_research_mode_change'));
   };
 
-  // Signed-in administrators can load the dashboard without entering a code.
+  // Reuse a valid signed-in admin session or short-lived founder cookie.
   React.useEffect(() => {
-    if (!isPending && isAuthenticated && user?.isAdmin) {
-      void fetchStats('');
-    }
-  }, [isPending, isAuthenticated, user?.isAdmin]);
+    void fetchStats(false);
+  }, []);
 
-  async function fetchStats(adminCode: string) {
+  async function fetchStats(showAuthError = true) {
     setLoading(true);
     setError('');
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 7000);
     try {
-      const headers: HeadersInit = {};
-      if (adminCode) headers['x-admin-code'] = adminCode;
-      const res  = await fetch(`${API_PREFIX}/admin/stats`, {
-        headers,
-        credentials: 'include',
-        signal: controller.signal
-      });
+      const res  = await fetch(`${API_PREFIX}/admin/stats`, { credentials: 'include', signal: controller.signal });
       clearTimeout(timeoutId);
       const data = await res.json();
       if (!res.ok || !data.success) {
-        setError(data.error ?? 'Failed to load stats');
+        setError(showAuthError ? (data.error ?? 'Failed to load stats') : '');
         setAuthed(false);
-        setWrongCode(true);
+        setWrongCode(showAuthError);
         return;
       }
       setStats(data.stats);
@@ -868,23 +855,42 @@ export default function AdminPanel() {
       setAuthed(false);
     } finally {
       setLoading(false);
+      setCheckingAccess(false);
     }
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    void fetchStats(code.trim());
+    if (!code.trim()) return;
+    setLoading(true);
+    setError('');
+    setWrongCode(false);
+    try {
+      const res = await fetch(`${API_PREFIX}/admin/verify`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: code.trim() }),
+      });
+      const data = await res.json() as { success?: boolean; error?: string };
+      if (!res.ok || !data.success) {
+        setWrongCode(true);
+        setError(data.error ?? 'Access denied');
+        return;
+      }
+      setCode('');
+      await fetchStats(true);
+    } catch {
+      setError('Could not connect to the secure admin service');
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function fetchRollingCode() {
     setCodeLoading(true);
     try {
-      const headers: HeadersInit = {};
-      if (code) headers['x-admin-code'] = code;
-      const res  = await fetch(`${API_PREFIX}/admin/code`, {
-        headers,
-        credentials: 'include',
-      });
+      const res  = await fetch(`${API_PREFIX}/admin/code`, { credentials: 'include' });
       const data = await res.json();
       if (data.success) setRollingCode(data);
     } catch { /* silent */ } finally {
@@ -904,12 +910,8 @@ export default function AdminPanel() {
     ? new Date(stats.generatedAt).toLocaleString('en-GB', { timeZone: 'Europe/London' })
     : '';
 
-  const avgStars = reviews.length
-    ? (reviews.reduce((sum, r) => sum + r.stars, 0) / reviews.length).toFixed(1)
-    : '—';
-
   // ── Loading state while checking session ────────────────────────────────────
-  if (isPending) {
+  if (isPending || checkingAccess) {
     return <div className="min-h-screen bg-background flex items-center justify-center p-8">
       <div className="flex flex-col items-center gap-4">
         <ArchieCharacter size={100} className="animate-bounce" />
@@ -918,66 +920,18 @@ export default function AdminPanel() {
     </div>;
   }
 
-  if (!adminUnlocked && customPassword) {
+  if (!authed) {
     return (
       <main className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-card border-2 border-primary/30 rounded-3xl p-7 shadow-xl">
           <div className="flex items-center gap-3 mb-4"><Lock className="text-primary" /><h1 className="text-xl font-black">Admin Hub</h1></div>
-          <p className="text-sm text-muted-foreground mb-4">Enter the admin password saved on this device.</p>
-          <input type="password" value={unlockPassword} onChange={e => setUnlockPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background font-bold" placeholder="Admin password" />
-          {unlockError && <p className="mt-2 text-sm font-bold text-red-600">{unlockError}</p>}
-          <button type="button" onClick={async () => {
-            const enteredHash = await hashAdminPassword(unlockPassword);
-            if (enteredHash === customPassword) { setAdminUnlocked(true); setUnlockError(''); setUnlockPassword(''); }
-            else setUnlockError('Incorrect admin password.');
-          }} className="mt-4 w-full py-3 rounded-xl bg-primary text-primary-foreground font-black">Open Admin Hub</button>
+          <p className="text-sm text-muted-foreground mb-4">Enter the founder code. It is checked securely by the server and is never stored in this page.</p>
+          <form onSubmit={handleSubmit}>
+            <input type="password" autoComplete="current-password" value={code} onChange={e => setCode(e.target.value)} className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background font-bold" placeholder="Founder code" />
+            {(wrongCode || error) && <p className="mt-2 text-sm font-bold text-red-600">{error || 'Access denied'}</p>}
+            <button type="submit" disabled={loading || !code.trim()} className="mt-4 w-full py-3 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50">{loading ? 'Checking…' : 'Open Admin Hub'}</button>
+          </form>
         </div>
-      </main>
-    );
-  }
-
-  if (!authed) {
-    return (
-      <main className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-        <form onSubmit={handleSubmit} className="w-full max-w-md bg-card border-2 border-primary/30 rounded-3xl p-7 shadow-xl">
-          <div className="flex items-center gap-3 mb-4">
-            <ShieldCheck className="text-primary" />
-            <h1 className="text-xl font-black">Founder/Admin Access</h1>
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            {isAuthenticated && user?.isAdmin
-              ? 'Opening your secure admin dashboard…'
-              : 'Enter the founder/admin code. It is checked securely by the server.'}
-          </p>
-          {!(isAuthenticated && user?.isAdmin) && (
-            <>
-              <input
-                type="password"
-                value={code}
-                onChange={(event) => setCode(event.target.value)}
-                autoComplete="current-password"
-                className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background font-bold"
-                placeholder="Founder/admin code"
-              />
-              {wrongCode && <p className="mt-2 text-sm font-bold text-red-600">{error || 'Invalid access code.'}</p>}
-              <button
-                type="submit"
-                disabled={loading || !code.trim()}
-                className="mt-4 w-full py-3 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50"
-              >
-                {loading ? 'Checking…' : 'Open Admin Hub'}
-              </button>
-            </>
-          )}
-          {isAuthenticated && user?.isAdmin && loading && (
-            <div className="flex items-center justify-center gap-2 font-bold text-primary">
-              <Loader2 className="animate-spin" size={18} /> Securely loading…
-            </div>
-          )}
-          {isAuthenticated && user?.isAdmin && error && (
-            <p className="mt-2 text-sm font-bold text-red-600">{error}</p>
-          )}
-        </form>
       </main>
     );
   }
@@ -1024,7 +978,7 @@ export default function AdminPanel() {
                 {researchMode ? 'Research Mode: ON' : 'Research Mode: OFF'}
               </button>
               <button
-                onClick={() => fetchStats(code)}
+                onClick={() => fetchStats(true)}
                 disabled={loading}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary-foreground/15 text-primary-foreground text-sm font-bold hover:bg-primary-foreground/25 transition-colors disabled:opacity-50"
               >
@@ -1061,6 +1015,16 @@ export default function AdminPanel() {
               }`}
             >
               Platform Evaluation
+            </button>
+            <button
+              onClick={() => setActiveTab('founder')}
+              className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+                activeTab === 'founder'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              Founder Voice
             </button>
             <button
               onClick={() => setActiveTab('bot')}
@@ -1202,62 +1166,14 @@ export default function AdminPanel() {
 
               {activeTab === 'security' && (
                 <div className="flex flex-col gap-6 max-w-2xl">
-                  {/* Create Admin Password Card */}
+                  {/* Server-side founder security */}
                   <div className="bg-card border-2 border-primary/30 rounded-2xl p-6 shadow-sm space-y-4">
                     <h3 className="font-black text-foreground text-base flex items-center gap-2">
-                      <KeyRound size={18} className="text-primary" /> Create Admin Password
+                      <ShieldCheck size={18} className="text-primary" /> Founder access is server secured
                     </h3>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      Set a custom password to secure the Admin Hub on future visits. Until a password is created, the Admin Hub remains directly accessible without a password.
+                      The permanent founder code is stored only in Railway. Successful authentication creates a short-lived, HTTP-only session. Voice commands cannot bypass this check.
                     </p>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-xs font-bold text-foreground mb-1">New Admin Password</label>
-                        <input
-                          type="password"
-                          value={newPasswordInput}
-                          onChange={(e) => setNewPasswordInput(e.target.value)}
-                          placeholder="Enter new admin password"
-                          className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-primary font-bold"
-                        />
-                      </div>
-                      {passwordSavedMsg && (
-                        <p className="text-xs font-bold text-green-600">✓ {passwordSavedMsg}</p>
-                      )}
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (!newPasswordInput.trim()) return;
-                          const hash = await saveLocalAdminPassword(newPasswordInput.trim());
-                          setCustomPassword(hash);
-                          setPasswordSavedMsg('Admin password created and saved successfully!');
-                          setNewPasswordInput('');
-                          setTimeout(() => setPasswordSavedMsg(''), 3000);
-                        }}
-                        className="py-2.5 px-5 rounded-xl bg-primary text-primary-foreground font-black text-xs hover:opacity-90 transition-opacity"
-                      >
-                        Save New Admin Password
-                      </button>
-                      {customPassword && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            clearLocalAdminPassword();
-                            setCustomPassword('');
-                            setAdminUnlocked(true);
-                            setPasswordSavedMsg('Admin password cleared. The Admin Hub is open until you create a new one.');
-                          }}
-                          className="py-2.5 px-5 rounded-xl border-2 border-red-200 text-red-700 font-black text-xs"
-                        >
-                          Clear Admin Password
-                        </button>
-                      )}
-                      {customPassword && (
-                        <p className="text-[11px] text-muted-foreground italic">
-                          Status: Custom admin password is currently saved and active.
-                        </p>
-                      )}
-                    </div>
                   </div>
 
                   {/* Loading codes button */}
@@ -1289,6 +1205,8 @@ export default function AdminPanel() {
               {activeTab === 'push' && <PushAdminTab />}
 
               {activeTab === 'bot' && <BotAdminTab />}
+
+              {activeTab === 'founder' && <FounderVoiceControl />}
 
               {activeTab === 'evaluation' && (
                 <div className="flex flex-col gap-8">

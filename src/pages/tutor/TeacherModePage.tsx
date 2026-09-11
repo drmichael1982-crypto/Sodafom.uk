@@ -17,18 +17,22 @@ export default function TeacherModePage() {
   const [profile, setProfile] = useState<ChildTutorProfile>(() => loadTutorMemory());
   const [showProfileSetup, setShowProfileSetup] = useState<boolean>(!profile.childName);
 
-  const [selectedSubject] = useState<string>(() => localStorage.getItem('sodafom_lesson_subject') || 'Any Subject');
-  const lessonSubject = ['Reading', 'Writing', 'Spelling'].includes(selectedSubject) ? 'English' : selectedSubject;
-  const lessonPool = lessonSubject === 'Any Subject'
-    ? CURRICULUM_LESSONS
-    : CURRICULUM_LESSONS.filter((lesson) => lesson.subject.toLowerCase() === lessonSubject.toLowerCase());
+  const [selectedSubject, setSelectedSubject] = useState<string>(() => localStorage.getItem('sodafom_lesson_subject') || 'Any Subject');
+  const [lessonMinutes, setLessonMinutes] = useState<15 | 20 | 30 | 60>(() => {
+    const stored = Number(localStorage.getItem('sodafom_lesson_minutes') || '30');
+    return ([15, 20, 30, 60] as const).includes(stored as 15 | 20 | 30 | 60) ? stored as 15 | 20 | 30 | 60 : 30;
+  });
   const ageGroup = profile.ageGroup ?? '8-10';
+  const lessonSubject = ['Reading', 'Writing', 'Spelling'].includes(selectedSubject) ? 'English' : selectedSubject;
+  const ageLessons = CURRICULUM_LESSONS.filter((lesson) => lesson.ageGroup === ageGroup);
+  const lessonPool = lessonSubject === 'Any Subject'
+    ? ageLessons
+    : ageLessons.filter((lesson) => lesson.subject.toLowerCase() === lessonSubject.toLowerCase());
   const lessons = lessonSubject === 'Maths'
     ? [...lessonPool, buildMathsPracticeLesson(ageGroup)]
-    : (lessonPool.length ? lessonPool : CURRICULUM_LESSONS);
+    : (lessonPool.length ? lessonPool : ageLessons.length ? ageLessons : CURRICULUM_LESSONS);
   const [currentLessonIndex, setCurrentLessonIndex] = useState<number>(0);
-  const lessonDurationMinutes = Number(localStorage.getItem('sodafom_lesson_minutes') || '30');
-  const [secondsRemaining, setSecondsRemaining] = useState<number>(() => lessonDurationMinutes * 60);
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(() => lessonMinutes * 60);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [typedInput, setTypedInput] = useState<string>('');
@@ -38,27 +42,23 @@ export default function TeacherModePage() {
   const [showSimpler, setShowSimpler] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; message: string } | null>(null);
   const [isPaused, setIsPaused] = useState<boolean>(false);
+  const [lessonComplete, setLessonComplete] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('Microphone ready');
+  const [answerSource, setAnswerSource] = useState<'Local AI' | 'OpenAI'>('Local AI');
   const recognitionRef = useRef<any>(null);
 
   const currentLesson: TopicLesson = lessons[currentLessonIndex] ?? lessons[0] ?? CURRICULUM_LESSONS[0];
   const currentQuestion: LessonQuestion | undefined = currentLesson.questions[currentQuestionIndex];
 
-  const speakText = useCallback((text: string) => {
+  const speakText = useCallback((text: string, onDone?: () => void) => {
     if (profile.readAloudPreference === false) return;
     stopTts();
     setIsSpeaking(true);
     ttsSpeak(text, () => {
       setIsSpeaking(false);
+      onDone?.();
     });
   }, [profile.readAloudPreference]);
-
-  // Initial welcome speech on lesson load
-  useEffect(() => {
-    if (showProfileSetup || !currentLesson) return;
-    const greeting = profile.childName ? `Hi ${profile.childName}! ` : '';
-    const introText = `${greeting}Welcome to ${currentLesson.title}! ${currentLesson.explanation}`;
-    speakText(introText);
-  }, [currentLessonIndex, showProfileSetup]);
 
   const handleProfileComplete = (updated: ChildTutorProfile) => {
     setProfile(updated);
@@ -71,6 +71,7 @@ export default function TeacherModePage() {
     setTypedInput('');
     setShowHint(false);
     setShowSimpler(false);
+    setAnswerSource('Local AI');
 
     if (currentQuestionIndex + 1 < currentLesson.questions.length) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -80,9 +81,10 @@ export default function TeacherModePage() {
       setCurrentLessonIndex(prev => prev + 1);
       setCurrentQuestionIndex(0);
     } else {
-      // Continue revising the selected subject for the full lesson.
-      setCurrentLessonIndex(0);
-      setCurrentQuestionIndex(0);
+      // Never repeat questions in the same lesson session.
+      setLessonComplete(true);
+      setIsPaused(true);
+      speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! You answered every available question without repeats.`);
     }
   };
 
@@ -117,11 +119,12 @@ export default function TeacherModePage() {
     }
     const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRec) {
-      alert('Voice command recognition is not supported on this browser. Use the buttons provided.');
+      setVoiceStatus('Speech recognition is not supported here. Type or tap an answer instead.');
       return;
     }
 
     setIsListening(true);
+    setVoiceStatus('Listening…');
     const rec = new SpeechRec();
     recognitionRef.current = rec;
     rec.lang = 'en-GB';
@@ -129,6 +132,35 @@ export default function TeacherModePage() {
     rec.onresult = (e: any) => {
       const phrase = e.results[0]?.[0]?.transcript ?? '';
       setIsListening(false);
+
+      const durationMatch = phrase.match(/\b(15|20|30|60)\s*(?:minute|min)\b/i);
+      if (durationMatch) {
+        const nextMinutes = Number(durationMatch[1]) as 15 | 20 | 30 | 60;
+        setLessonMinutes(nextMinutes);
+        setSecondsRemaining(nextMinutes * 60);
+        localStorage.setItem('sodafom_lesson_minutes', String(nextMinutes));
+        setVoiceStatus(`Lesson time changed to ${nextMinutes} minutes.`);
+        speakText(`Okay. This is now a ${nextMinutes} minute lesson.`);
+        return;
+      }
+
+      const subjectMatch = phrase.match(/\b(maths|math|english|reading|writing|spelling|science|geography|technology|religious education|r\.?e\.?)\b/i);
+      if (subjectMatch && /\b(?:switch|change|learn|teach|do|start)\b/i.test(phrase)) {
+        const spoken = subjectMatch[1].toLowerCase();
+        const nextSubject = spoken === 'math'
+          ? 'Maths'
+          : (spoken === 'religious education' || /^r\.?e\.?$/.test(spoken))
+            ? 'RE'
+            : spoken.charAt(0).toUpperCase() + spoken.slice(1);
+        setSelectedSubject(nextSubject);
+        localStorage.setItem('sodafom_lesson_subject', nextSubject);
+        setCurrentLessonIndex(0);
+        setCurrentQuestionIndex(0);
+        setLessonComplete(false);
+        setVoiceStatus(`Switched to ${nextSubject}.`);
+        speakText(`Great choice. Let's switch to ${nextSubject}.`);
+        return;
+      }
       const action = parseTutorVoiceCommand(phrase);
 
       if (action === 'read_question' && currentQuestion) {
@@ -146,21 +178,39 @@ export default function TeacherModePage() {
       } else if (action === 'stop') {
         stopTts();
         setIsSpeaking(false);
+      } else if (action === 'continue') {
+        handleNextQuestion();
+      } else if (action === 'repeat' && currentQuestion) {
+        speakText(currentQuestion.question);
       } else if (phrase) {
         // Evaluate phrase as direct answer
         handleAnswerSubmit(phrase);
       }
     };
-    rec.onerror = () => {
+    rec.onerror = (event: any) => {
       recognitionRef.current = null;
       setIsListening(false);
+      setVoiceStatus(event?.error === 'not-allowed' ? 'Microphone permission was blocked. Allow it in browser settings, or type the answer.' : 'I could not hear that. Try again or type the answer.');
     };
     rec.onend = () => {
       recognitionRef.current = null;
       setIsListening(false);
+      setVoiceStatus((current) => current === 'Listening…' ? 'Microphone ready' : current);
     };
     rec.start();
   };
+
+  // Archie reads each new, unique question and then opens the microphone.
+  useEffect(() => {
+    if (showProfileSetup || isPaused || lessonComplete || !currentLesson || !currentQuestion) return;
+    const greeting = currentLessonIndex === 0 && currentQuestionIndex === 0 && profile.childName ? `Hi ${profile.childName}! ` : '';
+    const lessonIntro = currentQuestionIndex === 0 ? `${currentLesson.title}. ${currentLesson.explanation} ` : '';
+    speakText(`${greeting}${lessonIntro}Question: ${currentQuestion.question}`, () => {
+      if (document.visibilityState === 'visible') handleVoiceCommandToggle();
+    });
+    // Question indexes are the session sequence; stopping at the end prevents repeats.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLessonIndex, currentQuestionIndex, showProfileSetup, lessonComplete]);
 
   useEffect(() => () => {
     try { recognitionRef.current?.abort?.(); } catch { /* ignore */ }
@@ -176,7 +226,9 @@ export default function TeacherModePage() {
 
   useEffect(() => {
     if (secondsRemaining !== 0) return;
-    speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! Your ${lessonDurationMinutes} minute lesson is complete.`);
+    setLessonComplete(true);
+    setIsPaused(true);
+    speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! Your ${lessonMinutes} minute lesson is complete.`);
   }, [secondsRemaining]);
 
   const minutes = Math.floor(secondsRemaining / 60);
@@ -203,7 +255,7 @@ export default function TeacherModePage() {
               1-to-1 Tutor <Award size={16} className="text-yellow-500" />
             </h1>
             <p className="text-[11px] font-extrabold text-amber-700">
-              {profile.childName ? `Learning with ${profile.childName}` : 'Child Profile Ready'}
+              {profile.childName ? `Learning with ${profile.childName}` : 'Child Profile Ready'} · {answerSource}
             </p>
           </div>
         </div>
@@ -252,11 +304,18 @@ export default function TeacherModePage() {
                   <p className="mt-1 flex items-center gap-1 text-xs font-black text-purple-700">
                     <Clock3 size={14} /> {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')} · {selectedSubject}
                   </p>
+                  <p className="mt-1 text-[11px] font-bold text-blue-700">{voiceStatus}</p>
                 </div>
               </div>
 
               {/* Toolbar Controls */}
               <div className="flex flex-wrap gap-2 justify-end">
+                <select value={lessonMinutes} onChange={(event) => {
+                  const next = Number(event.target.value) as 15 | 20 | 30 | 60;
+                  setLessonMinutes(next); setSecondsRemaining(next * 60); setLessonComplete(false); setIsPaused(false); localStorage.setItem('sodafom_lesson_minutes', String(next));
+                }} aria-label="Lesson length" className="rounded-2xl border border-blue-300 bg-blue-50 p-2 text-xs font-black text-blue-900">
+                  {[15, 20, 30, 60].map((value) => <option key={value} value={value}>{value} min</option>)}
+                </select>
                 <button
                   onClick={() => setIsPaused((value) => !value)}
                   className="p-2.5 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-2xl border border-purple-300 font-bold text-xs flex items-center gap-1"

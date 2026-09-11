@@ -1,7 +1,6 @@
 import { RouteObject } from "react-router";
 import { lazy } from 'react';
 import { Navigate } from 'react-router';
-import HomePage from './pages/index';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
 import AITeacherPage from './pages/AITeacherPage';
@@ -29,8 +28,6 @@ import ParentDashboardPage from './pages/parent-dashboard';
 import FeatureHubPage from './pages/FeatureHubPage';
 import LessonsPage from './pages/LessonsPage';
 import HomeworkHelperPage from './pages/HomeworkHelperPage';
-import PocketMoneyPage from './pages/PocketMoneyPage';
-import ParentChoresPage from './pages/ParentChoresPage';
 import BirthdayPage from './pages/BirthdayPage';
 import ArchieOutfitPage from './pages/ArchieOutfitPage';
 import SeasonalThemesPage from './pages/SeasonalThemesPage';
@@ -205,6 +202,7 @@ import EarthSpaceGame from './pages/games/earth-space';
 import EvolutionExplorerGame from './pages/games/evolution-explorer';
 import ScienceQuizGame from './pages/games/science-quiz';
 import BackToSchoolShopPage from './pages/shop/back-to-school';
+import ChoresPage, { ParentChoresPage } from './pages/ChoresPage';
 const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
 const NotFoundPage = ProdNotFoundPage;
 export const routes: RouteObject[] = [{
@@ -221,10 +219,10 @@ export const routes: RouteObject[] = [{
   element: <HomeworkHelperPage />
 }, {
   path: '/pocket-money',
-  element: <PocketMoneyPage />
+  element: <Navigate to="/chores" replace />
 }, {
   path: '/pocket-money/setup',
-  element: <ParentChoresPage />
+  element: <Navigate to="/parent-dashboard/chores" replace />
 }, {
   path: '/birthday',
   element: <BirthdayPage />
@@ -266,7 +264,7 @@ export const routes: RouteObject[] = [{
   element: <TeacherModePage />
 }, {
   path: '/classic-home',
-  element: <HomePage />
+  element: <Navigate to="/" replace />
 }, {
   path: '/subjects',
   element: <SubjectsPage />
@@ -811,6 +809,21 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/ai-teacher',
   element: <AITeacherPage />
+}, {
+  path: '/reading',
+  element: <Navigate to="/subjects/reading" replace />
+}, {
+  path: '/chores',
+  element: <ChoresPage />
+}, {
+  path: '/parent-dashboard/chores',
+  element: <ParentChoresPage />
+}, {
+  path: '/design-archie-outfit',
+  element: <Navigate to="/archie-outfit" replace />
+}, {
+  path: '/birthday-party',
+  element: <Navigate to="/birthday" replace />
 }, {
   path: '/mock-exams',
   element: <MockExamsPage />

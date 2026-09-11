@@ -94,6 +94,39 @@ export const children = mysqlTable('children', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+export const chores = mysqlTable('chores', {
+  id: int('id').primaryKey().autoincrement(),
+  parentId: varchar('parent_id', { length: 255 }).notNull().references(() => user.id, { onDelete: 'cascade' }),
+  childId: int('child_id').notNull().references(() => children.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 120 }).notNull(),
+  valuePence: int('value_pence').notNull().default(0),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow().onUpdateNow(),
+});
+
+export const choreCompletions = mysqlTable('chore_completions', {
+  id: int('id').primaryKey().autoincrement(),
+  choreId: int('chore_id').notNull().references(() => chores.id, { onDelete: 'cascade' }),
+  parentId: varchar('parent_id', { length: 255 }).notNull().references(() => user.id, { onDelete: 'cascade' }),
+  childId: int('child_id').notNull().references(() => children.id, { onDelete: 'cascade' }),
+  status: varchar('status', { length: 24 }).notNull().default('waiting_for_parent'),
+  completedAt: timestamp('completed_at').defaultNow(),
+  approvedAt: timestamp('approved_at'),
+});
+
+export const founderChangeRequests = mysqlTable('founder_change_requests', {
+  id: int('id').primaryKey().autoincrement(),
+  instruction: text('instruction').notNull(),
+  category: varchar('category', { length: 48 }).notNull(),
+  riskLevel: varchar('risk_level', { length: 16 }).notNull(),
+  plan: text('plan').notNull(),
+  testSummary: text('test_summary').notNull(),
+  status: varchar('status', { length: 32 }).notNull().default('prepared'),
+  createdAt: timestamp('created_at').defaultNow(),
+  approvedAt: timestamp('approved_at'),
+});
+
 /**
  * Logs for individual activity sessions played by a child.
  * Records scores, duration, and stars earned.
