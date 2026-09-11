@@ -339,7 +339,7 @@ export default function TeacherModePage() {
         ) : (
           <>
             {/* Top Classroom Row: Mascot + Control Toolbar */}
-            <div className="flex flex-col gap-4 overflow-hidden bg-gradient-to-br from-white via-sky-50 to-yellow-100 p-4 rounded-[2rem] border-4 border-white/90 shadow-2xl sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex flex-col gap-4 overflow-hidden bg-gradient-to-br from-cyan-100 via-fuchsia-100 to-yellow-200 p-4 rounded-[2rem] border-4 border-white/90 shadow-2xl sm:flex-row sm:items-center sm:justify-between sm:p-5">
               <div className="flex items-center gap-3">
                 <ArchieCharacter
                   size={90}

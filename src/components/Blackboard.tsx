@@ -78,7 +78,7 @@ export function Blackboard({
       <div className="space-y-4">
         {/* Explanation & Example Box */}
         {(mode === 'explain' || mode === 'question' || mode === 'summary') && (
-          <div className="rounded-2xl border-2 border-sky-100 bg-white/95 p-4 text-sm leading-relaxed shadow-lg">
+          <div className="rounded-2xl border-2 border-sky-100 bg-gradient-to-br from-cyan-50 via-white to-yellow-100 p-4 text-sm leading-relaxed shadow-lg">
             <p className="font-semibold text-slate-800">{explanationText}</p>
             {exampleText && (
               <div className="mt-3 rounded-r-xl border-l-4 border-yellow-400 bg-yellow-50 p-2.5 font-mono text-xs text-blue-900">
@@ -117,7 +117,7 @@ export function Blackboard({
 
         {/* Current Question & Options/Input */}
         {questionText && (
-          <div className="rounded-2xl border-2 border-yellow-200 bg-white/95 p-4 shadow-lg">
+          <div className="rounded-2xl border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 via-pink-50 to-cyan-100 p-4 shadow-lg">
             <p className="mb-3 flex items-center gap-2 text-sm font-black text-blue-950">
               <HelpCircle size={16} className="text-yellow-400" />
               {questionText}
