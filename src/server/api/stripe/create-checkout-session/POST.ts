@@ -13,6 +13,7 @@
 import type { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { getSecret } from '#airo/secrets';
+import { checkoutOrigin, isStripePriceId } from '@/server/lib/checkout-security';
 
 function getStripe(): Stripe {
   const secretKey = getSecret('STRIPE_SECRET_KEY');
@@ -50,8 +51,19 @@ export default async function handler(req: Request, res: Response) {
       return;
     }
 
-    // Derive redirect URLs from request origin (security - not from frontend body)
-    const origin = req.headers.origin || `https://${req.headers.host}`;
+    if ((lineItems?.length ?? 0) > 20) {
+      res.status(400).json({ success: false, error: 'A checkout can contain at most 20 items.' });
+      return;
+    }
+
+    const requestedItems = lineItems?.length ? lineItems : priceId ? [{ priceId, quantity }] : [];
+    if (requestedItems.some((item) => !isStripePriceId(item.priceId) || !Number.isInteger(item.quantity) || item.quantity < 1 || item.quantity > 10)) {
+      res.status(400).json({ success: false, error: 'Invalid checkout item.' });
+      return;
+    }
+
+    // Derive redirect URLs from server-owned host configuration.
+    const origin = checkoutOrigin(req);
     const successUrl = `${origin}/checkout/success`;
     const cancelUrl = `${origin}/checkout/cancel`;
 
@@ -99,6 +111,7 @@ export default async function handler(req: Request, res: Response) {
       cancel_url: cancelUrl,
       billing_address_collection: 'required', // Always collect billing address
       phone_number_collection: { enabled: true }, // Always collect phone number
+      metadata: priceId ? { sodafomPriceId: priceId } : { sodafomCart: 'true' },
     };
 
     const session = await stripe.checkout.sessions.create(sessionParams);
@@ -130,4 +143,3 @@ export default async function handler(req: Request, res: Response) {
     });
   }
 }
-

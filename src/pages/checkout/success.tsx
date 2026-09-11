@@ -23,6 +23,7 @@ interface SessionDetails {
   currency?: string;
   paymentStatus?: string;
   status?: string;
+  mode?: 'payment' | 'subscription' | 'setup';
 }
 
 function formatPrice(amount: number, currency: string) {
@@ -77,17 +78,31 @@ export default function CheckoutSuccess() {
         const session = data.session;
         setDetails(session);
 
-        if (session.status === 'complete' && session.paymentStatus === 'paid') {
+        const paidOrTrialStarted = session.paymentStatus === 'paid'
+          || (session.mode === 'subscription' && session.paymentStatus === 'no_payment_required');
+
+        if (session.status === 'complete' && paidOrTrialStarted) {
           firedRef.current = true;
-          // Activate subscription in DB (idempotent)
-          try {
-            await fetch(`${API_PREFIX}/subscription/activate`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ sessionId }),
-            });
-          } catch { /* non-blocking */ }
+          if (session.mode === 'subscription') {
+            try {
+              const activationResponse = await fetch(`${API_PREFIX}/subscription/activate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ sessionId }),
+              });
+              const activation = await activationResponse.json() as { success?: boolean };
+              if (!activationResponse.ok || !activation.success) {
+                setVerification('failed');
+                setErrorMessage('Payment was verified, but account access could not be activated. Please sign in and contact support with the reference below.');
+                return;
+              }
+            } catch {
+              setVerification('failed');
+              setErrorMessage('Payment was verified, but account access could not be activated. Please contact support with the reference below.');
+              return;
+            }
+          }
           setVerification('verified');
         } else if (session.paymentStatus === 'unpaid') {
           firedRef.current = true;
@@ -217,7 +232,9 @@ export default function CheckoutSuccess() {
               You're in! 🎉
             </h1>
             <p className="text-primary-foreground/80 text-sm">
-              Your 7-day free trial has started. Enjoy full access to every game.
+              {details?.mode === 'subscription'
+                ? 'Your 7-day free trial has started. Enjoy full access to every game.'
+                : 'Your payment has been verified successfully.'}
             </p>
           </div>
 

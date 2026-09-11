@@ -12,6 +12,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { signUp } from '@/lib/auth/auth-client.tsx';
 import { API_PREFIX } from '@/lib/config';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 import {
   Eye, EyeOff, KeyRound, CheckCircle, ArrowRight,
   CreditCard, Calendar, School, Sparkles, Shield, Lock,
@@ -189,10 +190,11 @@ export default function SignupPage() {
         return;
       }
 
-      // FOR TESTING: Bypass plan selection and go straight to the hub
-      navigate('/hub', { replace: true });
-      // Move to plan selection (DISABLED FOR TESTING)
-      // setStep(2);
+      if (OPEN_TESTING_MODE) {
+        navigate('/hub', { replace: true });
+      } else {
+        setStep(2);
+      }
     } catch (err) {
       setError(String(err));
     } finally {

@@ -1103,19 +1103,19 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
     });
   return <>
       <Helmet>
-        <title>Games & Activities — Sodafom | Fun Learning Games for Kids</title>
-        <meta name="description" content="Play maths, spelling, and reading games on Sodafom. Fun, age-appropriate activities for children aged 5–13 with read-aloud support." />
-        <link rel="canonical" href={`${siteUrl}/games`} />
-        <meta property="og:title" content="Games & Activities — Sodafom" />
-        <meta property="og:description" content="Fun learning games for children ages 5–13. Maths, spelling, reading and stories." />
-        <meta property="og:url" content={`${siteUrl}/games`} />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content={ogImage} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Games & Activities — Sodafom" />
-        <meta name="twitter:description" content="Fun learning games for children ages 5–13. Maths, spelling, reading and stories." />
-        <meta name="twitter:image" content={ogImage} />
-        <script type="application/ld+json">{JSON.stringify({
+        <title key="title">Games & Activities — Sodafom | Fun Learning Games for Kids</title>
+        <meta key="description" name="description" content="Play maths, spelling, and reading games on Sodafom. Fun, age-appropriate activities for children aged 5–13 with read-aloud support." />
+        <link key="canonical" rel="canonical" href={`${siteUrl}/games`} />
+        <meta key="og-title" property="og:title" content="Games & Activities — Sodafom" />
+        <meta key="og-description" property="og:description" content="Fun learning games for children ages 5–13. Maths, spelling, reading and stories." />
+        <meta key="og-url" property="og:url" content={`${siteUrl}/games`} />
+        <meta key="og-type" property="og:type" content="website" />
+        <meta key="og-image" property="og:image" content={ogImage} />
+        <meta key="twitter-card" name="twitter:card" content="summary_large_image" />
+        <meta key="twitter-title" name="twitter:title" content="Games & Activities — Sodafom" />
+        <meta key="twitter-description" name="twitter:description" content="Fun learning games for children ages 5–13. Maths, spelling, reading and stories." />
+        <meta key="twitter-image" name="twitter:image" content={ogImage} />
+        <script key="structured-data" type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'CollectionPage',
           '@id': `${siteUrl}/games#webpage`,
@@ -2104,11 +2104,12 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                     <span className="text-xs text-muted-foreground font-bold">{newGames.length} new game{newGames.length !== 1 ? 's' : ''} added!</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {newGames.map((g: { slug: string; emoji: string; title: string; subject: string }) => {
-                      const href = GAME_ROUTES[`game-${g.slug}` as keyof typeof GAME_ROUTES] ?? `/games/${g.slug}`;
+                    {newGames.map((g: { id: string; emoji: string; title: string; subject: string }) => {
+                      const gameSlug = g.id.replace(/^game-/, '');
+                      const href = GAME_ROUTES[g.id] ?? `/games/${gameSlug}`;
                       return (
                         <Link
-                          key={g.slug}
+                          key={g.id}
                           to={href}
                           className="flex items-center gap-1.5 bg-card border border-border rounded-xl px-3 py-1.5 text-sm font-bold text-foreground hover:border-primary hover:bg-primary/5 transition-all"
                         >
@@ -2315,7 +2316,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                                 {ac?.icon} {friendlyLabel[ag] ?? `Ages ${ag}`}
                               </span>;
                       })}
-                          {game.featured && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-accent text-accent-foreground">
+                          {game.featured && <span key="featured" className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-accent text-accent-foreground">
                               <Star size={10} className="fill-current" /> Featured
                             </span>}
                         </div>

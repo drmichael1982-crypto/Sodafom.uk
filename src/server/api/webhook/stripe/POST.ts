@@ -28,9 +28,21 @@ function planLabel(priceId: string): string {
   return PLAN_LABELS.get(priceId) ?? priceId;
 }
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>'"]/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;',
+  })[character] ?? character);
+}
+
 function paymentEmail(session: Stripe.Checkout.Session): { subject: string; html: string; text: string } {
   const name = session.customer_details?.name ?? 'Unknown';
   const email = session.customer_details?.email ?? session.customer_email ?? 'Unknown';
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
   const amount = session.amount_total != null ? `£${(session.amount_total / 100).toFixed(2)}` : 'N/A';
   const plan = planLabel(session.metadata?.priceId ?? '');
   const sessionId = session.id;
@@ -44,8 +56,8 @@ function paymentEmail(session: Stripe.Checkout.Session): { subject: string; html
       </div>
       <div style="background: #ffffff; padding: 24px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0;">
         <table style="width: 100%; border-collapse: collapse;">
-          <tr><td style="padding: 8px 0; font-weight: bold; color: #555; width: 140px;">Customer:</td><td style="padding: 8px 0; color: #222;">${name}</td></tr>
-          <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${email}" style="color: #2D6A4F;">${email}</a></td></tr>
+          <tr><td style="padding: 8px 0; font-weight: bold; color: #555; width: 140px;">Customer:</td><td style="padding: 8px 0; color: #222;">${safeName}</td></tr>
+          <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${safeEmail}" style="color: #2D6A4F;">${safeEmail}</a></td></tr>
           <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Plan:</td><td style="padding: 8px 0; color: #222;">${plan}</td></tr>
           <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Amount:</td><td style="padding: 8px 0; color: #222; font-weight: bold;">${amount}</td></tr>
           <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Date:</td><td style="padding: 8px 0; color: #222;">${date}</td></tr>
@@ -66,16 +78,21 @@ export default async function handler(req: Request, res: Response): Promise<void
   const sig = req.headers['stripe-signature'];
   const webhookSecret = getSecret('STRIPE_WEBHOOK_SECRET');
 
+  if (!webhookSecret || typeof webhookSecret !== 'string') {
+    console.error('[stripe-webhook] STRIPE_WEBHOOK_SECRET is not configured');
+    res.status(503).json({ error: 'Webhook verification is not configured' });
+    return;
+  }
+  if (!sig) {
+    res.status(400).json({ error: 'Missing Stripe signature' });
+    return;
+  }
+
   let event: Stripe.Event;
 
   try {
-    if (webhookSecret && typeof webhookSecret === 'string' && sig) {
-      const stripe = getStripe();
-      event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
-    } else {
-      // No webhook secret configured — parse body directly (less secure but functional)
-      event = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as Stripe.Event;
-    }
+    const stripe = getStripe();
+    event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
   } catch (err) {
     console.error('[stripe-webhook] signature verification failed:', err);
     res.status(400).json({ error: 'Webhook signature verification failed' });

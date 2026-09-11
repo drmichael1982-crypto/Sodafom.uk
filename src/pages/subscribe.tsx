@@ -6,7 +6,7 @@ import { subscribe } from 'virtual:content';
  * then go to Stripe Checkout. Card is captured upfront; no charge for 7 days.
  * After the trial, Stripe auto-charges and keeps billing until cancelled.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { Link, useSearchParams, useNavigate } from "react-router";
 import { Helmet } from '@dr.pogodin/react-helmet';
@@ -15,6 +15,7 @@ import { CheckCircle, Star, Shield, RotateCcw, Zap, ArrowRight, CreditCard, Lock
 import PromoCodeBox from '@/components/PromoCodeBox';
 import CancelSubscriptionButton from '@/components/CancelSubscriptionButton';
 import { useSubscription } from '@/hooks/useSubscription';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 const siteUrl = 'https://sodafom.uk';
 const ogImage = `${siteUrl}/og-image.png`;
 
@@ -99,6 +100,29 @@ export default function SubscribePage() {
   const [error, setError] = useState<string | null>(null);
   const { subscribed, plan: activePlan } = useSubscription();
   const plan = PLANS.find(p => p.id === selectedPlan)!;
+
+  if (OPEN_TESTING_MODE) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Helmet>
+          <title>Open Testing — Sodafom</title>
+          <meta name="robots" content="noindex" />
+        </Helmet>
+        <section className="w-full max-w-lg rounded-3xl border-2 border-primary/20 bg-card p-8 text-center shadow-lg">
+          <Shield size={44} className="mx-auto mb-4 text-primary" aria-hidden="true" />
+          <h1 className="text-3xl font-black text-foreground">Payments are paused for open testing</h1>
+          <p className="mt-3 text-sm font-semibold leading-relaxed text-muted-foreground">
+            Every learning game is unlocked while Sodafom is being checked. This page will not create a Stripe checkout or charge a card.
+          </p>
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Link to="/games" className="rounded-xl bg-primary px-5 py-3 font-black text-primary-foreground">Test the games</Link>
+            <Link to="/hub/signin" className="rounded-xl border-2 border-border px-5 py-3 font-black text-foreground">Test sign in</Link>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   const handleStartTrial = async () => {
     setLoading(true);
     setError(null);

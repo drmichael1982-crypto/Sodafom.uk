@@ -8,8 +8,9 @@
  * OPEN_TESTING_MODE gate remains separate so it cannot be enabled by editing
  * browser storage.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 
 export type SubscriptionStatus =
   | 'none'
@@ -53,7 +54,7 @@ export function useSubscription(): SubscriptionState {
       }) => {
         if (cancelled) return;
 
-        const forceFullAccess = true; // GLOBAL OVERRIDE FOR CORE TESTING
+        const forceFullAccess = OPEN_TESTING_MODE;
 
         setState({
           loading: false,
@@ -68,11 +69,11 @@ export function useSubscription(): SubscriptionState {
         if (!cancelled) {
           setState({
             loading: false,
-            subscribed: true, // TEST OVERRIDE
-            status: 'active',
+            subscribed: OPEN_TESTING_MODE,
+            status: OPEN_TESTING_MODE ? 'active' : 'none',
             trialEndsAt: null,
             daysLeft: null,
-            plan: 'promo',
+            plan: OPEN_TESTING_MODE ? 'testing' : null,
           });
         }
       });
@@ -89,10 +90,10 @@ export const DEMO_GAME_IDS = new Set(['number-pop', 'spelling-bee', 'phonics-par
 
 /** Returns true if the given game route path is a free demo game */
 export function isDemoGame(pathname: string): boolean {
-  return true; // FOR TESTING
+  return OPEN_TESTING_MODE || DEMO_GAME_IDS.has(pathname.replace(/^\/games\//, ''));
 }
 
 /** Returns true if the given game ID is a free demo game */
 export function isDemoGameId(id: string): boolean {
-  return true; // FOR TESTING
+  return OPEN_TESTING_MODE || DEMO_GAME_IDS.has(id.replace(/^game-/, ''));
 }

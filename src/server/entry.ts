@@ -216,6 +216,10 @@ app.use((req, res, next) => {
 // the sitemap origin in robots.txt.
 app.set("trust proxy", true);
 
+// Stripe signatures must be checked against the untouched request bytes. This
+// route must therefore be registered before the general JSON body parser.
+app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), webhook_stripe_post_75);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -310,7 +314,6 @@ app.get("/api/teacher/students/:studentId", teacher_students_studentId_get_71);
 app.post("/api/teacher/students/:studentId/activity", teacher_students_studentId_activity_post_72);
 app.post("/api/teacher/students/:studentId/notes", teacher_students_studentId_notes_post_73);
 app.post("/api/track/pageview", track_pageview_post_74);
-app.post("/api/webhook/stripe", webhook_stripe_post_75);
 // </api-registrations>
 
 let isInitialized = false;

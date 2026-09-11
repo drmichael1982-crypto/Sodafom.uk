@@ -9,6 +9,8 @@
 import type { Request, Response } from 'express';
 import Stripe from 'stripe';
 import { getSecret } from '#airo/secrets';
+import { getAuth } from '@/lib/auth/auth';
+import { checkoutOrigin, planForPrice } from '@/server/lib/checkout-security';
 
 function getStripe(): Stripe {
   const secretKey = getSecret('STRIPE_SECRET_KEY');
@@ -20,24 +22,30 @@ function getStripe(): Stripe {
 
 interface CreateTrialRequest {
   priceId: string;
-  successUrl?: string;
-  cancelUrl?: string;
 }
 
 export default async function handler(req: Request, res: Response) {
   try {
-    const { priceId, successUrl, cancelUrl } = req.body as CreateTrialRequest;
+    const { priceId } = req.body as CreateTrialRequest;
 
     if (!priceId) {
       res.status(400).json({ success: false, error: 'priceId is required.' });
       return;
     }
 
-    // Derive safe redirect URLs — prefer body values (they include session_id placeholder)
-    // but fall back to origin-derived URLs as a security backstop.
-    const origin = req.headers.origin || `https://${req.headers.host}`;
-    const resolvedSuccess = successUrl || `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`;
-    const resolvedCancel  = cancelUrl  || `${origin}/hub/signup`;
+    const plan = planForPrice(priceId);
+    if (!plan) {
+      res.status(400).json({ success: false, error: 'Unknown Sodafom subscription plan.' });
+      return;
+    }
+
+    const authSession = await getAuth().api.getSession({ headers: req.headers as unknown as Headers });
+    if (!authSession?.user?.id || !authSession.user.email) {
+      res.status(401).json({ success: false, error: 'Please sign in before starting checkout.' });
+      return;
+    }
+
+    const origin = checkoutOrigin(req);
 
     const stripe = getStripe();
 
@@ -58,14 +66,25 @@ export default async function handler(req: Request, res: Response) {
       // Stripe collects card details now; the first charge happens on day 8.
       subscription_data: {
         trial_period_days: 7,
+        metadata: {
+          sodafomUserId: authSession.user.id,
+          sodafomPlan: plan,
+          sodafomPriceId: priceId,
+        },
       },
       // ─────────────────────────────────────────────────────────────────────────
-      success_url: resolvedSuccess,
-      cancel_url: resolvedCancel,
+      success_url: `${origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/hub/signup?checkout=cancelled`,
       billing_address_collection: 'required',
       phone_number_collection: { enabled: true },
       // Pre-fill customer email if the user is authenticated
-      customer_email: (req as Request & { user?: { email?: string } }).user?.email ?? undefined,
+      customer_email: authSession.user.email,
+      client_reference_id: authSession.user.id,
+      metadata: {
+        sodafomUserId: authSession.user.id,
+        sodafomPlan: plan,
+        sodafomPriceId: priceId,
+      },
       // Allow promo codes at checkout
       allow_promotion_codes: true,
       // Collect payment method even during trial so Stripe can charge on day 8
