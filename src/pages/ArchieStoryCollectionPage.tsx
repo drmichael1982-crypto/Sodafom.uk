@@ -72,7 +72,15 @@ export default function ArchieStoryCollectionPage() {
     recognition.onresult = (event: any) => {
       const heard = String(event.results[event.results.length - 1][0].transcript).split(/\s+/).map(clean).filter(Boolean);
       let position = wordIndex; const nextStates = [...(wordStates.length ? wordStates : words.map(() => 'pending' as const))];
-      for (const spoken of heard) { if (position >= words.length) break; if (spoken === clean(words[position])) { nextStates[position] = 'correct'; position += 1; } else { nextStates[position] = 'wrong'; ttsSpeak(`Let us sound it out: ${soundOut(words[position])}. Your turn.`); break; } }
+      for (const spoken of heard) {
+        if (position >= words.length) break;
+        const expected = clean(words[position]);
+        const previous = position > 0 ? clean(words[position - 1]) : '';
+        if (spoken === previous || spoken.length < 2) continue;
+        if (spoken === expected || expected.startsWith(spoken) || spoken.startsWith(expected)) { nextStates[position] = 'correct'; position += 1; }
+        else if (heard.includes(expected)) continue;
+        else { nextStates[position] = 'wrong'; ttsSpeak(`Let us sound it out: ${soundOut(words[position])}. Your turn.`); break; }
+      }
       setWordStates(nextStates); setWordIndex(position); if (position >= words.length) recognition.stop();
       if (position >= words.length && page < 9) window.setTimeout(() => changePage(page + 1), 1100);
     };
