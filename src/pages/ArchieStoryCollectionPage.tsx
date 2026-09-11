@@ -56,6 +56,7 @@ export default function ArchieStoryCollectionPage() {
   const [listening, setListening] = useState(false);
   const [wordStates, setWordStates] = useState<Array<'pending' | 'correct' | 'wrong'>>([]);
   const [wordIndex, setWordIndex] = useState(0);
+  const [welcome, setWelcome] = useState(false);
   const recognitionRef = useRef<any>(null);
   const story = storyIndex === null ? null : STORIES[storyIndex];
 
@@ -63,7 +64,7 @@ export default function ArchieStoryCollectionPage() {
   const words = story ? story.pages[page].split(/\s+/) : [];
   const clean = (word: string) => word.toLowerCase().replace(/[^a-z0-9']/g, '');
   const resetReadAlong = () => { recognitionRef.current?.stop?.(); setListening(false); setWordStates(words.map(() => 'pending')); setWordIndex(0); };
-  const open = (index: number) => { setStoryIndex(index); setPage(0); setWordStates(STORIES[index].pages[0].split(/\s+/).map(() => 'pending')); setWordIndex(0); };
+  const open = (index: number) => { setStoryIndex(index); setPage(0); setWelcome(true); setWordStates(STORIES[index].pages[0].split(/\s+/).map(() => 'pending')); setWordIndex(0); };
   const close = () => { resetReadAlong(); stopTts(); setStoryIndex(null); };
   const changePage = (next: number) => { if (!story || turning) return; const safe = Math.max(0, Math.min(story.pages.length - 1, next)); if (safe === page) return; resetReadAlong(); setTurning(true); window.setTimeout(() => { setPage(safe); setWordStates(story.pages[safe].split(/\s+/).map(() => 'pending')); setWordIndex(0); setTurning(false); }, 750); };
   const startReading = () => {
@@ -80,6 +81,8 @@ export default function ArchieStoryCollectionPage() {
     };
     recognition.onerror = () => setListening(false); recognition.onend = () => setListening(false); recognitionRef.current = recognition; setListening(true); recognition.start();
   };
+
+  if (story && welcome) return <main className={`min-h-screen bg-gradient-to-b ${story.colour} px-4 py-5 text-slate-950`}><div className="mx-auto max-w-4xl"><button onClick={close} className="mb-4 flex min-h-12 items-center gap-2 rounded-full bg-white px-5 font-black shadow-xl"><ArrowLeft /> Back to shelf</button><motion.section initial={{ scale: .75, opacity: 0, rotateY: -55 }} animate={{ scale: 1, opacity: 1, rotateY: 0 }} transition={{ type: 'spring', stiffness: 115, damping: 17 }} className="relative overflow-hidden rounded-[2.5rem] border-8 border-amber-200 bg-slate-900 shadow-2xl"><img src="/assets/stories/archie-library-welcome.jpg" alt="Archie and his dogs waiting in the magical library" className="h-[520px] w-full object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-transparent" /><motion.div className="absolute bottom-8 left-7" animate={{ y: [0, -6, 0], scale: [1, 1.03, 1] }} transition={{ duration: 1.5, repeat: Infinity }}><ArchieCharacter size={116} speaking /></motion.div><motion.span className="absolute bottom-12 right-12 text-6xl" initial={{ x: 180, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 1.2 }}>🧒</motion.span><motion.span className="absolute left-[68%] top-[19%] text-5xl" animate={{ y: [0, 260], rotate: [0, 35, 90] }} transition={{ duration: 3.5, repeat: Infinity, repeatDelay: 2 }}>📚</motion.span><div className="absolute inset-x-0 bottom-0 p-7 text-white"><p className="text-2xl font-black sm:text-3xl">Come and sit down, friend! Let’s look at the book together.</p><p className="mt-2 max-w-xl font-bold text-white/90">The dogs wiggle, Archie’s lips move, and the storybook sparkles before you step into the adventure.</p><button onClick={() => setWelcome(false)} className="mt-5 min-h-12 rounded-full bg-yellow-300 px-6 font-black text-purple-950 shadow-xl">Let’s look at the book ✨</button></div></motion.section></div></main>;
 
   if (story) return <main className={`min-h-screen bg-gradient-to-b ${story.colour} px-4 py-5 text-slate-950`}>
     <div className="mx-auto max-w-4xl">
