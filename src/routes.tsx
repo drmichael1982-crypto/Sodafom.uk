@@ -1,6 +1,7 @@
 import { redirect, type RouteObject } from "react-router";
 import { lazy } from 'react';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
+import ApprovedArtworkPage from './pages/ApprovedArtworkPage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
 import AITeacherPage from './pages/AITeacherPage';
 import TeacherModePage from './pages/tutor/TeacherModePage';
@@ -213,15 +214,36 @@ import ChoresPage, { ParentChoresPage } from './pages/ChoresPage';
 const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
 export const routes: RouteObject[] = [{
   path: '/',
-  element: <SodafomAdventurePage />
+  element: <ApprovedArtworkPage variant="home" />
+}, {
+  path: '/stories',
+  element: <ApprovedArtworkPage variant="stories" />
+}, {
+  path: '/game-islands',
+  element: <ApprovedArtworkPage variant="game-islands" />
+}, {
+  path: '/archie-theatre',
+  element: <ApprovedArtworkPage variant="archie-theatre" />
+}, {
+  path: '/sodafom-shop',
+  element: <ApprovedArtworkPage variant="shop" />
+}, {
+  path: '/sodafom-settings',
+  element: <ApprovedArtworkPage variant="settings" />
 }, {
   path: '/archie-menu',
   element: <FeatureHubPage />
 }, {
   path: '/lessons',
+  element: <ApprovedArtworkPage variant="lessons" />
+}, {
+  path: '/lesson-library',
   element: <LessonsPage />
 }, {
   path: '/homework-helper',
+  element: <ApprovedArtworkPage variant="homework-helper" />
+}, {
+  path: '/homework-tools',
   element: <HomeworkHelperPage />
 }, {
   path: '/pocket-money',
