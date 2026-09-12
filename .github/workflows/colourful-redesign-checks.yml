@@ -14,13 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - name: Read exact source revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/tarball/$GITHUB_SHA" > /tmp/source.tar.gz
+          tar -xzf /tmp/source.tar.gz --strip-components=1
       - name: Prepare source snapshot (no credentials)
         run: |
           mkdir -p /tmp/sodafom-review
-          git archive HEAD -- . ':!.env' ':!**/.env' ':!**/.env.*' ':!android' > /tmp/sodafom-review/source.tar
+          tar --exclude='.env' --exclude='.env.*' --exclude='.git' --exclude='android' -cf /tmp/sodafom-review/source.tar .
       - uses: actions/upload-artifact@v4
         with:
           name: sodafom-review-source
