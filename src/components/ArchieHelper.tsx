@@ -1,3 +1,4 @@
+import { useLessonConversation } from '@/hooks/useLessonConversation';
 /**
  * ArchieHelper — Unified floating assistant.
  * Available across all screens and games.
@@ -76,9 +77,11 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState('Voice off. Tap the microphone to talk.');
   const [error, setError] = useState<string | null>(null);
-  const recognitionRef = useRef<any>(null);
+  const conversation = useLessonConversation({ active: open, speaking: isSpeaking || isLoading,
+    onTranscript: text => { setInput(text); void sendMessage(text); }, onStatus: setVoiceStatus });
+  const isListening = conversation.listening;
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastReadQuestionRef = useRef<string | null>(null);
@@ -96,12 +99,10 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
 
   const speak = useCallback((text: string) => {
     console.log('TTS_STARTED');
-    recognitionRef.current?.abort?.();
-    recognitionRef.current = null;
-    setIsListening(false);
+    conversation.suspend();
     speakWithVoiceState('read:archie-ai', text);
     console.log('TTS_FINISHED');
-  }, [speakWithVoiceState]);
+  }, [speakWithVoiceState, conversation.suspend]);
 
   // Games that supply their current question are read automatically once.
   // This is intentionally keyed by the question text so re-renders do not
@@ -112,18 +113,6 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
     const timer = window.setTimeout(() => speak(`The question is: ${currentQuestion}`), 350);
     return () => window.clearTimeout(timer);
   }, [gameMode, currentQuestion, speak]);
-
-  // Automatically start listening after Archie finishes speaking
-  const prevSpeakingRef = useRef(isSpeaking);
-  useEffect(() => {
-    if (prevSpeakingRef.current && !isSpeaking && open) {
-      const timer = setTimeout(() => {
-        startListening();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-    prevSpeakingRef.current = isSpeaking;
-  }, [isSpeaking, open]);
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
@@ -289,66 +278,7 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
     }
   }
 
-  const startListening = () => {
-    console.log('MIC_PERMISSION_REQUESTED');
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn('[Archie Diagnostic] Speech recognition not supported in browser');
-      setError("Voice input is not supported in this browser.");
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-GB';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognitionRef.current = recognition;
-
-    recognition.onstart = () => {
-      console.log('MIC_PERMISSION_GRANTED');
-      console.log('MIC_LISTENING_STARTED');
-      setIsListening(true);
-      setError(null);
-    };
-
-    if ('onspeechstart' in recognition) {
-      (recognition as any).onspeechstart = () => {
-        console.log('VOICE_DETECTED');
-      };
-    }
-
-    recognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript;
-      console.log('TRANSCRIPT_CREATED');
-      setInput(text);
-      sendMessage(text);
-    };
-
-    recognition.onerror = (event: any) => {
-      setIsListening(false);
-      console.error('[Archie Diagnostic] Speech recognition error:', event.error);
-      if (event.error === 'not-allowed') {
-        setError("Microphone permission denied. Please allow it in settings!");
-      } else if (event.error !== 'no-speech') {
-        setError("I didn't quite catch that. Try again!");
-      }
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    try {
-      recognition.start();
-    } catch (e) {
-      console.error('[Archie Diagnostic] Error starting recognition:', e);
-    }
-  };
-
-  const stopListening = () => {
-    recognitionRef.current?.stop();
-    setIsListening(false);
-  };
+  const closeArchie = () => { conversation.disable(); stopSpeaking(); setOpen(false); };
 
   const handleReadQuestion = () => {
     if (currentQuestion) {
@@ -363,14 +293,6 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
     }
   };
 
-  const handleArchieButton = () => {
-    console.log('ARCHIE_BUTTON_PRESSED');
-    // A single tap should always open Archie. If he is speaking, stop him first.
-    if (isSpeaking) stopSpeaking();
-    const willOpen = !open;
-    setOpen(willOpen);
-    if (willOpen) window.setTimeout(() => startListening(), 300);
-  };
 
   return (
     <div className={`fixed z-[9999] flex flex-col items-end gap-2 print:hidden ${gameMode ? 'bottom-20 right-3 sm:bottom-20 sm:right-5' : 'bottom-20 right-4'}`}>
@@ -394,7 +316,7 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
                   {gameTitle && <p className="text-[10px] text-primary font-bold uppercase tracking-wider">Helping with {gameTitle}</p>}
                 </div>
               </div>
-              <button onClick={() => setOpen(false)} className="p-1.5 rounded-full hover:bg-primary/10 transition-colors">
+              <button aria-label="Close Ask Archie and stop voice" onClick={closeArchie} className="p-1.5 rounded-full hover:bg-primary/10 transition-colors">
                 <X size={18} className="text-muted-foreground" />
               </button>
             </div>
@@ -504,14 +426,16 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
                 </div>
               )}
 
+              <p className="text-xs text-slate-700" role="status">{voiceStatus}</p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={isListening ? stopListening : startListening}
+                  onClick={conversation.toggle}
+                  aria-pressed={conversation.enabled}
                   className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-sm shrink-0 ${
-                    isListening ? 'bg-red-500 animate-pulse text-white' : 'bg-green-500 text-white hover:bg-green-600'
+                    isListening ? 'bg-red-500 animate-pulse text-white' : 'bg-blue-600 text-white hover:bg-blue-700'
                   }`}
-                  aria-label="Talk to Archie"
+                  aria-label={conversation.enabled ? 'Stop listening to me' : 'Start voice conversation with Archie'}
                 >
                   {isListening ? <MicOff size={18} /> : <Mic size={18} />}
                 </button>
@@ -550,35 +474,13 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
         )}
       </AnimatePresence>
 
-      {/* Floating Toggle Button */}
-      <motion.button
-        onClick={handleArchieButton}
-        style={{ touchAction: 'manipulation' }}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.95 }}
-        aria-label={gameMode ? 'Ask Archie for help with this game' : 'Ask Archie'}
-        title={gameMode ? 'Ask Archie for help with this game' : 'Ask Archie'}
-        className={`${gameMode ? 'w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 ring-4 ring-amber-300/60' : 'w-14 h-14 rounded-2xl border-2'} shadow-2xl flex items-center justify-center transition-all border-white relative pointer-events-auto cursor-pointer select-none z-[99999] ${
-          open ? 'bg-primary text-white' : 'bg-white'
-        }`}
-      >
-        <div className="relative">
-          <img
-            src="/assets/images/sodafom-launcher-icon-v2.png"
-            alt="Archie"
-            className={`${gameMode ? 'h-14 w-14 sm:h-16 sm:w-16' : 'h-10 w-10'} rounded-full object-cover`}
-          />
-          {currentStatus === 'listening' && (
-            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping" />
-          )}
-        </div>
-
-        {/* Unread badge/indicator or status label */}
-        {!open && !isSpeaking && (
-          <div className={`absolute bg-yellow-400 font-black rounded-full shadow-md text-yellow-900 border-2 border-white whitespace-nowrap ${gameMode ? '-bottom-3 left-1/2 -translate-x-1/2 text-xs px-3 py-1' : '-top-2 -left-2 text-[8px] px-2 py-0.5'}`}>
-            ASK ARCHIE
-          </div>
-        )}
+      {/* A single semantic click handler works for touch, mouse and keyboard. */}
+      <motion.button type="button" onClick={() => open ? closeArchie() : setOpen(true)}
+        aria-expanded={open} aria-label={open ? 'Close Ask Archie' : 'Open Ask Archie'}
+        data-status={currentStatus} className="sf-archie-launcher" whileTap={{ scale: .97 }}>
+        <img src="/assets/images/sodafom-launcher-icon-v2.png" alt="" />
+        <span><strong>Ask Archie</strong><small>{isListening ? 'I’m listening' : isSpeaking ? 'Archie is speaking' : open ? 'Your learning buddy' : 'Tap to chat'}</small></span>
+        {open ? <X size={21} aria-hidden="true" /> : <Mic size={22} aria-hidden="true" />}
       </motion.button>
     </div>
   );

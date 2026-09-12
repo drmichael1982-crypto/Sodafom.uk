@@ -1,0 +1,56 @@
+name: Live-source colourful review
+on:
+  push:
+    branches: ['sodafom/live-colourful-review-2026-09-12']
+    paths-ignore: ['.review-transfer/**', '.github/workflows/review-transfer.yml']
+  pull_request:
+    branches: [master]
+permissions:
+  contents: read
+concurrency:
+  group: live-colourful-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Read exact source revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/tarball/$GITHUB_SHA" > /tmp/source.tar.gz
+          tar -xzf /tmp/source.tar.gz --strip-components=1
+      - name: Prepare source snapshot without environment files
+        run: |
+          mkdir -p /tmp/sodafom-review
+          tar --exclude='.env' --exclude='.env.*' --exclude='.git' --exclude='android' -cf /tmp/sodafom-review/source.tar .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sodafom-live-review-source
+          path: /tmp/sodafom-review/source.tar
+          retention-days: 3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.0'
+      - name: Install repository package manager
+        run: npm install --global pnpm@11.23.0
+      - name: Reproducible dependency installation
+        id: dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Production client and server build
+        if: steps.dependencies.outcome == 'success'
+        run: pnpm run build
+      - name: Type checking
+        if: (success() || failure()) && steps.dependencies.outcome == 'success'
+        run: pnpm run type-check
+      - name: Unit tests
+        if: (success() || failure()) && steps.dependencies.outcome == 'success'
+        run: pnpm test --run
+      - uses: actions/upload-artifact@v4
+        if: success() || failure()
+        with:
+          name: sodafom-live-review-build
+          path: dist/client
+          if-no-files-found: ignore
+          retention-days: 3

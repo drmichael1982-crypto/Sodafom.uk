@@ -1,3 +1,4 @@
+import SystemMonitor from '@/components/SystemMonitor';
 import { admin_panel } from 'virtual:content';
 /**
  * /admin-panel — Hidden owner stats page
@@ -841,7 +842,7 @@ export default function AdminPanel() {
   const [codeLoading, setCodeLoading] = useState(false);
   const [copied, setCopied]         = useState<'current' | 'next' | null>(null);
 
-  // RESEARCH MODE STATE (Makes all games free and hides payments)
+  // Local presentation preference only. This does not enable billing or AI entitlement.
   const [researchMode, setResearchMode] = useState(() => {
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('sodafom_research_mode') === 'true';
@@ -925,7 +926,7 @@ export default function AdminPanel() {
     try {
       const res  = await fetch(`${API_PREFIX}/admin/code`, { credentials: 'include' });
       const data = await res.json();
-      if (data.success) setRollingCode(data);
+      if (data.success) setRollingCode(data); else setError(data.error || 'Rolling codes unavailable.');
     } catch { /* silent */ } finally {
       setCodeLoading(false);
     }
@@ -953,14 +954,14 @@ export default function AdminPanel() {
     </div>;
   }
 
-  if (!authed) {
+  if (!authed || !stats) {
     return (
       <main className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-card border-2 border-primary/30 rounded-3xl p-7 shadow-xl">
+        <div className="sf-panel sf-admin-login">
           <div className="flex items-center gap-3 mb-4"><Lock className="text-primary" /><h1 className="text-xl font-black">Admin Hub</h1></div>
           <p className="text-sm text-muted-foreground mb-4">Enter the founder code. It is checked securely by the server and is never stored in this page.</p>
           <form onSubmit={handleSubmit}>
-            <input type="password" autoComplete="current-password" value={code} onChange={e => setCode(e.target.value)} className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background font-bold" placeholder="Founder code" />
+            <input aria-label="Founder code" type="password" autoComplete="current-password" value={code} onChange={e => setCode(e.target.value)} className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background font-bold" placeholder="Founder code" />
             {(wrongCode || error) && <p className="mt-2 text-sm font-bold text-red-600">{error || 'Access denied'}</p>}
             <button type="submit" disabled={loading || !code.trim()} className="mt-4 w-full py-3 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50">{loading ? 'Checking…' : 'Open Admin Hub'}</button>
           </form>
@@ -1008,7 +1009,7 @@ export default function AdminPanel() {
                 }`}
               >
                 {researchMode ? <Unlock size={16} /> : <Lock size={16} />}
-                {researchMode ? 'Research Mode: ON' : 'Research Mode: OFF'}
+                {researchMode ? 'Preview labels: ON' : 'Preview labels: OFF'}
               </button>
               <button
                 onClick={() => fetchStats(true)}
@@ -1025,17 +1026,19 @@ export default function AdminPanel() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-6">
 
           {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-          <div className="flex flex-wrap gap-1 mb-6 bg-card border border-border rounded-2xl p-1 w-fit">
+          <nav className="sf-admin-launchers" aria-label="Admin sections">
             {admin_panel.TABS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as Tab)}
+                aria-pressed={activeTab === tab.id}
                 className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
                   activeTab === tab.id
                     ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
+                <span className="sf-admin-icon" aria-hidden="true">{React.createElement(({ overview: HeartPulse, reviews: MessageSquare, users: Users, subscriptions: CreditCard, insurance: ShieldCheck, code: KeyRound, vouchers: Ticket } as Record<string, React.ElementType>)[tab.id] || BarChart2, { size: 24 })}</span>
                 {tab.id === 'reviews' ? `${tab.label} (${stats?.totalReviews ?? 0})` : tab.label}
               </button>
             ))}
@@ -1069,12 +1072,13 @@ export default function AdminPanel() {
             >
               Bot Controls
             </button>
-          </div>
+          </nav>
 
           {/* ══════════════════════════════════════════════════════════════════ */}
           {/* CONTENT                                                            */}
           {/* ══════════════════════════════════════════════════════════════════ */}
 
+          {activeTab === 'overview' && <div className="mb-6"><SystemMonitor /></div>}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -1116,7 +1120,7 @@ export default function AdminPanel() {
                         }`}
                       >
                         <CreditCard size={16} />
-                        {researchMode ? 'Activate Payments' : 'Switch to Research Mode (Hide Payments)'}
+                        {researchMode ? 'Show payment labels' : 'Hide payment labels locally'}
                       </button>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
