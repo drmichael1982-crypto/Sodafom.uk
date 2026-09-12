@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import OpenAI, { toFile } from 'openai';
+import { requirePaidAiBilling } from '@/server/paid-ai-guard';
 
 const AUDIO_DATA = /^data:(audio\/[a-z0-9.+-]+);base64,([a-z0-9+/=]+)$/i;
 
@@ -9,7 +10,7 @@ export default async function handler(req: Request, res: Response) {
   if (!match) return res.status(400).json({ error: 'Please record a short voice message.' });
   const bytes = Buffer.from(match[2], 'base64');
   if (!bytes.length || bytes.length > 6_000_000) return res.status(413).json({ error: 'Voice message is too large.' });
-
+  if (!requirePaidAiBilling(res)) return;
   const apiKey = process.env.OPENAI_API_KEY?.trim();
   if (!apiKey) return res.status(503).json({ error: 'Voice transcription is not configured.' });
   try {
@@ -17,8 +18,7 @@ export default async function handler(req: Request, res: Response) {
     const client = new OpenAI({ apiKey, timeout: 30_000, maxRetries: 1 });
     const result = await client.audio.transcriptions.create({
       file: await toFile(bytes, `archie-voice.${extension}`, { type: match[1] }),
-      model: 'gpt-4o-mini-transcribe',
-      language: 'en',
+      model: 'gpt-4o-mini-transcribe', language: 'en',
       prompt: 'A child is speaking to Archie, a UK educational assistant. Return only the words spoken.',
     });
     const text = result.text.trim().slice(0, 1000);
