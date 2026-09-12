@@ -18,6 +18,7 @@ function nextMondayUTC(now: Date): Date {
 }
 
 export default async function handler(req: Request, res: Response) {
+  res.setHeader('Cache-Control', 'no-store');
   if (!(await hasAdminAccess(req))) {
     res.status(401).json({ success: false, error: 'Authorisation required' });
     return;
@@ -31,10 +32,9 @@ export default async function handler(req: Request, res: Response) {
     return;
   }
 
-  const nextWeek = week === 52 ? 1 : week + 1;
-  const nextYear = week === 52 ? year + 1 : year;
-  const nextCode = generateWeekCode(nextWeek, nextYear);
   const expiresAt = nextMondayUTC(now);
+  const next = getISOWeek(expiresAt);
+  const nextCode = generateWeekCode(next.week, next.year);
   const msRemaining = expiresAt.getTime() - now.getTime();
 
   res.json({

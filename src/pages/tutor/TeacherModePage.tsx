@@ -1,3 +1,4 @@
+import { useLessonConversation } from '@/hooks/useLessonConversation';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { ArrowLeft, Volume2, Mic, MicOff, Lightbulb, RotateCcw, Pause, Play, Settings, Award, Clock3 } from 'lucide-react';
@@ -56,15 +57,23 @@ export default function TeacherModePage() {
   const [selectedOption, setSelectedOption] = useState<string>('');
   const [typedInput, setTypedInput] = useState<string>('');
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
-  const [isListening, setIsListening] = useState<boolean>(false);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [showSimpler, setShowSimpler] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; message: string } | null>(null);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [lessonComplete, setLessonComplete] = useState(false);
-  const [voiceStatus, setVoiceStatus] = useState('Microphone ready');
+  const [voiceStatus, setVoiceStatus] = useState('Voice off. Tap Voice to start a conversation.');
   const [answerSource, setAnswerSource] = useState<'Local AI' | 'OpenAI'>('Local AI');
-  const recognitionRef = useRef<any>(null);
+  const onTranscript = useRef<(text: string) => void>(() => {});
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const acceptedQuestion = useRef<string | null>(null);
+  const conversation = useLessonConversation({
+    active: !showProfileSetup && !isPaused && !lessonComplete,
+    speaking: isSpeaking,
+    onTranscript: phrase => onTranscript.current(phrase),
+    onStatus: setVoiceStatus,
+  });
+  const isListening = conversation.listening;
 
   useEffect(() => {
     const storedSubject = localStorage.getItem('sodafom_lesson_subject');
@@ -92,14 +101,15 @@ export default function TeacherModePage() {
   const currentQuestion: LessonQuestion | undefined = currentLesson.questions[currentQuestionIndex];
 
   const speakText = useCallback((text: string, onDone?: () => void) => {
-    if (profile.readAloudPreference === false) return;
+    conversation.suspend();
+    if (profile.readAloudPreference === false) { onDone?.(); return; }
     stopTts();
     setIsSpeaking(true);
     ttsSpeak(text, () => {
       setIsSpeaking(false);
       onDone?.();
     });
-  }, [profile.readAloudPreference]);
+  }, [profile.readAloudPreference, conversation.suspend]);
 
   const handleProfileComplete = (updated: ChildTutorProfile) => {
     setProfile(updated);
@@ -107,6 +117,8 @@ export default function TeacherModePage() {
   };
 
   const handleNextQuestion = () => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    advanceTimer.current = null; acceptedQuestion.current = null;
     setFeedback(null);
     setSelectedOption('');
     setTypedInput('');
@@ -139,7 +151,7 @@ export default function TeacherModePage() {
   };
 
   const handleAnswerSubmit = (givenAnswer: string) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || isPaused || lessonComplete || acceptedQuestion.current === currentQuestion.id) return;
     const expected = currentQuestion.answer.toLowerCase();
     const isCorrect = givenAnswer.trim().toLowerCase() === expected ||
       (currentQuestion.alternateAnswers?.some(a => a.toLowerCase() === givenAnswer.trim().toLowerCase()) ?? false);
@@ -151,7 +163,9 @@ export default function TeacherModePage() {
       const msg = `Well done${profile.childName ? ' ' + profile.childName : ''}! ${currentQuestion.explanation}`;
       setFeedback({ isCorrect: true, message: msg });
       speakText(msg);
-      setTimeout(handleNextQuestion, 2500);
+      acceptedQuestion.current = currentQuestion.id;
+      if (advanceTimer.current) clearTimeout(advanceTimer.current);
+      advanceTimer.current = setTimeout(handleNextQuestion, 2500);
     } else {
       const msg = `Good try! Here is a hint: ${currentQuestion.hint}`;
       setFeedback({ isCorrect: false, message: msg });
@@ -160,29 +174,7 @@ export default function TeacherModePage() {
     }
   };
 
-  const handleVoiceCommandToggle = () => {
-    if (isListening) {
-      try { recognitionRef.current?.stop?.(); } catch { /* ignore */ }
-      recognitionRef.current = null;
-      setIsListening(false);
-      return;
-    }
-    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRec) {
-      setVoiceStatus('Speech recognition is not supported here. Type or tap an answer instead.');
-      return;
-    }
-
-    setIsListening(true);
-    setVoiceStatus('Listening…');
-    const rec = new SpeechRec();
-    recognitionRef.current = rec;
-    rec.lang = 'en-GB';
-    rec.interimResults = false;
-    rec.onresult = (e: any) => {
-      const phrase = e.results[0]?.[0]?.transcript ?? '';
-      setIsListening(false);
-
+  const handleSpokenAnswer = (phrase: string) => {
       const durationMatch = phrase.match(/\b(15|20|30|60)\s*(?:minute|min)\b/i);
       if (durationMatch) {
         const nextMinutes = Number(durationMatch[1]) as 15 | 20 | 30 | 60;
@@ -245,35 +237,22 @@ export default function TeacherModePage() {
         // Evaluate phrase as direct answer
         handleAnswerSubmit(phrase);
       }
-    };
-    rec.onerror = (event: any) => {
-      recognitionRef.current = null;
-      setIsListening(false);
-      setVoiceStatus(event?.error === 'not-allowed' ? 'Microphone permission was blocked. Allow it in browser settings, or type the answer.' : 'I could not hear that. Try again or type the answer.');
-    };
-    rec.onend = () => {
-      recognitionRef.current = null;
-      setIsListening(false);
-      setVoiceStatus((current) => current === 'Listening…' ? 'Microphone ready' : current);
-    };
-    rec.start();
   };
+  onTranscript.current = handleSpokenAnswer;
+  const handleVoiceCommandToggle = conversation.toggle;
 
-  // Archie reads each new, unique question and then opens the microphone.
+  // Read the question. The opt-in conversation controller resumes listening after speech.
   useEffect(() => {
     if (showProfileSetup || isPaused || lessonComplete || !currentLesson || !currentQuestion) return;
     const greeting = currentLessonIndex === 0 && currentQuestionIndex === 0 && profile.childName ? `Hi ${profile.childName}! ` : '';
     const lessonIntro = currentQuestionIndex === 0 ? `${currentLesson.title}. ${currentLesson.explanation} ` : '';
-    speakText(`${greeting}${lessonIntro}Question: ${currentQuestion.question}`, () => {
-      if (document.visibilityState === 'visible') handleVoiceCommandToggle();
-    });
+    speakText(`${greeting}${lessonIntro}Question: ${currentQuestion.question}`);
     // Question indexes are the session sequence; stopping at the end prevents repeats.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLessonIndex, currentQuestionIndex, showProfileSetup, lessonComplete]);
 
   useEffect(() => () => {
-    try { recognitionRef.current?.abort?.(); } catch { /* ignore */ }
-    recognitionRef.current = null;
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
     stopTts();
   }, []);
 
@@ -290,6 +269,12 @@ export default function TeacherModePage() {
     speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! Your ${lessonMinutes} minute lesson is complete.`);
   }, [lessonMinutes, profile.childName, secondsRemaining, speakText]);
 
+  useEffect(() => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    advanceTimer.current = null;
+    acceptedQuestion.current = null;
+  }, [isPaused, selectedSubject, ageGroup]);
+
   const minutes = Math.floor(secondsRemaining / 60);
   const seconds = secondsRemaining % 60;
   // Progress represents the chosen lesson duration, not the number of questions
@@ -304,8 +289,8 @@ export default function TeacherModePage() {
       <Helmet>
         <title>Sodafom One-to-One Tutor Mode</title>
       </Helmet>
-      <div className="fixed inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/assets/cartoon/home-landscape-v2.png')" }} aria-hidden="true" />
-      <div className="fixed inset-0 bg-gradient-to-b from-blue-500/55 via-indigo-800/75 to-blue-950/95" aria-hidden="true" />
+      <div className="fixed inset-0 bg-gradient-to-br from-sky-100 via-white to-violet-100" aria-hidden="true" />
+      <div className="fixed inset-0 bg-gradient-to-b from-sky-200/20 via-transparent to-purple-200/30" aria-hidden="true" />
 
       {/* Header */}
       <header className="relative z-20 m-3 flex flex-col gap-3 rounded-[1.75rem] border-4 border-white/80 bg-gradient-to-r from-sky-500 via-blue-600 to-purple-700 p-3 text-white shadow-2xl sm:m-4 sm:flex-row sm:items-center sm:justify-between sm:p-4">
@@ -353,7 +338,7 @@ export default function TeacherModePage() {
         ) : (
           <>
             {/* Top Classroom Row: Mascot + Control Toolbar */}
-            <div className="flex flex-col gap-4 overflow-hidden bg-gradient-to-br from-cyan-100 via-fuchsia-100 to-yellow-200 p-4 rounded-[2rem] border-4 border-white/90 shadow-2xl sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex flex-col gap-4 overflow-hidden bg-gradient-to-br from-cyan-100 via-fuchsia-100 to-violet-100 p-4 rounded-[2rem] border-4 border-white/90 shadow-2xl sm:flex-row sm:items-center sm:justify-between sm:p-5">
               <div className="flex items-center gap-3">
                 <ArchieCharacter
                   size={90}
@@ -364,7 +349,7 @@ export default function TeacherModePage() {
                   <h2 className="font-extrabold text-sm text-gray-900">
                     Tutor: {profile.preferredTutor === 'soda' ? 'Soda' : profile.preferredTutor === 'bella' ? 'Bella' : profile.preferredTutor === 'rocky' ? 'Rocky' : 'Archie'}
                   </h2>
-                  <p className="text-xs font-bold text-amber-600">
+                  <p className="text-xs font-bold text-pink-700">
                     {currentLesson.subject} • Ages {ageGroup.replace('-', '–')}
                   </p>
                   <p className="mt-1 flex items-center gap-1 text-xs font-black text-purple-700">
@@ -383,7 +368,7 @@ export default function TeacherModePage() {
                   {[15, 20, 30, 60].map((value) => <option key={value} value={value}>{value} min</option>)}
                 </select>
                 <button
-                  onClick={() => setIsPaused((value) => !value)}
+                  onClick={() => { stopTts(); setIsSpeaking(false); conversation.disable(); setIsPaused((value) => !value); }}
                   className="p-2.5 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-2xl border border-purple-300 font-bold text-xs flex items-center gap-1"
                   title={isPaused ? 'Resume lesson' : 'Pause lesson'}
                 >
@@ -391,7 +376,7 @@ export default function TeacherModePage() {
                 </button>
                 <button
                   onClick={() => speakText(`${currentLesson.explanation}. Question: ${currentQuestion?.question ?? ''}`)}
-                  className="p-2.5 bg-yellow-100 hover:bg-yellow-200 text-amber-900 rounded-2xl border border-yellow-300 font-bold text-xs flex items-center gap-1"
+                  className="p-2.5 bg-sky-100 hover:bg-sky-200 text-blue-900 rounded-2xl border border-sky-300 font-bold text-xs flex items-center gap-1"
                   title="Read Aloud"
                 >
                   <Volume2 size={16} /> Read
@@ -401,7 +386,7 @@ export default function TeacherModePage() {
                     setShowHint(true);
                     if (currentQuestion) speakText(`Hint: ${currentQuestion.hint}`);
                   }}
-                  className="p-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-2xl border border-amber-300 font-bold text-xs flex items-center gap-1"
+                  className="p-2.5 bg-pink-100 hover:bg-pink-200 text-pink-900 rounded-2xl border border-pink-300 font-bold text-xs flex items-center gap-1"
                 >
                   <Lightbulb size={16} /> Hint
                 </button>
@@ -410,17 +395,19 @@ export default function TeacherModePage() {
                     setShowSimpler(true);
                     speakText(`Here is a simpler explanation: ${currentLesson.simplerExplanation}`);
                   }}
-                  className="p-2.5 bg-green-100 hover:bg-green-200 text-green-900 rounded-2xl border border-green-300 font-bold text-xs flex items-center gap-1"
+                  className="p-2.5 bg-violet-100 hover:bg-violet-200 text-violet-900 rounded-2xl border border-violet-300 font-bold text-xs flex items-center gap-1"
                 >
                   <RotateCcw size={16} /> Simpler
                 </button>
                 <button
                   onClick={handleVoiceCommandToggle}
+                  aria-pressed={conversation.enabled}
+                  aria-label={conversation.enabled ? 'Turn lesson voice off' : 'Enable lesson voice conversation'}
                   className={`p-2.5 rounded-2xl font-bold text-xs flex items-center gap-1 text-white shadow ${
-                    isListening ? 'bg-red-500 animate-pulse' : 'bg-green-600 hover:bg-green-700'
+                    isListening ? 'bg-red-500 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
-                  {isListening ? <MicOff size={16} /> : <Mic size={16} />} Voice
+                  {conversation.enabled ? <MicOff size={16} /> : <Mic size={16} />} {conversation.enabled ? 'Voice on' : 'Voice'}
                 </button>
               </div>
             </div>

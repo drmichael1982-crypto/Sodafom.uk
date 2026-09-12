@@ -1,3 +1,4 @@
+import '@/styles/colourful.css';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { type ReactElement } from 'react';
 import { ScrollRestoration, useLocation } from "react-router";
@@ -65,6 +66,8 @@ export default function RootLayout({
     '/sodafom-settings',
     '/archie-friends',
     '/lesson-library',
+    '/museum',
+    '/museum-explorer',
     '/homework-tools',
     '/teacher-hub',
   ];
@@ -80,7 +83,7 @@ export default function RootLayout({
         <ProgressionProvider>
           <ArchieProvider>
             <CartProvider>
-              <Website>
+              <Website className={`sodafom-colourful ${location.pathname.startsWith('/admin') ? 'sodafom-control-room' : ''}`}>
                 <Helmet>
                   <title>Sodafom — Learn The Key To Success</title>
                   <meta name="description" content="Fun, curriculum-aligned learning for children aged 5–13. Maths, Spelling and Reading games and activities." />
@@ -95,7 +98,7 @@ export default function RootLayout({
                 {/* Immersive app screens provide their own controls and must not
                     have legacy floating elements covering child-facing buttons. */}
                 {!immersiveApp && <AccessibilityBar gameMode={isIndividualGame} />}
-                {!immersiveApp && <ArchieHelper gameMode={isIndividualGame} />}
+                {!immersiveApp && !location.pathname.startsWith('/admin') && <ArchieHelper gameMode={isIndividualGame} />}
                 {!immersiveApp && <MobileTrialBar />}
               </Website>
             </CartProvider>
