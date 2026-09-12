@@ -1,29 +1,25 @@
 import { Helmet } from '@dr.pogodin/react-helmet';
-import { useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import { ArchieCharacter } from '@/components/ArchieCharacter';
+import IslandAdventure from '@/components/IslandAdventure';
+import PaywallGate from '@/components/games/PaywallGate';
+import { ISLANDS, isIslandId, islandRoute } from '@/lib/island-adventures';
 
 function buttonWords(label: string) {
-  return label
-    .replace(/^Open protected /, '')
-    .replace(/^Open /, '')
-    .replace(/^Meet /, '')
-    .replace(/^Return /, '')
-    .trim();
+  return label.replace(/^Open protected /, '').replace(/^Open /, '').replace(/^Meet /, '').replace(/^Return /, '').trim();
 }
 
-/** Child-friendly feedback that needs no downloaded audio file and also works offline. */
+/** Feedback is optional: restricted storage, audio or vibration must never break navigation. */
 export function playButtonFeedback(label: string) {
   if (typeof window === 'undefined') return;
-  if (window.localStorage.getItem('sodafom_sound_enabled') === 'false') return;
-
-  // A short two-note chime. Older browsers simply skip it if Web Audio is absent.
+  try { if (window.localStorage.getItem('sodafom_sound_enabled') === 'false') return; } catch { /* Storage may be blocked. */ }
   const AudioContextClass = window.AudioContext
     ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (AudioContextClass) {
     try {
       const context = new AudioContextClass();
-      if (context.state === 'suspended') void context.resume();
+      if (context.state === 'suspended') void context.resume().catch(() => {});
       const gain = context.createGain();
       gain.gain.setValueAtTime(0.0001, context.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.13, context.currentTime + 0.015);
@@ -31,102 +27,57 @@ export function playButtonFeedback(label: string) {
       gain.connect(context.destination);
       [659.25, 783.99].forEach((frequency, index) => {
         const oscillator = context.createOscillator();
-        oscillator.type = 'sine';
-        oscillator.frequency.value = frequency;
-        oscillator.connect(gain);
-        oscillator.start(context.currentTime + index * 0.07);
-        oscillator.stop(context.currentTime + 0.24);
+        oscillator.type = 'sine'; oscillator.frequency.value = frequency; oscillator.connect(gain);
+        oscillator.start(context.currentTime + index * 0.07); oscillator.stop(context.currentTime + 0.24);
       });
-      window.setTimeout(() => void context.close(), 350);
-    } catch { /* Speech still provides feedback when audio context is unavailable. */ }
+      window.setTimeout(() => { void context.close().catch(() => {}); }, 350);
+    } catch { /* Speech can still provide feedback. */ }
   }
-
-  if ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
-    window.speechSynthesis.cancel();
-    const words = buttonWords(label);
-    const utterance = new SpeechSynthesisUtterance(
-      label.startsWith('Return') ? `Going ${words}` : `Opening ${words}`,
-    );
-    utterance.lang = 'en-GB';
-    utterance.rate = 0.92;
-    utterance.pitch = 1.12;
-    window.speechSynthesis.speak(utterance);
-  }
-
-  window.navigator.vibrate?.(18);
+  try {
+    if ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
+      window.speechSynthesis.cancel();
+      const words = buttonWords(label);
+      const utterance = new SpeechSynthesisUtterance(label.startsWith('Return') ? `Going ${words}` : `Opening ${words}`);
+      utterance.lang = 'en-GB'; utterance.rate = 0.92; utterance.pitch = 1.12;
+      window.speechSynthesis.speak(utterance);
+    }
+  } catch { /* Keep navigation working when speech is unavailable. */ }
+  try { window.navigator.vibrate?.(18); } catch { /* Optional haptic feedback. */ }
 }
 
-export type ApprovedArtworkVariant =
-  | 'home'
-  | 'lessons'
-  | 'game-islands'
-  | 'homework-helper'
-  | 'archie-theatre'
-  | 'shop'
-  | 'settings'
-  | 'stories';
-
-type Hotspot = {
-  label: string;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  route?: string;
-};
-
+export type ApprovedArtworkVariant = 'home' | 'lessons' | 'game-islands' | 'homework-helper' | 'archie-theatre' | 'shop' | 'settings' | 'stories';
+type Hotspot = { label: string; left: number; top: number; width: number; height: number; route?: string };
 const ARTWORK: Record<ApprovedArtworkVariant, { src: string; title: string; alt: string; ratio: number }> = {
   home: {
-    // Versioned because an earlier Railway copy was corrupt and cached by Silk.
-    src: '/assets/approved/home-fire-v3.jpg',
-    title: 'Sodafom — A brighter future for every child',
-    alt: 'The approved Sodafom family home screen with Archie, his family, the dogs and the main learning buttons.',
-    ratio: 1086 / 1448,
+    src: '/assets/approved/home-fire-v3.jpg', title: 'Sodafom — A brighter future for every child',
+    alt: 'The approved Sodafom family home screen with Archie, his family, the dogs and the main learning buttons.', ratio: 1086 / 1448,
   },
   lessons: {
-    src: '/assets/approved/lessons.png',
-    title: "Archie's Lessons",
-    alt: "The approved illustrated Archie's Lessons classroom with colourful subject doors.",
-    ratio: 1536 / 1151,
+    src: '/assets/approved/lessons.png', title: "Archie's Lessons",
+    alt: "The approved illustrated Archie's Lessons classroom with colourful subject doors.", ratio: 1536 / 1151,
   },
   'game-islands': {
-    src: '/assets/approved/game-islands.png',
-    title: 'Sodafom Game Islands',
-    alt: 'The approved illustrated Sodafom Game Islands learning map.',
-    ratio: 1536 / 1151,
+    src: '/assets/approved/game-islands.png', title: 'Sodafom Game Islands',
+    alt: 'The approved illustrated Sodafom Game Islands learning map.', ratio: 1536 / 1151,
   },
   'homework-helper': {
-    src: '/assets/approved/homework-helper.png',
-    title: 'Homework Helper',
-    alt: 'The approved illustrated Homework Helper classroom with Archie and the homework tools.',
-    ratio: 1536 / 1405,
+    src: '/assets/approved/homework-helper.png', title: 'Homework Helper',
+    alt: 'The approved illustrated Homework Helper classroom with Archie and the homework tools.', ratio: 1536 / 1405,
   },
   'archie-theatre': {
-    src: '/assets/approved/archie-theatre.png',
-    title: 'Archie Theatre',
-    alt: 'The approved illustrated Archie Theatre screen.',
-    ratio: 1536 / 1024,
+    src: '/assets/approved/archie-theatre.png', title: 'Archie Theatre',
+    alt: 'The approved illustrated Archie Theatre screen.', ratio: 1536 / 1024,
   },
   shop: {
-    src: '/assets/approved/shop.png',
-    title: 'Sodafom Shop',
-    alt: 'The approved illustrated Sodafom Shop screen.',
-    ratio: 1536 / 1024,
+    src: '/assets/approved/shop.png', title: 'Sodafom Shop', alt: 'The approved illustrated Sodafom Shop screen.', ratio: 1536 / 1024,
   },
   settings: {
-    src: '/assets/approved/settings.png',
-    title: 'Sodafom Settings',
-    alt: 'The approved illustrated Sodafom Settings screen.',
-    ratio: 1536 / 1061,
+    src: '/assets/approved/settings.png', title: 'Sodafom Settings', alt: 'The approved illustrated Sodafom Settings screen.', ratio: 1536 / 1061,
   },
   stories: {
-    src: '/assets/approved/stories.png',
-    title: "Archie's Stories",
-    alt: "The approved illustrated Archie's Stories library.",
-    ratio: 1536 / 1151,
+    src: '/assets/approved/stories.png', title: "Archie's Stories", alt: "The approved illustrated Archie's Stories library.", ratio: 1536 / 1151,
   },
 };
-
 const HOME_HOTSPOTS: Hotspot[] = [
   { label: "Open Archie's Stories", left: 9, top: 43, width: 20, height: 11, route: '/stories' },
   { label: "Open Archie's Lessons", left: 30, top: 43, width: 20, height: 11, route: '/lessons' },
@@ -145,7 +96,6 @@ const HOME_HOTSPOTS: Hotspot[] = [
   { label: 'Open Rewards', left: 51, top: 79, width: 19, height: 11, route: '/rewards' },
   { label: 'Meet Archie and Friends', left: 71, top: 79, width: 20, height: 11, route: '/archie-friends' },
 ];
-
 const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> = {
   lessons: [
     { label: 'Return home', left: 0, top: 0, width: 9, height: 12, route: '/' },
@@ -162,16 +112,16 @@ const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> 
   ],
   'game-islands': [
     { label: 'Return home', left: 0, top: 0, width: 9, height: 12, route: '/' },
-    { label: 'Open Maths Island games', left: 9, top: 17, width: 22, height: 21, route: '/games?cat=maths' },
-    { label: 'Open English Island games', left: 30, top: 22, width: 21, height: 22, route: '/games?cat=reading' },
-    { label: 'Open Science Island games', left: 50, top: 20, width: 21, height: 22, route: '/games?cat=science' },
-    { label: 'Open History Island games', left: 75, top: 18, width: 20, height: 22, route: '/games?cat=science' },
-    { label: 'Open Geography Island games', left: 13, top: 37, width: 22, height: 22, route: '/games?cat=science' },
-    { label: 'Open PE Island games', left: 59, top: 38, width: 21, height: 22, route: '/games' },
-    { label: 'Open Technology Island games', left: 79, top: 38, width: 20, height: 22, route: '/games?cat=science' },
-    { label: 'Open French Island games', left: 25, top: 56, width: 21, height: 21, route: '/games' },
-    { label: 'Open German Island games', left: 48, top: 56, width: 21, height: 21, route: '/games' },
-    { label: 'Open Spelling Island games', left: 70, top: 57, width: 22, height: 21, route: '/games?cat=spelling' },
+    { label: 'Open Maths Island games', left: 9, top: 17, width: 22, height: 21, route: islandRoute('maths') },
+    { label: 'Open English Island games', left: 30, top: 22, width: 21, height: 22, route: islandRoute('english') },
+    { label: 'Open Science Island games', left: 50, top: 20, width: 21, height: 22, route: islandRoute('science') },
+    { label: 'Open History Island games', left: 75, top: 18, width: 20, height: 22, route: islandRoute('history') },
+    { label: 'Open Geography Island games', left: 13, top: 37, width: 22, height: 22, route: islandRoute('geography') },
+    { label: 'Open PE Island games', left: 59, top: 38, width: 21, height: 22, route: islandRoute('pe') },
+    { label: 'Open Technology Island games', left: 79, top: 38, width: 20, height: 22, route: islandRoute('technology') },
+    { label: 'Open French Island games', left: 25, top: 56, width: 21, height: 21, route: islandRoute('french') },
+    { label: 'Open German Island games', left: 48, top: 56, width: 21, height: 21, route: islandRoute('german') },
+    { label: 'Open Spelling Island games', left: 70, top: 57, width: 22, height: 21, route: islandRoute('spelling') },
   ],
   'homework-helper': [
     { label: 'Return home', left: 0, top: 0, width: 9, height: 10, route: '/' },
@@ -206,95 +156,84 @@ const PAGE_HOTSPOTS: Record<Exclude<ApprovedArtworkVariant, 'home'>, Hotspot[]> 
 
 export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtworkVariant }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [doorTransition, setDoorTransition] = useState<string | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
+  const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    setImageFailed(false); setDoorTransition(null);
+    return () => { if (transitionTimer.current !== null) clearTimeout(transitionTimer.current); };
+  }, [variant]);
   const artwork = ARTWORK[variant];
   const hotspots = variant === 'home' ? HOME_HOTSPOTS : PAGE_HOTSPOTS[variant];
+  const selectedIsland = searchParams.get('island');
 
   function activate(hotspot: Hotspot) {
+    if (transitionTimer.current !== null) clearTimeout(transitionTimer.current);
     const isLessonDoor = variant === 'lessons' && hotspot.route?.startsWith('/tutor?subject=');
     if (isLessonDoor && hotspot.route) {
-      const childName = window.localStorage.getItem('sodafom_child_name')?.trim();
+      let childName: string | undefined;
+      try { childName = window.localStorage.getItem('sodafom_child_name')?.trim(); } catch { /* Use a friendly generic name. */ }
       const subject = new URLSearchParams(hotspot.route.split('?')[1]).get('subject') ?? 'next';
       const learner = childName || 'young learner';
       const invitation = `The key is unlocking the door. Come on, ${learner}, let's go to our ${subject} lesson! Your ${subject} teacher says, hello Archie, and hello ${learner}.`;
       setDoorTransition(invitation);
       playButtonFeedback(hotspot.label);
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(invitation);
-        utterance.lang = 'en-GB';
-        utterance.rate = 0.92;
-        utterance.pitch = 1.12;
-        window.speechSynthesis.speak(utterance);
-      }
-      window.setTimeout(() => navigate(hotspot.route!), 1550);
+      try {
+        if ('speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(invitation);
+          utterance.lang = 'en-GB'; utterance.rate = 0.92; utterance.pitch = 1.12;
+          window.speechSynthesis.speak(utterance);
+        }
+      } catch { /* The lesson must still open. */ }
+      transitionTimer.current = setTimeout(() => navigate(hotspot.route!), 1550);
       return;
     }
     playButtonFeedback(hotspot.label);
     if (hotspot.route) navigate(hotspot.route);
   }
 
+  if (variant === 'game-islands' && isIslandId(selectedIsland)) {
+    const island = ISLANDS.find(item => item.id === selectedIsland)!;
+    // This is only the existing gate's visual theme, not the island's subject mapping.
+    const gateTheme = selectedIsland === 'maths' ? 'maths' : selectedIsland === 'spelling' ? 'spelling'
+      : ['english', 'french', 'german'].includes(selectedIsland) ? 'reading' : 'science';
+    return <>
+      <Helmet><title>{island.name} Island — Sodafom</title></Helmet>
+      <PaywallGate gameTitle={`${island.name} Island`} gameEmoji={island.icon} subject={gateTheme}>
+        <IslandAdventure key={selectedIsland} islandId={selectedIsland} onBack={() => navigate('/game-islands')} onNavigate={navigate} />
+      </PaywallGate>
+    </>;
+  }
+
+  if (imageFailed) {
+    return <main className="min-h-[100svh] bg-sky-100 p-5 text-sky-950">
+      <Helmet><title>{artwork.title}</title></Helmet>
+      <div className="mx-auto max-w-4xl">
+        <h1 className="mb-3 text-3xl font-black">{artwork.title}</h1>
+        <p className="mb-5">The picture could not load, but all your buttons still work.</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {hotspots.map(hotspot => <button key={hotspot.label} type="button" onClick={() => activate(hotspot)} className="min-h-16 rounded-2xl border-2 border-sky-700 bg-white p-4 text-left text-lg font-bold focus-visible:ring-4 focus-visible:ring-amber-400">{buttonWords(hotspot.label)}</button>)}
+          {variant === 'home' && <button type="button" onClick={() => navigate('/museum?trip=1')} className="min-h-16 rounded-2xl bg-white p-4 text-left font-bold">🚌 School Trip</button>}
+          {variant === 'game-islands' && <button type="button" onClick={() => navigate('/games/colour-book')} className="min-h-16 rounded-2xl bg-white p-4 text-left font-bold">🎨 Colouring Book</button>}
+        </div>
+        {doorTransition && <p role="status" className="mt-4 rounded-2xl bg-white p-4 font-bold">{doorTransition}</p>}
+      </div>
+    </main>;
+  }
+
   return (
     <main className="h-[100svh] w-full overflow-hidden bg-sky-500 p-0">
-      <Helmet>
-        <title>{artwork.title}</title>
-      </Helmet>
+      <Helmet><title>{artwork.title}</title></Helmet>
       <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
         <img src={artwork.src} alt="" aria-hidden="true" className="absolute -inset-8 h-[calc(100%+4rem)] w-[calc(100%+4rem)] scale-110 object-cover opacity-70 blur-2xl" draggable={false} />
-        <div
-          className="relative z-10 max-h-full max-w-full overflow-hidden shadow-2xl"
-          style={{
-            width: `min(100vw, calc(100svh * ${artwork.ratio}))`,
-            height: `min(100svh, calc(100vw / ${artwork.ratio}))`,
-            aspectRatio: artwork.ratio,
-          }}
-        >
-          <img src={artwork.src} alt={artwork.alt} className="block h-full w-full" draggable={false} />
-          {hotspots.map((hotspot) => (
-            <button
-              key={hotspot.label}
-              type="button"
-              aria-label={hotspot.label}
-              title={hotspot.label}
-              onClick={() => activate(hotspot)}
-              className="absolute cursor-pointer rounded-2xl bg-transparent transition-transform duration-150 hover:scale-105 active:scale-95 focus-visible:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300"
-              style={{
-                left: `${hotspot.left}%`,
-                top: `${hotspot.top}%`,
-                width: `${hotspot.width}%`,
-                height: `${hotspot.height}%`,
-              }}
-            >
-              <span className="sr-only">{hotspot.label}</span>
-            </button>
-          ))}
-          {variant === 'home' && (
-            <button
-              onClick={() => navigate('/museum?trip=1')}
-              className="absolute z-10 flex items-center gap-1 rounded-full border-2 border-yellow-100 bg-gradient-to-r from-yellow-400 to-amber-500 px-3 py-2 text-xs font-black text-blue-950 shadow-lg transition hover:scale-105 active:scale-95"
-              style={{ right: '3%', top: '15%' }}
-              aria-label="Open School Trip Adventure"
-            >🚌 School Trip</button>
-          )}
-          {variant === 'game-islands' && (
-            <button
-              onClick={() => navigate('/games/colour-book')}
-              className="absolute z-10 flex items-center gap-1 rounded-full border-2 border-white bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 px-4 py-2 text-sm font-black text-white shadow-xl transition hover:scale-105 active:scale-95"
-              style={{ right: '4%', bottom: '8%' }}
-              aria-label="Open Colouring Book on Games Island"
-            >🎨 Colouring Book</button>
-          )}
-          {doorTransition && (
-            <div role="status" aria-live="polite" className="absolute inset-0 z-20 flex items-end justify-center bg-sky-950/30 p-5 backdrop-blur-[2px]">
-              <div className="mb-8 flex w-full max-w-xl items-center gap-3 rounded-[2rem] border-4 border-yellow-200 bg-white/95 p-4 text-sky-950 shadow-2xl">
-                <div className="relative shrink-0 animate-[bounce_0.7s_ease-in-out_infinite]">
-                  <ArchieCharacter size={92} />
-                  <span aria-hidden="true" className="absolute -right-1 top-0 animate-spin text-4xl">🔑</span>
-                </div>
-                <p className="text-lg font-black sm:text-2xl">{doorTransition}</p>
-              </div>
-            </div>
-          )}
+        <div className="relative z-10 max-h-full max-w-full overflow-hidden shadow-2xl" style={{ width: `min(100vw, calc(100svh * ${artwork.ratio}))`, height: `min(100svh, calc(100vw / ${artwork.ratio}))`, aspectRatio: artwork.ratio }}>
+          <img src={artwork.src} alt={artwork.alt} onError={() => setImageFailed(true)} className="block h-full w-full" draggable={false} />
+          {hotspots.map(hotspot => <button key={hotspot.label} type="button" aria-label={hotspot.label} title={hotspot.label} onClick={() => activate(hotspot)} className="absolute cursor-pointer rounded-2xl bg-transparent transition-transform duration-150 hover:scale-105 active:scale-95 focus-visible:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300" style={{ left: `${hotspot.left}%`, top: `${hotspot.top}%`, width: `${hotspot.width}%`, height: `${hotspot.height}%` }}><span className="sr-only">{hotspot.label}</span></button>)}
+          {variant === 'home' && <button type="button" onClick={() => navigate('/museum?trip=1')} className="absolute z-10 flex items-center gap-1 rounded-full border-2 border-yellow-100 bg-gradient-to-r from-yellow-400 to-amber-500 px-3 py-2 text-xs font-black text-blue-950 shadow-lg transition hover:scale-105 active:scale-95" style={{ right: '3%', top: '15%' }} aria-label="Open School Trip Adventure">🚌 School Trip</button>}
+          {variant === 'game-islands' && <button type="button" onClick={() => navigate('/games/colour-book')} className="absolute z-10 flex items-center gap-1 rounded-full border-2 border-white bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 px-4 py-2 text-sm font-black text-white shadow-xl transition hover:scale-105 active:scale-95" style={{ right: '4%', bottom: '8%' }} aria-label="Open Colouring Book on Games Island">🎨 Colouring Book</button>}
+          {doorTransition && <div role="status" aria-live="polite" className="absolute inset-0 z-20 flex items-end justify-center bg-sky-950/30 p-5 backdrop-blur-[2px]"><div className="mb-8 flex w-full max-w-xl items-center gap-3 rounded-[2rem] border-4 border-yellow-200 bg-white/95 p-4 text-sky-950 shadow-2xl"><div className="relative shrink-0 animate-[bounce_0.7s_ease-in-out_infinite]"><ArchieCharacter size={92} /><span aria-hidden="true" className="absolute -right-1 top-0 animate-spin text-4xl">🔑</span></div><p className="text-lg font-black sm:text-2xl">{doorTransition}</p></div></div>}
         </div>
       </div>
     </main>
