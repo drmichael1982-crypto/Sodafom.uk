@@ -1,106 +1,92 @@
 import type { Request, Response } from 'express';
-import OpenAI from 'openai';
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { SYSTEM_PROMPT } from '@/lib/chatbot/chat-config';
+import {
+  tryLocalAppHelp,
+  tryLocalMaths,
+  tryLocalReading,
+  tryLocalScience,
+  tryLocalSpelling,
+} from '@/lib/archie-local';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
-function loadFreshEnv() {
-  const cwd = process.cwd();
-  const envPaths = [
-    resolve(cwd, '.env'),
-    resolve(cwd, '../.env'),
-    resolve(cwd, '../../.env')
-  ];
-  for (const envPath of envPaths) {
-    if (existsSync(envPath)) {
-      try {
-        const content = readFileSync(envPath, 'utf-8');
-        const lines = content.split(/\r?\n/);
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine || trimmedLine.startsWith('#')) continue;
-          const eqIdx = trimmedLine.indexOf('=');
-          if (eqIdx === -1) continue;
-          const key = trimmedLine.slice(0, eqIdx).trim();
-          let val = trimmedLine.slice(eqIdx + 1).trim();
-          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-            val = val.slice(1, -1);
-          }
-          val = val.trim();
-          if (key) {
-            process.env[key] = val;
-            if (key === 'OPENAI_API_KE') {
-              process.env['OPENAI_API_KEY'] = val;
-            }
-          }
-        }
-      } catch { /* ignore */ }
-    }
-  }
+const LOCAL_ONLY_MESSAGE = 'Online learning help is not enabled. Try a maths, spelling, science, reading, or Sodafom question — or ask a grown-up for help.';
+
+// Do not call tryLocalTutor here: it holds browser-child lesson state and must
+// never become shared server state between pupils.
+function answerLocally(question: string): string | null {
+  return (
+    tryLocalMaths(question)
+    ?? tryLocalSpelling(question)
+    ?? tryLocalScience(question)
+    ?? tryLocalReading(question)
+    ?? tryLocalAppHelp(question)
+  )?.text ?? null;
 }
 
 export default async function handler(req: Request, res: Response) {
-  console.log('[chat] Request received. Origin:', req.headers.origin);
-  const messages = req.body?.messages as ChatMessage[] | undefined;
-  const systemExtra = req.body?.systemExtra as string | undefined;
+  const wantsJson = req.headers.accept?.includes('application/json') === true;
+  res.setHeader('Cache-Control', 'no-store');
 
-  if (!Array.isArray(messages)) {
-    console.error('[chat] Invalid request: missing messages');
-    return res.status(400).send('Invalid request: missing messages');
+  const fail = (status: number, code: string, message: string) => {
+    if (wantsJson) {
+      return res.status(status).json({
+        error: message,
+        code,
+        source: 'error',
+        modelUsed: null,
+        cost: null,
+      });
+    }
+    return res.status(status).type('text/plain').send(message);
+  };
+
+  const answer = (text: string) => {
+    const reply = {
+      text: text.trim(),
+      content: text.trim(),
+      response: text.trim(),
+      source: 'local' as const,
+      modelUsed: 'Local Archie' as const,
+      cost: 0 as const,
+    };
+    if (wantsJson) return res.status(200).json(reply);
+    return res.status(200).type('text/plain').send(reply.text);
+  };
+
+  const input: unknown = req.body?.messages;
+  const systemExtra: unknown = req.body?.systemExtra;
+  if (!Array.isArray(input) || input.length === 0 || input.length > 50
+    || (systemExtra !== undefined && (typeof systemExtra !== 'string' || systemExtra.length > 6000))) {
+    return fail(400, 'INVALID_REQUEST', 'Please send Archie a clear, shorter question.');
+  }
+  if (input.some((message) => !message
+    || (message.role !== 'user' && message.role !== 'assistant')
+    || typeof message.content !== 'string'
+    || !message.content.trim()
+    || message.content.length > 4000)) {
+    return fail(400, 'INVALID_REQUEST', 'Please send Archie a clear question.');
   }
 
-  const safeMessages = messages
-    .filter((m) => (m.role === 'user' || m.role === 'assistant') && m.content && m.content.trim().length > 0);
-
-  if (safeMessages.length === 0) {
-    console.warn('[chat] No valid messages provided');
-    return res.status(400).send('No valid messages provided');
+  const messages: ChatMessage[] = input.map((message) => ({
+    role: message.role,
+    content: message.content.trim(),
+  }));
+  const last = messages[messages.length - 1];
+  if (last.role !== 'user' || messages.reduce((total, message) => total + message.content.length, 0) > 24_000) {
+    return fail(400, 'INVALID_REQUEST', 'Please send Archie a clear, shorter question.');
   }
 
   try {
-    loadFreshEnv();
-
-    const apiKey = process.env.OPENAI_API_KEY?.trim();
-    if (!apiKey) {
-      console.error('[chat] OPENAI_API_KEY is missing on the server');
-      return res.status(503).send('Archie AI is not configured on the server yet.');
-    }
-
-    const openai = new OpenAI({ apiKey, timeout: 40_000, maxRetries: 2 });
-    console.log('[chat] Calling the OpenAI Chat Completions API (gpt-4o-mini)...');
-
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: SYSTEM_PROMPT + (systemExtra ? `\n\n${systemExtra}` : '') },
-        ...safeMessages.map((message) => ({
-          role: message.role,
-          content: message.content,
-        })),
-      ],
-      max_tokens: 500,
-    });
-
-    const text = response.choices[0]?.message?.content?.trim();
-    console.log(`[chat] AI Response generated. Length: ${text?.length || 0}`);
-
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    if (!text) {
-      console.warn('[chat] OpenAI returned empty string');
-      return res.status(200).send("I'm thinking really hard, but I couldn't find the right words! Try asking me again? 😊");
-    }
-    return res.status(200).send(text);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    console.error('[chat] ERROR:', message);
-
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    // Do not send provider details or secret-related information to the child/device.
-    res.status(502).send('Archie could not reach the learning service. Please try again.');
+    const local = answerLocally(last.content);
+    if (local?.trim()) return answer(local);
+  } catch {
+    return fail(503, 'LOCAL_UNAVAILABLE', 'My local learning help is having a little trouble. Please try again in a moment.');
   }
+
+  // Fail closed: this endpoint has no credential, voucher, model, retry, or
+  // external-service fallback. A client flag cannot enable paid AI.
+  return fail(503, 'PAID_AI_DISABLED', LOCAL_ONLY_MESSAGE);
 }
