@@ -12,9 +12,12 @@ import { SESSION_RECOVERY_URL, claimSessionRecovery, clearSessionRecovery } from
 import { API_BASE_URL, API_PREFIX } from '../config';
 
 // Auth client - baseURL must be the full origin for BetterAuth's URL construction.
-const _authClient = createAuthClient({
-  baseURL: API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '')
-});
+// Web sign-in must stay same-origin so the session cookie reaches the app.
+// Capacitor has no matching web origin, so it uses the configured hosted API.
+const authBaseURL = typeof window === 'undefined'
+  ? API_BASE_URL
+  : ((window as any).Capacitor ? API_BASE_URL : window.location.origin);
+const _authClient = createAuthClient({ baseURL: authBaseURL });
 
 // How long an unsettled session may stay pending before we treat it as a stuck
 // stale-cookie state and attempt recovery. Generous enough to clear a slow but
