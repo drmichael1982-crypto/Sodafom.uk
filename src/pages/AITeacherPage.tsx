@@ -1,7 +1,8 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, Camera, PenLine, Send, Sparkles, Volume2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
+import { askArchie, friendlyArchieError } from '@/lib/archie-routing';
 import { ttsSpeak } from '@/lib/voice-context';
 import { getActiveChild, setActiveChild, type AgeGroup } from '@/hooks/useChildAge';
 
@@ -31,6 +32,9 @@ const SUBJECTS = [
 export default function AITeacherPage() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const requestInFlightRef = useRef(false);
+  const requestAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => requestAbortRef.current?.abort(), []);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [preview, setPreview] = useState('');
@@ -57,28 +61,28 @@ export default function AITeacherPage() {
   };
 
   const askTeacher = async () => {
-    if (!question.trim() || busy) return;
-    setBusy(true); setError('');
+    if (!question.trim() || busy || requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    requestAbortRef.current = controller;
+    setBusy(true); setError(''); setAnswer('');
     try {
-      const response = await fetch(`${API_PREFIX}/chat`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const reply = await askArchie({
+        messages: [{ role: 'user', content: question.trim() }],
         signal: controller.signal,
-        body: JSON.stringify({ messages: [{ role: 'user', content: question }], systemExtra: `Act as a patient teacher following the National Curriculum in England for a child aged ${age}, in ${curriculum.year} (${curriculum.stage}). Teach one clear step at a time, check understanding, use child-friendly language, and adapt examples to this level. Relevant learning includes ${curriculum.topics}.` }),
       });
-      clearTimeout(timeoutId);
-      if (!response.ok) throw new Error('Online teacher is not connected yet.');
-      const text = await response.text();
-      setAnswer(text); ttsSpeak(text);
-    } catch (e) {
-      clearTimeout(timeoutId);
-      const fallbackText = `I am helping offline! For a child in ${curriculum.year} learning ${curriculum.topics}, regarding "${question}": Let's break it down into simple steps. Take your time, try a small example, and you'll get it!`;
-      setAnswer(fallbackText);
-      ttsSpeak(fallbackText);
-      setError('Online teacher is unavailable (offline mode active).');
+      if (controller.signal.aborted) return;
+      setAnswer(reply.text);
+      ttsSpeak(reply.text);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      setError(friendlyArchieError(error));
     }
-    finally { setBusy(false); }
+    finally {
+      requestInFlightRef.current = false;
+      requestAbortRef.current = null;
+      setBusy(false);
+    }
   };
 
   const readBookPage = async (file?: File) => {
