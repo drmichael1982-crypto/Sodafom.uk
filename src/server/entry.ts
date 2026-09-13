@@ -37,7 +37,7 @@ import children_childId_delete_18 from "./api/children/[childId]/DELETE";
 import children_childId_patch_19 from "./api/children/[childId]/PATCH";
 import children_childId_game_level_gameSlug_get_20 from "./api/children/[childId]/game-level/[gameSlug]/GET";
 import children_childId_game_level_gameSlug_post_21 from "./api/children/[childId]/game-level/[gameSlug]/POST";
-import ai_teacher_read_page_post from "./api/ai-teacher/read-page/POST";
+import ai_teacher_read_page_post, { isTrustedScannerOrigin } from "./api/ai-teacher/read-page/POST";
 import ai_transcribe_post from "./api/ai/transcribe/POST";
 import children_childId_progress_get_22 from "./api/children/[childId]/progress/GET";
 import children_childId_progress_post_23 from "./api/children/[childId]/progress/POST";
@@ -223,6 +223,75 @@ app.set("trust proxy", true);
 // route must therefore be registered before the general JSON body parser.
 app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), webhook_stripe_post_75);
 
+// A scanner photograph is deliberately handled on this route only. Reject
+// untrusted and abusive traffic before Express buffers a child-page upload.
+// This process-local limit is a second line of defence; deployment should also
+// retain an edge/WAF request limit for multi-instance traffic.
+const SCANNER_REQUEST_BYTES = 9 * 1024 * 1024;
+const SCANNER_RATE_LIMIT_WINDOW_MS = 60_000;
+const SCANNER_RATE_LIMIT_MAX = 12;
+const SCANNER_RATE_BUCKET_MAX = 5_000;
+const scannerRequestBuckets = new Map<string, { count: number; resetAt: number }>();
+
+function scannerClientKey(req: Request) {
+  return `${req.ip || req.socket.remoteAddress || 'unknown'}:${req.headers.origin || 'native'}`;
+}
+
+function allowScannerRequest(req: Request) {
+  const now = Date.now();
+  const key = scannerClientKey(req);
+  const current = scannerRequestBuckets.get(key);
+  if (current && current.resetAt > now) {
+    if (current.count >= SCANNER_RATE_LIMIT_MAX) return false;
+    current.count += 1;
+    return true;
+  }
+  if (!current && scannerRequestBuckets.size >= SCANNER_RATE_BUCKET_MAX) {
+    for (const [bucketKey, bucket] of scannerRequestBuckets) {
+      if (bucket.resetAt <= now) scannerRequestBuckets.delete(bucketKey);
+    }
+    // Avoid turning arbitrary client keys into an unbounded memory store.
+    if (scannerRequestBuckets.size >= SCANNER_RATE_BUCKET_MAX) return false;
+  }
+  scannerRequestBuckets.set(key, { count: 1, resetAt: now + SCANNER_RATE_LIMIT_WINDOW_MS });
+  return true;
+}
+
+function scannerRequestGate(req: Request, res: Response, next: NextFunction) {
+  res.setHeader('Cache-Control', 'no-store, private');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  if (!isTrustedScannerOrigin(req.headers.origin)) {
+    return res.status(403).type('text/plain').send('Photo help must be opened from the Sodafom app.');
+  }
+  const contentLength = Array.isArray(req.headers['content-length'])
+    ? req.headers['content-length'][0]
+    : req.headers['content-length'];
+  const declaredBytes = contentLength ? Number(contentLength) : 0;
+  if (!Number.isSafeInteger(declaredBytes) || declaredBytes < 0 || declaredBytes > SCANNER_REQUEST_BYTES) {
+    return res.status(413).type('text/plain').send('This photo is too large. Please choose a photograph smaller than 6 MB.');
+  }
+  if (!allowScannerRequest(req)) {
+    res.setHeader('Retry-After', String(Math.ceil(SCANNER_RATE_LIMIT_WINDOW_MS / 1000)));
+    return res.status(429).type('text/plain').send('The photo helper is busy. Please wait a moment before trying again.');
+  }
+  return next();
+}
+
+// Keep the larger parser limit narrow, then apply a stricter decoded-image
+// limit in the handler; all other JSON routes retain Express's default.
+app.post("/api/ai-teacher/read-page", scannerRequestGate, express.json({ limit: "9mb" }), ai_teacher_read_page_post);
+app.use("/api/ai-teacher/read-page", (err: unknown, _req: Request, res: Response, next: NextFunction) => {
+  if (!err) return next();
+  // Never echo parser details for a child's page image. The normal app error
+  // middleware stays unchanged for unrelated routes.
+  res.setHeader('Cache-Control', 'no-store, private');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  const status = typeof err === 'object' && err && 'status' in err && (err as { status?: unknown }).status === 413 ? 413 : 400;
+  return res.status(status).type('text/plain').send(status === 413
+    ? 'This photo is too large. Please choose a photograph smaller than 6 MB.'
+    : 'Please photograph one clear homework question or book page.');
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -265,7 +334,6 @@ app.delete("/api/children/:childId", children_childId_delete_18);
 app.patch("/api/children/:childId", children_childId_patch_19);
 app.get("/api/children/:childId/game-level/:gameSlug", children_childId_game_level_gameSlug_get_20);
 app.post("/api/children/:childId/game-level/:gameSlug", children_childId_game_level_gameSlug_post_21);
-app.post("/api/ai-teacher/read-page", ai_teacher_read_page_post);
 app.post("/api/ai/transcribe", ai_transcribe_post);
 app.get("/api/children/:childId/progress", children_childId_progress_get_22);
 app.post("/api/children/:childId/progress", children_childId_progress_post_23);
