@@ -9,7 +9,7 @@
  * - OAuth credentials (GOOGLE_CLIENT_ID, etc.) for social login
  *
  * CORS/Trusted Origins:
- * - Only trusts origins matching the server's hostname
+ * - Uses the same explicit origin policy as the API server.
  */
 
 import { betterAuth } from 'better-auth';
@@ -20,13 +20,19 @@ import { db } from '@/server/db/client';
 import { user, session, account, verification } from '@/server/db/schema';
 import { getSecret } from '#airo/secrets';
 import { sendEmail } from '@/server/email';
+import { trustedOrigins } from './trusted-origins';
 
 const OWNER_EMAIL = 'sodafom.uk@gmail.com';
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
 async function notifyOwnerOfSignup(newUser: { name?: string | null; email: string; phoneNumber?: string | null }) {
   // Skip email notification in local development to avoid hangs/timeouts
   if (process.env.NODE_ENV !== 'production') {
-    console.log(`[auth] skipping signup notification for ${newUser.email} (local dev)`);
+    console.log('[auth] skipping signup notification (local dev)');
     return;
   }
   try {
@@ -42,9 +48,9 @@ async function notifyOwnerOfSignup(newUser: { name?: string | null; email: strin
           </div>
           <div style="background: #ffffff; padding: 24px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0;">
             <table style="width: 100%; border-collapse: collapse;">
-              <tr><td style="padding: 8px 0; font-weight: bold; color: #555; width: 140px;">Name:</td><td style="padding: 8px 0; color: #222;">${newUser.name || 'Not provided'}</td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${newUser.email}" style="color: #2D6A4F;">${newUser.email}</a></td></tr>
-              <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Phone:</td><td style="padding: 8px 0; color: #222;">${newUser.phoneNumber || 'Not provided'}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold; color: #555; width: 140px;">Name:</td><td style="padding: 8px 0; color: #222;">${escapeHtml(newUser.name || 'Not provided')}</td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Email:</td><td style="padding: 8px 0;"><a href="mailto:${escapeHtml(newUser.email)}" style="color: #2D6A4F;">${escapeHtml(newUser.email)}</a></td></tr>
+              <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Phone:</td><td style="padding: 8px 0; color: #222;">${escapeHtml(newUser.phoneNumber || 'Not provided')}</td></tr>
               <tr><td style="padding: 8px 0; font-weight: bold; color: #555;">Date:</td><td style="padding: 8px 0; color: #222;">${date}</td></tr>
             </table>
             <hr style="border: none; border-top: 1px solid #eee; margin: 16px 0;" />
@@ -54,10 +60,10 @@ async function notifyOwnerOfSignup(newUser: { name?: string | null; email: strin
       `,
       text: `New Sodafom Signup\n\nName: ${newUser.name || 'N/A'}\nEmail: ${newUser.email}\nPhone: ${newUser.phoneNumber || 'N/A'}\nDate: ${date}`,
     });
-    console.log(`[auth] signup notification sent for ${newUser.email}`);
-  } catch (err) {
-    // Non-fatal — don't block signup if email fails
-    console.error('[auth] failed to send signup notification:', err);
+    console.log('[auth] signup notification sent');
+  } catch {
+    // Non-fatal — don't block signup or log personal data if email fails.
+    console.error('[auth] failed to send signup notification');
   }
 }
 
@@ -86,8 +92,8 @@ export function getAuth() {
         authSecret = match[1].replace(/^["']|["']$/g, "");
         process.env.BETTER_AUTH_SECRET = authSecret as string;
       }
-    } catch (err) {
-      console.warn('[auth] Failed to read secret from .env fallback:', err);
+    } catch {
+      console.warn('[auth] Failed to read secret from .env fallback');
     }
   }
 
@@ -140,50 +146,12 @@ export function getAuth() {
       },
     },
 
-    // CORS: Trusts .airoapp.ai subdomains, sodafom.uk, and localhost.
-    trustedOrigins: (request?: Request) => {
-      // Always trust these fixed origins
-      const ALWAYS_TRUSTED = [
-        'https://sodafom.uk',
-        'https://www.sodafom.uk',
-      ];
-
-      if (!request) return ALWAYS_TRUSTED;
-
-      const origin = request.headers.get('origin');
-      if (!origin) return ALWAYS_TRUSTED;
-
-      try {
-        const originUrl = new URL(origin);
-        const hostname = originUrl.hostname;
-
-        // Trust all airoapp.ai subdomains (preview/builder)
-        if (hostname.endsWith('.airoapp.ai') || hostname.endsWith('.test-airoapp.ai')) {
-          return [...ALWAYS_TRUSTED, origin];
-        }
-
-        // Trust localhost for development
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-          return [...ALWAYS_TRUSTED, origin];
-        }
-
-        // Trust sodafom.uk and subdomains
-        if (hostname === 'sodafom.uk' || hostname.endsWith('.sodafom.uk')) {
-          return [...ALWAYS_TRUSTED, origin];
-        }
-
-        return ALWAYS_TRUSTED;
-      } catch {
-        return ALWAYS_TRUSTED;
-      }
-    },
+    // Preview origins must be configured explicitly; no wildcard tenant trust.
+    trustedOrigins: (request?: Request) => trustedOrigins(request?.headers.get('origin')),
 
     advanced: {
-      // Disable CSRF origin check — the preview runs in an iframe on a different
-      // origin and the browser strips the Origin header for same-origin requests,
-      // causing BetterAuth to reject valid sign-in/sign-up calls with 403.
-      // Cookie security is still enforced by SameSite + Secure attributes below.
-      disableCSRFCheck: true,
+      // Keep BetterAuth's CSRF checks enabled, including in preview mode.
+      disableCSRFCheck: false,
 
       // In preview mode the site runs in an iframe embedded by the builder on a
       // different origin, so cookies need SameSite=None + Secure + Partitioned
@@ -210,13 +178,13 @@ export function getAuth() {
                 <h1 style="color: #FFD700; margin: 0; font-size: 24px;">🔑 Reset your password</h1>
               </div>
               <div style="background: #ffffff; padding: 28px 24px; border-radius: 0 0 8px 8px; border: 1px solid #e0e0e0;">
-                <p style="color: #333; font-size: 16px; margin: 0 0 16px;">Hi ${resetUser.name ?? 'there'},</p>
+                <p style="color: #333; font-size: 16px; margin: 0 0 16px;">Hi ${escapeHtml(resetUser.name ?? 'there')},</p>
                 <p style="color: #555; font-size: 15px; margin: 0 0 24px;">
                   We received a request to reset your Sodafom password. Click the button below to choose a new one.
                   This link expires in <strong>1 hour</strong>.
                 </p>
                 <div style="text-align: center; margin: 28px 0;">
-                  <a href="${url}"
+                  <a href="${escapeHtml(url)}"
                      style="display: inline-block; background: #2D6A4F; color: #FFD700; font-weight: bold; font-size: 16px;
                             padding: 14px 32px; border-radius: 8px; text-decoration: none;">
                     Reset my password

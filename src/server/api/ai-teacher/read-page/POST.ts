@@ -23,6 +23,9 @@ export default async function handler(req: Request, res: Response) {
     const requestText = mode === 'homework' ? (childQuestion || 'Please explain this homework one step at a time.') : 'Help the child read this page.';
     const response = await openai.responses.create({
       model: 'gpt-4o-mini', instructions,
+      // Do not retain a retrievable response. Provider abuse-monitoring policies
+      // are separate; this flag is not a promise of Zero Data Retention.
+      store: false,
       input: [{ role: 'user', content: [{ type: 'input_text', text: requestText }, { type: 'input_image', image_url: image, detail: 'auto' }] }] as any,
       max_output_tokens: 900,
     });

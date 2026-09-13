@@ -1,6 +1,6 @@
 /**
- * GET /api/admin/list-users?adminKey=xxx
- * Lists all registered users (admin only).
+ * GET /api/admin/list-users
+ * Lists registered users for an authenticated administrator; never passwords.
  */
 import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
@@ -8,6 +8,7 @@ import { sql } from 'drizzle-orm';
 import { hasAdminAccess } from '@/server/admin-auth';
 
 export default async function handler(req: Request, res: Response) {
+  res.setHeader('Cache-Control', 'private, no-store');
   try {
     if (!(await hasAdminAccess(req))) {
       return res.status(403).json({ error: 'Forbidden' });
@@ -19,7 +20,8 @@ export default async function handler(req: Request, res: Response) {
     const users = rows[0] as unknown as { id: string; name: string; email: string; created_at: string }[];
 
     res.json({ users });
-  } catch (err) {
-    res.status(500).json({ error: String(err) });
+  } catch {
+    console.error('[admin/list-users] request failed');
+    res.status(500).json({ error: 'Unable to load accounts' });
   }
 }

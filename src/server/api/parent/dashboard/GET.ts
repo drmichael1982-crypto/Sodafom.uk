@@ -9,15 +9,19 @@ import { sql } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
 
 export default async function handler(req: Request, res: Response) {
+  res.setHeader('Cache-Control', 'private, no-store');
   try {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: req.headers as Record<string, string> });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
+    // A client-provided role, selected child, or admin flag is not authority.
+    if (!('role' in session.user) || session.user.role !== 'parent') return res.status(403).json({ error: 'Parent access required' });
 
-    const childId = parseInt(req.query.childId as string, 10);
-    if (!childId) return res.status(400).json({ error: 'childId required' });
+    const rawChildId = req.query.childId;
+    const childId = typeof rawChildId === 'string' && /^[1-9]\d*$/.test(rawChildId) ? Number(rawChildId) : NaN;
+    if (!Number.isSafeInteger(childId)) return res.status(400).json({ error: 'Valid childId required' });
 
-    // Verify child belongs to this parent
+    // Verify child belongs to this parent before reading any learning data.
     const childRows = await db.execute(sql`
       SELECT id, name, age_group, total_stars FROM children
       WHERE id = ${childId} AND parent_id = ${session.user.id} LIMIT 1
@@ -72,16 +76,9 @@ export default async function handler(req: Request, res: Response) {
     `);
     const badgeCount = (badgeRows[0] as unknown as { total: number }[])[0]?.total ?? 0;
 
-    res.json({
-      child,
-      totalGames,
-      badgeCount,
-      subjects,
-      daily,
-      recent,
-    });
-  } catch (err) {
-    console.error('[parent/dashboard]', err);
-    res.status(500).json({ error: String(err) });
+    res.json({ child, totalGames, badgeCount, subjects, daily, recent });
+  } catch {
+    console.error('[parent/dashboard] request failed');
+    res.status(500).json({ error: 'Unable to load the parent report' });
   }
 }

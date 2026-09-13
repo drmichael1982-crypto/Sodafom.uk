@@ -1,8 +1,9 @@
-import express, { type Express, type NextFunction, type Request, type Response } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import { fileURLToPath } from "node:url";
 import { dirname, extname, join } from "node:path";
 import { readFileSync } from "node:fs";
 import { render as renderFn } from "../entry-server";
+import { httpSecurity, apiErrorHandler, requestMetadata } from "./http-security";
 
 // <api-imports>
 import admin_code_get_0 from "./api/admin/code/GET";
@@ -172,46 +173,9 @@ normalizeCommerceApiBaseUrlEnv();
 
 const app = express();
 
-// DEBUG LOGGING MIDDLEWARE
-app.use((req, res, next) => {
-  console.log(`[server] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'none'}`);
-  next();
-});
-
-// --- Extremely Robust CORS Middleware for Capacitor & Web ---
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const allowedOrigins = [
-    'http://localhost',
-    'https://localhost',
-    'capacitor://localhost',
-    'https://app.sodafom.uk',
-    'https://sodafom.uk'
-  ];
-
-  if (origin) {
-    if (allowedOrigins.includes(origin) || origin.endsWith('.sodafom.uk')) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    } else {
-      // Fallback: reflect origin to ensure connectivity during transition
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Vary', 'Origin');
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization, Accept, Origin, Range, Cache-Control, Pragma, X-Capacitor-Http, Accept-Encoding, X-Accel-Buffering, User-Agent');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, X-Accel-Buffering, Content-Type');
-  res.setHeader('Access-Control-Max-Age', '86400');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
-});
+// Security applies before every API handler, including the raw Stripe webhook.
+app.disable("x-powered-by");
+app.use(httpSecurity);
 
 // Honour x-forwarded-* from the load balancer so req.protocol/req.hostname
 // reflect the public-facing values. Express-maintained parsing respects the
@@ -570,16 +534,7 @@ initializeProject()
 
 
 // Error middleware must be registered AFTER the routes it protects
-app.use("/api", (err: unknown, req: Request, res: Response, _next: NextFunction) => {
-	console.error("ssr.api.error", {
-		url: req.url,
-		error: err instanceof Error ? err.stack : String(err),
-	});
-	res.status(500).json({
-    error: "Internal server error",
-    message: err instanceof Error ? err.message : String(err)
-  });
-});
+app.use("/api", apiErrorHandler);
 
 function baseUrl(req: Request): string {
 	return `${req.protocol}://${req.hostname}`;
@@ -737,7 +692,7 @@ if (import.meta.env.PROD) {
 				// User-visible 404 / error pages should come from a route
 				// errorElement, not from this fallback path.
 				console.error("ssr.render.error-response", {
-					url: req.url,
+					...requestMetadata(req),
 					status: result.status,
 				});
 				res
@@ -772,11 +727,9 @@ if (import.meta.env.PROD) {
 			// page as success. console.error (not warn) puts it at the right log
 			// level for the observability pipeline to alert on.
 			console.error("ssr.render.failed", {
-				url: req.url,
-				// Log the full stack — React's renderToString annotates it with
-				// the failing component's call tree, which the message alone
-				// discards.
-				error: err instanceof Error ? err.stack : String(err),
+				...requestMetadata(req),
+				// Do not log tokens, child identifiers, or rendered user content.
+				reason: "render_failed",
 			});
 			sendFallback();
 		}

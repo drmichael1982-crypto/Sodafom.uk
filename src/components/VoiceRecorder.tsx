@@ -40,6 +40,46 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
   const chunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const readerRef = useRef<FileReader | null>(null);
+  const mountedRef = useRef(true);
+  const generationRef = useRef(0);
+  const captureBusyRef = useRef(false);
+
+  // A permission prompt may resolve after navigation. Invalidate that request
+  // and release all acquired devices, even when MediaRecorder construction fails.
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      generationRef.current++;
+      captureBusyRef.current = false;
+      if (timerRef.current !== null) clearInterval(timerRef.current);
+      timerRef.current = null;
+      const recorder = mediaRef.current;
+      if (recorder) {
+        recorder.ondataavailable = null;
+        recorder.onstop = null;
+        recorder.onerror = null;
+        try { if (recorder.state !== 'inactive') recorder.stop(); } catch { /* Still release tracks. */ }
+      }
+      streamRef.current?.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+      mediaRef.current = null;
+      chunksRef.current = [];
+      const reader = readerRef.current;
+      if (reader) {
+        reader.onloadend = null;
+        reader.onerror = null;
+        if (reader.readyState === 1) reader.abort();
+      }
+      readerRef.current = null;
+      if (audioRef.current) {
+        audioRef.current.onended = null;
+        audioRef.current.pause();
+      }
+    };
+  }, []);
 
   // Sync if external clip changes
   useEffect(() => {
@@ -50,10 +90,14 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
   }, [existing]);
 
   const clearTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current !== null) clearInterval(timerRef.current);
+    timerRef.current = null;
   };
 
   const startCountdown = () => {
+    // Compact-mode buttons remain visible; repeated taps must not start streams.
+    if (!mountedRef.current || captureBusyRef.current) return;
+    captureBusyRef.current = true;
     setState('countdown');
     setCountdown(COUNTDOWN_SECS);
     let c = COUNTDOWN_SECS;
@@ -62,30 +106,61 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
       setCountdown(c);
       if (c <= 0) {
         clearTimer();
-        startRecording();
+        void startRecording();
       }
     }, 1000);
   };
 
   const startRecording = async () => {
+    const generation = ++generationRef.current;
+    let stream: MediaStream | null = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      if (!mountedRef.current || generation !== generationRef.current) {
+        stream.getTracks().forEach(track => track.stop());
+        return;
+      }
+      streamRef.current = stream;
       const mr = new MediaRecorder(stream, { mimeType: getSupportedMimeType() });
       mediaRef.current = mr;
       chunksRef.current = [];
 
       mr.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
+        if (mountedRef.current && generation === generationRef.current && e.data.size > 0) chunksRef.current.push(e.data);
       };
       mr.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chunksRef.current, { type: getSupportedMimeType() });
+        clearTimer();
+        stream?.getTracks().forEach(track => track.stop());
+        if (streamRef.current === stream) streamRef.current = null;
+        if (mediaRef.current === mr) mediaRef.current = null;
+        if (!mountedRef.current || generation !== generationRef.current) return;
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || getSupportedMimeType() });
+        chunksRef.current = [];
         const reader = new FileReader();
+        readerRef.current = reader;
         reader.onloadend = () => {
-          setDataUrl(reader.result as string);
+          if (!mountedRef.current || generation !== generationRef.current) return;
+          readerRef.current = null;
+          captureBusyRef.current = false;
+          if (typeof reader.result !== 'string') { setState('idle'); return; }
+          setDataUrl(reader.result);
           setState('preview');
         };
         reader.readAsDataURL(blob);
+      };
+      mr.onerror = () => {
+        clearTimer();
+        stream?.getTracks().forEach(track => track.stop());
+        mr.onstop = null;
+        mr.ondataavailable = null;
+        try { if (mr.state !== 'inactive') mr.stop(); } catch { /* Tracks are already stopped. */ }
+        if (!mountedRef.current || generation !== generationRef.current) return;
+        generationRef.current++;
+        mediaRef.current = null;
+        streamRef.current = null;
+        chunksRef.current = [];
+        captureBusyRef.current = false;
+        setState('idle');
       };
 
       mr.start();
@@ -98,6 +173,20 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
         if (s >= MAX_RECORD_SECS) stopRecording();
       }, 1000);
     } catch {
+      stream?.getTracks().forEach(track => track.stop());
+      if (!mountedRef.current || generation !== generationRef.current) return;
+      clearTimer();
+      streamRef.current = null;
+      const mr = mediaRef.current;
+      if (mr) {
+        mr.onstop = null;
+        mr.ondataavailable = null;
+        mr.onerror = null;
+        try { if (mr.state !== 'inactive') mr.stop(); } catch { /* Tracks are already stopped. */ }
+      }
+      mediaRef.current = null;
+      chunksRef.current = [];
+      captureBusyRef.current = false;
       setState('idle');
       alert('Microphone access is needed to record your voice. Please allow it in your settings.');
     }
@@ -105,7 +194,20 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
 
   const stopRecording = () => {
     clearTimer();
-    mediaRef.current?.stop();
+    const mr = mediaRef.current;
+    try {
+      if (mr && mr.state !== 'inactive') mr.stop();
+    } catch {
+      generationRef.current++;
+      if (mr) { mr.onstop = null; mr.ondataavailable = null; }
+      mediaRef.current = null;
+      chunksRef.current = [];
+      captureBusyRef.current = false;
+      if (mountedRef.current) setState('idle');
+    } finally {
+      streamRef.current?.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
   };
 
   const playPreview = () => {
@@ -114,8 +216,8 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
     const audio = new Audio(dataUrl);
     audioRef.current = audio;
     setPlaying(true);
-    audio.onended = () => setPlaying(false);
-    audio.play().catch(() => setPlaying(false));
+    audio.onended = () => { if (mountedRef.current) setPlaying(false); };
+    audio.play().catch(() => { if (mountedRef.current) setPlaying(false); });
   };
 
   const stopPreview = () => {

@@ -11,6 +11,7 @@ interface RecentActivity {
 }
 
 export default async function handler(req: Request, res: Response) {
+  res.setHeader('Cache-Control', 'private, no-store');
   try {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: new Headers(req.headers as Record<string, string>) });
@@ -58,7 +59,8 @@ export default async function handler(req: Request, res: Response) {
       streakDays: 0,
       badgeCount: 0,
     });
-  } catch (e) {
-    res.status(500).json({ error: String(e) });
+  } catch {
+    console.error('[children/progress] request failed');
+    res.status(500).json({ error: 'Unable to load child progress' });
   }
 }
