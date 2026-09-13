@@ -4,7 +4,7 @@
 - **Original task:** Homework and Reading scanners — camera/upload capture, safe image handling, explanation, read-aloud and voice flow.
 - **Recovery branch:** `recovery/agent12-scanners-20260913`
 - **Latest implementation commit:** `91c540a1182531ffe56738821c7b06adf35c1cad`
-- **Pushed:** Pending authorised GitHub connector upload and remote verification.
+- **Pushed:** Yes — uploaded through the authorised GitHub connector; this report is the branch’s upload record.
 
 ## Completed
 
