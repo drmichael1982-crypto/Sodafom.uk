@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { ArchieCharacter } from '@/components/ArchieCharacter';
 import IslandAdventure from '@/components/IslandAdventure';
+import StickerBooksPage from './StickerBooksPage';
 import PaywallGate from '@/components/games/PaywallGate';
 import { ISLANDS, isIslandId, islandRoute } from '@/lib/island-adventures';
 
@@ -90,7 +91,7 @@ const HOME_HOTSPOTS: Hotspot[] = [
   { label: "Open Parents' Evening", left: 9, top: 67, width: 20, height: 11, route: '/parent-area' },
   { label: 'Open Teacher Classroom', left: 30, top: 67, width: 20, height: 11, route: '/teacher-hub' },
   { label: 'Open Sodafom Shop', left: 51, top: 67, width: 19, height: 11, route: '/sodafom-shop' },
-  { label: "Open Archie's Sticker Book", left: 71, top: 67, width: 20, height: 11, route: '/rewards' },
+  { label: "Open Archie's Sticker Book", left: 71, top: 67, width: 20, height: 11, route: '/?activity=sticker-books' },
   { label: 'Open Settings', left: 9, top: 79, width: 20, height: 11, route: '/sodafom-settings' },
   { label: 'Open My Progress', left: 30, top: 79, width: 20, height: 11, route: '/hub/progress' },
   { label: 'Open Rewards', left: 51, top: 79, width: 19, height: 11, route: '/rewards' },
@@ -192,6 +193,10 @@ export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtw
     }
     playButtonFeedback(hotspot.label);
     if (hotspot.route) navigate(hotspot.route);
+  }
+
+  if (variant === 'home' && searchParams.get('activity') === 'sticker-books') {
+    return <StickerBooksPage />;
   }
 
   if (variant === 'game-islands' && isIslandId(selectedIsland)) {
