@@ -1,87 +1,97 @@
 /**
- * GET /api/parent/dashboard?childId=X
- * Returns full progress data for a child: total stars, games played,
- * subject breakdown, daily stars over last 14 days, recent games.
+ * GET /api/parent/dashboard?childId=X&days=7|30|90
+ *
+ * Read-only, account-scoped parent reports. No device-local tutor memory,
+ * cross-child fallback, report sharing, or database writes are used here.
  */
-import type { Request, Response } from 'express';
-import { db } from '@/server/db/client';
-import { sql } from 'drizzle-orm';
-import { getAuth } from '@/lib/auth/auth';
+import type { Request, Response } from "express";
+import { db } from "@/server/db/client";
+import { sql } from "drizzle-orm";
+import { getAuth } from "@/lib/auth/auth";
+import { games } from "virtual:content";
+import {
+  buildChildReport,
+  knownGameIds,
+  parseChildId,
+  parseReportDays,
+  REPORT_LIMIT,
+  type ParentChild,
+  type SavedActivity,
+} from "@/lib/parent-reports";
 
 export default async function handler(req: Request, res: Response) {
+  res.setHeader("Cache-Control", "private, no-store, max-age=0");
+  res.vary("Cookie");
+  res.setHeader("X-Robots-Tag", "noindex, nofollow");
+
   try {
-    const auth = getAuth();
-    const session = await auth.api.getSession({ headers: req.headers as Record<string, string> });
-    if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
+    const session = await getAuth().api.getSession({
+      headers: new Headers(req.headers as Record<string, string>),
+    });
+    if (!session?.user?.id) {
+      return res.status(401).json({ error: "Sign in to view parent reports." });
+    }
 
-    const childId = parseInt(req.query.childId as string, 10);
-    if (!childId) return res.status(400).json({ error: 'childId required' });
+    const childId = parseChildId(req.query.childId);
+    const days = parseReportDays(req.query.days);
+    if (childId === null || days === null) {
+      return res
+        .status(400)
+        .json({ error: "A valid child and reporting period are required." });
+    }
 
-    // Verify child belongs to this parent
-    const childRows = await db.execute(sql`
+    // Use an owner-scoped lookup before reading a single activity record.
+    const childResult = await db.execute(sql`
       SELECT id, name, age_group, total_stars FROM children
       WHERE id = ${childId} AND parent_id = ${session.user.id} LIMIT 1
     `);
-    const children = childRows[0] as unknown as { id: number; name: string; age_group: string; total_stars: number }[];
-    if (!children.length) return res.status(403).json({ error: 'Child not found' });
-    const child = children[0];
+    const child = (childResult[0] as unknown as ParentChild[])[0];
+    // The same result for missing and another parent's child avoids an ID oracle.
+    if (!child)
+      return res.status(404).json({ error: "Child report not found." });
 
-    // Games played count + stars per subject
-    const subjectRows = await db.execute(sql`
-      SELECT subject,
-             COUNT(*) AS games_played,
-             COALESCE(SUM(stars_earned), 0) AS stars
-      FROM game_plays
-      WHERE child_id = ${childId}
-      GROUP BY subject
+    const now = new Date();
+    const from = new Date(now.getTime() - days * 86_400_000);
+    // Repeat ownership in the data query as defence in depth. The +1 makes a
+    // partial report explicit instead of silently claiming all history.
+    const result = await db.execute(sql`
+      SELECT a.id, a.child_id, a.subject, a.activity_id, a.activity_title,
+             a.score, a.max_score, a.duration_seconds, a.stars_earned, a.completed_at
+      FROM activity_sessions a
+      INNER JOIN children c ON c.id = a.child_id
+      WHERE a.child_id = ${childId} AND c.parent_id = ${session.user.id}
+        AND a.completed_at >= ${from} AND a.completed_at <= ${now}
+      ORDER BY a.completed_at DESC, a.id DESC
+      LIMIT ${REPORT_LIMIT + 1}
     `);
-    const subjects = subjectRows[0] as unknown as { subject: string; games_played: number; stars: number }[];
-
-    // Total games played
-    const totalGamesRows = await db.execute(sql`
-      SELECT COUNT(*) AS total FROM game_plays WHERE child_id = ${childId}
-    `);
-    const totalGames = (totalGamesRows[0] as unknown as { total: number }[])[0]?.total ?? 0;
-
-    // Daily stars over last 14 days
-    const dailyRows = await db.execute(sql`
-      SELECT DATE(played_at) AS day, COALESCE(SUM(stars_earned), 0) AS stars
-      FROM game_plays
-      WHERE child_id = ${childId}
-        AND played_at >= DATE_SUB(NOW(), INTERVAL 14 DAY)
-      GROUP BY DATE(played_at)
-      ORDER BY day ASC
-    `);
-    const daily = dailyRows[0] as unknown as { day: string; stars: number }[];
-
-    // Recent 5 games
-    const recentRows = await db.execute(sql`
-      SELECT game_slug, subject, stars_earned, score_pct, played_at
-      FROM game_plays
-      WHERE child_id = ${childId}
-      ORDER BY played_at DESC
-      LIMIT 5
-    `);
-    const recent = recentRows[0] as unknown as {
-      game_slug: string; subject: string; stars_earned: number; score_pct: number; played_at: string;
-    }[];
-
-    // Badge count
-    const badgeRows = await db.execute(sql`
-      SELECT COUNT(*) AS total FROM badge_awards WHERE child_id = ${childId}
-    `);
-    const badgeCount = (badgeRows[0] as unknown as { total: number }[])[0]?.total ?? 0;
-
-    res.json({
-      child,
-      totalGames,
-      badgeCount,
-      subjects,
-      daily,
-      recent,
+    const rows = result[0] as unknown as SavedActivity[];
+    const report = buildChildReport(child, rows.slice(0, REPORT_LIMIT), {
+      days,
+      now,
+      gameIds: knownGameIds(games.games),
+      truncated: rows.length > REPORT_LIMIT,
     });
-  } catch (err) {
-    console.error('[parent/dashboard]', err);
-    res.status(500).json({ error: String(err) });
+
+    // The current certificates page only consumes this limited, period-scoped
+    // subject summary. Keeping it prevents an unrelated client break while the
+    // new parent dashboard uses the verified `child` and `report` contract.
+    const subjects = report.subjects.map((subject) => ({
+      subject: subject.subject,
+      games_played: subject.sessions,
+      stars: subject.stars,
+    }));
+    return res.json({
+      child,
+      report,
+      totalGames: report.totalSessions,
+      subjects,
+    });
+  } catch {
+    // Never expose SQL, session details, child records, or provider errors.
+    return res
+      .status(500)
+      .json({
+        error: "The child report could not be loaded. Please try again.",
+      });
   }
 }
