@@ -579,6 +579,17 @@ function RewardsContent() {
 
       <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
 
+        {/* Creative play is separate from rewards: it never spends or earns stars. */}
+        <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex flex-col gap-3 rounded-3xl border-2 border-primary/20 bg-primary/5 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-black text-foreground" style={{ fontFamily: 'var(--font-heading)' }}>✨ Archie&apos;s Sticker Books</p>
+            <p className="mt-1 text-sm text-muted-foreground">Make a private sticker story with Archie and friends. It does not use stars.</p>
+          </div>
+          <Link to="/sticker-books" className="inline-flex shrink-0 items-center justify-center rounded-xl bg-primary px-4 py-2.5 text-sm font-black text-primary-foreground transition-transform hover:scale-[1.02]">
+            Open sticker books
+          </Link>
+        </motion.div>
+
         {/* Child selector */}
         {children.length > 1 && (
           <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex gap-3 flex-wrap">
