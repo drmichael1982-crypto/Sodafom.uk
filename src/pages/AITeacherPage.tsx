@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ArrowLeft, BookOpen, Camera, PenLine, Send, Sparkles, Volume2, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
@@ -32,10 +32,8 @@ const SUBJECTS = [
 
 export default function AITeacherPage() {
   const navigate = useNavigate();
-  const inputRef = useRef<HTMLInputElement>(null);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
-  const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [answerSource, setAnswerSource] = useState<'Local AI' | 'OpenAI' | null>(null);
@@ -101,41 +99,6 @@ export default function AITeacherPage() {
     finally { setBusy(false); }
   };
 
-  const readBookPage = async (file?: File) => {
-    if (!file || busy) return;
-    if (file.size > 6 * 1024 * 1024) { setError('Please choose a photograph smaller than 6 MB.'); return; }
-    setBusy(true); setError(''); setAnswer('');
-    setAnswerSource(null);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const image = String(reader.result || '');
-      setPreview(image);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
-      try {
-        const response = await fetch(`${API_PREFIX}/ai-teacher/read-page`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({ image, age }),
-        });
-        clearTimeout(timeoutId);
-        if (!response.ok) throw new Error(await response.text() || 'The page could not be read.');
-        const text = await response.text();
-        setAnswer(text); setAnswerSource('OpenAI'); ttsSpeak(text);
-      } catch (_e) {
-        clearTimeout(timeoutId);
-        const fallbackText = `I have looked at your book page photo! For year ${curriculum.year}, focus on reading each word clearly, sounding out tricky parts, and asking what happens next in the story.`;
-        setAnswer(fallbackText);
-        setAnswerSource('Local AI');
-        ttsSpeak(fallbackText);
-        setError('Online OCR is unavailable (offline reading guidance active).');
-      }
-      finally { setBusy(false); }
-    };
-    reader.onerror = () => { setBusy(false); setError('The photograph could not be opened.'); };
-    reader.readAsDataURL(file);
-  };
-
   return (
     <main className="relative min-h-screen overflow-hidden bg-sky-700 px-4 py-5 pb-24">
       <div className="fixed inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/assets/cartoon/home-landscape-v2.png')" }} aria-hidden="true" />
@@ -195,10 +158,8 @@ export default function AITeacherPage() {
 
         <section className="mt-5 rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-800 p-5 text-white shadow-xl">
           <h2 className="flex items-center gap-2 text-xl font-black"><BookOpen/> Read a Book With Archie</h2>
-          <p className="mt-1 text-sm font-bold text-white/85">Photograph one page. Archie will read the visible text and explain difficult words.</p>
-          <input ref={inputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={e => void readBookPage(e.target.files?.[0])}/>
-          <button onClick={() => inputRef.current?.click()} disabled={busy} className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-yellow-400 font-black text-indigo-950 disabled:opacity-60"><Camera/> {busy ? 'Reading the page…' : 'Photograph a Book Page'}</button>
-          {preview && <img src={preview} alt="Photographed book page" className="mt-4 max-h-72 w-full rounded-2xl bg-white object-contain"/>}
+          <p className="mt-1 text-sm font-bold text-white/85">Use the protected Reading scanner to photograph one page, read the visible text and explain difficult words.</p>
+          <button onClick={() => navigate('/reading?scan=1')} disabled={busy} className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-yellow-400 font-black text-indigo-950 disabled:opacity-60"><Camera/> Open Safe Book Scanner</button>
         </section>
 
         {answer && <section className="mt-5 rounded-3xl border-4 border-green-200 bg-white/95 p-5 shadow-xl backdrop-blur-sm"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="flex items-center gap-2 font-black text-green-800"><PenLine/> Archie’s lesson</h2>{answerSource && <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-black text-blue-800">{answerSource}</span>}</div><p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{answer}</p><button onClick={() => ttsSpeak(answer)} className="mt-3 flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 font-black text-white"><Volume2/> Read aloud</button></section>}
