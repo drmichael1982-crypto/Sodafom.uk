@@ -33,3 +33,7 @@ Static route assertions were run against the branch after both code commits. All
 - This was a source-level route audit. A full phone/PC click-through test still needs the app built and run with a browser/device.
 - Individual game pages were deliberately retained; only the old menu and hub entry points were redirected.
 - Parent, teacher, rewards and progress pages remain separate feature routes because their replacement artwork is being handled in other work; they were not deleted in this navigation-only change.
+
+## Follow-up route inventory
+
+A second static route inventory found all 16 Home artwork destinations and all 31 current artwork-page hotspot destinations have matching route definitions. Seven current artwork pages expose a direct Home hotspot. This verifies route availability only; it does not prove device tap targets or backend-dependent screens.
