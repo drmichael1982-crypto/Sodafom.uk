@@ -196,6 +196,7 @@ import EarthSpaceGame from './pages/games/earth-space';
 import EvolutionExplorerGame from './pages/games/evolution-explorer';
 import ScienceQuizGame from './pages/games/science-quiz';
 import BackToSchoolShopPage from './pages/shop/back-to-school';
+import ArchieOutfitPage from './pages/ArchieOutfitPage';
 const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
 const NotFoundPage = ProdNotFoundPage;
 export const routes: RouteObject[] = [{
@@ -231,6 +232,13 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/classic-home',
   element: <HomePage />
+}, {
+  path: '/archie-outfit',
+  element: <ArchieOutfitPage />
+}, {
+  // Keep the earlier friendly URL working without changing the home or covers UI.
+  path: '/design-archie-outfit',
+  element: <Navigate to="/archie-outfit" replace />
 }, {
   path: '/subjects',
   element: <SubjectsPage />
