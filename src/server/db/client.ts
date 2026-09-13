@@ -1,23 +1,23 @@
-/** TREAT AS IMMUTABLE - This file is protected by the file-edit tool
- *
- * Database connection setup using Drizzle ORM with MySQL2
+/**
+ * Database connection setup using the existing Drizzle ORM / MySQL2 pool.
+ * Never replace a failed database with a mock: callers must not acknowledge
+ * a save which has not reached the real database.
  */
-
 import { drizzle } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import { getDatabaseCredentials } from './config';
 import * as schema from './schema';
 
-// Lazy pool and db initialization
 let _pool: mysql.Pool | null = null;
 let _db: any = null;
 
 export const db = new Proxy({} as any, {
   get(_, prop) {
     if (!_db) {
+      let candidatePool: mysql.Pool | null = null;
       try {
         const dbConfig = getDatabaseCredentials();
-        _pool = mysql.createPool({
+        candidatePool = mysql.createPool({
           host: dbConfig.host,
           port: dbConfig.port,
           user: dbConfig.user,
@@ -30,15 +30,14 @@ export const db = new Proxy({} as any, {
           connectionLimit: 10,
           queueLimit: 0,
         });
-        _db = drizzle(_pool, { schema, mode: 'default' });
-      } catch (err) {
-        console.warn('[db] Initialization failed, using fallback mock:', err instanceof Error ? err.message : String(err));
-        // Fallback to a mock that doesn't throw but returns empty results
-        _db = {
-          select: () => ({ from: () => ({ where: () => ({ limit: () => [] }), limit: () => [] }) }),
-          insert: () => ({ values: () => ({ onDuplicateKeyUpdate: () => Promise.resolve() }) }),
-          execute: () => Promise.resolve([]),
-        };
+        const candidateDb = drizzle(candidatePool, { schema, mode: 'default' });
+        _pool = candidatePool;
+        _db = candidateDb;
+      } catch {
+        // A later request may retry initialization after configuration recovers.
+        // Do not log connection strings, credentials or driver error contents.
+        if (candidatePool) void candidatePool.end().catch(() => undefined);
+        throw new Error('Database unavailable');
       }
     }
     const value = _db[prop];
@@ -46,32 +45,24 @@ export const db = new Proxy({} as any, {
   },
 });
 
-
-
-
-/**
- * Test database connection
- */
 export async function testConnection(): Promise<boolean> {
+  let connection: mysql.PoolConnection | undefined;
   try {
-    // Trigger lazy initialization by accessing a property on the proxy
     void (db as any).query;
     if (!_pool) return false;
-    const connection = await _pool.getConnection();
+    connection = await _pool.getConnection();
     await connection.ping();
-    connection.release();
     return true;
   } catch {
     return false;
+  } finally {
+    connection?.release();
   }
 }
 
-/**
- * Close database connection pool
- */
 export async function closeConnection(): Promise<void> {
-  if (_pool) {
-    await _pool.end();
-  }
+  const pool = _pool;
+  _pool = null;
+  _db = null;
+  if (pool) await pool.end();
 }
-

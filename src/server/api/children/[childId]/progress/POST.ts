@@ -3,8 +3,9 @@ import { db } from '../../../../db/client.js';
 import { activitySessions, progressSummaries, children, starMilestones, promoCodes } from '../../../../db/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
+import { childIdFromParam, progressFromBody, starsForScore } from '../../../../lib/progress-input.js';
 
-// ── Milestone thresholds that generate a promo code ──────────────────────────
+// Existing milestone rules and rewards are unchanged.
 const STAR_MILESTONES = [1000, 2000, 3000, 5000];
 
 function generateMilestoneCode(): string {
@@ -14,128 +15,85 @@ function generateMilestoneCode(): string {
   return code;
 }
 
-async function checkAndAwardMilestones(childId: number, newTotal: number): Promise<string | null> {
-  // Find the highest milestone this child has now crossed
-  const crossed = STAR_MILESTONES.filter((m) => newTotal >= m);
+async function checkAndAwardMilestones(tx: typeof db, childId: number, newTotal: number): Promise<string | null> {
+  const crossed = STAR_MILESTONES.filter(m => newTotal >= m);
   if (crossed.length === 0) return null;
-
-  // Check which milestones already claimed
-  const claimed = await db
-    .select({ milestone: starMilestones.milestone })
-    .from(starMilestones)
+  const claimed = await tx.select({ milestone: starMilestones.milestone }).from(starMilestones)
     .where(eq(starMilestones.childId, childId));
-  const claimedSet = new Set(claimed.map((r: any) => r.milestone));
-
+  const claimedSet = new Set(claimed.map((row: { milestone: number }) => row.milestone));
   let newCode: string | null = null;
   for (const milestone of crossed) {
     if (claimedSet.has(milestone)) continue;
-    // Generate a unique promo code
     const code = generateMilestoneCode();
-    // Insert into promo_codes (1 month free, single use)
     const expiresAt = new Date();
-    expiresAt.setMonth(expiresAt.getMonth() + 6); // code valid for 6 months
-    await db.insert(promoCodes).values({
+    expiresAt.setMonth(expiresAt.getMonth() + 6);
+    await tx.insert(promoCodes).values({
       code,
       description: `1-month free — ${milestone}-star milestone (child ${childId})`,
-      accessType: 'free',
-      maxUses: 1,
-      usedCount: 0,
-      expiresAt,
-      active: true,
+      accessType: 'free', maxUses: 1, usedCount: 0, expiresAt, active: true,
     });
-    // Record the milestone
-    await db.insert(starMilestones).values({ childId, milestone, promoCode: code });
-    newCode = code; // return the most recent one
+    await tx.insert(starMilestones).values({ childId, milestone, promoCode: code });
+    newCode = code;
   }
   return newCode;
 }
 
-// ── Stars logic ───────────────────────────────────────────────────────────────
-// 0–49%  → 0 stars
-// 50–74% → 1 star
-// 75–89% → 2 stars
-// 90–100%→ 3 stars
-function calcStars(score: number, maxScore: number): number {
-  if (maxScore <= 0) return 0;
-  const pct = (score / maxScore) * 100;
-  if (pct >= 90) return 3;
-  if (pct >= 75) return 2;
-  if (pct >= 50) return 1;
-  return 0;
-}
-
 export default async function handler(req: Request, res: Response) {
+  res.setHeader('Cache-Control', 'private, no-store');
   try {
-    const auth = getAuth();
-    const session = await auth.api.getSession({ headers: new Headers(req.headers as Record<string, string>) });
+    const session = await getAuth().api.getSession({ headers: new Headers(req.headers as Record<string, string>) });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
+    const childId = childIdFromParam(req.params.childId);
+    const input = progressFromBody(req.body);
+    if (childId === null || !input) return res.status(400).json({ error: 'Invalid activity result' });
+    const { subject, activityId, activityTitle, score, maxScore, durationSeconds } = input;
+    const starsEarned = starsForScore(score, maxScore);
 
-    const childId = parseInt(String(req.params.childId));
-    const { subject, activityId, activityTitle, score, maxScore, durationSeconds } = req.body;
-    if (!subject || !activityId || !activityTitle) return res.status(400).json({ error: 'Missing fields' });
+    const result = await db.transaction(async (tx: typeof db) => {
+      // Ownership and serialization use the same locked row. All result, star,
+      // milestone and summary writes below share this database transaction.
+      const [child] = await tx.select({ id: children.id }).from(children)
+        .where(and(eq(children.id, childId), eq(children.parentId, session.user.id)))
+        .for('update');
+      if (!child) return null;
+      await tx.insert(activitySessions).values({
+        childId, subject, activityId, activityTitle, score, maxScore, durationSeconds, starsEarned,
+      });
 
-    const safeScore    = score ?? 0;
-    const safeMax      = maxScore ?? 100;
-    const safeDuration = durationSeconds ?? 0;
-    const starsEarned  = calcStars(safeScore, safeMax);
-
-    // Insert activity session (with stars)
-    await db.insert(activitySessions).values({
-      childId,
-      subject,
-      activityId,
-      activityTitle,
-      score: safeScore,
-      maxScore: safeMax,
-      durationSeconds: safeDuration,
-      starsEarned,
-    });
-
-    // Add stars to child's running total and check milestones
-    let milestoneCode: string | null = null;
-    if (starsEarned > 0) {
-      await db.update(children)
-        .set({ totalStars: sql`${children.totalStars} + ${starsEarned}` })
-        .where(eq(children.id, childId));
-      // Fetch updated total for milestone check
-      const [updated] = await db.select({ totalStars: children.totalStars }).from(children).where(eq(children.id, childId));
-      if (updated) {
-        milestoneCode = await checkAndAwardMilestones(childId, updated.totalStars);
+      let milestoneCode: string | null = null;
+      if (starsEarned > 0) {
+        await tx.update(children).set({ totalStars: sql`${children.totalStars} + ${starsEarned}` })
+          .where(eq(children.id, childId));
+        const [updated] = await tx.select({ totalStars: children.totalStars }).from(children)
+          .where(eq(children.id, childId));
+        if (updated) milestoneCode = await checkAndAwardMilestones(tx, childId, updated.totalStars);
       }
-    }
 
-    // Upsert weekly summary
-    const weekStart = new Date();
-    weekStart.setHours(0, 0, 0, 0);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-
-    const [existing] = await db.select().from(progressSummaries)
-      .where(and(
-        eq(progressSummaries.childId, childId),
-        eq(progressSummaries.subject, subject),
+      const weekStart = new Date();
+      weekStart.setHours(0, 0, 0, 0);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+      const [existing] = await tx.select().from(progressSummaries).where(and(
+        eq(progressSummaries.childId, childId), eq(progressSummaries.subject, subject),
         eq(progressSummaries.weekStart, weekStart),
       ));
-
-    if (existing) {
-      const newTotal = (existing.totalSessions ?? 0) + 1;
-      const newAvg   = (((Number(existing.avgScore) * (existing.totalSessions ?? 0)) + safeScore) / newTotal).toFixed(2);
-      const newMins  = (existing.totalMinutes ?? 0) + Math.round(safeDuration / 60);
-      await db.update(progressSummaries)
-        .set({ totalSessions: newTotal, avgScore: newAvg, totalMinutes: newMins })
-        .where(eq(progressSummaries.id, existing.id));
-    } else {
-      await db.insert(progressSummaries).values({
-        childId,
-        subject,
-        weekStart,
-        totalSessions: 1,
-        avgScore: String(safeScore.toFixed(2)),
-        totalMinutes: Math.round(safeDuration / 60),
-      });
-    }
-
-    res.status(201).json({ ok: true, starsEarned, milestoneCode });
-  } catch (e) {
-    res.status(500).json({ error: String(e) });
+      if (existing) {
+        const totalSessions = (existing.totalSessions ?? 0) + 1;
+        const avgScore = ((Number(existing.avgScore) * (existing.totalSessions ?? 0) + score) / totalSessions).toFixed(2);
+        const totalMinutes = (existing.totalMinutes ?? 0) + Math.round(durationSeconds / 60);
+        await tx.update(progressSummaries).set({ totalSessions, avgScore, totalMinutes })
+          .where(eq(progressSummaries.id, existing.id));
+      } else {
+        await tx.insert(progressSummaries).values({
+          childId, subject, weekStart, totalSessions: 1, avgScore: score.toFixed(2),
+          totalMinutes: Math.round(durationSeconds / 60),
+        });
+      }
+      return { ok: true, starsEarned, milestoneCode };
+    });
+    if (!result) return res.status(404).json({ error: 'Child not found' });
+    // A success response is sent only after the transaction has committed.
+    return res.status(201).json(result);
+  } catch {
+    return res.status(503).json({ error: 'Progress could not be confirmed saved' });
   }
 }

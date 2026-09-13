@@ -16,6 +16,7 @@ import React, { useState, useEffect } from 'react';
 export type AgeGroup = '5-7' | '8-10' | '11-13';
 
 const STORAGE_KEY = 'sodafom_active_child';
+const CHILD_CHANGED_EVENT = 'sodafom:active-child-changed';
 
 export interface ActiveChild {
   id: number;
@@ -46,9 +47,9 @@ export function getActiveChild(): ActiveChild | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<ActiveChild>;
-    if (!parsed.id || !parsed.ageGroup) return null;
+    if (!Number.isInteger(parsed?.id) || (parsed.id as number) <= 0 || !parsed.ageGroup) return null;
     return {
-      id: parsed.id,
+      id: parsed.id as number,
       name: parsed.name ?? 'Learner',
       ageGroup: normaliseAge(parsed.ageGroup) ?? '8-10',
       avatarEmoji: parsed.avatarEmoji ?? '⭐',
@@ -64,9 +65,11 @@ export function setActiveChild(child: ActiveChild | null) {
   } else {
     localStorage.removeItem(STORAGE_KEY);
   }
+  // Native storage events fire in other tabs, not in the tab making this write.
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(CHILD_CHANGED_EVENT));
 }
 
-/** React hook — re-renders when the active child changes (cross-tab via storage event) */
+/** React hook — updates for both same-tab and cross-tab child selection. */
 export function useChildAge(): { child: ActiveChild | null; ageGroup: AgeGroup | null; tier: 1 | 2 | 3 } {
   const [child, setChild] = useState<ActiveChild | null>(() => {
     if (typeof window === 'undefined') return null;
@@ -74,13 +77,19 @@ export function useChildAge(): { child: ActiveChild | null; ageGroup: AgeGroup |
   });
 
   React.useEffect(() => {
+    const refresh = () => setChild(getActiveChild());
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) setChild(getActiveChild());
+      if (e.key === STORAGE_KEY || e.key === null) refresh();
     };
     window.addEventListener('storage', onStorage);
-    // Also read on mount in case it was set before this component mounted
-    setChild(getActiveChild());
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener(CHILD_CHANGED_EVENT, refresh);
+    window.addEventListener('focus', refresh);
+    refresh();
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(CHILD_CHANGED_EVENT, refresh);
+      window.removeEventListener('focus', refresh);
+    };
   }, []);
 
   const ageGroup = child ? normaliseAge(child.ageGroup) : null;
