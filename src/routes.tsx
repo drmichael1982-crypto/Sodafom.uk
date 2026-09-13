@@ -3,6 +3,7 @@ import { lazy } from 'react';
 import { Navigate } from 'react-router';
 import HomePage from './pages/index';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
+import SeasonalThemesPage from './pages/SeasonalThemesPage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
 import AITeacherPage from './pages/AITeacherPage';
 import TeacherModePage from './pages/tutor/TeacherModePage';
@@ -231,6 +232,9 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/classic-home',
   element: <HomePage />
+}, {
+  path: '/seasonal-themes',
+  element: <SeasonalThemesPage />
 }, {
   path: '/subjects',
   element: <SubjectsPage />
