@@ -196,6 +196,7 @@ import EarthSpaceGame from './pages/games/earth-space';
 import EvolutionExplorerGame from './pages/games/evolution-explorer';
 import ScienceQuizGame from './pages/games/science-quiz';
 import BackToSchoolShopPage from './pages/shop/back-to-school';
+import BirthdayPartyRoomPage from './pages/BirthdayPartyRoomPage';
 const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
 const NotFoundPage = ProdNotFoundPage;
 export const routes: RouteObject[] = [{
@@ -793,6 +794,12 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/shop/back-to-school',
   element: <BackToSchoolShopPage />
+}, {
+  path: '/birthday-party',
+  element: <BirthdayPartyRoomPage />
+}, {
+  path: '/birthday',
+  element: <Navigate to="/birthday-party" replace />
 }, {
   path: '/ask-archie',
   element: <ChatbotPage />
