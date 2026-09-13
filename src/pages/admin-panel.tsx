@@ -19,6 +19,7 @@ import { ArchieCharacter } from '../components/ArchieCharacter';
 import { useSession } from '@/lib/auth/auth-client';
 import { useSearchParams } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
+import AdminAccountsAndVisits from '@/components/admin/AdminAccountsAndVisits';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface PlanBreakdown {
@@ -914,6 +915,36 @@ export default function AdminPanel() {
   // REMOVED: Allow all authenticated users to see the code input fallback
   // if (isAuthenticated && !user?.isAdmin && !authed) { ... }
 
+  // Do not render stats-dependent dashboard cards before a server-side admin
+  // code check has supplied an authorised summary. This keeps founder testing
+  // available while avoiding an accidental empty-dashboard access path.
+  if (!stats) {
+    return (
+      <>
+        <Helmet>
+          <title>Admin access — Sodafom</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Helmet>
+        <main className="min-h-screen bg-muted/30 px-4 py-10 sm:px-6">
+          <section className="mx-auto max-w-md rounded-3xl border border-border bg-card p-6 shadow-sm">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground"><Lock aria-hidden="true" /></div>
+            <h1 className="mt-4 text-2xl font-black text-foreground">Admin Hub access</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Enter an authorised admin access code, or use your signed-in administrator session, to load the founder summary. Account details remain limited to signed-in administrator sessions.</p>
+            <form className="mt-6 space-y-3" onSubmit={handleSubmit}>
+              <label className="block text-sm font-bold text-foreground" htmlFor="admin-access-code">Access code</label>
+              <input id="admin-access-code" type="password" autoComplete="off" value={code} onChange={event => setCode(event.target.value)} className="w-full rounded-xl border border-border bg-background px-4 py-3 text-foreground outline-none focus:border-primary" />
+              {error && <p className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm font-medium text-destructive" role="alert">{error}</p>}
+              <button type="submit" disabled={loading || (!code.trim() && user?.isAdmin !== true)} className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 font-black text-primary-foreground disabled:opacity-60">
+                {loading && <Loader2 size={17} className="animate-spin" aria-hidden="true" />}
+                {loading ? 'Checking access…' : 'Open Admin Hub'}
+              </button>
+            </form>
+          </section>
+        </main>
+      </>
+    );
+  }
+
   // ── Dashboard ───────────────────────────────────────────────────────────────
   return (
     <>
@@ -1029,6 +1060,15 @@ export default function AdminPanel() {
                       <StatCard icon={TrendingUp} label="Signed up this week" value={stats!.signupsThisWeek} colour="bg-accent" />
                     </div>
                   </section>
+
+                  <AdminAccountsAndVisits
+                    visits={{
+                      trafficToday: stats.trafficToday,
+                      trafficThisWeek: stats.trafficThisWeek,
+                      trafficThisMonth: stats.trafficThisMonth,
+                    }}
+                    canViewAccounts={user?.isAdmin === true}
+                  />
 
                   {/* Subscribers */}
                   <section>
