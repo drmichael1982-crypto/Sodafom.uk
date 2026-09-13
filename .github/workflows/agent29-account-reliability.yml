@@ -21,9 +21,19 @@ jobs:
           --health-cmd="mysqladmin ping -h localhost -pagent29-disposable-root-only"
           --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
+      - name: Check out exact public-repository commit without submodule mutation
+        env:
+          CHECKOUT_SHA: ${{ github.sha }}
+          CHECKOUT_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -eu
+          [[ "$CHECKOUT_SHA" =~ ^[0-9a-f]{40}$ ]]
+          # No credentials are persisted. Do not initialise or change the Android gitlink.
+          git init .
+          git remote add origin "https://github.com/${CHECKOUT_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --no-recurse-submodules --depth=1 origin "$CHECKOUT_SHA"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$CHECKOUT_SHA"
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
