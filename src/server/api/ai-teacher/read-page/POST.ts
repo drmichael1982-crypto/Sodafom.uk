@@ -2,6 +2,10 @@ import type { Request, Response } from 'express';
 import OpenAI from 'openai';
 
 export default async function handler(req: Request, res: Response) {
+  // A child image or its explanation must never be cached by this route.
+  res.setHeader('Cache-Control', 'private, no-store, max-age=0');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+
   const image = typeof req.body?.image === 'string' ? req.body.image : '';
   const requestedAge = Number(req.body?.age);
   const age = Number.isInteger(requestedAge) && requestedAge >= 5 && requestedAge <= 13 ? requestedAge : 9;
@@ -14,6 +18,10 @@ export default async function handler(req: Request, res: Response) {
   try {
     const openai = new OpenAI({ apiKey, timeout: 45_000, maxRetries: 1 });
     const response = await openai.responses.create({
+      // Privacy only: disable retrievable response-state storage for a child
+      // image. This does not change the model, billing policy, or separate
+      // provider abuse-monitoring/retention controls.
+      store: false,
       model: 'gpt-4o-mini',
       instructions: `You are Archie, a patient UK reading teacher helping a child aged ${age} at ${schoolLevel} level. Follow the National Curriculum in England at an age-appropriate level. Transcribe only the visible educational text, then present it in short read-along chunks, give gentle phonics or comprehension help as appropriate, and explain up to five difficult words. Never identify people in photographs. If the page is unclear, ask for a clearer photograph.`,
       input: [{ role: 'user', content: [{ type: 'input_text', text: 'Help the child read this page.' }, { type: 'input_image', image_url: image, detail: 'auto' }] }] as any,
