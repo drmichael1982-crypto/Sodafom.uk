@@ -19,7 +19,7 @@
 
 - The change only adds an accessible name to an existing local text input and a focused test. It does not add or alter camera, microphone, image, speech, AI, account, payment, database, analytics, or network behaviour.
 - No homework/scanner flow, raw image handling, parent/child permissions, seasonal cover, admin, payment, AI-routing, default-branch, Railway/deployment, or 797 work was changed.
-- No production database, external API, physical device, or real child data was used.
+- No production database, application external API, physical device, or real child data was used.
 
 ## Seasonal-cover coordination
 
@@ -52,4 +52,4 @@ The seasonal-cover recovery also changes `src/pages/SodafomAdventurePage.tsx`. T
 
 ## Safety confirmation
 
-`main`/`master` was not merged or changed. No PR, deployment, Railway action, production database operation, paid-AI action, payment action, or external API operation was made.
+`main`/`master` was not merged or changed. No PR, deployment, Railway action, production database operation, paid-AI action, payment action, or application external API operation was made.
