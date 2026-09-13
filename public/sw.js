@@ -60,3 +60,6 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// Agent34: network behavior is isolated from the notification handlers above.
+importScripts('/network-worker.js');

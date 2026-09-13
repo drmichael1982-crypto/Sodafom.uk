@@ -1,4 +1,6 @@
 import './lib/i18n';
+import { startNetworkSupport } from './lib/network-status';
+import { networkMutationDefaults } from './lib/network-query-policy';
 import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
 
@@ -39,7 +41,7 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: false,
     },
-    mutations: { retry: 0 },
+    mutations: networkMutationDefaults,
   },
 });
 
@@ -76,3 +78,5 @@ const tree = (
 
 // Use createRoot always, as index.html content is a static placeholder, not SSR.
 createRoot(rootElement).render(tree);
+
+startNetworkSupport();
