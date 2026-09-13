@@ -69,13 +69,15 @@ export default async function handler(req: Request, res: Response): Promise<void
   let event: Stripe.Event;
 
   try {
-    if (webhookSecret && typeof webhookSecret === 'string' && sig) {
-      const stripe = getStripe();
-      event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
-    } else {
-      // No webhook secret configured — parse body directly (less secure but functional)
-      event = (typeof req.body === 'string' ? JSON.parse(req.body) : req.body) as Stripe.Event;
+    // A payment endpoint must never accept an unsigned event. Configuration
+    // errors should surface loudly in test/staging, not turn into a bypass.
+    if (!webhookSecret || typeof webhookSecret !== 'string' || !sig) {
+      res.status(503).json({ error: 'Stripe webhook verification is not configured' });
+      return;
     }
+
+    const stripe = getStripe();
+    event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
   } catch (err) {
     console.error('[stripe-webhook] signature verification failed:', err);
     res.status(400).json({ error: 'Webhook signature verification failed' });

@@ -23,9 +23,8 @@ const PLANS = [{
   id: 'monthly',
   label: 'Monthly',
   emoji: '📅',
-  price: '£2.99',
+  price: '£4.99',
   period: '/month',
-  priceId: 'price_1U5bazK4qwt1chs3b6cnitbe',
   description: 'Flexible — cancel anytime',
   highlight: false,
   saving: null
@@ -33,10 +32,9 @@ const PLANS = [{
   id: 'annual',
   label: 'Annual',
   emoji: '🏆',
-  price: '£19.99',
+  price: '£49.90',
   period: '/year',
-  priceId: 'price_1U5bb5K4qwt1chs3WvIrzKfS',
-  description: 'Best value — SAVE OVER 40%',
+  description: 'Two months free — pay for 10 months',
   highlight: true,
   saving: 'BEST VALUE'
 }] as const;
@@ -109,9 +107,7 @@ export default function SubscribePage() {
           'Content-Type': 'application/json'
         },
         credentials: 'include',
-        body: JSON.stringify({
-          priceId: plan.priceId
-        })
+              body: JSON.stringify({ planId: plan.id })
       });
       const data = (await res.json()) as {
         success: boolean;
@@ -167,7 +163,7 @@ export default function SubscribePage() {
           <motion.div variants={stagger} initial="hidden" animate="visible" className="relative z-10 max-w-2xl mx-auto">
             <motion.div variants={fadeUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/20 border border-accent/40 mb-5">
               <Zap size={14} className="text-accent" />
-              <span className="text-accent font-black text-sm">Instant access — from £1/month</span>
+              <span className="text-accent font-black text-sm">Instant access — from £4.99/month</span>
             </motion.div>
             <motion.h1 variants={fadeUp} className="text-4xl sm:text-5xl font-black mb-4 leading-tight" style={{
             fontFamily: 'var(--font-heading)'
