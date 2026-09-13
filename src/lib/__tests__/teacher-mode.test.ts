@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { loadTutorMemory, saveTutorMemory, recordQuestionAnswer, getWeakAndStrongTopics, ChildTutorProfile } from '../tutor/memory';
+import { loadTutorMemory, saveTutorMemory, recordQuestionAnswer, getWeakAndStrongTopics, ChildTutorProfile, loadTutorLessonResults, recordTutorLessonResult } from '../tutor/memory';
 import { CURRICULUM_LESSONS } from '../tutor/curriculum';
 import { tryLocalTutor, clearActivePendingQuestion } from '../tutor/engine';
 import { parseTutorVoiceCommand } from '../tutor/voice-commands';
@@ -61,6 +61,27 @@ describe('One-to-One Teacher Mode & Parent Dashboard Engine', () => {
 
       const { weak } = getWeakAndStrongTopics();
       expect(weak).toContain('water cycle');
+    });
+  });
+
+  describe('Lesson completion results', () => {
+    it('saves a bounded local lesson result without counting an unopened lesson', () => {
+      expect(loadTutorLessonResults()).toEqual([]);
+
+      recordTutorLessonResult({
+        lessonId: 'year:maths:8-10:day-001',
+        subject: 'Maths',
+        topic: 'number-and-place-value',
+        ageGroup: '8-10',
+        lessonDay: 1,
+        durationMinutes: 30,
+        attemptedQuestions: 3,
+        correctAnswers: 2,
+        completionReason: 'time',
+      });
+
+      const [saved] = loadTutorLessonResults();
+      expect(saved).toMatchObject({ subject: 'Maths', correctAnswers: 2, attemptedQuestions: 3, completionReason: 'time' });
     });
   });
 
