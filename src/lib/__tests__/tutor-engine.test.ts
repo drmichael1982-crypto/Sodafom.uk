@@ -70,6 +70,12 @@ describe('Local Tutoring Engine & Memory', () => {
   });
 
   describe('OpenAI Fallback Integration', () => {
+    it('answers a basic Ancient Egypt question from the local learning pack', () => {
+      const res = tryLocalArchieResponse('Tell me about the Egyptians');
+      expect(res?.intent).toBe('history');
+      expect(res?.text).toContain('River Nile');
+    });
+
     it('falls back (returns null) when local engine cannot answer non-curriculum prompt', () => {
       const res = tryLocalArchieResponse('explain advanced quantum mechanics and general relativity in detail');
       expect(res).toBeNull(); // Cleanly triggers OpenAI fallback

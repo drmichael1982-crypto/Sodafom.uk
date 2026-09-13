@@ -1,6 +1,6 @@
 export type LocalArchieResult = {
   text: string;
-  intent: 'maths' | 'spelling' | 'app-help' | 'repeat' | 'science' | 'reading';
+  intent: 'maths' | 'spelling' | 'app-help' | 'repeat' | 'science' | 'reading' | 'history';
 };
 
 // ── Child Name Memory ─────────────────────────────────────────────────────────
@@ -372,6 +372,19 @@ export function tryLocalScience(input: string): LocalArchieResult | null {
   return null;
 }
 
+// Keep a small, reliable history pack on the device. This is deliberately
+// factual rather than pretending that an offline browser can answer anything.
+export function tryLocalHistory(input: string): LocalArchieResult | null {
+  const t = input.toLowerCase();
+  if (/\b(?:ancient )?egypt(?:ians?)?\b|\bpharaohs?\b|\bpyramids?\b/.test(t)) {
+    return {
+      text: 'Ancient Egypt grew beside the River Nile in north-east Africa. The Nile gave people water and rich soil for farming. Pharaohs were the rulers, and pyramids were built as tombs for some important pharaohs. Would you like to learn about mummies, hieroglyphs, or the pyramids?',
+      intent: 'history',
+    };
+  }
+  return null;
+}
+
 export function tryLocalAppHelp(input: string): LocalArchieResult | null {
   const t = input.toLowerCase();
   if (/\bcan you hear me\b|\bcan you speak\b|\bsay hello\b|\bhello archie\b|\bhi archie\b/.test(t)) {
@@ -455,6 +468,7 @@ export function tryLocalArchieResponse(input: string): LocalArchieResult | null 
     ?? tryLocalTutor(input)
     ?? tryLocalSpelling(input)
     ?? tryLocalScience(input)
+    ?? tryLocalHistory(input)
     ?? tryLocalReading(input)
     ?? tryLocalAppHelp(input);
 }

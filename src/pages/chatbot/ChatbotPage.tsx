@@ -13,6 +13,7 @@ import { ArchieCharacter } from '../../components/ArchieCharacter';
 import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak, stopTts } from '@/lib/voice-context';
 import { tryLocalArchieResponse } from '@/lib/archie-local';
+import { getArchieConnectionFallback } from '@/lib/archie-chat-fallback';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 
 // ── Parse [PLAY:slug|label] markers out of Archie's message ──────────────────
@@ -336,7 +337,8 @@ export default function ChatbotPage() {
       if (!response.ok) {
         const errText = await response.text().catch(() => 'no body');
         console.error(`[Chatbot] Response NOT OK. Status: ${response.status}. Body: ${errText}`);
-        throw new Error(`Server error: HTTP ${response.status}. ${errText.slice(0, 100)}`);
+        const status = response.headers.get('X-Sodafom-AI-Status');
+        throw new Error(`${status || `http-${response.status}`}: ${errText.slice(0, 100)}`);
       }
 
       let fullContent = '';
@@ -392,9 +394,14 @@ export default function ChatbotPage() {
     } catch (err) {
       console.error('Chatbot API Error:', err);
       const msg = err instanceof Error ? err.message : 'Unknown error';
+      const fallback = getArchieConnectionFallback(err);
       setError(msg);
-      setMessages((prev) => prev.filter((m) => m.id !== assistantId));
-      speakArchie("Oops! I'm having a little trouble connecting right now. Please check your internet and try again! 😊");
+      // Keep the child's question and show a useful honest answer in the chat,
+      // instead of removing the response bubble and only logging a raw server error.
+      setMessages((prev) => prev.map((m) => (
+        m.id === assistantId ? { ...m, content: fallback, source: 'local' } : m
+      )));
+      speakArchie(fallback);
     } finally {
       setIsLoading(false);
       processingRef.current = false;
