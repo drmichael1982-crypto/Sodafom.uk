@@ -4,7 +4,7 @@
 - **Recovery branch:** `recovery/agent4-current-main-admin-accounts-visits-20260913`
 - **Base:** current `main` at `305401dd15acfaa60d8bd12f32a1aafd5f351f34`
 - **Legacy reference only:** `agent4-admin-accounts-visits`
-- **Pushed:** Pending upload through the authorised GitHub connector.
+- **Pushed:** Yes — verified on this recovery branch through the authorised GitHub connector. No pull request, merge, deployment, Railway action, or 797 change was made.
 
 ## Delivered
 
