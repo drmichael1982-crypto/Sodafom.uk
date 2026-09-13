@@ -3,6 +3,7 @@
  */
 import { useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
+import { authJsonRequest } from '@/lib/auth/account-reliability';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
@@ -19,12 +20,11 @@ export default function ForgotPasswordPage() {
     setError('');
     setLoading(true);
     try {
-      await fetch(`${API_PREFIX}/auth/forgot-password`, {
+      await authJsonRequest(`${API_PREFIX}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
-      });
+      }, 'ok');
       setSent(true);
     } catch {
       setError('Something went wrong. Please try again.');
@@ -71,8 +71,9 @@ export default function ForgotPasswordPage() {
                   Check your email
                 </h1>
                 <p className="text-muted-foreground text-sm mb-6">
-                  If an account exists for <strong>{email}</strong>, we've sent a password reset link. Check your inbox (and spam folder).
+                  Your reset request was accepted. For an existing account, check the inbox and spam folder for <strong>{email}</strong>. Email delivery may take a little time.
                 </p>
+                <button type="button" onClick={() => setSent(false)} className="block mx-auto mb-4 text-primary font-bold">Request another reset link</button>
                 <Link
                   to="/hub/login"
                   className="inline-flex items-center gap-2 text-primary font-bold hover:underline text-sm"

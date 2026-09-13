@@ -1,0 +1,47 @@
+name: Agent29 account reliability (no deployment)
+on:
+  push:
+    branches: ['agent29/account-login-reliability-20260913']
+permissions:
+  contents: read
+jobs:
+  auth-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: agent29_auth_test
+          MYSQL_USER: agent29_test
+          MYSQL_PASSWORD: agent29-disposable-test-only
+          MYSQL_ROOT_PASSWORD: agent29-disposable-root-only
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pagent29-disposable-root-only"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Dependency-free auth regression tests
+        run: node --experimental-strip-types --test scripts/agent29-account-reliability.test.mjs
+      - name: Install locked project dependencies
+        id: install
+        run: npm ci
+      - name: Isolated real-source server-handler tests
+        run: node --experimental-strip-types --test scripts/agent29-server-reliability.test.mjs
+      - name: Auth UI and disposable MySQL API integration
+        env:
+          AGENT29_TEST_DB: '1'
+        run: npx vitest run --config agent29.vitest.config.ts
+      - name: Whole-project type check (diagnostic)
+        if: always() && steps.install.outcome == 'success'
+        run: npm run type-check
+      - name: Whole-project build (no deployment)
+        if: always() && steps.install.outcome == 'success'
+        run: npm run build

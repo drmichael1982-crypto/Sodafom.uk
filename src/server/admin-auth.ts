@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { createHmac, scryptSync, timingSafeEqual, randomBytes } from 'node:crypto';
 import { getAuth } from '@/lib/auth/auth';
+import { isChildAccount, type AccountIdentity } from '@/lib/auth/account-reliability';
 
 const FOUNDER_COOKIE = 'sodafom_founder_session';
 const FOUNDER_SESSION_MS = 2 * 60 * 60 * 1000;
@@ -80,12 +81,13 @@ export function issueFounderSession(res: Response): boolean {
 }
 
 export async function hasAdminAccess(req: Request): Promise<boolean> {
-  // Public open/testing mode must never bypass authentication in production.
-  if (process.env.NODE_ENV === 'development' && secret('ADMIN_OPEN_MODE') === 'true') return true;
-  if (hasFounderSession(req)) return true;
   try {
     const session = await getAuth().api.getSession({ headers: new Headers(req.headers as any) });
-    const account = session?.user as { isAdmin?: boolean; email?: string | null; emailVerified?: boolean } | undefined;
+    const account = session?.user as (AccountIdentity & { email?: string | null; emailVerified?: boolean }) | undefined;
+    // A child's account cannot inherit an old founder cookie or conflicting flag.
+    if (isChildAccount(account)) return false;
+    if (process.env.NODE_ENV === 'development' && secret('ADMIN_OPEN_MODE') === 'true') return true;
+    if (hasFounderSession(req)) return true;
     const founderEmail = secret('FOUNDER_EMAIL')?.toLowerCase();
     const verifiedFounder = account?.emailVerified === true && Boolean(founderEmail && account.email?.trim().toLowerCase() === founderEmail);
     return account?.isAdmin === true || verifiedFounder;

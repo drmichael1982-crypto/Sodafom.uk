@@ -7,12 +7,15 @@ import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { sql } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
+import { canUseParentArea } from '@/lib/auth/account-reliability';
 
 export default async function handler(req: Request, res: Response) {
+  res.setHeader('Cache-Control', 'no-store');
   try {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: req.headers as Record<string, string> });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
+    if (!canUseParentArea(session.user)) return res.status(403).json({ error: 'Parent access required' });
 
     const childId = parseInt(req.query.childId as string, 10);
     if (!childId) return res.status(400).json({ error: 'childId required' });
@@ -80,8 +83,8 @@ export default async function handler(req: Request, res: Response) {
       daily,
       recent,
     });
-  } catch (err) {
-    console.error('[parent/dashboard]', err);
-    res.status(500).json({ error: String(err) });
+  } catch {
+    console.error(JSON.stringify({ event: 'auth.parent_dashboard.failed' }));
+    res.status(503).json({ error: 'Parent dashboard is temporarily unavailable.' });
   }
 }
