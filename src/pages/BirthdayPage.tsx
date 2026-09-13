@@ -77,6 +77,7 @@ export default function BirthdayPage() {
   const [danceMode, setDanceMode] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const musicTimerRef = useRef<number | null>(null);
+  const musicVolumeRef = useRef(0.45);
   const countdown = birthdayCountdown(date);
   const balloonsLeft = BALLOONS.length - poppedBalloons.size;
 
@@ -101,13 +102,18 @@ export default function BirthdayPage() {
       return;
     }
 
-    const AudioContextClass = window.AudioContext;
-    const context = audioContextRef.current ?? new AudioContextClass();
+    const context = audioContextRef.current ?? new window.AudioContext();
     audioContextRef.current = context;
     if (context.state === 'suspended') await context.resume();
-    playPartyBeat(context, musicVolume);
-    musicTimerRef.current = window.setInterval(() => playPartyBeat(context, musicVolume), 1100);
+    playPartyBeat(context, musicVolumeRef.current);
+    musicTimerRef.current = window.setInterval(() => playPartyBeat(context, musicVolumeRef.current), 1100);
     setMusicPlaying(true);
+  };
+
+  const changeMusicVolume = (value: number) => {
+    const safeValue = Math.min(1, Math.max(0, value));
+    musicVolumeRef.current = safeValue;
+    setMusicVolume(safeValue);
   };
 
   const save = (event: React.FormEvent) => {
@@ -136,7 +142,7 @@ export default function BirthdayPage() {
       <Helmet><title>Birthday Party Room — Sodafom</title></Helmet>
       <FeaturePageShell title="Birthday Party Room" subtitle="Countdown, decorate, play and celebrate together." emoji="🎂" accent="from-pink-500 via-fuchsia-600 to-purple-900">
         <section className="relative mb-5 overflow-hidden rounded-[2rem] border-4 border-yellow-200 bg-gradient-to-br from-pink-100 via-yellow-50 to-cyan-100 p-5 text-center text-purple-950 shadow-2xl">
-          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-2 flex justify-around text-3xl motion-reduce:animate-none">
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-2 flex justify-around text-3xl">
             <span className="animate-bounce motion-reduce:animate-none">🎈</span>
             <span className="animate-pulse motion-reduce:animate-none">🎉</span>
             <span className="animate-bounce motion-reduce:animate-none">🎁</span>
@@ -186,7 +192,7 @@ export default function BirthdayPage() {
             <label className="flex min-h-12 flex-1 items-center gap-2 rounded-full bg-black/20 px-4 font-black" htmlFor="party-volume">
               {musicVolume === 0 ? <VolumeX /> : <Volume2 />}
               <span className="sr-only">Party music volume</span>
-              <input id="party-volume" type="range" min="0" max="1" step="0.05" value={musicVolume} onChange={event => setMusicVolume(Number(event.target.value))} className="w-full" />
+              <input id="party-volume" type="range" min="0" max="1" step="0.05" value={musicVolume} onChange={event => changeMusicVolume(Number(event.target.value))} className="w-full" />
             </label>
           </div>
         </section>
@@ -229,7 +235,7 @@ export default function BirthdayPage() {
           <button type="button" onClick={() => setDanceMode(previous => !previous)} aria-pressed={danceMode} className="mx-auto mt-4 flex min-h-14 items-center gap-2 rounded-full bg-teal-900 px-6 py-3 text-lg font-black text-white shadow-lg active:scale-95">
             <Music /> {danceMode ? 'FREEZE!' : 'Start dancing'}
           </button>
-          <p className="mt-3 min-h-7 text-lg font-black" aria-live="polite">{danceMode ? 'Dance, dance, dance! 🎵' : 'Hold that pose! ⭐'}</p>
+          <p className="mt-3 min-h-7 text-lg font-black" aria-live="polite">{danceMode ? 'Dance, dance, dance! 🎵' : 'Ready for freeze dance! ⭐'}</p>
         </section>
       </FeaturePageShell>
     </>
