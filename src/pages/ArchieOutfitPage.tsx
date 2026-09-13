@@ -22,6 +22,8 @@ const CHARACTERS = [
   { id: 'soda-bot', name: 'Soda Bot', image: '/assets/cartoon/friends/soda-bot.png' },
 ] as const;
 
+const LEGACY_ARCHIE_OUTFIT_STORAGE_KEY = 'sodafom_archie_outfit_v1';
+
 const COLOURS = [
   { name: 'Sodafom Blue', value: '#2563eb' },
   { name: 'Hero Green', value: '#16a34a' },
@@ -49,7 +51,12 @@ interface SavedLook {
 function loadLook(): SavedLook {
   const fallback: SavedLook = { characterId: 'archie', outfitId: 'everyday-hero', colour: COLOURS[0].value, badge: BADGES[0], accessory: ACCESSORIES[0] };
   try {
-    const parsed = JSON.parse(localStorage.getItem(CHARACTER_OUTFIT_STORAGE_KEY) || '{}') as Partial<SavedLook>;
+    // Keep a child's existing Archie customisation when it was saved before
+    // character selection was added. The next save moves it to the new key.
+    const savedLook = localStorage.getItem(CHARACTER_OUTFIT_STORAGE_KEY)
+      ?? localStorage.getItem(LEGACY_ARCHIE_OUTFIT_STORAGE_KEY)
+      ?? '{}';
+    const parsed = JSON.parse(savedLook) as Partial<SavedLook>;
     return {
       characterId: CHARACTERS.some(character => character.id === parsed.characterId) ? parsed.characterId! : fallback.characterId,
       outfitId: OUTFITS.some(outfit => outfit.id === parsed.outfitId) ? parsed.outfitId! : fallback.outfitId,
