@@ -1,0 +1,229 @@
+/* Agent25: layout-only corrections. Load after globals.css.
+   No artwork, theme, animation, route, permission or feature behaviour changes.
+   Do not mask overflow on html/body: off-screen controls must remain detectable. */
+:root {
+  --sodafom-safe-top: env(safe-area-inset-top, 0px);
+  --sodafom-safe-right: env(safe-area-inset-right, 0px);
+  --sodafom-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --sodafom-safe-left: env(safe-area-inset-left, 0px);
+}
+
+.sodafom-device-shell {
+  min-width: 0;
+}
+
+/* Shared Radix overlays may be portalled outside the shell. Preserve max-w-*
+   chosen by each caller; only the available width and height are constrained. */
+.sodafom-device-dialog.w-full {
+  width: calc(100% - 2rem - var(--sodafom-safe-left) - var(--sodafom-safe-right));
+}
+.sodafom-device-dialog {
+  max-height: calc(100vh - 2rem - var(--sodafom-safe-top) - var(--sodafom-safe-bottom));
+  max-height: calc(100dvh - 2rem - var(--sodafom-safe-top) - var(--sodafom-safe-bottom));
+  left: calc((100% + var(--sodafom-safe-left) - var(--sodafom-safe-right)) / 2);
+  top: calc((100% + var(--sodafom-safe-top) - var(--sodafom-safe-bottom)) / 2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+
+.sodafom-device-sheet {
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+  padding-top: max(1.5rem, var(--sodafom-safe-top));
+  padding-right: max(1.5rem, var(--sodafom-safe-right));
+  padding-bottom: max(1.5rem, var(--sodafom-safe-bottom));
+  padding-left: max(1.5rem, var(--sodafom-safe-left));
+}
+
+.sodafom-device-dialog > *,
+.sodafom-device-sheet > * {
+  min-width: 0;
+}
+
+/* The icon stays at its original centre (24px from the edge at normal text
+   size), while its transparent hit area grows. Reserve space in the heading. */
+.sodafom-device-close {
+  top: 0;
+  right: 0;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+}
+
+.sodafom-device-sheet > .sodafom-device-close {
+  top: var(--sodafom-safe-top);
+  right: var(--sodafom-safe-right);
+}
+
+.sodafom-device-overlay-header {
+  padding-right: 48px;
+  min-height: 1.5rem;
+}
+
+.sodafom-device-overlay-footer {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sodafom-device-overlay-footer > * {
+  max-width: 100%;
+  min-width: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Only standard button sizes grow vertically. Caller-defined artwork/game
+   button heights and icon dimensions are not reset. */
+.sodafom-device-button {
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.sodafom-device-button.h-9 { height: auto; min-height: 2.25rem; }
+.sodafom-device-button.h-10 { height: auto; min-height: 2.5rem; }
+.sodafom-device-button.h-11 { height: auto; min-height: 2.75rem; }
+
+.sodafom-device-tabs {
+  min-width: 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 2.5rem;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.sodafom-device-tab {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Scope these existing Header DOM selectors to RootLayout's website shell.
+   Routes that do not render the shared Header are unaffected. Keep both
+   labelled navigation elements and their current actions intact. */
+.sodafom-device-shell > header {
+  display: flex;
+  flex-direction: column;
+  max-height: 100vh;
+  max-height: 100dvh;
+  padding-top: var(--sodafom-safe-top);
+}
+.sodafom-device-shell > header > .max-w-7xl {
+  width: 100%;
+  flex-shrink: 0;
+  padding-left: max(var(--sodafom-header-gutter, 1rem), var(--sodafom-safe-left));
+  padding-right: max(var(--sodafom-header-gutter, 1rem), var(--sodafom-safe-right));
+}
+.sodafom-device-shell > header > .max-w-7xl > .flex {
+  height: auto;
+  min-height: 4rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.sodafom-device-shell > header > .max-w-7xl > .flex > a {
+  min-width: 0;
+  max-width: min(10rem, 30vw);
+  flex-shrink: 1;
+}
+.sodafom-device-shell > header > .max-w-7xl > .flex > a > img {
+  max-width: 100%;
+  height: auto;
+}
+.sodafom-device-shell nav[aria-label="Main navigation"] {
+  min-width: 0;
+  flex: 1 1 0%;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.sodafom-device-shell nav[aria-label="Main navigation"] > a,
+.sodafom-device-shell nav[aria-label="Main navigation"] button {
+  min-height: 44px;
+  white-space: normal;
+}
+
+.sodafom-device-shell nav[aria-label="Mobile navigation"] > div.flex {
+  flex-wrap: wrap;
+}
+.sodafom-device-shell nav[aria-label="Mobile navigation"] > div.flex > * {
+  flex: 1 1 8rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Match all three visibility switches; hiding desktop navigation without also
+   showing the existing hamburger/menu would strand tablet users. */
+@media (max-width: 1279px), (max-height: 500px) {
+  .sodafom-device-shell nav[aria-label="Main navigation"] { display: none; }
+  .sodafom-device-shell > header > .max-w-7xl > .flex > .md\:hidden {
+    display: flex;
+    flex-shrink: 0;
+  }
+  .sodafom-device-shell > header > .bg-primary\/95 {
+    display: block;
+    /* Flex shrinking uses the actual header height, including enlarged text. */
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: var(--sodafom-safe-bottom);
+  }
+}
+@media (min-width: 1280px) and (min-height: 501px) {
+  .sodafom-device-shell > header > .max-w-7xl > .flex { min-height: 5rem; }
+  .sodafom-device-shell nav[aria-label="Main navigation"] { display: flex; }
+  .sodafom-device-shell > header > .max-w-7xl > .flex > .md\:hidden,
+  .sodafom-device-shell > header > .bg-primary\/95 { display: none; }
+}
+
+/* A short landscape/keyboard viewport must not be consumed by a sticky header. */
+@media (max-height: 500px) {
+  .sodafom-device-shell > header { position: relative; }
+}
+
+@media (pointer: coarse), (max-width: 640px) {
+  .sodafom-device-button.h-9,
+  .sodafom-device-button.h-10,
+  .sodafom-device-button.h-11,
+  .sodafom-device-tab,
+  .sodafom-device-shell nav[aria-label="Main navigation"] > a,
+  .sodafom-device-shell nav[aria-label="Main navigation"] button,
+  .sodafom-device-shell > header button,
+  .sodafom-device-shell > header a {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  .sodafom-device-shell > header > .max-w-7xl > .flex > .md\:hidden > button,
+  .sodafom-device-shell > header > .max-w-7xl > .flex > .md\:hidden > a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Avoid spending most of a small screen on padding when text is enlarged. */
+@media (max-width: 480px) {
+  .sodafom-device-dialog,
+  .sodafom-device-sheet {
+    padding-left: max(0.75rem, var(--sodafom-safe-left));
+    padding-right: max(0.75rem, var(--sodafom-safe-right));
+  }
+}
+
+/* Match Header's existing px-4 / sm:px-6 / lg:px-8 without covering notches. */
+@media (min-width: 640px) {
+  .sodafom-device-shell > header { --sodafom-header-gutter: 1.5rem; }
+}
+@media (min-width: 1024px) {
+  .sodafom-device-shell > header { --sodafom-header-gutter: 2rem; }
+}
+.sodafom-device-shell nav[aria-label="Mobile navigation"] {
+  padding-left: max(1rem, var(--sodafom-safe-left));
+  padding-right: max(1rem, var(--sodafom-safe-right));
+}
