@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { useNavigate } from 'react-router';
 import ArchieCharacter from '@/components/ArchieCharacter';
+import { SeasonalCoverDecorations, SeasonalCoverLink } from '@/components/SeasonalCoverDecorations';
+import { useSeasonalTheme } from '@/lib/seasonal-themes';
 
 type Screen = 'home' | 'stories' | 'lessons' | 'ask' | 'games' | 'homework' | 'museum' | 'theatre' | 'parents' | 'teacher' | 'shop' | 'stickers' | 'settings';
 
@@ -102,6 +104,7 @@ const button = 'rounded-2xl px-4 py-3 font-black shadow-lg active:scale-95 trans
 
 export default function SodafomAdventurePage() {
   const navigate = useNavigate();
+  const { theme } = useSeasonalTheme();
   const [screen,setScreen] = useState<Screen>('home');
   const [duration,setDuration] = useState(30);
   const [selectedTeacher,setSelectedTeacher] = useState<string | null>(null);
@@ -187,10 +190,12 @@ export default function SodafomAdventurePage() {
     </div>
   );
 
-  const Home = () => <main className={shell}>
-    <section className="relative overflow-hidden border-b-8 border-white bg-[url('/assets/cartoon/home-landscape-v2.png')] bg-cover bg-center px-4 py-5 text-center shadow-xl">
+  const Home = () => <main className={shell} data-seasonal-theme={theme.id} style={theme.background ? { background: theme.background } : undefined}>
+    <section className="relative overflow-hidden border-b-8 border-white bg-[url('/assets/cartoon/home-landscape-v2.png')] bg-cover bg-center px-4 py-5 text-center shadow-xl" style={theme.background ? { background: theme.background } : undefined}>
+      <SeasonalCoverDecorations theme={theme} />
       <div className="absolute inset-0 bg-white/15" />
-      <div className="relative mx-auto max-w-6xl">
+      <div className="relative z-10 mx-auto max-w-6xl">
+        <div className="flex justify-end"><SeasonalCoverLink theme={theme} /></div>
         <div className="inline-flex items-center gap-2 rounded-full border-4 border-white bg-blue-700 px-5 py-2 font-black text-white shadow-xl">🌈 A brighter future for every child 💛</div>
         <h1 className="mt-2 text-5xl font-black sm:text-7xl"><span className="text-yellow-400">🔑</span><span className="text-red-500">S</span><span className="text-yellow-500">o</span><span className="text-blue-600">d</span><span className="text-green-500">a</span><span className="text-red-500">f</span><span className="text-blue-600">o</span><span className="text-purple-600">m</span></h1>
         <p className="font-black text-blue-950">A key to your children’s success</p>
@@ -273,7 +278,7 @@ export default function SodafomAdventurePage() {
   const Settings = () => <main className="min-h-screen bg-gradient-to-b from-amber-100 via-white to-emerald-100 text-slate-900">{top('Sodafom Settings','The windmill workshop')}
     <div className="mx-auto max-w-5xl px-4 pb-8"><div className={`${panel} overflow-hidden bg-gradient-to-b from-amber-100 to-amber-50 p-6`}><div className="text-center"><div className="animate-spin text-8xl [animation-duration:12s]">🌬️</div><h2 className="mt-2 text-3xl font-black text-amber-900">Windmill Settings</h2></div><div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">{[['🔊','Audio & Voice'],['👤','Child Profile'],['🖥️','Display'],['🌐','Language'],['🛡️','Privacy & Safety'],['📚','Learning Preferences'],['👨‍👩‍👧','Account'],['🔒','Admin Access']].map(([icon,label],i)=><button key={label} onClick={()=>label==='Admin Access'?navigate('/admin-panel'):label==='Account'?navigate('/hub/subscription'):undefined} className={`relative aspect-square rounded-full border-8 border-amber-700 bg-amber-300 p-4 font-black text-amber-950 shadow-xl transition hover:rotate-6 active:scale-95 ${i%2?'animate-[spin_18s_linear_infinite_reverse]':''}`}><div className="text-4xl">{icon}</div><div className="mt-2 text-sm">{label}</div></button>)}</div><div className="mt-5 rounded-3xl bg-white p-4 text-center font-bold text-blue-950">Subscription management and cancellation are inside Account. Admin is separately protected.</div></div></div></main>;
 
-  const current = useMemo(()=>({home:<Home/>,stories:<Stories/>,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,museum:<Museum/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,listening,homeworkImage,homeworkText,homeworkHelp,homeworkListening,homeworkSyncing,homeworkCloudStatus,episode,parentPin,parentOpen,classCode,stickerTab,museumChoice,museumQuestion,museumMessage,museumArtefact]);
+  const current = useMemo(()=>({home:<Home/>,stories:<Stories/>,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,museum:<Museum/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,listening,homeworkImage,homeworkText,homeworkHelp,homeworkListening,homeworkSyncing,homeworkCloudStatus,episode,parentPin,parentOpen,classCode,stickerTab,museumChoice,museumQuestion,museumMessage,museumArtefact,theme]);
 
   return <><Helmet><title>Sodafom — Archie Learning</title></Helmet>{current}</>;
 }
