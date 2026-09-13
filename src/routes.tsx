@@ -4,6 +4,7 @@ import { Navigate } from 'react-router';
 import HomePage from './pages/index';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
+import HealthyBodyAdventurePage from './pages/cartoons/HealthyBodyAdventurePage';
 import AITeacherPage from './pages/AITeacherPage';
 import TeacherModePage from './pages/tutor/TeacherModePage';
 import SubjectsPage from './pages/subjects';
@@ -772,6 +773,9 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/cartoons',
   element: <CartoonTheatrePage />
+}, {
+  path: '/cartoons/healthy-body',
+  element: <HealthyBodyAdventurePage />
 }, {
   path: '/ai-teacher',
   element: <AITeacherPage />
