@@ -2,9 +2,9 @@
 
 ## Status
 
-Source files have been uploaded and content-verified through the authorised
-GitHub connector. This report is the final branch document and is awaiting its
-own upload and verification.
+Completed: all recovery source files and this report were uploaded and
+content-verified through the authorised GitHub connector. No pull request,
+merge, deployment, Railway action, or default-branch change was made.
 
 ## Recovery basis
 
