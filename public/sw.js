@@ -60,3 +60,7 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// Network reliability is kept separate from notification behaviour above.
+// It never queues or replays an activity submission.
+importScripts('/network-worker.js');
