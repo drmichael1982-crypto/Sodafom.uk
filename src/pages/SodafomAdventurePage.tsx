@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { useNavigate } from 'react-router';
 import ArchieCharacter from '@/components/ArchieCharacter';
+import BooksLibrary from '@/components/BooksLibrary';
 
 type Screen = 'home' | 'stories' | 'lessons' | 'ask' | 'games' | 'homework' | 'museum' | 'theatre' | 'parents' | 'teacher' | 'shop' | 'stickers' | 'settings';
 
@@ -24,13 +25,6 @@ const SUBJECTS = [
   ['Maths','➗','/subjects/maths'], ['English','📖','/subjects/reading'], ['Spelling','🔤','/subjects/spelling'],
   ['Science','🔬','/subjects/science'], ['Geography','🌍','/games/geography-quiz'], ['History','🏛️','/ai-teacher'],
   ['PE','⚽','/ai-teacher'], ['Technology','💻','/ai-teacher'], ['French','🇫🇷','/ai-teacher'], ['German','🇩🇪','/ai-teacher'],
-];
-
-const STORIES = [
-  'Rendlesham Forest Adventure','Archie and the Orford Boat Discovery','Archie Saves the Seal Pup','Archie and the Lost Key',
-  'Archie Builds a Treehouse','Archie Visits London','Archie Explores Space','Archie Helps in the Community',
-  'Archie and the Dinosaur Trail','A Brighter Tomorrow','Archie and the Nature Trail','Archie’s Science Adventure',
-  'Archie Travels Through History','Friends From Different Places','Archie Learns Healthy Living','Archie’s Future Dreams'
 ];
 
 const GAME_ISLANDS = [
@@ -204,12 +198,6 @@ export default function SodafomAdventurePage() {
     <footer className="bg-gradient-to-r from-blue-700 via-purple-600 to-pink-500 px-4 py-4 text-center font-black text-white">Together, we can give children a brighter future. ❤️</footer>
   </main>;
 
-  const Stories = () => <main className={shell}>{top("Archie’s Stories",'Choose a book or add your own reading book')}
-    <div className="mx-auto max-w-6xl px-4 pb-8"><div className={`${panel} bg-gradient-to-b from-amber-100 to-amber-50 p-5`}>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">{STORIES.map((s,i)=><button key={s} onClick={()=>{speak(`${s}. Tap again in the reader to begin.`)}} className="rounded-2xl border-4 border-amber-700 bg-gradient-to-b from-blue-500 to-blue-800 p-3 text-white shadow-xl active:scale-95"><div className="text-4xl">📕</div><div className="mt-2 text-sm font-black">{i+1}. {s}</div></button>)}</div>
-      <label className="mt-5 flex cursor-pointer items-center justify-center gap-3 rounded-3xl border-4 border-dashed border-purple-500 bg-purple-100 p-5 font-black text-purple-900">📷 Add Your Reading Book<input type="file" accept="image/*" capture="environment" className="hidden"/></label>
-    </div></div></main>;
-
   const Lessons = () => <main className={shell}>{top("Archie’s Lessons",'Choose a subject door and lesson length')}
     <div className="mx-auto max-w-6xl px-4 pb-8"><div className={`${panel} p-5`}><div className="mb-5 flex flex-wrap justify-center gap-2">{[15,20,30,60].map(d=><button key={d} onClick={()=>setDuration(d)} className={`${button} ${duration===d?'bg-blue-700 text-white':'bg-blue-100 text-blue-900'}`}>{d} minutes</button>)}</div>
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">{SUBJECTS.map(([name,icon,route])=><button key={name} onClick={()=>{setSelectedTeacher(name); speak(`${name} teacher says: Come in kids! Your ${duration} minute lesson is ready.`); setTimeout(()=>navigate(route),650)}} className="relative min-h-44 overflow-hidden rounded-t-[2rem] border-8 border-amber-900 bg-gradient-to-b from-amber-400 to-amber-700 p-4 text-white shadow-xl active:scale-95"><div className="text-5xl">🚪</div><div className="mt-2 text-xl font-black">{icon} {name}</div>{selectedTeacher===name&&<div className="absolute inset-x-2 bottom-2 rounded-xl bg-white p-2 text-xs font-black text-blue-900">Teacher: “Come in kids!”</div>}</button>)}</div>
@@ -273,7 +261,7 @@ export default function SodafomAdventurePage() {
   const Settings = () => <main className="min-h-screen bg-gradient-to-b from-amber-100 via-white to-emerald-100 text-slate-900">{top('Sodafom Settings','The windmill workshop')}
     <div className="mx-auto max-w-5xl px-4 pb-8"><div className={`${panel} overflow-hidden bg-gradient-to-b from-amber-100 to-amber-50 p-6`}><div className="text-center"><div className="animate-spin text-8xl [animation-duration:12s]">🌬️</div><h2 className="mt-2 text-3xl font-black text-amber-900">Windmill Settings</h2></div><div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">{[['🔊','Audio & Voice'],['👤','Child Profile'],['🖥️','Display'],['🌐','Language'],['🛡️','Privacy & Safety'],['📚','Learning Preferences'],['👨‍👩‍👧','Account'],['🔒','Admin Access']].map(([icon,label],i)=><button key={label} onClick={()=>label==='Admin Access'?navigate('/admin-panel'):label==='Account'?navigate('/hub/subscription'):undefined} className={`relative aspect-square rounded-full border-8 border-amber-700 bg-amber-300 p-4 font-black text-amber-950 shadow-xl transition hover:rotate-6 active:scale-95 ${i%2?'animate-[spin_18s_linear_infinite_reverse]':''}`}><div className="text-4xl">{icon}</div><div className="mt-2 text-sm">{label}</div></button>)}</div><div className="mt-5 rounded-3xl bg-white p-4 text-center font-bold text-blue-950">Subscription management and cancellation are inside Account. Admin is separately protected.</div></div></div></main>;
 
-  const current = useMemo(()=>({home:<Home/>,stories:<Stories/>,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,museum:<Museum/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,listening,homeworkImage,homeworkText,homeworkHelp,homeworkListening,homeworkSyncing,homeworkCloudStatus,episode,parentPin,parentOpen,classCode,stickerTab,museumChoice,museumQuestion,museumMessage,museumArtefact]);
+  const current = useMemo(()=>({home:<Home/>,stories:<BooksLibrary onBack={() => setScreen('home')} />,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,museum:<Museum/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,listening,homeworkImage,homeworkText,homeworkHelp,homeworkListening,homeworkSyncing,homeworkCloudStatus,episode,parentPin,parentOpen,classCode,stickerTab,museumChoice,museumQuestion,museumMessage,museumArtefact]);
 
   return <><Helmet><title>Sodafom — Archie Learning</title></Helmet>{current}</>;
 }
