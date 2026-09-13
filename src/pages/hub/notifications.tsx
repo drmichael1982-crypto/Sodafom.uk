@@ -157,18 +157,18 @@ function NotificationCentre() {
           </div>
         )}
 
-        {/* Push notification settings link */}
+        {/* Parent-only reminder planning link */}
         <div className="mt-8 p-4 rounded-2xl bg-card border border-border flex items-center gap-3">
           <Bell size={20} className="text-primary flex-shrink-0" />
           <div className="flex-1">
-            <p className="text-sm font-bold text-foreground">Push notifications</p>
-            <p className="text-xs text-muted-foreground">Get notified even when you're not on the site</p>
+            <p className="text-sm font-bold text-foreground">Parent reminder plan</p>
+            <p className="text-xs text-muted-foreground">Review optional, gentle reminder boundaries. Device notifications are currently off.</p>
           </div>
           <Link
             to="/notifications"
             className="text-xs text-primary font-bold hover:underline flex-shrink-0"
           >
-            Manage →
+            Review →
           </Link>
         </div>
       </div>
