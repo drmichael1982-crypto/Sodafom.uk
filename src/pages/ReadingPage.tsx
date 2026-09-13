@@ -7,7 +7,7 @@ import ArchieStoryCollectionPage from './ArchieStoryCollectionPage';
 
 const READING_CHOICES = [
   { title: "Archie’s Book Collection", text: 'Choose one of ten illustrated Archie storybooks.', icon: BookOpen, route: '/reading?books=1', colour: 'from-violet-600 to-purple-950' },
-  { title: 'Reading Games', text: 'Play phonics, stories and comprehension games.', icon: Gamepad2, route: '/games/reading', colour: 'from-emerald-500 to-green-800' },
+  { title: 'Reading Games', text: 'Play phonics, stories and comprehension games.', icon: Gamepad2, route: '/game-islands?island=english', colour: 'from-emerald-500 to-green-800' },
   { title: 'Read With Archie', text: 'Photograph a book page for help with tricky words.', icon: Camera, route: '/ai-teacher', colour: 'from-purple-500 to-indigo-800' },
   { title: 'Archie Reading Lesson', text: 'Start a spoken reading lesson with Archie.', icon: Volume2, route: '/lessons', colour: 'from-orange-500 to-rose-700' },
 ] as const;
