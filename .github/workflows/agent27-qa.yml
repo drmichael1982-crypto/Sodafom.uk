@@ -9,7 +9,8 @@ on:
       - 'scripts/qa/agent27/**'
       - 'src/**'
       - 'package.json'
-      - 'package-lock.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
       - 'vite.config.ts'
       - 'tsconfig*.json'
 
@@ -21,8 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      # This repository is public. No checkout token, repository secret, Railway
-      # credential, deployment action or production environment is used.
+      # Public-repository checkout: no checkout token or production secrets.
       - name: Read the exact Agent27 commit
         shell: bash
         run: |
@@ -33,15 +33,34 @@ jobs:
           git fetch --depth=1 origin "$GITHUB_SHA"
           git checkout --detach FETCH_HEAD
           test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
-      - name: Install locked dependencies without lifecycle scripts
+          mkdir -p qa-output
+          git archive --format=tar.gz --output=qa-output/agent27-source.tar.gz HEAD
+      - name: Retain exact source for this QA run
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agent27-source
+          path: qa-output/agent27-source.tar.gz
+          retention-days: 1
+      - name: Prepare the project's Node major version
+        shell: bash
+        run: docker pull node:22-bookworm
+      - name: Agent27 recovery regressions (no dependencies or network)
+        id: recovery
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            node:22-bookworm node --experimental-strip-types --test \
+            scripts/qa/agent27/critical-error-display.node.mjs 2>&1 | tee qa-output/recovery.txt
+      - name: Install with the package manager and lockfile used by Dockerfile
+        id: install
         shell: bash
         run: |
           set -euo pipefail
-          docker pull node:22-bookworm
           docker run --rm -v "$GITHUB_WORKSPACE:/app" -w /app node:22-bookworm \
-            sh -c 'node --version && npm --version && npm ci --ignore-scripts --no-audit --no-fund'
-      # Network isolation prevents tests/build plugins from reaching real user
-      # data, paid AI, payment providers, email services or the deployed app.
+            sh -c 'node --version && corepack enable && corepack prepare pnpm@11.23.0 --activate && pnpm install --frozen-lockfile --ignore-scripts' \
+            2>&1 | tee qa-output/install.txt
+      # No real data, paid AI, payment, email or deployment endpoints are reachable.
       - name: Existing island regression tests (network isolated)
         id: islands
         continue-on-error: true
@@ -49,7 +68,7 @@ jobs:
         run: |
           docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
             -e CI=true -e NODE_ENV=test node:22-bookworm \
-            node --test scripts/test-island-adventures.cjs
+            node --test scripts/test-island-adventures.cjs 2>&1 | tee qa-output/islands.txt
       - name: Existing Vitest suite (network isolated)
         id: unit
         continue-on-error: true
@@ -57,31 +76,41 @@ jobs:
         run: |
           docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
             -e CI=true -e NODE_ENV=test node:22-bookworm \
-            npm test -- --run
+            npm test -- --run 2>&1 | tee qa-output/vitest.txt
       - name: Project type check (network isolated)
         id: types
         continue-on-error: true
         shell: bash
         run: |
           docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
-            -e CI=true node:22-bookworm npm run type-check
+            -e CI=true node:22-bookworm npm run type-check 2>&1 | tee qa-output/types.txt
       - name: Client and server build (network isolated)
         id: build
         continue-on-error: true
         shell: bash
         run: |
           docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
-            -e CI=true node:22-bookworm npm run build
+            -e CI=true node:22-bookworm npm run build 2>&1 | tee qa-output/build.txt
+      - name: Retain QA logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agent27-qa-logs
+          path: qa-output/*.txt
+          retention-days: 1
+          if-no-files-found: ignore
       - name: Report honest outcomes
         if: always()
         shell: bash
         env:
+          RECOVERY: ${{ steps.recovery.outcome }}
+          INSTALL: ${{ steps.install.outcome }}
           ISLANDS: ${{ steps.islands.outcome }}
           UNIT: ${{ steps.unit.outcome }}
           TYPES: ${{ steps.types.outcome }}
           BUILD: ${{ steps.build.outcome }}
         run: |
           printf '## Agent27 baseline QA\n\nCommit: `%s`\n\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          printf '| Check | Outcome |\n| --- | --- |\n| Existing island tests | %s |\n| Vitest | %s |\n| Type check | %s |\n| Build | %s |\n' "$ISLANDS" "$UNIT" "$TYPES" "$BUILD" >> "$GITHUB_STEP_SUMMARY"
-          printf '\nThese are automated checks, not a real-device, microphone, camera or live-account end-to-end certification. No merge or deployment was performed.\n' >> "$GITHUB_STEP_SUMMARY"
-          test "$ISLANDS" = success && test "$UNIT" = success && test "$TYPES" = success && test "$BUILD" = success
+          printf '| Check | Outcome |\n| --- | --- |\n| Recovery regressions | %s |\n| Frozen pnpm install | %s |\n| Existing island tests | %s |\n| Vitest | %s |\n| Type check | %s |\n| Build | %s |\n' "$RECOVERY" "$INSTALL" "$ISLANDS" "$UNIT" "$TYPES" "$BUILD" >> "$GITHUB_STEP_SUMMARY"
+          printf '\nAutomated checks only: not a real-device, microphone, camera or live-account end-to-end certification. Dependency lifecycle scripts are intentionally disabled. No merge or deployment was performed.\n' >> "$GITHUB_STEP_SUMMARY"
+          test "$RECOVERY" = success && test "$INSTALL" = success && test "$ISLANDS" = success && test "$UNIT" = success && test "$TYPES" = success && test "$BUILD" = success
