@@ -31,7 +31,22 @@ export interface ChildTutorProfile {
   recentLessonTime?: string;
 }
 
+export interface TutorLessonResult {
+  id: string;
+  lessonId: string;
+  subject: string;
+  topic: string;
+  ageGroup: '5-7' | '8-10' | '11-13';
+  lessonDay: number;
+  durationMinutes: 15 | 20 | 30 | 60;
+  attemptedQuestions: number;
+  correctAnswers: number;
+  completionReason: 'time' | 'all-questions';
+  completedAt: string;
+}
+
 const MEMORY_KEY = 'sodafom_tutor_memory';
+const LESSON_RESULTS_KEY = 'sodafom_tutor_lesson_results';
 
 export function loadTutorMemory(): ChildTutorProfile {
   if (typeof window === 'undefined') {
@@ -159,4 +174,39 @@ export function getWeakAndStrongTopics(): { weak: string[]; strong: string[] } {
   }
 
   return { weak, strong };
+}
+
+/** Keep a small, device-only completion history for the lesson results screen. */
+export function recordTutorLessonResult(
+  result: Omit<TutorLessonResult, 'id' | 'completedAt'>,
+): TutorLessonResult {
+  const saved: TutorLessonResult = {
+    ...result,
+    id: `lesson-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    completedAt: new Date().toISOString(),
+  };
+
+  if (typeof window === 'undefined') return saved;
+
+  try {
+    const raw = localStorage.getItem(LESSON_RESULTS_KEY);
+    const prior: TutorLessonResult[] = raw ? JSON.parse(raw) : [];
+    const history = Array.isArray(prior) ? prior : [];
+    localStorage.setItem(LESSON_RESULTS_KEY, JSON.stringify([saved, ...history].slice(0, 50)));
+  } catch {
+    // The lesson result is still available in the current screen state.
+  }
+
+  return saved;
+}
+
+export function loadTutorLessonResults(): TutorLessonResult[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(LESSON_RESULTS_KEY);
+    const results = raw ? JSON.parse(raw) : [];
+    return Array.isArray(results) ? results : [];
+  } catch {
+    return [];
+  }
 }
