@@ -15,6 +15,7 @@ const corePath = 'src/components/scanners/scanner-core.ts';
 const speechPath = 'src/components/scanners/useScannerSpeech.ts';
 const capturePath = 'src/components/scanners/ScannerCapture.tsx';
 const endpointPath = 'src/server/api/ai-teacher/read-page/POST.ts';
+const serverEntryPath = 'src/server/entry.ts';
 
 function load(name, mocks = {}, globals = {}) {
   const output = ts.transpileModule(source(name), {
@@ -23,7 +24,7 @@ function load(name, mocks = {}, globals = {}) {
   });
   assert.equal((output.diagnostics || []).filter(item => item.category === ts.DiagnosticCategory.Error).length, 0);
   const module = { exports: {} };
-  const context = { module, exports: module.exports, console, Error, RangeError, setTimeout, clearTimeout, AbortController,
+  const context = { module, exports: module.exports, console, Error, RangeError, URL, setTimeout, clearTimeout, AbortController,
     require(id) { if (!(id in mocks)) throw new Error(`Unexpected dependency: ${id}`); return mocks[id]; }, ...globals };
   vm.runInNewContext(output.outputText, context, { filename: name });
   return module.exports;
@@ -35,6 +36,12 @@ test('photo validation accepts supported files at the size boundary', () => {
 });
 test('photo validation rejects unsupported, empty and oversized files', () => {
   for (const file of [{ type: 'image/svg+xml', size: 100 }, { type: 'text/html', size: 100 }, { type: 'image/jpeg', size: 0 }, { type: 'image/png', size: core.MAX_PHOTO_BYTES + 1 }]) assert.equal(typeof core.validatePhoto(file), 'string');
+});
+test('data URL validation rejects malformed, empty and oversized camera frames', () => {
+  assert.equal(core.dataUrlByteLength('data:image/jpeg;base64,AAAA'), 3);
+  for (const value of ['data:image/jpeg;base64,A', 'data:image/svg+xml;base64,AAAA', 'data:image/jpeg;base64,']) assert.equal(core.dataUrlByteLength(value), null);
+  const oversized = `data:image/jpeg;base64,${'A'.repeat((Math.ceil((core.MAX_PHOTO_BYTES + 1) / 3)) * 4)}`;
+  assert.match(core.validatePhotoDataUrl(oversized), /smaller than 6 MB/);
 });
 test('word offsets preserve repeated words, punctuation and line breaks', () => {
   const text = 'A cat.\nA cat!';
@@ -57,7 +64,7 @@ test('speech chunks handle long unbroken words and reject invalid limits', () =>
   assert.throws(() => core.speechChunks('hello', 0), RangeError);
   assert.equal(core.speechChunks('').length, 0);
 });
-const scan = { image: 'data:image/jpeg;base64,AAAA', age: 8, mode: 'reading', task: 'help', question: 'What is a habitat?' };
+const scan = { image: 'data:image/jpeg;base64,AAAA', childId: 42, age: 8, mode: 'reading', task: 'help', question: 'What is a habitat?' };
 test('scan request preserves authentication, signal, mode and child question', async () => {
   let sent;
   const local = load(corePath, {}, { fetch: async (url, options) => { sent = { url, options }; return { ok: true, headers: { get: () => 'text/plain' }, text: async () => ' A home for an animal. ' }; } });
@@ -65,8 +72,11 @@ test('scan request preserves authentication, signal, mode and child question', a
   assert.equal(await local.requestScan('/api/ai-teacher/read-page', scan, signal), 'A home for an animal.');
   assert.equal(sent.options.signal, signal);
   assert.equal(sent.options.credentials, 'include');
-  assert.equal(JSON.parse(sent.options.body).scannerRequest, true);
-  assert.equal(JSON.parse(sent.options.body).question, scan.question);
+  const payload = JSON.parse(sent.options.body);
+  assert.equal(payload.childId, scan.childId);
+  assert.equal(payload.question, scan.question);
+  assert.equal(Object.hasOwn(payload, 'age'), false);
+  assert.equal(Object.hasOwn(payload, 'scannerRequest'), false);
 });
 test('scan request does not expose raw server errors or claim a page was read', async () => {
   for (const status of [400, 401, 402, 403, 413, 422, 429, 500, 502, 503]) {
@@ -85,18 +95,32 @@ test('scan request propagates cancellation rather than inventing an answer', asy
   const local = load(corePath, {}, { fetch: async () => { throw cancelled; } });
   await assert.rejects(local.requestScan('/api', scan, new AbortController().signal), { name: 'AbortError' });
 });
+test('scan request refuses an invalid data URL before it can leave the device', async () => {
+  let sent = false;
+  const local = load(corePath, {}, { fetch: async () => { sent = true; throw new Error('should not be called'); } });
+  await assert.rejects(local.requestScan('/api', { ...scan, image: 'data:image/jpeg;base64,A' }, new AbortController().signal));
+  assert.equal(sent, false);
+});
 
 async function backend(body = {}, settings = {}) {
   const calls = [], guardCalls = [];
+  const selectedChildId = Number(body.childId ?? scan.childId);
+  const db = {
+    select() { return { from() { return { where() { return { limit: async () => settings.ownsChild === false ? [] : [{ id: selectedChildId, ageGroup: settings.ageGroup ?? '8-10' }] }; } }; } }; },
+  };
   class Provider {
     constructor() { this.responses = { create: async payload => { calls.push(payload); if (settings.throwProvider) throw new Error('private provider secret'); return settings.response ?? { status: 'completed', output_text: 'Visible text.' }; } }; }
   }
   const handler = load(endpointPath, {
     openai: Provider,
+    'drizzle-orm': { and: (...parts) => parts, eq: (...parts) => parts },
+    '@/lib/auth/auth': { getAuth() { return { api: { getSession: async () => { if (settings.authThrows) throw new Error('private auth detail'); return settings.authenticated === false ? null : { user: { id: 'parent-1' } }; } } }; } },
+    '@/server/db/client': { db },
+    '@/server/db/schema': { children: { id: 'id', parentId: 'parentId', ageGroup: 'ageGroup' } },
     '@/server/paid-ai-guard': { requirePaidAiBilling(res, type) { guardCalls.push(type); if (settings.allow === false) { res.status(402).send('Parent voucher needed.'); return false; } return true; } },
   }, { process: { env: { OPENAI_API_KEY: settings.key === false ? '' : 'test-placeholder-not-a-credential' } } }).default;
-  const res = { statusCode: 200, body: '', status(value) { this.statusCode = value; return this; }, type(value) { this.contentType = value; return this; }, send(value) { this.body = value; return this; } };
-  await handler({ body: { ...scan, scannerRequest: true, ...body } }, res);
+  const res = { statusCode: 200, body: '', headers: {}, setHeader(name, value) { this.headers[name.toLowerCase()] = value; }, status(value) { this.statusCode = value; return this; }, type(value) { this.contentType = value; return this; }, send(value) { this.body = value; return this; } };
+  await handler({ body: { ...scan, ...body }, headers: settings.headers ?? {} }, res);
   return { calls, guardCalls, res };
 }
 test('backend keeps parent/voucher guard and never calls AI on denial', async () => {
@@ -107,6 +131,41 @@ test('backend rejects bad photos before checking billing or calling AI', async (
   for (const image of ['https://example.invalid/photo.jpg', 'data:image/svg+xml;base64,AAAA', 'x'.repeat(8_500_001)]) {
     const result = await backend({ image }); assert.equal(result.res.statusCode, 400); assert.equal(result.calls.length, 0); assert.equal(result.guardCalls.length, 0);
   }
+});
+test('backend enforces the decoded six-megabyte limit before billing or AI', async () => {
+  const image = `data:image/jpeg;base64,${'A'.repeat((Math.ceil((6 * 1024 * 1024 + 1) / 3)) * 4)}`;
+  const result = await backend({ image });
+  assert.equal(result.res.statusCode, 400); assert.equal(result.calls.length, 0); assert.equal(result.guardCalls.length, 0);
+});
+test('backend marks scanner responses as private and non-sniffable', async () => {
+  const result = await backend();
+  assert.equal(result.res.headers['cache-control'], 'no-store, private');
+  assert.equal(result.res.headers['x-content-type-options'], 'nosniff');
+});
+test('scanner access requires a signed-in parent and their own selected learner', async () => {
+  const cases = [
+    [{ childId: 0 }, {}, 400],
+    [{}, { authenticated: false }, 401],
+    [{}, { ownsChild: false }, 403],
+    [{}, { headers: { origin: 'https://not-sodafom.example' } }, 403],
+    [{}, { authThrows: true }, 503],
+  ];
+  for (const [body, settings, status] of cases) {
+    const result = await backend(body, settings);
+    assert.equal(result.res.statusCode, status);
+    assert.equal(result.calls.length, 0);
+  }
+});
+test('scanner accepts the Sodafom app and configured preview origins', async () => {
+  for (const origin of ['https://sodafom.uk', 'https://app.sodafom.uk', 'http://localhost:5173', 'https://preview.airoapp.ai', 'capacitor://localhost']) {
+    const result = await backend({}, { headers: { origin } });
+    assert.equal(result.res.statusCode, 200, origin);
+    assert.equal(result.calls.length, 1, origin);
+  }
+});
+test('the paid-AI guard remains fail-closed before scanner access checks', async () => {
+  const result = await backend({ childId: 0 }, { allow: false });
+  assert.equal(result.res.statusCode, 402); assert.equal(result.guardCalls.length, 1); assert.equal(result.calls.length, 0);
 });
 test('backend missing API configuration does not call AI', async () => {
   const result = await backend({}, { key: false }); assert.equal(result.res.statusCode, 503); assert.equal(result.calls.length, 0);
@@ -133,22 +192,17 @@ test('homework follow-up carries bounded previous help and child attempt', async
   const payload = JSON.parse(result.calls[0].input[0].content[0].text);
   assert.equal(payload.previousExplanation.length, 2500); assert.equal(payload.childQuestion.length, 500);
 });
-test('scanner teaching uses the selected age and validates an invalid age', async () => {
-  assert.match((await backend({ age: 5 })).calls[0].instructions, /aged 5/);
-  assert.match((await backend({ age: 999 })).calls[0].instructions, /aged 9/);
+test('scanner teaching age comes from the owned child profile, not request data', async () => {
+  assert.match((await backend({ age: 13 }, { ageGroup: '5-7' })).calls[0].instructions, /aged 6/);
+  assert.match((await backend({ age: 5 }, { ageGroup: '11-13' })).calls[0].instructions, /aged 12/);
 });
-test('legacy reading callers retain existing behaviour', async () => {
-  const result = await backend({ scannerRequest: false, task: undefined });
-  assert.equal(result.calls[0].input[0].content[0].text, 'Help the child read this page.');
-  assert.match(result.calls[0].instructions, /explain up to five difficult words/);
-});
-test('legacy homework callers retain existing behaviour', async () => {
-  const result = await backend({ scannerRequest: false, mode: 'homework', question: 'Explain fractions.' });
-  assert.equal(result.calls[0].input[0].content[0].text, 'Explain fractions.');
-  assert.match(result.calls[0].instructions, /Do not merely give an answer/);
+test('scanner safeguards cannot be disabled by a client request field', async () => {
+  const result = await backend({ scannerRequest: false, task: 'transcribe' });
+  assert.equal(result.calls[0].input[0].content[0].text, 'Read the visible educational text on this one page.');
+  assert.match(result.calls[0].instructions, /plain page text ONLY/);
 });
 test('model and response size are unchanged', async () => {
-  const result = await backend(); assert.equal(result.calls[0].model, 'gpt-4o-mini'); assert.equal(result.calls[0].max_output_tokens, 900);
+  const result = await backend(); assert.equal(result.calls[0].model, 'gpt-4o-mini'); assert.equal(result.calls[0].max_output_tokens, 900); assert.equal(result.calls[0].store, false);
 });
 test('incomplete and empty scans fail visibly rather than presenting a complete page', async () => {
   for (const response of [{ status: 'incomplete', output_text: 'Partial page' }, { status: 'completed', output_text: '' }]) assert.equal((await backend({}, { response })).res.statusCode, 422);
@@ -241,6 +295,30 @@ function cameraFixture() {
   const media = { getTracks: () => [{ stop() { stopped++; } }] };
   return { h, render, click, errors, photos, streams, video, listeners, resolve: () => resolveCamera(media), reject: error => rejectCamera(error), stopped: () => stopped };
 }
+function uploadFixture() {
+  const h = hooks(), errors = [], photos = [], readers = [], images = [];
+  class Reader {
+    constructor() { readers.push(this); this.readyState = 0; this.result = ''; }
+    readAsDataURL() { this.readyState = 2; this.result = 'data:image/jpeg;base64,AAAA'; }
+    abort() { this.aborted = true; }
+  }
+  class ImageFixture {
+    constructor() { images.push(this); this.naturalWidth = 100; this.naturalHeight = 100; this._src = ''; }
+    get src() { return this._src; }
+    set src(value) { this._src = value; }
+  }
+  const window = { addEventListener() {}, removeEventListener() {} };
+  const document = { hidden: false, addEventListener() {}, removeEventListener() {}, createElement: () => ({ getContext: () => ({ drawImage() {} }), toDataURL: () => 'data:image/jpeg;base64,AAAA' }) };
+  const Component = load(capturePath, { react: h.react, 'lucide-react': { Camera: 'icon', Upload: 'icon', X: 'icon' }, './scanner-core': core,
+    'react/jsx-runtime': { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) },
+  }, { window, document, FileReader: Reader, Image: ImageFixture, navigator: {} }).default;
+  const render = () => h.render(() => Component({ onPhoto: value => photos.push(value), onError: value => errors.push(value), onStart() {} }));
+  const upload = tree => {
+    const input = elements(tree).find(node => node.type === 'input' && node.props['aria-label'] === 'Upload a scanner photo');
+    input.props.onChange({ target: { files: [{ type: 'image/jpeg', size: 3 }], value: 'page.jpg' } });
+  };
+  return { h, render, upload, readers, images, errors, photos };
+}
 const flush = () => new Promise(resolve => setImmediate(resolve));
 test('camera requests video only after an explicit tap', async () => {
   const f = cameraFixture(); let tree = f.render(); assert.equal(f.streams.length, 0);
@@ -265,6 +343,21 @@ test('camera denial offers upload instead of leaving a stuck preview', async () 
   const denied = new Error('Denied'); denied.name = 'NotAllowedError'; f.reject(denied); await flush();
   assert.match(f.errors.at(-1), /upload a photo/); assert.equal(elements(f.render()).some(node => node.type === 'video'), false);
 });
+test('upload decoding drops the raw source after re-encoding and when the page closes', () => {
+  const f = uploadFixture();
+  f.upload(f.render());
+  f.readers[0].onload();
+  assert.equal(f.readers[0].onload, null);
+  assert.equal(f.images[0].src, 'data:image/jpeg;base64,AAAA');
+  f.images[0].onload();
+  assert.equal(f.photos[0], 'data:image/jpeg;base64,AAAA');
+  assert.equal(f.images[0].src, '');
+
+  f.upload(f.render());
+  f.readers[1].onload();
+  f.h.unmount();
+  assert.equal(f.images[1].src, '');
+});
 test('scanner route stays within Reading and preserves existing book collection', () => {
   const text = source('src/pages/ReadingPage.tsx');
   assert.match(text, /route: '\/reading\?scan=1'/); assert.match(text, /searchParams.get\('books'\) === '1'/);
@@ -274,8 +367,41 @@ test('scanner components contain no persistence, forced speaking or decorative e
   const files = [capturePath, speechPath, 'src/components/scanners/ScannerWorkspace.tsx', corePath];
   for (const file of files) assert.doesNotMatch(source(file), /localStorage|sessionStorage|indexedDB|innerHTML|[\u{1F300}-\u{1FAFF}]/u);
 });
-test('all seven changed application files parse as TypeScript / TSX', () => {
-  for (const file of [corePath, speechPath, capturePath, endpointPath, 'src/components/scanners/ScannerWorkspace.tsx', 'src/pages/HomeworkHelperPage.tsx', 'src/pages/ReadingPage.tsx']) {
+test('uploaded photos are redrawn before previewing or sending to strip metadata', () => {
+  const capture = source(capturePath);
+  assert.match(capture, /removeMetadataAndResize/);
+  assert.match(capture, /context\.drawImage\(image,/);
+  assert.match(capture, /canvas\.toDataURL\('image\/jpeg', 0\.82\)/);
+  assert.match(capture, /previewImage\.current = check/);
+  assert.match(capture, /target\.src = ''/);
+  assert.match(capture, /discardReader\(next\)/);
+});
+test('scanner route rejects untrusted, oversized and burst traffic before the narrow parser', () => {
+  const entry = source(serverEntryPath);
+  const scannerRoute = 'app.post("/api/ai-teacher/read-page", scannerRequestGate, express.json({ limit: "9mb" }), ai_teacher_read_page_post);';
+  assert.ok(entry.indexOf(scannerRoute) >= 0);
+  assert.ok(entry.indexOf(scannerRoute) < entry.indexOf('app.use(express.json());'));
+  assert.equal((entry.match(/app\.post\("\/api\/ai-teacher\/read-page"/g) ?? []).length, 1);
+  assert.ok(entry.indexOf('function scannerRequestGate') < entry.indexOf(scannerRoute));
+  assert.match(entry, /isTrustedScannerOrigin\(req\.headers\.origin\)/);
+  assert.match(entry, /content-length/);
+  assert.match(entry, /SCANNER_RATE_LIMIT_MAX/);
+  assert.match(entry, /Retry-After/);
+  assert.match(entry, /app\.use\("\/api\/ai-teacher\/read-page", \(err: unknown/);
+  assert.match(entry, /This photo is too large\. Please choose a photograph smaller than 6 MB\./);
+});
+test('scanner page scrubs transient page state when hidden or left', () => {
+  const workspace = source('src/components/scanners/ScannerWorkspace.tsx');
+  assert.match(workspace, /window\.addEventListener\('pagehide', clearSensitiveState\)/);
+  assert.match(workspace, /if \(document\.hidden\) clearSensitiveState\(\)/);
+  assert.match(workspace, /setPhoto\(''\); setPageText\(''\); setExplanation\(''\); setQuestion\(''\)/);
+});
+test('scanner read-aloud does not log the spoken page text', () => {
+  const voice = source('src/lib/voice-context.tsx');
+  assert.doesNotMatch(voice, /ttsSpeak starting:\s*['"`],?\s*\{\s*text/);
+});
+test('all eleven changed application files parse as TypeScript / TSX', () => {
+  for (const file of [corePath, speechPath, capturePath, endpointPath, serverEntryPath, 'src/components/scanners/ScannerWorkspace.tsx', 'src/pages/HomeworkHelperPage.tsx', 'src/pages/ReadingPage.tsx', 'src/lib/voice-context.tsx', 'src/pages/AITeacherPage.tsx', 'src/pages/legal.tsx']) {
     const parsed = ts.createSourceFile(file, source(file), ts.ScriptTarget.Latest, true);
     assert.equal(parsed.parseDiagnostics.length, 0, file);
   }
