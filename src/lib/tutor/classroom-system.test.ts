@@ -4,6 +4,7 @@ import {
   buildLessonStagePlan,
   getEnvironment,
   getPeFocus,
+  getTeacherForSubject,
   isContinueRequest,
   isHelpRequest,
   lessonProgressPercent,
@@ -23,11 +24,34 @@ describe('classroom lesson system', () => {
     expect(stages.reduce((sum, stage) => sum + stage.minutes, 0)).toBe(duration);
   });
 
-  it('cycles through PE environments without pretending to observe performance', () => {
+  it('keeps the lesson structure in a teach-interact-practise-assess sequence', () => {
+    expect(buildLessonStagePlan(30, false).map((stage) => stage.kind)).toEqual([
+      'intro', 'teach', 'example', 'activity', 'guided', 'practice', 'assessment', 'reflection',
+    ]);
+  });
+
+  it('cycles through every requested PE focus and environment', () => {
     expect(getPeFocus(1).key).toBe('football');
     expect(getEnvironment('PE', 1)).toBe('football-field');
+    expect(getPeFocus(2).key).toBe('athletics');
+    expect(getEnvironment('PE', 2)).toBe('athletics-track');
+    expect(getPeFocus(3).key).toBe('basketball');
+    expect(getEnvironment('PE', 3)).toBe('sports-hall');
+    expect(getPeFocus(4).key).toBe('gymnastics');
+    expect(getPeFocus(5).key).toBe('fitness');
+    expect(getPeFocus(6).key).toBe('coordination');
+    expect(getPeFocus(7).key).toBe('throw-catch');
+    expect(getEnvironment('PE', 7)).toBe('outdoor-field');
     expect(getPeFocus(8).key).toBe('football');
     expect(getEnvironment('Maths', 1)).toBe('classroom');
+  });
+
+  it('uses only verified existing subject assignments and Archie fallback', () => {
+    expect(getTeacherForSubject('English').name).toBe('Bella');
+    expect(getTeacherForSubject('Science').name).toBe('Professor Thinkwell');
+    expect(getTeacherForSubject('Geography').name).toBe('Rocky');
+    expect(getTeacherForSubject('Maths').name).toBe('Archie');
+    expect(getTeacherForSubject('PE').name).toBe('Archie');
   });
 
   it('scales cloud phases to the selected duration', () => {
