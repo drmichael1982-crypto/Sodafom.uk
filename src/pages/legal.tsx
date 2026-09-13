@@ -88,6 +88,7 @@ const SECTIONS: Section[] = [
         <p><strong>Account data:</strong> Name, email address, and password (hashed) when you register.</p>
         <p><strong>Child profiles:</strong> First name and age group added by the account holder. We do not collect children's email addresses or contact details.</p>
         <p><strong>Usage data:</strong> Activity sessions, scores, subjects accessed, and time spent — used to generate progress reports for parents and teachers.</p>
+        <p><strong>Optional photo help:</strong> If a signed-in parent selects their linked learner and presses a photo-help button, a resized page image and the question they choose to send are processed by our configured AI service to provide that response. Sodafom does not write the image, extracted page text, or question to its database or browser storage. Photo metadata is removed before sending, and response storage is disabled where the AI service supports it.</p>
         <p><strong>Payment data:</strong> Billing information is processed by Stripe and not stored by us. We receive only a transaction reference.</p>
         <p><strong>Technical data:</strong> IP address, browser type, device type, and cookies (see Cookie Policy below).</p>
 
@@ -114,6 +115,7 @@ const SECTIONS: Section[] = [
         <ul>
           <li><strong>Stripe</strong> — payment processing</li>
           <li><strong>Hosting providers</strong> — infrastructure and storage</li>
+          <li><strong>AI service providers</strong> — only when a parent uses optional photo help for a selected learner; used to process that request under the provider configuration</li>
           <li><strong>Analytics providers</strong> — aggregated, anonymised usage statistics only</li>
           <li><strong>Law enforcement</strong> — where required by law</li>
         </ul>
@@ -150,6 +152,7 @@ const SECTIONS: Section[] = [
 
         <h3>4.2 Parental Consent</h3>
         <p>By creating a child profile, the account holder confirms they are the parent or legal guardian of that child, or an authorised educator, and consents to the collection of activity data for progress tracking purposes.</p>
+        <p>Optional photo help is available only after a parent signs in and selects a learner linked to that account. Parents should avoid photographing faces, name labels, addresses, contact details, or other private information, and can remove the photo before sending it.</p>
 
         <h3>4.3 Data Minimisation</h3>
         <p>We collect only the minimum data necessary to provide the educational service. Child activity data (subject, score, duration) is used solely to generate progress reports visible to the account holder.</p>
