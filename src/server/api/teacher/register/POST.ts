@@ -1,46 +1,39 @@
-/**
- * POST /api/teacher/register
- * Registers a teacher account linked to a school licence key.
- */
 import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { teacherAccounts, schoolLicences } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
-import { createHash } from 'node:crypto';
-
-function hashPassword(pw: string): string {
-  return createHash('sha256').update(pw + 'sodafom-teacher-salt').digest('hex');
-}
+import { hashTeacherPassword } from '@/server/teacher-password';
+import { object, text, normaliseEmail, passwordInput } from '@/lib/teacher-school';
+import { allowAttempt, privateResponse, schoolError } from '../security';
 
 export default async function handler(req: Request, res: Response) {
+  privateResponse(res);
   try {
-    const { name, email, password, licenceKey, className } = req.body as {
-      name?: string; email?: string; password?: string; licenceKey?: string; className?: string;
-    };
-    if (!name || !email || !password || !licenceKey) {
-      return res.status(400).json({ error: 'name, email, password and licenceKey are required' });
+    if (!allowAttempt(req, res, 'teacher-register', 10)) return;
+    const body = object(req.body);
+    const name = text(body.name, 'Name', 255);
+    const email = normaliseEmail(body.email);
+    const password = passwordInput(body.password, true);
+    const className = text(body.className, 'Class name', 128);
+    // Preserve the existing school-licence membership model; no payment or schema policy changes are made here.
+    const licenceKey = text(body.licenceKey, 'School access key', 64);
+    const [licence] = await db.select().from(schoolLicences).where(eq(schoolLicences.licenceKey, licenceKey)).limit(1);
+    if (!licence || (licence.expiresAt && licence.expiresAt < new Date())) {
+      return res.status(400).json({ error: 'School access key is invalid or expired.' });
     }
 
-    // Validate licence key
-    const [licence] = await db.select().from(schoolLicences).where(eq(schoolLicences.licenceKey, licenceKey.trim())).limit(1);
-    if (!licence) return res.status(400).json({ error: 'Invalid school licence key' });
-    if (licence.expiresAt && licence.expiresAt < new Date()) return res.status(400).json({ error: 'School licence has expired' });
-
-    // Check email not already used
-    const [existing] = await db.select({ id: teacherAccounts.id }).from(teacherAccounts).where(eq(teacherAccounts.email, email.toLowerCase().trim())).limit(1);
-    if (existing) return res.status(409).json({ error: 'An account with this email already exists' });
+    const [existing] = await db.select({ id: teacherAccounts.id }).from(teacherAccounts).where(eq(teacherAccounts.email, email)).limit(1);
+    if (existing) return res.status(409).json({ error: 'An account with this email already exists. Please sign in.' });
 
     const [teacher] = await db.insert(teacherAccounts).values({
       licenceId: licence.id,
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      passwordHash: hashPassword(password),
-      className: className?.trim() || 'My Class',
+      name,
+      email,
+      passwordHash: await hashTeacherPassword(password),
+      className,
     }).$returningId();
-
-    res.status(201).json({ success: true, teacherId: teacher.id });
-  } catch (err) {
-    console.error('Teacher register error:', err);
-    res.status(500).json({ error: 'Registration failed' });
+    return res.status(201).json({ success: true, teacherId: teacher.id });
+  } catch (error) {
+    return schoolError(res, error, 'Registration is unavailable. Please try again.');
   }
 }
