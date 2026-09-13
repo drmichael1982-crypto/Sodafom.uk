@@ -13,7 +13,7 @@ interface Recognition {
   start(): void;
   abort(): void;
 }
-type SpeechWindow = Window & {
+type SpeechWindow = {
   SpeechRecognition?: new () => Recognition;
   webkitSpeechRecognition?: new () => Recognition;
 };
@@ -86,7 +86,10 @@ export function useScannerSpeech(onTranscript: (text: string) => void) {
   const listen = useCallback(() => {
     if (recognition.current) { stopListening(); return; }
     stopSpeech(); setMessage('');
-    const speechWindow = window as SpeechWindow;
+    // Other app modules augment Window with a narrower recognition type. This
+    // scanner needs its own complete runtime shape without changing that
+    // shared global declaration.
+    const speechWindow = window as unknown as SpeechWindow;
     const Constructor = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
     if (!Constructor) { setMessage('This device does not support voice questions here. Please type your question below.'); return; }
     const active = new Constructor();
