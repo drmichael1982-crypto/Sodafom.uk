@@ -32,16 +32,15 @@ const APPROVED_TEACHERS: Record<string, TeacherAssignment> = {
   bella: { id: 'bella', name: 'Bella', image: '/assets/cartoon/friends/bella.png', role: 'Words, spelling and vocabulary', verified: true },
   thinkwell: { id: 'professor-thinkwell', name: 'Professor Thinkwell', image: '/assets/cartoon/friends/professor-thinkwell.png', role: 'Science, facts and clever thinking', verified: true },
   rocky: { id: 'rocky', name: 'Rocky', image: '/assets/cartoon/friends/rocky.png', role: 'Geography tutor', verified: true },
-  mia: { id: 'mia', name: 'Mia', image: '/assets/cartoon/friends/mia.png', role: 'Stories and creative learning', verified: true },
-  captainSpark: { id: 'captain-spark', name: 'Captain Spark', image: '/assets/cartoon/friends/captain-spark.png', role: 'Challenges and active encouragement', verified: true },
   penny: { id: 'penny', name: 'Penny', image: '/assets/cartoon/friends/penny.png', role: 'Patient reading practice', verified: true },
-  soda: { id: 'soda-bot', name: 'Soda Bot', image: '/assets/cartoon/friends/soda-bot.png', role: 'Friendly app helper', verified: true },
 };
 
 /**
- * Master currently has explicit subject-role evidence for English/Bella,
- * Science/Professor Thinkwell and Geography/Rocky. Other subjects keep Archie
- * as the non-invented fallback until a shared character assignment is merged.
+ * The base branch explicitly documents Bella for words/language work,
+ * Professor Thinkwell for science, Rocky for geography and Penny for reading.
+ * It does not define dedicated Maths, History, French, German or PE teachers.
+ * Archie remains the existing non-invented learning-guide fallback for those
+ * subjects until a shared character-assignment change is merged by its owner.
  */
 export const SUBJECT_TEACHERS: Record<string, TeacherAssignment> = {
   English: APPROVED_TEACHERS.bella,
@@ -53,7 +52,7 @@ export const SUBJECT_TEACHERS: Record<string, TeacherAssignment> = {
   History: APPROVED_TEACHERS.archie,
   French: APPROVED_TEACHERS.archie,
   German: APPROVED_TEACHERS.archie,
-  PE: APPROVED_TEACHERS.captainSpark,
+  PE: APPROVED_TEACHERS.archie,
 };
 
 export function getTeacherForSubject(subject: string): TeacherAssignment {
@@ -125,8 +124,8 @@ const ACADEMIC_WEIGHTS: Array<[LessonStageKind, string, number]> = [
   ['intro', 'Introduction & learning goal', 2],
   ['teach', 'Teacher explanation', 5],
   ['example', 'Worked examples', 3],
+  ['activity', 'Interactive fun activity', 4],
   ['guided', 'Guided practice', 5],
-  ['activity', 'Fun activity', 4],
   ['practice', 'Further practice', 4],
   ['assessment', 'End test / quiz', 5],
   ['reflection', 'Feedback & reflection', 2],
@@ -136,8 +135,8 @@ const PE_WEIGHTS: Array<[LessonStageKind, string, number]> = [
   ['intro', 'Introduction & safety check', 3],
   ['teach', 'Warm-up', 6],
   ['example', 'Teacher demonstration', 5],
+  ['activity', 'Try the movement', 8],
   ['guided', 'Guided practice', 8],
-  ['activity', 'Skill challenge', 8],
   ['practice', 'Practice & rest', 8],
   ['assessment', 'Cool-down', 7],
   ['reflection', 'Feedback & reflection', 5],
