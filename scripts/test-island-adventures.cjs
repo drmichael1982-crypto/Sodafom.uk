@@ -152,3 +152,22 @@ test('microphone automatically stops after its timeout', async () => {
   await new Promise(resolve => setTimeout(resolve, 15));
   assert.equal(fake.get().aborts, 1); assert.equal(statuses.at(-1)[0], 'idle');
 });
+
+test('Spelling Island remains spelling-only and its game buttons remain spelling games', () => {
+  const spellingQuestions = core.createIslandRound('spelling', () => 0.42);
+  assert.equal(spellingQuestions.length, 10);
+  assert(spellingQuestions.every(question => question.id.startsWith('spelling-')));
+  assert(spellingQuestions.every(question => !/frozen water|roots|magnet|gravity|solar/i.test(question.prompt)));
+
+  const spelling = core.ISLANDS.find(island => island.id === 'spelling');
+  assert.deepEqual(spelling.games.map(([, route]) => route), [
+    '/games/spelling-bee',
+    '/games/word-scramble',
+    '/games/word-wizard',
+  ]);
+  for (const island of core.ISLANDS) {
+    for (const [, route] of island.games) {
+      assert.match(route, /^\/games\/[a-z0-9-]+$/, `${island.name} has a safe game route`);
+    }
+  }
+});
