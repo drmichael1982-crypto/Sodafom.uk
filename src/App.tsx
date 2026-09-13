@@ -5,7 +5,7 @@ import AiroErrorBoundary from '../export-plugins/AiroErrorBoundary';
 import CookieBannerErrorBoundary from '@/components/CookieBannerErrorBoundary';
 import RootLayout from './layouts/RootLayout';
 import Spinner from './components/Spinner';
-import { routes } from './routes';
+import { routes } from './features/sticker-books/routes';
 const CookieBanner = lazy(() => import('@/components/CookieBanner').catch(error => {
   console.warn('Failed to load CookieBanner:', error);
   return {

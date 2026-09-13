@@ -7,7 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Outlet, StaticRouterProvider, createStaticHandler, createStaticRouter, type RouteObject } from "react-router";
 import RootLayout from './layouts/RootLayout';
 import Spinner from './components/Spinner';
-import { routes } from './routes';
+import { routes } from './features/sticker-books/routes';
 export interface RenderResult {
   html: string;
   head: string;
