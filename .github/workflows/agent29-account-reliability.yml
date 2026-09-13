@@ -41,17 +41,32 @@ jobs:
       - name: Dependency-free auth regression tests
         run: node --experimental-strip-types --test scripts/agent29-account-reliability.test.mjs
       - name: Install locked project dependencies
-        id: install
+        id: locked
+        continue-on-error: true
         run: npm ci
+      - name: Disposable diagnostic install when the committed lock is inconsistent
+        id: diagnostic
+        if: steps.locked.outcome == 'failure'
+        run: |
+          npm install --no-save --no-audit --no-fund
+          git diff --exit-code -- package.json
+          echo 'Diagnostic dependencies only; no lockfile changes are committed or deployed.'
       - name: Isolated real-source server-handler tests
+        if: always() && (steps.locked.outcome == 'success' || steps.diagnostic.outcome == 'success')
         run: node --experimental-strip-types --test scripts/agent29-server-reliability.test.mjs
       - name: Auth UI and disposable MySQL API integration
+        if: always() && (steps.locked.outcome == 'success' || steps.diagnostic.outcome == 'success')
         env:
           AGENT29_TEST_DB: '1'
         run: npx vitest run --config agent29.vitest.config.ts
       - name: Whole-project type check (diagnostic)
-        if: always() && steps.install.outcome == 'success'
+        if: always() && (steps.locked.outcome == 'success' || steps.diagnostic.outcome == 'success')
         run: npm run type-check
       - name: Whole-project build (no deployment)
-        if: always() && steps.install.outcome == 'success'
+        if: always() && (steps.locked.outcome == 'success' || steps.diagnostic.outcome == 'success')
         run: npm run build
+      - name: Keep an inconsistent committed lockfile as a failed check
+        if: always() && steps.locked.outcome == 'failure'
+        run: |
+          echo 'The committed lockfile could not be installed. Diagnostic passes do not resolve this blocker.'
+          exit 1
