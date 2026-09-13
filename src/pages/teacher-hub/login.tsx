@@ -1,206 +1,46 @@
-import { useState } from 'react';
-import { API_PREFIX } from '@/lib/config';
-import { useNavigate, Link } from 'react-router';
+import { useState, type FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router';
 import { Helmet } from '@dr.pogodin/react-helmet';
-import { motion } from 'motion/react';
-import { GraduationCap, Mail, Lock, Eye, EyeOff, School, ArrowRight, KeyRound } from 'lucide-react';
-import { saveTeacherSession } from '@/lib/teacher-auth';
-
-type Mode = 'login' | 'register';
+import { teacherRequest } from '@/lib/teacher-api';
+import { saveTeacherSession, type TeacherProfile } from '@/lib/teacher-auth';
 
 export default function TeacherHubLoginPage() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<Mode>('login');
-  const [showPw, setShowPw] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Login fields
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  // Register fields
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regLicence, setRegLicence] = useState('');
-  const [regClass, setRegClass] = useState('');
-
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  const [registering, setRegistering] = useState(false), [busy, setBusy] = useState(false), [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState(''), [password, setPassword] = useState(''), [name, setName] = useState(''), [className, setClassName] = useState(''), [licenceKey, setLicenceKey] = useState('');
+  const [error, setError] = useState(''), [message, setMessage] = useState('');
+  async function submit(event: FormEvent) {
+    event.preventDefault(); setError(''); setMessage(''); setBusy(true);
     try {
-      const res = await fetch(`${API_PREFIX}/teacher/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json() as { token?: string; teacher?: { id: number; name: string; email: string; className: string }; error?: string };
-      if (!res.ok) { setError(data.error ?? 'Login failed'); return; }
-      saveTeacherSession(data.token!, data.teacher!);
-      navigate('/teacher-hub');
-    } catch {
-      setError('Network error — please try again');
-    } finally {
-      setLoading(false);
-    }
+      if (registering) {
+        await teacherRequest('/register', { method: 'POST', body: JSON.stringify({ name, className, email, password, licenceKey }) });
+        setRegistering(false); setMessage('Your free teacher account is ready. Sign in to open your own class.'); setPassword(''); return;
+      }
+      const result = await teacherRequest<{ token: string; teacher: TeacherProfile }>('/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+      saveTeacherSession(result.token, result.teacher); setPassword(''); navigate('/teacher-hub', { replace: true });
+    } catch (reason) { setError(reason instanceof Error ? reason.message : 'Unable to sign in.'); }
+    finally { setBusy(false); }
   }
-
-  async function handleRegister(e: React.FormEvent) {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_PREFIX}/teacher/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: regName, email: regEmail, password: regPassword, licenceKey: regLicence, className: regClass }),
-      });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) { setError(data.error ?? 'Registration failed'); return; }
-      // Auto-login after register
-      const loginRes = await fetch(`${API_PREFIX}/teacher/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: regEmail, password: regPassword }),
-      });
-      const loginData = await loginRes.json() as { token?: string; teacher?: { id: number; name: string; email: string; className: string } };
-      if (loginRes.ok) { saveTeacherSession(loginData.token!, loginData.teacher!); navigate('/teacher-hub'); }
-      else setMode('login');
-    } catch {
-      setError('Network error — please try again');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <>
-      <Helmet>
-        <title>Teacher Hub Login — Sodafom</title>
-        <meta name="description" content="Log in to the Sodafom Teacher Hub to track your students' progress and get personalised game recommendations." />
-        <link rel="canonical" href="https://sodafom.uk/teacher-hub/login" />
-        <meta name="robots" content="noindex" />
-      </Helmet>
-
-      <main className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-accent/10 flex items-center justify-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: 'easeOut' as const }}
-          className="w-full max-w-md"
-        >
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary text-primary-foreground text-3xl mb-4 shadow-lg">
-              <GraduationCap size={32} />
-            </div>
-            <h1 className="text-3xl font-black text-foreground">Teacher Hub</h1>
-            <p className="text-muted-foreground mt-1">Track your class's learning journey</p>
-          </div>
-
-          {/* Tab switcher */}
-          <div className="flex rounded-2xl bg-muted p-1 mb-6">
-            {(['login', 'register'] as Mode[]).map(m => (
-              <button key={m} onClick={() => { setMode(m); setError(''); }}
-                className={`flex-1 py-2.5 rounded-xl font-black text-sm transition-all ${mode === m ? 'bg-card shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
-                {m === 'login' ? 'Sign In' : 'Create Account'}
-              </button>
-            ))}
-          </div>
-
-          <div className="bg-card rounded-3xl shadow-xl border border-border p-8">
-            {error && (
-              <div className="mb-4 px-4 py-3 rounded-xl bg-destructive/10 text-destructive text-sm font-bold border border-destructive/20">
-                {error}
-              </div>
-            )}
-
-            {mode === 'login' ? (
-              <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                <div>
-                  <label className="block text-sm font-black text-foreground mb-1.5">Email address</label>
-                  <div className="relative">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                      placeholder="teacher@school.co.uk"
-                      className="w-full pl-9 pr-4 py-3 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-none focus:ring-2 focus:ring-primary" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-black text-foreground mb-1.5">Password</label>
-                  <div className="relative">
-                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
-                      placeholder="••••••••"
-                      className="w-full pl-9 pr-10 py-3 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-none focus:ring-2 focus:ring-primary" />
-                    <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                      {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-                <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.97 }}
-                  className="mt-2 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-black text-base flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60">
-                  {loading ? 'Signing in…' : <><span>Sign In</span><ArrowRight size={18} /></>}
-                </motion.button>
-              </form>
-            ) : (
-              <form onSubmit={handleRegister} className="flex flex-col gap-4">
-                <div>
-                  <label className="block text-sm font-black text-foreground mb-1.5">Your full name</label>
-                  <input type="text" value={regName} onChange={e => setRegName(e.target.value)} required placeholder="Ms Smith"
-                    className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-none focus:ring-2 focus:ring-primary" />
-                </div>
-                <div>
-                  <label className="block text-sm font-black text-foreground mb-1.5">Class name</label>
-                  <div className="relative">
-                    <School size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input type="text" value={regClass} onChange={e => setRegClass(e.target.value)} placeholder="Year 3 Robins"
-                      className="w-full pl-9 pr-4 py-3 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-none focus:ring-2 focus:ring-primary" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-black text-foreground mb-1.5">Email address</label>
-                  <div className="relative">
-                    <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input type="email" value={regEmail} onChange={e => setRegEmail(e.target.value)} required placeholder="teacher@school.co.uk"
-                      className="w-full pl-9 pr-4 py-3 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-none focus:ring-2 focus:ring-primary" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-black text-foreground mb-1.5">Password</label>
-                  <div className="relative">
-                    <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input type={showPw ? 'text' : 'password'} value={regPassword} onChange={e => setRegPassword(e.target.value)} required placeholder="••••••••"
-                      className="w-full pl-9 pr-10 py-3 rounded-xl border border-border bg-background text-foreground font-bold focus:outline-none focus:ring-2 focus:ring-primary" />
-                    <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                      {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-black text-foreground mb-1.5">School licence key</label>
-                  <div className="relative">
-                    <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input type="text" value={regLicence} onChange={e => setRegLicence(e.target.value)} required placeholder="SODA-XXXX-XXXX"
-                      className="w-full pl-9 pr-4 py-3 rounded-xl border border-border bg-background text-foreground font-bold font-mono focus:outline-none focus:ring-2 focus:ring-primary" />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">Provided when your school purchased a Sodafom School plan</p>
-                </div>
-                <motion.button type="submit" disabled={loading} whileTap={{ scale: 0.97 }}
-                  className="mt-2 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-black text-base flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60">
-                  {loading ? 'Creating account…' : <><span>Create Teacher Account</span><ArrowRight size={18} /></>}
-                </motion.button>
-              </form>
-            )}
-          </div>
-
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            <Link to="/" className="hover:text-primary font-bold transition-colors">← Back to Sodafom</Link>
-          </p>
-        </motion.div>
-      </main>
-    </>
-  );
+  const input = 'w-full rounded-xl border border-border bg-background p-3 text-foreground';
+  return <main className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/10 px-4 py-12">
+    <Helmet><title>Teacher sign-in | Sodafom</title><meta name="robots" content="noindex,nofollow" /></Helmet>
+    <div className="mx-auto max-w-lg rounded-3xl border border-border bg-card p-6 shadow-xl sm:p-8">
+      <h1 className="text-3xl font-black">Schools and Teachers</h1>
+      <p className="my-4">Free core in-school learning. School work stays local-first; this teacher hub never calls paid AI.</p>
+      <p className="mb-6 text-sm text-muted-foreground">Your account opens only your own class. It does not give access to another teacher’s pupils or private family reports.</p>
+      <div className="mb-6 flex gap-3"><button type="button" disabled={busy} className="rounded-xl border p-3" aria-pressed={!registering} onClick={() => { setRegistering(false); setError(''); }}>Sign in</button><button type="button" disabled={busy} className="rounded-xl border p-3" aria-pressed={registering} onClick={() => { setRegistering(true); setError(''); }}>Create free account</button></div>
+      {error && <p role="alert" className="mb-4 rounded-xl bg-destructive/10 p-3 text-destructive">{error}</p>}
+      {message && <p role="status" className="mb-4 rounded-xl bg-primary/10 p-3">{message}</p>}
+      <form onSubmit={submit} className="space-y-4">
+        {registering && <><label className="block">Your name<input className={input} autoComplete="name" required maxLength={255} value={name} onChange={e => setName(e.target.value)} /></label><label className="block">Class name<input className={input} required maxLength={128} value={className} onChange={e => setClassName(e.target.value)} placeholder="Year 3 Robins" /></label></>}
+        <label className="block">Teacher email<input className={input} type="email" autoComplete="username" required maxLength={255} value={email} onChange={e => setEmail(e.target.value)} /></label>
+        <label className="block">Password<input className={input} type={showPassword ? 'text' : 'password'} autoComplete={registering ? 'new-password' : 'current-password'} required minLength={registering ? 12 : 1} maxLength={256} value={password} onChange={e => setPassword(e.target.value)} /></label>
+        <button type="button" className="text-sm underline" aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>{showPassword ? 'Hide password' : 'Show password'}</button>
+        {registering && <><p className="text-sm">Use at least 12 characters. No payment or school access key is required for your own free class.</p><details><summary className="cursor-pointer">Existing school access key (optional)</summary><label className="mt-3 block">Access key<input className={input} maxLength={64} value={licenceKey} onChange={e => setLicenceKey(e.target.value)} /></label></details></>}
+        <button disabled={busy} className="w-full rounded-xl bg-primary p-3 font-bold text-primary-foreground disabled:opacity-50">{busy ? 'Please wait…' : registering ? 'Create free teacher account' : 'Sign in'}</button>
+      </form>
+      <p className="mt-5 text-sm text-muted-foreground">On a shared school device, sign out when finished. Your teacher sign-in is kept only for this browser session.</p>
+      <Link to="/" className="mt-6 inline-block underline">Back to Sodafom</Link>
+    </div>
+  </main>;
 }

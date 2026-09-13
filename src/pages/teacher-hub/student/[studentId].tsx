@@ -1,414 +1,87 @@
-/**
- * /teacher-hub/student/:studentId — Student detail page
- * Shows full progress, stars, games played, notes, and recommendations.
- */
-import { useState, useEffect, useCallback } from 'react';
-import { API_PREFIX } from '@/lib/config';
+import { useState, useEffect, useCallback, type FormEvent } from 'react';
+import { Link, useNavigate, useParams } from 'react-router';
 import { Helmet } from '@dr.pogodin/react-helmet';
-import { Link, useParams, useNavigate } from 'react-router';
-import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Star, Gamepad2, TrendingUp, Clock, StickyNote, Plus, Lightbulb, ChevronRight, AlertCircle, CheckCircle2, BookOpen, Calculator, PenLine, BarChart3 } from 'lucide-react';
-import { getTeacherToken, clearTeacherSession, teacherAuthHeaders } from '@/lib/teacher-auth';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-interface Note {
-  id: number;
-  noteText: string;
-  needsHelp: string | null;
-  createdAt: string | null;
+import { teacherRequest, TeacherApiError, exportTeacherCsv } from '@/lib/teacher-api';
+import { getTeacherToken } from '@/lib/teacher-auth';
+import { SUBJECTS, ACTIVITY_KINDS, activityKind, scorePercent, type ActivityRecord, type SavedReview, type summariseProgress } from '@/lib/teacher-school';
+import WorkReviewForm, { type ReviewDraft } from '../WorkReviewForm';
+interface Detail {
+  student: { id: number; name: string; ageGroup: string; totalStars: number };
+  activity: ActivityRecord[];
+  notes: { id: number; subject: string | null; noteText: string; createdAt: string | null }[];
+  reviews: SavedReview[]; progress: ReturnType<typeof summariseProgress>; historyLimited: boolean; historyScope: string; invalidReviewCount: number;
+  recommendations: { gameId: string; title: string; path: string; reason: string }[];
 }
-
-interface ActivityEntry {
-  id: number;
-  gameTitle: string;
-  subject: string | null;
-  score: number | null;
-  starsEarned: number;
-  timeSpentSeconds: number | null;
-  difficulty: string | null;
-  playedAt: string | null;
-}
-
-interface Recommendation {
-  gameId: string;
-  title: string;
-  subject: string;
-  reason: string;
-  path: string;
-}
-
-interface StudentDetail {
-  id: number;
-  studentCode: string;
-  name: string;
-  ageGroup: string;
-  avatarEmoji: string;
-  totalStars: number;
-  stats: { gamesPlayed: number; totalStarsEarned: number; avgScore: number };
-  notes: Note[];
-  recentActivity: ActivityEntry[];
-  recommendations: Recommendation[];
-}
-
-const ageColour: Record<string, string> = {
-  '5–7':   'bg-yellow-100 text-yellow-800 border-yellow-300',
-  '8–10':  'bg-blue-100 text-blue-800 border-blue-300',
-  '11–13': 'bg-purple-100 text-purple-800 border-purple-300',
-};
-
-const subjectIcon: Record<string, React.ElementType> = {
-  reading: BookOpen,
-  maths: Calculator,
-  spelling: PenLine,
-};
-
-const subjectColour: Record<string, string> = {
-  reading: 'text-blue-600 bg-blue-50',
-  maths:   'text-green-600 bg-green-50',
-  spelling:'text-orange-600 bg-orange-50',
-};
-
-function timeAgo(dateStr: string | null): string {
-  if (!dateStr) return 'Never';
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
-function fmtTime(secs: number | null): string {
-  if (!secs) return '—';
-  if (secs < 60) return `${secs}s`;
-  return `${Math.floor(secs / 60)}m ${secs % 60}s`;
-}
-
-// ── Main page ─────────────────────────────────────────────────────────────────
+function percent(value: number | null) { return value === null ? 'Not assessed' : `${value}%`; }
+function date(value: string | Date | null) { return value ? new Date(value).toLocaleDateString('en-GB') : 'Date not recorded'; }
 export default function StudentDetailPage() {
   const { studentId } = useParams<{ studentId: string }>();
+  // A route change gets a fresh form and immediately discards the previous pupil's photo.
+  return <StudentRecord key={studentId} studentId={studentId ?? ''} />;
+}
+function StudentRecord({ studentId }: { studentId: string }) {
   const navigate = useNavigate();
-  const [student, setStudent] = useState<StudentDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  // Note form
-  const [noteText, setNoteText] = useState('');
-  const [needsHelp, setNeedsHelp] = useState('');
-  const [noteLoading, setNoteLoading] = useState(false);
-  const [noteError, setNoteError] = useState('');
-  const [noteSuccess, setNoteSuccess] = useState(false);
-
-  // Auth guard
-  useEffect(() => {
-    if (!getTeacherToken()) { navigate('/teacher-hub/login'); }
+  const [data, setData] = useState<Detail | null>(null), [loading, setLoading] = useState(true), [error, setError] = useState('');
+  const [editing, setEditing] = useState<SavedReview | null | undefined>(undefined), [comment, setComment] = useState(''), [subject, setSubject] = useState('general'), [savingComment, setSavingComment] = useState(false);
+  const [notice, setNotice] = useState('');
+  const showError = useCallback((reason: unknown) => {
+    if (reason instanceof TeacherApiError && reason.status === 401) { setData(null); setEditing(undefined); navigate('/teacher-hub/login', { replace: true }); }
+    else setError(reason instanceof Error ? reason.message : 'Could not load pupil information.');
   }, [navigate]);
-
-  const fetchStudent = useCallback(async () => {
-    if (!studentId) return;
-    setLoading(true);
-    setError('');
+  const load = useCallback(async (signal?: AbortSignal) => {
+    if (!getTeacherToken()) { navigate('/teacher-hub/login', { replace: true }); return; }
+    setLoading(true); setError('');
+    try { const result = await teacherRequest<Detail>(`/students/${encodeURIComponent(studentId)}`, { signal }); if (!signal?.aborted) setData(result); }
+    catch (reason) { if (!signal?.aborted) { setData(null); showError(reason); } }
+    finally { if (!signal?.aborted) setLoading(false); }
+  }, [studentId, navigate, showError]);
+  useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => controller.abort(); }, [load]);
+  async function saveReview(review: ReviewDraft) {
     try {
-      const res = await fetch(`${API_PREFIX}/teacher/students/${studentId}`, { headers: teacherAuthHeaders() });
-      if (res.status === 401) { clearTeacherSession(); navigate('/teacher-hub/login'); return; }
-      if (res.status === 404) { setError('Student not found'); return; }
-      const data = await res.json() as {
-        student: Omit<StudentDetail, 'recentActivity' | 'recommendations'>;
-        activity: ActivityEntry[];
-        notes: Note[];
-        recommendations: Recommendation[];
-      };
-      setStudent({
-        ...data.student,
-        notes: data.notes,
-        recentActivity: data.activity,
-        recommendations: data.recommendations,
-        stats: {
-          gamesPlayed: data.activity.length,
-          totalStarsEarned: data.activity.reduce((s, a) => s + a.starsEarned, 0),
-          avgScore: data.activity.length
-            ? data.activity.reduce((s, a) => s + (a.score ?? 0), 0) / data.activity.length
-            : 0,
-        },
-      });
-    } catch { setError('Could not load student data'); }
-    finally { setLoading(false); }
-  }, [studentId, navigate]);
-
-  useEffect(() => { fetchStudent(); }, [fetchStudent]);
-
-  async function addNote(e: React.FormEvent) {
-    e.preventDefault();
-    if (!noteText.trim()) return;
-    setNoteLoading(true);
-    setNoteError('');
-    setNoteSuccess(false);
-    try {
-      const res = await fetch(`${API_PREFIX}/teacher/students/${studentId}/notes`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...teacherAuthHeaders() },
-        body: JSON.stringify({ noteText, needsHelp }),
-      });
-      if (!res.ok) { setNoteError('Failed to save note'); return; }
-      setNoteText('');
-      setNeedsHelp('');
-      setNoteSuccess(true);
-      setTimeout(() => setNoteSuccess(false), 3000);
-      await fetchStudent();
-    } catch { setNoteError('Network error'); }
-    finally { setNoteLoading(false); }
+      await teacherRequest(`/students/${studentId}/notes`, { method: 'POST', body: JSON.stringify({ action: 'saveReview', review, ...(editing ? { reviewId: editing.id, expectedRevision: editing.revision } : {}) }) });
+      setEditing(undefined); setNotice('Work review saved.'); await load();
+    } catch (reason) { showError(reason); throw reason; }
   }
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-muted/30 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-          <p className="text-muted-foreground text-sm">Loading student...</p>
-        </div>
-      </main>
-    );
+  async function saveComment(event: FormEvent) {
+    event.preventDefault(); setSavingComment(true); setError('');
+    try { await teacherRequest(`/students/${studentId}/notes`, { method: 'POST', body: JSON.stringify({ noteText: comment, subject }) }); setComment(''); setNotice('Teacher comment saved.'); await load(); }
+    catch (reason) { showError(reason); } finally { setSavingComment(false); }
   }
-
-  if (error || !student) {
-    return (
-      <main className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-        <div className="bg-card border border-border rounded-2xl p-8 text-center max-w-sm">
-          <AlertCircle size={32} className="text-destructive mx-auto mb-3" />
-          <p className="font-bold text-foreground mb-1">{error || 'Student not found'}</p>
-          <Link to="/teacher-hub" className="text-primary text-sm font-bold hover:underline">← Back to dashboard</Link>
-        </div>
-      </main>
-    );
+  function exportReport() {
+    if (!data) return;
+    const rows: unknown[][] = [['Pupil', data.student.name], ['Report scope', data.historyScope], ['Generated at', new Date().toISOString()], [], ['Category', 'Records', 'Assessed', 'Mean percentage', 'Pending review']];
+    for (const kind of ACTIVITY_KINDS) { const item = data.progress.byKind[kind]; rows.push([kind, item.count, item.assessed, item.averagePercent, item.pending]); }
+    rows.push([], ['Subject', 'Records', 'Assessed', 'Mean percentage', 'Pending review']);
+    for (const item of data.progress.bySubject) rows.push([item.subject, item.count, item.assessed, item.averagePercent, item.pending]);
+    rows.push([], ['Activity', 'Type', 'Subject', 'Mark', 'Out of', 'Percentage', 'Date']);
+    for (const item of data.activity) rows.push([item.gameTitle, activityKind(item.gameId, item.subject), item.subject, item.score, item.maxScore, scorePercent(item.score, item.maxScore), item.playedAt]);
+    rows.push([], ['Work type', 'Title', 'Subject', 'Review status', 'Mark', 'Out of', 'Teacher feedback']);
+    for (const item of data.reviews) rows.push([item.kind, item.title, item.subject, item.status, item.score, item.maxScore, item.comment]);
+    rows.push([], ['Comment subject', 'Teacher comment', 'Date']);
+    for (const note of data.notes) rows.push([note.subject, note.noteText, note.createdAt]);
+    exportTeacherCsv(`pupil-${data.student.id}-report.csv`, rows);
   }
-
-  return (
-    <>
-      <Helmet>
-        <title>{student.name} — Teacher Hub | Sodafom</title>
-        <meta name="robots" content="noindex, nofollow" />
-        <meta name="description" content={`Progress and activity for ${student.name} — Sodafom Teacher Hub.`} />
-        <link rel="canonical" href={`https://sodafom.uk/teacher-hub/student/${student.id}`} />
-      </Helmet>
-
-      <main className="min-h-screen bg-muted/30 pb-16">
-        {/* ── Top bar ──────────────────────────────────────────────────────── */}
-        <div className="bg-primary shadow-md">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-4">
-            <Link
-              to="/teacher-hub"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary-foreground/15 text-primary-foreground text-sm font-bold hover:bg-primary-foreground/25 transition-colors"
-            >
-              <ArrowLeft size={14} /> Back
-            </Link>
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <span className="text-3xl">{student.avatarEmoji}</span>
-              <div className="min-w-0">
-                <h1 className="text-primary-foreground font-black text-base leading-none truncate">{student.name}</h1>
-                <p className="text-primary-foreground/70 text-xs mt-0.5 font-mono">{student.studentCode}</p>
-              </div>
-            </div>
-            <span className={`text-xs font-bold px-2.5 py-1 rounded-full border flex-shrink-0 ${ageColour[student.ageGroup] ?? 'bg-muted text-muted-foreground border-border'}`}>
-              Age {student.ageGroup}
-            </span>
-          </div>
-        </div>
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-6 flex flex-col gap-6">
-
-          {/* ── Stats ────────────────────────────────────────────────────── */}
-          <section>
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-              <BarChart3 size={13} /> Progress overview
-            </h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {[
-                { icon: Star,       label: 'Total stars',  value: student.totalStars,                    colour: 'bg-yellow-500' },
-                { icon: Gamepad2,   label: 'Games played', value: student.stats.gamesPlayed,             colour: 'bg-primary' },
-                { icon: TrendingUp, label: 'Avg score',    value: `${Math.round(student.stats.avgScore)}%`, colour: 'bg-secondary' },
-                { icon: Star,       label: 'Stars earned', value: student.stats.totalStarsEarned,        colour: 'bg-accent' },
-              ].map(({ icon: Icon, label, value, colour }) => (
-                <motion.div
-                  key={label}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-card border border-border rounded-2xl p-4 flex flex-col gap-1.5 shadow-sm"
-                >
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${colour}`}>
-                    <Icon size={16} className="text-white" />
-                  </div>
-                  <p className="text-muted-foreground text-xs font-bold">{label}</p>
-                  <p className="text-2xl font-black text-foreground leading-none">{value}</p>
-                </motion.div>
-              ))}
-            </div>
-          </section>
-
-          {/* ── Recommendations ──────────────────────────────────────────── */}
-          {student.recommendations.length > 0 && (
-            <section>
-              <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-                <Lightbulb size={13} /> Recommended games
-              </h2>
-              <div className="flex flex-col gap-2">
-                {student.recommendations.map((rec) => {
-                  const SubIcon = subjectIcon[rec.subject] ?? Gamepad2;
-                  return (
-                    <Link
-                      key={rec.gameId}
-                      to={rec.path}
-                      className="bg-card border border-border rounded-2xl p-4 flex items-center gap-3 hover:border-primary/40 hover:shadow-sm transition-all group"
-                    >
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${subjectColour[rec.subject] ?? 'bg-muted text-muted-foreground'}`}>
-                        <SubIcon size={16} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-foreground text-sm truncate">{rec.title}</p>
-                        <p className="text-muted-foreground text-xs">{rec.reason}</p>
-                      </div>
-                      <ChevronRight size={14} className="text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                    </Link>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
-          {/* ── Recent activity ───────────────────────────────────────────── */}
-          <section>
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-              <Clock size={13} /> Recent activity
-            </h2>
-            {student.recentActivity.length === 0 ? (
-              <div className="bg-card border border-border rounded-2xl p-8 text-center text-muted-foreground text-sm">
-                No games played yet.
-              </div>
-            ) : (
-              <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/40">
-                      <th className="text-left px-4 py-3 font-bold text-muted-foreground text-xs uppercase tracking-wide">Game</th>
-                      <th className="text-right px-4 py-3 font-bold text-muted-foreground text-xs uppercase tracking-wide hidden sm:table-cell">Score</th>
-                      <th className="text-right px-4 py-3 font-bold text-muted-foreground text-xs uppercase tracking-wide">Stars</th>
-                      <th className="text-right px-4 py-3 font-bold text-muted-foreground text-xs uppercase tracking-wide hidden md:table-cell">Time</th>
-                      <th className="text-right px-4 py-3 font-bold text-muted-foreground text-xs uppercase tracking-wide">When</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {student.recentActivity.map((a) => {
-                      const SubIcon = subjectIcon[a.subject ?? ''] ?? Gamepad2;
-                      return (
-                        <tr key={a.id} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <SubIcon size={13} className={`flex-shrink-0 ${a.subject ? (subjectColour[a.subject]?.split(' ')[0] ?? 'text-muted-foreground') : 'text-muted-foreground'}`} />
-                              <span className="font-bold text-foreground text-xs truncate max-w-[120px] sm:max-w-none">{a.gameTitle}</span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-right font-bold text-foreground text-xs hidden sm:table-cell">
-                            {a.score !== null ? `${a.score}%` : '—'}
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <span className="text-yellow-600 font-bold text-xs">⭐ {a.starsEarned}</span>
-                          </td>
-                          <td className="px-4 py-3 text-right text-muted-foreground text-xs hidden md:table-cell">
-                            {fmtTime(a.timeSpentSeconds)}
-                          </td>
-                          <td className="px-4 py-3 text-right text-muted-foreground text-xs">
-                            {timeAgo(a.playedAt)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          {/* ── Notes ────────────────────────────────────────────────────── */}
-          <section>
-            <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-              <StickyNote size={13} /> Teacher notes ({student.notes.length})
-            </h2>
-
-            {/* Add note form */}
-            <form onSubmit={addNote} className="bg-card border border-border rounded-2xl p-4 mb-4 flex flex-col gap-3">
-              <p className="font-bold text-foreground text-sm">Add a note</p>
-              <textarea
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                placeholder="e.g. Struggling with long division, needs extra practice on fractions..."
-                rows={3}
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-primary transition-colors resize-none"
-              />
-              <input
-                type="text"
-                value={needsHelp}
-                onChange={(e) => setNeedsHelp(e.target.value)}
-                placeholder="Area needing help (optional, e.g. fractions, phonics)"
-                className="w-full px-4 py-2.5 rounded-xl border border-border bg-background text-foreground text-sm outline-none focus:border-primary transition-colors"
-              />
-              {noteError && <p className="text-destructive text-xs">{noteError}</p>}
-              <div className="flex items-center gap-3">
-                <button
-                  type="submit"
-                  disabled={noteLoading || !noteText.trim()}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-black hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
-                >
-                  <Plus size={14} />
-                  {noteLoading ? 'Saving...' : 'Save note'}
-                </button>
-                <AnimatePresence>
-                  {noteSuccess && (
-                    <motion.span
-                      initial={{ opacity: 0, x: -8 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0 }}
-                      className="flex items-center gap-1 text-green-600 text-sm font-bold"
-                    >
-                      <CheckCircle2 size={14} /> Saved!
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </div>
-            </form>
-
-            {/* Existing notes */}
-            {student.notes.length === 0 ? (
-              <div className="bg-card border border-border rounded-2xl p-6 text-center text-muted-foreground text-sm">
-                No notes yet — add one above.
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {student.notes.map((note) => (
-                  <motion.div
-                    key={note.id}
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex gap-3"
-                  >
-                    <StickyNote size={15} className="text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-amber-900 text-sm leading-relaxed">{note.noteText}</p>
-                      {note.needsHelp && (
-                        <span className="inline-block mt-2 text-xs font-bold text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
-                          Needs help: {note.needsHelp}
-                        </span>
-                      )}
-                      {note.createdAt && (
-                        <p className="text-amber-600 text-xs mt-1.5">{timeAgo(note.createdAt)}</p>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </section>
-
-        </div>
-      </main>
-    </>
-  );
+  return <main className="min-h-screen bg-muted/30 p-4 sm:p-8 print:bg-white print:p-0">
+    <Helmet><title>Pupil progress | Sodafom Teacher Hub</title><meta name="robots" content="noindex,nofollow" /></Helmet>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <Link className="inline-block underline print:hidden" to="/teacher-hub">Back to class list</Link>
+      {error && <p role="alert" className="rounded-xl bg-destructive/10 p-4 text-destructive">{error}</p>}
+      {notice && <p role="status" className="rounded-xl bg-primary/10 p-3 print:hidden">{notice}</p>}
+      {loading && <p role="status">Loading pupil progress…</p>}
+      {!loading && !data && <button className="rounded-xl border p-3" onClick={() => void load()}>Try again</button>}
+      {data && <>
+        <header className="flex flex-wrap justify-between gap-4"><div><h1 className="text-3xl font-black">{data.student.name}</h1><p>Ages {data.student.ageGroup} · Private teacher report</p></div><div className="flex flex-wrap gap-3 print:hidden"><button disabled={loading} className="rounded-xl border bg-card p-3" onClick={exportReport}>Export report</button><button disabled={loading} className="rounded-xl border bg-card p-3" onClick={() => window.print()}>Print report</button><button className="rounded-xl bg-primary p-3 text-primary-foreground" onClick={() => { setEditing(null); setNotice(''); }}>Add work / photo review</button></div></header>
+        <p className="text-sm">{data.historyScope} Percentages are the mean of valid assessed results; unmarked and uncertain work is not treated as zero. This view uses school-linked records only, not private parent data.</p>
+        {data.historyLimited && <p role="status" className="rounded-xl border p-3">Older records exist. This report is limited to the history described above.</p>}
+        {data.invalidReviewCount > 0 && <p role="alert">{data.invalidReviewCount} stored review(s) could not be read safely and have been excluded from scores.</p>}
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-label="Progress by activity type">{ACTIVITY_KINDS.map(kind => { const item = data.progress.byKind[kind]; return <article key={kind} className="rounded-2xl border bg-card p-5"><h2 className="text-xl font-bold capitalize">{kind === 'game' ? 'Games' : kind === 'lesson' ? 'Lessons' : kind}</h2><p className="my-2 text-2xl font-black">{percent(item.averagePercent)}</p><p>{item.count} records · {item.assessed} assessed</p><p>{item.pending} awaiting teacher review</p></article>; })}</section>
+        {editing !== undefined && <WorkReviewForm key={editing ? `${editing.id}-${editing.revision}` : 'new'} existing={editing ?? undefined} onSave={saveReview} onCancel={() => setEditing(undefined)} />}
+        <section className="rounded-2xl border bg-card p-5"><h2 className="mb-3 text-xl font-bold">Subject scores</h2>{!data.progress.bySubject.length ? <p>No subject results recorded yet.</p> : <div className="overflow-x-auto"><table className="w-full text-left"><thead><tr><th className="p-2">Subject</th><th className="p-2">Assessed results</th><th className="p-2">Mean score</th><th className="p-2">Needs review</th></tr></thead><tbody>{data.progress.bySubject.map(item => <tr key={item.subject} className="border-t"><th className="p-2 capitalize">{item.subject}</th><td className="p-2">{item.assessed}</td><td className="p-2">{percent(item.averagePercent)}</td><td className="p-2">{item.pending}</td></tr>)}</tbody></table></div>}</section>
+        <section className="rounded-2xl border bg-card p-5"><h2 className="mb-4 text-xl font-bold">Work and handwriting reviews</h2>{!data.reviews.length && <p>No work reviews recorded yet.</p>}<div className="space-y-4">{data.reviews.map(review => <article key={review.id} className="rounded-xl border p-4"><div className="flex flex-wrap justify-between gap-3"><h3 className="font-bold">{review.title}</h3><button className="underline print:hidden" onClick={() => setEditing(review)}>Open review: {review.title}</button></div><p>{review.kind} · {review.subject} · {review.status === 'needs_review' ? 'Needs teacher review — not included in scores' : `Teacher confirmed: ${review.score}/${review.maxScore}`} · {date(review.createdAt)}</p>{review.transcription && <p className="mt-2 whitespace-pre-wrap">Observation: {review.transcription}</p>}{review.comment && <p className="mt-2 whitespace-pre-wrap">Teacher feedback: {review.comment}</p>}{review.status === 'reviewed' && <p className="mt-2 text-sm">Reviewed {date(review.reviewedAt)} · Revision {review.revision}</p>}</article>)}</div></section>
+        <section className="rounded-2xl border bg-card p-5"><h2 className="mb-4 text-xl font-bold">Recorded activity results</h2>{!data.activity.length ? <p>No activity results recorded yet.</p> : <div className="overflow-x-auto"><table className="w-full text-left"><thead><tr><th className="p-2">Activity</th><th className="p-2">Type</th><th className="p-2">Subject</th><th className="p-2">Result</th><th className="p-2">Date</th></tr></thead><tbody>{data.activity.map(item => <tr key={item.id} className="border-t"><td className="p-2">{item.gameTitle}</td><td className="p-2">{activityKind(item.gameId, item.subject)}</td><td className="p-2">{item.subject}</td><td className="p-2">{percent(scorePercent(item.score, item.maxScore))}</td><td className="p-2">{date(item.playedAt)}</td></tr>)}</tbody></table></div>}</section>
+        <section className="rounded-2xl border bg-card p-5"><h2 className="mb-4 text-xl font-bold">Teacher comments</h2><div className="space-y-3">{data.notes.map(note => <article key={note.id} className="rounded-xl border p-3"><p className="text-sm">{note.subject} · {date(note.createdAt)}</p><p className="whitespace-pre-wrap">{note.noteText}</p></article>)}{!data.notes.length && <p>No teacher comments yet.</p>}</div><form onSubmit={saveComment} className="mt-4 space-y-3 print:hidden"><label className="block">Subject<select className="ml-3 rounded-xl border bg-background p-2" value={subject} onChange={e => setSubject(e.target.value)}>{SUBJECTS.map(item => <option key={item}>{item}</option>)}</select></label><label className="block">Comment<textarea className="mt-1 block w-full rounded-xl border bg-background p-3" required maxLength={4000} value={comment} onChange={e => setComment(e.target.value)} /></label><button disabled={savingComment} className="rounded-xl bg-primary p-3 text-primary-foreground">{savingComment ? 'Saving…' : 'Save comment'}</button></form></section>
+        {!!data.recommendations.length && <section className="rounded-2xl border bg-card p-5"><h2 className="mb-3 text-xl font-bold">Existing learning recommendations</h2><p className="mb-3 text-sm">Suggestions based on teacher notes; not a diagnosis or a new assessment.</p>{data.recommendations.filter(item => item.path.startsWith('/') && !item.path.startsWith('//')).map(item => <p key={item.gameId} className="mb-2"><Link className="underline" to={item.path}>{item.title}</Link> — {item.reason}</p>)}</section>}
+      </>}
+    </div>
+  </main>;
 }

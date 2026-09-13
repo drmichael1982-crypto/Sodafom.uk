@@ -315,7 +315,7 @@ export const gameLevels = mysqlTable('game_levels', {
  */
 export const teacherAccounts = mysqlTable('teacher_accounts', {
   id: int('id').primaryKey().autoincrement(),
-  licenceId: int('licence_id').notNull().references(() => schoolLicences.id, { onDelete: 'cascade' }),
+  licenceId: int('licence_id').references(() => schoolLicences.id, { onDelete: 'cascade' }),
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
