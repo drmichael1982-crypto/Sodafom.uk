@@ -7,13 +7,35 @@ import {
 } from '@/server/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
+import { ClawMachineError, playClawMachine } from '@/server/rewards/claw-machine';
 
 export default async function handler(req: Request, res: Response) {
   try {
     const session = await getAuth().api.getSession({ headers: req.headers as any });
     if (!session?.user) return res.status(401).json({ error: 'Not authenticated' });
 
-    const { childId, characterId } = req.body as { childId: number; characterId: number };
+    const { childId, characterId, source, playToken } = req.body as {
+      childId: number;
+      characterId?: number;
+      source?: string;
+      playToken?: string;
+    };
+
+    // Agent 40: learning-earned claw turns use the existing character collection
+    // but never deduct stars. The server chooses a guaranteed unowned prize and
+    // protects retries with a play token.
+    if (source === 'claw') {
+      try {
+        const result = await playClawMachine(Number(childId), session.user.id, playToken);
+        return res.json({ ...result, source: 'claw' });
+      } catch (error) {
+        if (error instanceof ClawMachineError) {
+          return res.status(error.status).json({ error: error.message, code: error.code });
+        }
+        throw error;
+      }
+    }
+
     if (!childId || !characterId) {
       return res.status(400).json({ error: 'childId and characterId required' });
     }
@@ -48,7 +70,7 @@ export default async function handler(req: Request, res: Response) {
       });
     }
 
-    // Deduct stars and insert unlock in one go
+    // Existing star unlock behaviour is intentionally unchanged.
     await db
       .update(children)
       .set({ totalStars: child.totalStars - character.starCost })
