@@ -9,15 +9,16 @@ import ScannerCapture from './ScannerCapture';
 import { readingWords, requestScan, wordAtOffset, type ScannerMode } from './scanner-core';
 import { useScannerSpeech } from './useScannerSpeech';
 
-function suggestedAge() {
-  const group = getActiveChild()?.ageGroup;
+function suggestedAge(group?: string) {
   return group === '5-7' ? 6 : group === '11-13' ? 12 : 9;
 }
 
 export default function ScannerWorkspace({ mode }: { mode: ScannerMode }) {
   const reading = mode === 'reading';
   const title = reading ? 'Scan Reading Book' : 'Scan Homework';
-  const [age, setAge] = useState(suggestedAge);
+  const activeChild = getActiveChild();
+  const canUseOnlinePhotoHelp = Boolean(activeChild?.id);
+  const age = suggestedAge(activeChild?.ageGroup);
   const [photo, setPhoto] = useState('');
   const [question, setQuestion] = useState('');
   const [pageText, setPageText] = useState('');
@@ -43,10 +44,29 @@ export default function ScannerWorkspace({ mode }: { mode: ScannerMode }) {
   const reset = () => {
     cancel(); setPhoto(''); setPageText(''); setExplanation(''); setQuestion(''); setError('');
   };
-  useEffect(() => () => { generation.current += 1; request.current?.abort(); }, []);
+  useEffect(() => {
+    // Browser history, app switching and BFCache must not leave a photographed
+    // page or its extracted text waiting in the current page state.
+    const clearSensitiveState = () => {
+      cancel(); setPhoto(''); setPageText(''); setExplanation(''); setQuestion('');
+    };
+    const onVisibilityChange = () => { if (document.hidden) clearSensitiveState(); };
+    window.addEventListener('pagehide', clearSensitiveState);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      generation.current += 1;
+      request.current?.abort();
+      window.removeEventListener('pagehide', clearSensitiveState);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+  }, [cancel]);
 
   const ask = async (task: 'transcribe' | 'help') => {
     if (!photo || request.current) return;
+    if (!activeChild?.id) {
+      setError('Please ask a parent to sign in and choose the learner before using the protected photo helper.');
+      return;
+    }
     stopSpeech(); stopListening(); setError('');
     const controller = new AbortController();
     request.current = controller;
@@ -56,7 +76,7 @@ export default function ScannerWorkspace({ mode }: { mode: ScannerMode }) {
     const timeout = window.setTimeout(() => { timedOut = true; controller.abort(); }, 55000);
     try {
       const text = await requestScan(`${API_PREFIX}/ai-teacher/read-page`, {
-        image: photo, age, mode, task,
+        image: photo, childId: activeChild.id, mode, task,
         question: question.trim() || (reading ? 'Help me understand this page.' : 'Please give me one small hint, then let me try.'),
         previousExplanation: explanation.slice(0, 2500),
       }, controller.signal);
@@ -90,22 +110,19 @@ export default function ScannerWorkspace({ mode }: { mode: ScannerMode }) {
       </section>
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <section className={`${panel} space-y-4`}>
-          <label className="block font-bold">Learner&apos;s age
-            <select value={age} onChange={event => { cancel(); setAge(Number(event.target.value)); setExplanation(''); }} className="mt-2 min-h-12 w-full rounded-xl border-2 border-sky-200 px-3">
-              {Array.from({ length: 9 }, (_, index) => index + 5).map(value => <option key={value} value={value}>Age {value}</option>)}
-            </select>
-          </label>
+          <p className="rounded-xl bg-slate-50 p-3 text-sm leading-relaxed"><strong>Learning level:</strong> the selected learner&apos;s parent-managed profile sets an age-{age} starting point. The protected server checks that profile again before it can read a page.</p>
           <ScannerCapture onPhoto={value => { reset(); setPhoto(value); }} onError={setError} onStart={reset} />
           <p className="text-sm leading-relaxed text-slate-600">Choose a clear JPG, PNG or WebP photo under 6 MB. Keep faces, names and private information out of the picture.</p>
           {photo && <div className="space-y-3">
             <img src={photo} alt={reading ? 'Book page selected for reading' : 'Homework selected for help'} className="max-h-96 w-full rounded-xl border object-contain" />
             <button type="button" onClick={reset} className={`${button} border-2 border-slate-300 text-slate-800`}><Trash2 aria-hidden />Remove photo and answers</button>
           </div>}
-          <p className="rounded-xl bg-sky-50 p-3 text-sm leading-relaxed">The photo is sent only when you press a help button. Scanning uses the protected online image helper; existing parent permission and AI voucher checks still apply. This scanner does not save photos or questions in browser storage.</p>
+          <p className="rounded-xl bg-sky-50 p-3 text-sm leading-relaxed">The photo is sent only when you press a help button. It is resized to remove photo metadata first, then checked against the signed-in parent&apos;s selected learner and the AI voucher rules. This scanner does not save photos, page text or questions in browser storage.</p>
+          {!canUseOnlinePhotoHelp && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm font-bold text-amber-900">A parent needs to sign in and choose this learner before any photo can be sent for online help. You can still remove the photo at any time.</p>}
         </section>
         <section className={`${panel} space-y-4`} aria-busy={busy}>
           <h2 className="text-xl font-black">{reading ? 'Read and ask for help' : 'Tell Archie where you are stuck'}</h2>
-          {reading && <button type="button" disabled={!photo || busy} onClick={() => void ask('transcribe')} className={`${button} w-full bg-emerald-700 text-white`}><BookOpen aria-hidden />Scan the page text</button>}
+          {reading && <button type="button" disabled={!photo || busy || !canUseOnlinePhotoHelp} onClick={() => void ask('transcribe')} className={`${button} w-full bg-emerald-700 text-white`}><BookOpen aria-hidden />Scan the page text</button>}
           <label className="block font-bold">{reading ? 'Your question about this page' : 'Your question or your attempt'}
             <textarea value={question} onChange={event => setQuestion(event.target.value)} maxLength={500} rows={4} placeholder={reading ? 'What does this word mean?' : 'Tell me what to try first, or check my attempt.'} className="mt-2 w-full rounded-xl border-2 border-sky-200 p-3 font-normal leading-relaxed" />
           </label>
@@ -113,7 +130,7 @@ export default function ScannerWorkspace({ mode }: { mode: ScannerMode }) {
           <p className="text-sm leading-relaxed text-slate-600">The microphone listens only after you press it. Your device may use its speech service. Check the words above before sending.</p>
           {voice.listening && <p role="status" className="font-bold text-rose-800">Listening. Tell Archie what you need help with.</p>}
           {voice.message && <p role="status" className="rounded-xl bg-violet-50 p-3 text-sm">{voice.message}</p>}
-          <button type="button" disabled={!photo || busy || (reading && !question.trim())} onClick={() => void ask('help')} className={`${button} w-full bg-sky-700 text-white`}><Send aria-hidden />{reading ? 'Help with my question' : explanation ? 'Check my attempt / next hint' : 'Guide me step by step'}</button>
+          <button type="button" disabled={!photo || busy || !canUseOnlinePhotoHelp || (reading && !question.trim())} onClick={() => void ask('help')} className={`${button} w-full bg-sky-700 text-white`}><Send aria-hidden />{reading ? 'Help with my question' : explanation ? 'Check my attempt / next hint' : 'Guide me step by step'}</button>
           {!reading && <p className="text-sm text-slate-600">Try Archie&apos;s hint, then type or speak your attempt above for the next step.</p>}
           {busy && <div role="status" className="space-y-2"><p>Archie is checking this part of the page…</p><button type="button" onClick={cancel} className={`${button} border-2 border-slate-300`}>Cancel request</button></div>}
           {error && <p role="alert" className="rounded-xl border-2 border-rose-200 bg-rose-50 p-3 font-bold text-rose-800">{error}</p>}
