@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { db } from '../../../../db/client.js';
 import { activitySessions, progressSummaries, children } from '../../../../db/schema.js';
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, lt } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
 
 interface RecentActivity {
@@ -11,6 +11,8 @@ interface RecentActivity {
 }
 
 export default async function handler(req: Request, res: Response) {
+  const daily = req.query.view === 'daily';
+  if (daily) res.set('Cache-Control', 'private, no-store');
   try {
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: new Headers(req.headers as Record<string, string>) });
@@ -19,11 +21,30 @@ export default async function handler(req: Request, res: Response) {
     const childId = Number(req.params.childId);
     if (!Number.isInteger(childId) || childId <= 0) return res.status(400).json({ error: 'Valid childId required' });
 
-    const [ownedChild] = await db.select({ totalStars: children.totalStars })
+    const [ownedChild] = await db.select({ id: children.id, name: children.name, ageGroup: children.ageGroup, totalStars: children.totalStars })
       .from(children)
       .where(and(eq(children.id, childId), eq(children.parentId, session.user.id)))
       .limit(1);
     if (!ownedChild) return res.status(404).json({ error: 'Child not found' });
+
+    // Opt-in daily dashboard view. The existing parent/game response below is unchanged.
+    if (daily) {
+      const rawCursor = req.query.beforeId;
+      if (rawCursor !== undefined && (typeof rawCursor !== 'string' || !/^[1-9]\d*$/.test(rawCursor) || !Number.isSafeInteger(Number(rawCursor)))) {
+        return res.status(400).json({ error: 'Valid beforeId required' });
+      }
+      const beforeId = rawCursor === undefined ? null : Number(rawCursor);
+      const rows = await db.select().from(activitySessions)
+        .where(beforeId === null ? eq(activitySessions.childId, childId) : and(eq(activitySessions.childId, childId), lt(activitySessions.id, beforeId)))
+        .orderBy(desc(activitySessions.id))
+        .limit(101);
+      const recent = rows.slice(0, 100);
+      return res.json({
+        child: ownedChild,
+        recent,
+        nextCursor: rows.length > 100 ? recent[recent.length - 1].id : null,
+      });
+    }
 
     const [recentRows, summaries] = await Promise.all([
       db.select().from(activitySessions)
@@ -59,6 +80,6 @@ export default async function handler(req: Request, res: Response) {
       badgeCount: 0,
     });
   } catch (e) {
-    res.status(500).json({ error: String(e) });
+    res.status(500).json({ error: daily ? 'Daily learning progress is temporarily unavailable.' : String(e) });
   }
 }

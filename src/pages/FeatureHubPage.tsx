@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ChevronRight, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import FeaturePageShell from '@/components/FeaturePageShell';
+import DailyLearningDashboard from '@/components/DailyLearningDashboard';
 
 const FEATURES = [
   { title: "Archie's Lessons", description: 'Choose a subject and a 15, 20, 30 or 60-minute lesson.', emoji: '🎓', route: '/lessons', colour: 'from-blue-500 to-indigo-700' },
@@ -29,6 +30,7 @@ export default function FeatureHubPage() {
         <meta name="description" content="Open Sodafom lessons, games, reading, homework help and family features." />
       </Helmet>
       <FeaturePageShell title="Archie's Menu" subtitle="Choose what you would like to do." emoji="🌈" backTo="/">
+        <DailyLearningDashboard />
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Sodafom activities">
           {FEATURES.map((feature, index) => (
             <motion.button
