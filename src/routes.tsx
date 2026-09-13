@@ -26,6 +26,8 @@ import CartPage from './pages/cart';
 import ForgotPasswordPage from './pages/hub/forgot-password';
 import ResetPasswordPage from './pages/hub/reset-password';
 import ParentDashboardPage from './pages/parent-dashboard';
+import ChoresPage from './pages/ChoresPage';
+import ParentChoresPage from './pages/ParentChoresPage';
 import DailyChallengePage from './pages/daily-challenge';
 import CheckoutSuccess from './pages/checkout/success';
 import CheckoutCancel from './pages/checkout/cancel';
@@ -742,6 +744,15 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/parent-dashboard',
   element: <ParentDashboardPage />,
+}, {
+  path: '/parent-dashboard/chores',
+  element: <ParentChoresPage />,
+}, {
+  path: '/chores',
+  element: <ChoresPage />,
+}, {
+  path: '/pocket-money',
+  element: <ChoresPage />,
 }, {
   path: '/daily-challenge',
   element: <DailyChallengePage />,
