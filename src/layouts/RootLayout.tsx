@@ -13,6 +13,7 @@ import AccessibilityBar from '@/components/AccessibilityBar';
 import ArchieHelper from '@/components/ArchieHelper';
 import MobileTrialBar from '@/components/MobileTrialBar';
 import { usePageView } from '@/hooks/usePageView';
+import ReminderNotice from '@/components/ReminderNotice';
 
 interface RootLayoutProps {
   children: ReactElement;
@@ -87,6 +88,7 @@ export default function RootLayout({
                 </Helmet>
                 <ScrollRestoration />
                 {!immersiveApp && <Header />}
+                <ReminderNotice />
                 <div className={immersiveApp ? 'sodafom-immersive-route' : undefined}>
                   {children}
                 </div>

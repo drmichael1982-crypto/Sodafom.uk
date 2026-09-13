@@ -1,156 +1,158 @@
-/**
- * /notifications — Notification preferences page
- * Lets users manage their push subscription and see what they'll receive.
- */
+/** /notifications — parents choose gentle, optional learning reminders. */
+import { useEffect, useState, type FormEvent } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
-import { motion } from 'motion/react';
-import { Bell, BellOff, CheckCircle, XCircle, AlertTriangle, Flame, Star, Sparkles, BookOpen } from 'lucide-react';
-import { ProtectedRoute } from '@/lib/auth/auth-client';
-import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { Link } from 'react-router';
+import { ProtectedRoute, useSession } from '@/lib/auth/auth-client';
+import { API_PREFIX } from '@/lib/config';
+import {
+  REMINDER_TYPES, REMINDER_LABELS, REMINDER_COPY,
+  defaultReminderPreferences, parseReminderPreferences, type ReminderPreferences,
+} from '@/lib/reminder-policy';
 
-const NOTIFICATION_TYPES = [
-  { icon: <Flame size={18} className="text-orange-500" />, title: 'Daily streak reminder', desc: "We'll nudge you if you haven't played today so your streak stays alive.", bg: 'bg-orange-50 border-orange-200' },
-  { icon: <Star size={18} className="text-yellow-500" />, title: 'New games & activities', desc: 'Be first to know when a new game drops on Sodafom.', bg: 'bg-yellow-50 border-yellow-200' },
-  { icon: <Sparkles size={18} className="text-purple-500" />, title: 'Rewards & milestones', desc: "Celebrate when your child earns a new character or hits a star milestone.", bg: 'bg-purple-50 border-purple-200' },
-  { icon: <BookOpen size={18} className="text-green-600" />, title: 'Weekly progress digest', desc: "A quick summary of how your learners did this week.", bg: 'bg-green-50 border-green-200' },
-];
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
+const INPUT = 'mt-1 block min-h-11 w-full rounded-xl border border-border bg-background p-3 text-foreground';
+const API = `${API_PREFIX}/notifications/read?reminders=preferences`;
 
-function NotificationSettings() {
-  const { state, error, subscribe, unsubscribe } = usePushNotifications();
+function ParentReminderSettings() {
+  const [draft, setDraft] = useState<ReminderPreferences>(defaultReminderPreferences);
+  const [password, setPassword] = useState('');
+  const [ready, setReady] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [retry, setRetry] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+    let active = true;
+    setReady(false);
+    setError('');
+    void (async () => {
+      try {
+        const response = await fetch(API, { method: 'POST', credentials: 'include', cache: 'no-store', signal: controller.signal, headers: { 'Content-Type': 'application/json', 'X-Sodafom-Reminders': '1' }, body: '{}' });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Could not load reminder settings.');
+        const preferences = parseReminderPreferences(result.preferences);
+        if (active) { setDraft(preferences); setReady(true); }
+      } catch (failure) {
+        if (active) setError(failure instanceof Error && failure.name !== 'AbortError' ? failure.message : 'Could not load settings. Please try again.');
+      } finally { window.clearTimeout(timeout); }
+    })();
+    return () => { active = false; window.clearTimeout(timeout); controller.abort(); };
+  }, [retry]);
 
-  const statusInfo = {
-    loading:      { icon: <div className="w-5 h-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />, label: 'Checking…',        color: 'text-muted-foreground' },
-    subscribed:   { icon: <CheckCircle size={20} className="text-green-600" />,   label: 'Notifications on',  color: 'text-green-700' },
-    unsubscribed: { icon: <BellOff size={20} className="text-muted-foreground" />, label: 'Notifications off', color: 'text-muted-foreground' },
-    denied:       { icon: <XCircle size={20} className="text-destructive" />,      label: 'Blocked by browser', color: 'text-destructive' },
-    unsupported:  { icon: <AlertTriangle size={20} className="text-amber-500" />,  label: 'Not supported',     color: 'text-amber-600' },
-  }[state];
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    if (!ready || busy) return;
+    setError(''); setMessage('');
+    let preferences: ReminderPreferences;
+    try { preferences = parseReminderPreferences(draft); }
+    catch (failure) { setError(failure instanceof Error ? failure.message : 'Check your settings.'); return; }
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 12000);
+    setBusy(true);
+    // Password is sent only to the authenticated server and is never saved locally.
+    const verification = password;
+    setPassword('');
+    try {
+      const response = await fetch(`${API_PREFIX}/notifications/read?reminders=save`, {
+        method: 'POST', credentials: 'include', signal: controller.signal,
+        headers: { 'Content-Type': 'application/json', 'X-Sodafom-Reminders': '1' },
+        body: JSON.stringify({ preferences, password: verification }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not save reminder settings.');
+      setDraft(parseReminderPreferences(result.preferences));
+      setMessage('Your reminder choices are saved. Taking a break is always fine.');
+      window.dispatchEvent(new Event('sodafom:reminder-settings-changed'));
+    } catch (failure) {
+      setError(failure instanceof Error && failure.name !== 'AbortError' ? failure.message : 'The save could not be confirmed. Reload to check your choices before trying again.');
+    } finally { window.clearTimeout(timeout); setBusy(false); }
+  }
 
-  return (
-    <>
-      <Helmet>
-        <title>Notification Settings — Sodafom</title>
-        <meta name="description" content="Manage your Sodafom push notification preferences — streak reminders, new games, and weekly progress updates." />
-        <link rel="canonical" href="https://sodafom.uk/notifications" />
-        <meta name="robots" content="noindex" />
-      </Helmet>
-
-      <main className="min-h-screen bg-background">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-12">
-          {/* Back */}
-          <Link to="/hub" className="inline-flex items-center gap-1.5 text-sm font-bold text-muted-foreground hover:text-primary transition-colors mb-8">
-            ← Back to Hub
-          </Link>
-
-          {/* Header */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Bell size={24} className="text-primary" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-black text-foreground" style={{ fontFamily: 'var(--font-heading)' }}>
-                  Notification settings
-                </h1>
-                <div className={`flex items-center gap-1.5 text-sm font-bold ${statusInfo.color}`}>
-                  {statusInfo.icon}
-                  <span>{statusInfo.label}</span>
-                </div>
-              </div>
+  return <main className="min-h-screen bg-background px-4 py-8 text-foreground">
+    <Helmet><title>Parent Reminder Settings — Sodafom</title><meta name="robots" content="noindex" /></Helmet>
+    <div className="mx-auto max-w-2xl space-y-6">
+      <Link to="/hub/notifications" className="inline-block min-h-11 py-3 font-bold text-primary">← Back to notifications</Link>
+      <header>
+        <h1 className="text-3xl font-black">Notifications and reminders</h1>
+        <p className="mt-3 leading-relaxed">Parents choose what appears and when. Every reminder starts switched off. There are no adverts, streak warnings or penalties for missing a day.</p>
+      </header>
+      <div className="rounded-2xl border border-border bg-muted p-4 leading-relaxed">
+        <p>Reminders appear on Home, the Hub or Parent Area while the app is open. Closed-app delivery is not scheduled by this feature.</p>
+        <p className="mt-2">At most two reminders in any 24 hours, at least an hour apart. Choices at the same time are combined. Missed times are skipped, not saved up.</p>
+      </div>
+      {error && <p role="alert" className="rounded-xl border border-destructive p-4 text-destructive">{error}</p>}
+      <p role="status" aria-live="polite">{message || (!ready && !error ? 'Loading your reminder choices…' : '')}</p>
+      {!ready && error && <button type="button" className="min-h-11 rounded-xl border p-3 font-bold" onClick={() => setRetry(value => value + 1)}>Try loading again</button>}
+      <form onSubmit={save} className="space-y-6">
+        <fieldset disabled={!ready || busy} className="space-y-6 disabled:opacity-60">
+          <legend className="text-xl font-bold">Choose reminder types, days and times</legend>
+          {REMINDER_TYPES.map(type => {
+            const rule = draft.rules[type];
+            return <section key={type} className="rounded-2xl border border-border bg-card p-5">
+              <label className="flex min-h-11 items-center gap-3 text-lg font-bold">
+                <input type="checkbox" className="h-5 w-5" checked={rule.enabled}
+                  onChange={event => { setMessage(''); setDraft(current => ({ ...current, rules: { ...current.rules, [type]: { ...current.rules[type], enabled: event.target.checked } } })); }} />
+                {REMINDER_LABELS[type]}
+              </label>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{REMINDER_COPY[type]}</p>
+              {type === 'achievements' && <p className="mt-2 text-sm">Only shown for a newly recorded badge, never an invented achievement.</p>}
+              <label className="mt-4 block font-semibold">{REMINDER_LABELS[type]} time
+                <input type="time" required min="07:00" max="19:59" className={INPUT} value={rule.time}
+                  onChange={event => setDraft(current => ({ ...current, rules: { ...current.rules, [type]: { ...current.rules[type], time: event.target.value } } }))} />
+              </label>
+              <fieldset className="mt-4"><legend className="font-semibold">{REMINDER_LABELS[type]} days</legend>
+                <div className="mt-2 flex flex-wrap gap-2">{DAY_ORDER.map(day => <label key={day} className="flex min-h-11 items-center gap-2 rounded-xl border border-border px-3">
+                  <input type="checkbox" checked={rule.days.includes(day)} aria-label={`${REMINDER_LABELS[type]} on ${DAYS[day]}`}
+                    onChange={event => setDraft(current => ({ ...current, rules: { ...current.rules, [type]: { ...current.rules[type], days: event.target.checked ? [...current.rules[type].days, day] : current.rules[type].days.filter(value => value !== day) } } }))} />
+                  <span aria-hidden="true">{DAYS[day].slice(0, 3)}</span>
+                </label>)}</div>
+              </fieldset>
+            </section>;
+          })}
+          <section className="space-y-4 rounded-2xl border border-border bg-card p-5">
+            <h2 className="text-xl font-bold">Family quiet times</h2>
+            <label className="block font-semibold">Time zone
+              <input required list="reminder-timezones" className={INPUT} value={draft.timeZone}
+                onChange={event => setDraft(current => ({ ...current, timeZone: event.target.value }))} />
+              <datalist id="reminder-timezones"><option value="Europe/London" /><option value="Europe/Dublin" /><option value="Europe/Paris" /><option value="America/New_York" /><option value="Australia/Sydney" /></datalist>
+            </label>
+            <p className="text-sm">Times follow this time zone, including its summer-time changes. Reminders are always quiet from 20:00 to 07:00.</p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block font-semibold">Quiet hours start<input required type="time" className={INPUT} value={draft.quietStart} onChange={event => setDraft(current => ({ ...current, quietStart: event.target.value }))} /></label>
+              <label className="block font-semibold">Quiet hours end<input required type="time" className={INPUT} value={draft.quietEnd} onChange={event => setDraft(current => ({ ...current, quietEnd: event.target.value }))} /></label>
             </div>
-          </motion.div>
-
-          {/* Main card */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card border-2 border-border rounded-3xl p-6 mb-6">
-            {state === 'unsupported' && (
-              <div className="text-center py-4">
-                <AlertTriangle size={32} className="text-amber-400 mx-auto mb-3" />
-                <p className="font-black text-foreground mb-1">Browser not supported</p>
-                <p className="text-muted-foreground text-sm">Push notifications aren't available in this browser. Try Chrome or Firefox on Android or desktop.</p>
-              </div>
-            )}
-
-            {state === 'denied' && (
-              <div className="text-center py-4">
-                <XCircle size={32} className="text-destructive mx-auto mb-3" />
-                <p className="font-black text-foreground mb-1">Notifications blocked</p>
-                <p className="text-muted-foreground text-sm mb-4">You've blocked notifications for Sodafom. To re-enable, click the lock icon in your browser's address bar and allow notifications.</p>
-                <div className="bg-muted rounded-xl p-3 text-xs text-muted-foreground font-bold text-left">
-                  <p>Chrome: Address bar → 🔒 → Site settings → Notifications → Allow</p>
-                  <p className="mt-1">Safari: Settings → Websites → Notifications → Allow</p>
-                </div>
-              </div>
-            )}
-
-            {(state === 'unsubscribed' || state === 'loading') && (
-              <div className="text-center py-2">
-                <div className="text-4xl mb-3">🔔</div>
-                <h2 className="font-black text-foreground text-lg mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
-                  Never miss a learning moment
-                </h2>
-                <p className="text-muted-foreground text-sm mb-5">
-                  Turn on push notifications to keep streaks alive, celebrate milestones, and be first to hear about new games.
-                </p>
-                {error && <p className="text-destructive text-sm font-bold mb-3">{error}</p>}
-                <button
-                  onClick={subscribe}
-                  disabled={state === 'loading'}
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-black hover:opacity-90 transition-opacity disabled:opacity-60"
-                >
-                  <Bell size={16} />
-                  {state === 'loading' ? 'Enabling…' : 'Enable notifications'}
-                </button>
-              </div>
-            )}
-
-            {state === 'subscribed' && (
-              <div className="text-center py-2">
-                <CheckCircle size={40} className="text-green-500 mx-auto mb-3" />
-                <h2 className="font-black text-foreground text-lg mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
-                  You're all set!
-                </h2>
-                <p className="text-muted-foreground text-sm mb-5">
-                  Push notifications are active on this device. We'll send you helpful reminders and updates.
-                </p>
-                <button
-                  onClick={unsubscribe}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-border text-muted-foreground font-bold text-sm hover:border-destructive hover:text-destructive transition-colors"
-                >
-                  <BellOff size={14} />
-                  Turn off notifications
-                </button>
-              </div>
-            )}
-          </motion.div>
-
-          {/* What you'll receive */}
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <h2 className="font-black text-foreground text-lg mb-4" style={{ fontFamily: 'var(--font-heading)' }}>
-              What you'll receive
-            </h2>
-            <div className="space-y-3">
-              {NOTIFICATION_TYPES.map(({ icon, title, desc, bg }) => (
-                <div key={title} className={`flex items-start gap-3 p-4 rounded-2xl border ${bg}`}>
-                  <div className="mt-0.5 shrink-0">{icon}</div>
-                  <div>
-                    <p className="font-black text-foreground text-sm">{title}</p>
-                    <p className="text-muted-foreground text-xs mt-0.5 leading-relaxed">{desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </main>
-    </>
-  );
+            <label className="block font-semibold">Maximum reminders in 24 hours
+              <select className={INPUT} value={draft.maxPerDay} onChange={event => setDraft(current => ({ ...current, maxPerDay: Number(event.target.value) as 1 | 2 }))}>
+                <option value={1}>One</option><option value={2}>Two</option>
+              </select>
+            </label>
+          </section>
+          <button type="button" className="min-h-11 rounded-xl border border-border px-4 py-3 font-bold" onClick={() => {
+            setDraft(current => ({ ...current, rules: Object.fromEntries(REMINDER_TYPES.map(type => [type, { ...current.rules[type], enabled: false }])) as ReminderPreferences['rules'] }));
+            setMessage('All reminder types are off in this form. Confirm with your parent password and save to apply.');
+          }}>Switch every reminder off</button>
+          <section className="space-y-3 rounded-2xl border border-border bg-card p-5">
+            <h2 className="text-xl font-bold">Parent confirmation</h2>
+            <p>Enter the password for your signed-in parent account to apply any changes. This prevents children changing saved reminders on a shared device.</p>
+            <label className="block font-semibold">Parent account password
+              <input required type="password" name="parent-reminder-password" autoComplete="current-password" maxLength={1024} className={INPUT} value={password} onChange={event => setPassword(event.target.value)} />
+            </label>
+            <p className="text-sm text-muted-foreground">A parent account with a password and a child profile is required.</p>
+            <button type="submit" className="min-h-12 w-full rounded-xl bg-primary px-5 py-3 font-bold text-primary-foreground">{busy ? 'Saving…' : 'Save reminder choices'}</button>
+          </section>
+        </fieldset>
+      </form>
+    </div>
+  </main>;
 }
-
+function AccountReminderSettings() {
+  const { user } = useSession();
+  // Discard passwords and preferences immediately when the signed-in account changes.
+  return user ? <ParentReminderSettings key={user.id} /> : null;
+}
 export default function NotificationsPage() {
-  return (
-    <ProtectedRoute>
-      <NotificationSettings />
-    </ProtectedRoute>
-  );
+  return <ProtectedRoute><AccountReminderSettings /></ProtectedRoute>;
 }
