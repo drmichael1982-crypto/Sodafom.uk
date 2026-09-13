@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
-import { PHOTO_TYPES, validatePhoto } from './scanner-core';
+import { PHOTO_TYPES, validatePhoto, validatePhotoDataUrl } from './scanner-core';
 
 interface Props {
   onPhoto: (photo: string) => void;
@@ -15,6 +15,7 @@ export default function ScannerCapture({ onPhoto, onError, onStart }: Props) {
   const video = useRef<HTMLVideoElement>(null);
   const stream = useRef<MediaStream | null>(null);
   const reader = useRef<FileReader | null>(null);
+  const previewImage = useRef<HTMLImageElement | null>(null);
   const generation = useRef(0);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [ready, setReady] = useState(false);
@@ -25,14 +26,34 @@ export default function ScannerCapture({ onPhoto, onError, onStart }: Props) {
     if (node && stream.current) node.srcObject = stream.current;
   }, []);
 
+  const discardReader = useCallback((target = reader.current) => {
+    if (!target) return;
+    if (reader.current === target) reader.current = null;
+    // A FileReader keeps the original upload (and its EXIF data) in memory.
+    // Drop all references as soon as we no longer need the temporary source.
+    target.onload = null;
+    target.onerror = null;
+    target.onabort = null;
+    if (target.readyState === 1) target.abort();
+  }, []);
+  const discardPreviewImage = useCallback((target = previewImage.current) => {
+    if (!target) return;
+    if (previewImage.current === target) previewImage.current = null;
+    target.onload = null;
+    target.onerror = null;
+    // Clearing the source releases the un-reencoded upload if the user resets
+    // or leaves the page before decoding completes.
+    target.src = '';
+  }, []);
+
   const release = useCallback(() => {
     generation.current += 1;
-    reader.current?.abort();
-    reader.current = null;
+    discardReader();
+    discardPreviewImage();
     stream.current?.getTracks().forEach(track => track.stop());
     stream.current = null;
     if (video.current) video.current.srcObject = null;
-  }, []);
+  }, [discardPreviewImage, discardReader]);
   const close = useCallback(() => {
     release(); setCameraOpen(false); setOpening(false); setReady(false);
   }, [release]);
@@ -48,6 +69,19 @@ export default function ScannerCapture({ onPhoto, onError, onStart }: Props) {
     };
   }, [close, release]);
 
+  const removeMetadataAndResize = (image: HTMLImageElement) => {
+    // Drawing to a new canvas deliberately drops EXIF data (including any
+    // location metadata) before an uploaded file is ever previewed or sent.
+    const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(image.naturalWidth * scale);
+    canvas.height = Math.round(image.naturalHeight * scale);
+    const context = canvas.getContext('2d');
+    if (!context || !canvas.width || !canvas.height) throw new Error('Photo image unavailable');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.82);
+  };
+
   const choose = (file?: File) => {
     if (!file) return;
     close(); onStart(); onError('');
@@ -57,18 +91,45 @@ export default function ScannerCapture({ onPhoto, onError, onStart }: Props) {
     const next = new FileReader();
     reader.current = next;
     next.onload = () => {
-      if (current !== generation.current) return;
+      if (current !== generation.current) { discardReader(next); return; }
       const data = String(next.result ?? '');
+      // The raw uploaded Data URL is only needed to make this one temporary
+      // image. After this, the FileReader must not retain it in component state.
+      discardReader(next);
       const check = new Image();
+      previewImage.current = check;
+      const discardCheck = () => discardPreviewImage(check);
       check.onload = () => {
-        if (current !== generation.current) return;
-        if (!check.naturalWidth || !check.naturalHeight) { onError('This photo could not be opened.'); return; }
-        onPhoto(data);
+        if (current !== generation.current) { discardCheck(); return; }
+        try {
+          if (!check.naturalWidth || !check.naturalHeight) {
+            onError('This photo could not be opened.');
+            return;
+          }
+          const safePhoto = removeMetadataAndResize(check);
+          const safeProblem = validatePhotoDataUrl(safePhoto);
+          if (safeProblem) {
+            onError(safeProblem);
+            return;
+          }
+          onPhoto(safePhoto);
+        } catch {
+          onError('This photo could not be prepared safely. Please take another one.');
+        } finally {
+          discardCheck();
+        }
       };
-      check.onerror = () => { if (current === generation.current) onError('This file is not a readable photograph. Please choose another.'); };
+      check.onerror = () => {
+        if (current === generation.current) onError('This file is not a readable photograph. Please choose another.');
+        discardCheck();
+      };
       check.src = data;
     };
-    next.onerror = () => { if (current === generation.current) onError('The photograph could not be opened. Please choose another.'); };
+    next.onerror = () => {
+      if (current === generation.current) onError('The photograph could not be opened. Please choose another.');
+      discardReader(next);
+    };
+    next.onabort = () => discardReader(next);
     next.readAsDataURL(file);
   };
 
@@ -102,15 +163,20 @@ export default function ScannerCapture({ onPhoto, onError, onStart }: Props) {
     const frame = video.current;
     if (!frame?.videoWidth || !frame.videoHeight) return;
     try {
-      const scale = Math.min(1, 2000 / Math.max(frame.videoWidth, frame.videoHeight));
+      // Keep a fresh camera capture well below the same six-megabyte limit as
+      // uploads. It stays in memory only until the child chooses to send it.
+      const scale = Math.min(1, 1600 / Math.max(frame.videoWidth, frame.videoHeight));
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(frame.videoWidth * scale);
       canvas.height = Math.round(frame.videoHeight * scale);
       const context = canvas.getContext('2d');
       if (!context) throw new Error('Camera image unavailable');
       context.drawImage(frame, 0, 0, canvas.width, canvas.height);
-      const data = canvas.toDataURL('image/jpeg', 0.9);
-      close(); onPhoto(data);
+      const data = canvas.toDataURL('image/jpeg', 0.82);
+      const problem = validatePhotoDataUrl(data);
+      close();
+      if (problem) { onError(problem); return; }
+      onPhoto(data);
     } catch {
       close(); onError('That photo could not be taken. Please upload a photo instead.');
     }
