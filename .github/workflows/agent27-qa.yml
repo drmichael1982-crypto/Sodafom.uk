@@ -60,6 +60,14 @@ jobs:
           docker run --rm -v "$GITHUB_WORKSPACE:/app" -w /app node:22-bookworm \
             sh -c 'node --version && corepack enable && corepack prepare pnpm@11.23.0 --activate && pnpm install --frozen-lockfile --ignore-scripts' \
             2>&1 | tee qa-output/install.txt
+      - name: Startup storage regressions (network isolated)
+        id: startup
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            -e CI=true node:22-bookworm \
+            node --test scripts/qa/agent27/startup-config.node.mjs 2>&1 | tee qa-output/startup.txt
       # No real data, paid AI, payment, email or deployment endpoints are reachable.
       - name: Existing island regression tests (network isolated)
         id: islands
@@ -131,6 +139,7 @@ jobs:
         env:
           RECOVERY: ${{ steps.recovery.outcome }}
           INSTALL: ${{ steps.install.outcome }}
+          STARTUP: ${{ steps.startup.outcome }}
           ISLANDS: ${{ steps.islands.outcome }}
           UNIT: ${{ steps.unit.outcome }}
           GUARD: ${{ steps.guard.outcome }}
@@ -139,6 +148,6 @@ jobs:
           BUILD: ${{ steps.build.outcome }}
         run: |
           printf '## Agent27 baseline QA\n\nCommit: `%s`\n\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
-          printf '| Check | Outcome |\n| --- | --- |\n| Recovery regressions | %s |\n| Frozen pnpm install | %s |\n| Existing island tests | %s |\n| Vitest | %s |\n| Admin/paid-AI guards | %s |\n| Lint | %s |\n| Type check | %s |\n| Build | %s |\n' "$RECOVERY" "$INSTALL" "$ISLANDS" "$UNIT" "$GUARD" "$LINT" "$TYPES" "$BUILD" >> "$GITHUB_STEP_SUMMARY"
+          printf '| Check | Outcome |\n| --- | --- |\n| Recovery regressions | %s |\n| Frozen pnpm install | %s |\n| Startup storage regressions | %s |\n| Existing island tests | %s |\n| Vitest | %s |\n| Admin/paid-AI guards | %s |\n| Lint | %s |\n| Type check | %s |\n| Build | %s |\n' "$RECOVERY" "$INSTALL" "$STARTUP" "$ISLANDS" "$UNIT" "$GUARD" "$LINT" "$TYPES" "$BUILD" >> "$GITHUB_STEP_SUMMARY"
           printf '\nAutomated checks only: not a real-device, microphone, camera or live-account end-to-end certification. Dependency lifecycle scripts are intentionally disabled. No merge or deployment was performed.\n' >> "$GITHUB_STEP_SUMMARY"
-          test "$RECOVERY" = success && test "$INSTALL" = success && test "$ISLANDS" = success && test "$UNIT" = success && test "$GUARD" = success && test "$LINT" = success && test "$TYPES" = success && test "$BUILD" = success
+          test "$RECOVERY" = success && test "$INSTALL" = success && test "$STARTUP" = success && test "$ISLANDS" = success && test "$UNIT" = success && test "$GUARD" = success && test "$LINT" = success && test "$TYPES" = success && test "$BUILD" = success
