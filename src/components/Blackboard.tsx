@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { BookOpen, Sparkles, Lightbulb, HelpCircle, CheckCircle2, XCircle } from 'lucide-react';
 
 export interface BlackboardProps {
@@ -20,6 +20,7 @@ export interface BlackboardProps {
   feedback?: { isCorrect: boolean; message: string } | null;
   progressPercent: number;
   isLocalMode?: boolean;
+  answerLocked?: boolean;
 }
 
 export function Blackboard({
@@ -39,7 +40,8 @@ export function Blackboard({
   simplerText,
   feedback,
   progressPercent,
-  isLocalMode = true
+  isLocalMode = true,
+  answerLocked = false,
 }: BlackboardProps) {
   return (
     <div className="relative w-full overflow-hidden rounded-[2rem] border-4 border-white bg-gradient-to-br from-sky-500 via-blue-600 to-violet-600 p-5 font-sans text-slate-900 shadow-2xl">
@@ -131,11 +133,12 @@ export function Blackboard({
                     key={opt}
                     type="button"
                     onClick={() => onOptionSelect && onOptionSelect(opt)}
+                    disabled={answerLocked}
                     className={`p-3 rounded-xl text-xs font-extrabold border-2 transition-all ${
                       selectedOption === opt
                         ? 'bg-yellow-400 text-amber-950 border-yellow-500 font-black shadow-lg scale-[1.02]'
                         : 'border-sky-300 bg-gradient-to-b from-sky-50 to-blue-100 text-blue-950 hover:from-yellow-50 hover:to-yellow-100'
-                    }`}
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                   >
                     {opt}
                   </button>
@@ -149,13 +152,14 @@ export function Blackboard({
                   value={typedInput}
                   onChange={(e) => onTypedInputChange && onTypedInputChange(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && onSubmitAnswer && onSubmitAnswer()}
+                  disabled={answerLocked}
                   placeholder="Type your answer here..."
                   className="flex-1 rounded-xl border-2 border-sky-300 bg-white px-4 py-2.5 text-xs font-bold text-blue-950 placeholder-slate-400 focus:border-yellow-400 focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={onSubmitAnswer}
-                  disabled={!typedInput.trim()}
+                  disabled={!typedInput.trim() || answerLocked}
                   className="px-5 py-2.5 bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 text-amber-950 font-black text-xs rounded-xl shadow transition-all"
                 >
                   Submit
