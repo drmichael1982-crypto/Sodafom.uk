@@ -9,10 +9,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, Volume2, X, Send, Square, Sparkles, BookOpen, Play } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useVoice } from '@/lib/voice-context';
-import { API_PREFIX } from '@/lib/config';
+import { askArchie, friendlyArchieError } from '@/lib/archie-routing';
 import { ArchieCharacter } from './ArchieCharacter';
 import { useArchieContext } from '@/contexts/ArchieContext';
-import { tryLocalArchieResponse } from '@/lib/archie-local';
 import { games as gamesContent } from 'virtual:content';
 
 type State = 'idle' | 'listening' | 'thinking' | 'speaking';
@@ -81,6 +80,9 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastReadQuestionRef = useRef<string | null>(null);
+  const requestInFlightRef = useRef(false);
+  const requestAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => () => requestAbortRef.current?.abort(), []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -126,9 +128,11 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || isLoading) return;
+    if (!trimmed || isLoading || requestInFlightRef.current) return;
 
-    console.log('AI_REQUEST_SENT');
+    requestInFlightRef.current = true;
+    const controller = new AbortController();
+    requestAbortRef.current = controller;
     const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: trimmed };
     const assistantId = `assistant-${Date.now()}`;
 
@@ -138,7 +142,6 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
     setError(null);
 
     try {
-      console.log('AI_RESPONSE_RECEIVED');
       const destination = requestedDestination(trimmed);
       if (destination) {
         const reply = `Of course! Opening ${destination.label} now.`;
@@ -150,133 +153,34 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
         }, 900);
         return;
       }
-      const local = tryLocalArchieResponse(trimmed);
+
       const hintRequest = /\b(hint|help|what do i have to do|instructions?)\b/i.test(trimmed);
-      if (local || (gameTitle && hintRequest)) {
-        const localText = local?.text ?? (currentQuestion
+      const localHint = gameTitle && hintRequest
+        ? (currentQuestion
           ? `Let's work it out together. Read this carefully: ${currentQuestion}. Look at each choice, rule out the ones that cannot be right, then choose your best answer.`
-          : `You are playing ${gameTitle}. Read the instructions carefully, take your time, and try one step at a time. I'm right here if you need me.`);
-        setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: localText } : m));
-        speak(localText);
-        return;
-      }
-
-      console.log('[Archie Diagnostic] 8. AI response received');
-      console.log(`[Archie] START sendMessage: "${trimmed}"`);
-      // Build context-aware prompt if in a game
-      let contextPrompt = "";
-      if (gameTitle) {
-        contextPrompt = `\n\nCONTEXT: The child is currently playing "${gameTitle}" (${subject}).`;
-        if (currentQuestion) {
-          contextPrompt += ` The current question is: "${currentQuestion}".`;
-        }
-        contextPrompt += ` If they ask for help or a hint, help them think through this specific question without giving the answer away directly.`;
-      }
-
-      // Filter out empty messages from history
+          : `You are playing ${gameTitle} (${subject}). Read the instructions carefully, take your time, and try one step at a time. I'm right here if you need me.`)
+        : undefined;
       const history = [...messages, userMessage]
-        .filter(m => m.content && m.content.trim().length > 0)
-        .map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
-      console.log(`[Archie] Sanitized history length: ${history.length}`);
-
-      const fetchUrl = `${API_PREFIX}/chat`;
-      console.log(`[Archie] Fetching URL: ${fetchUrl}`);
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.warn('[Archie] Request TIMEOUT triggered (45s)');
-        controller.abort();
-      }, 45000);
-
-      console.log('[Archie] Calling fetch...');
-      const response = await fetch(fetchUrl, {
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'include',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/plain, */*'
-        },
-        body: JSON.stringify({
-          messages: history,
-          systemExtra: contextPrompt
-        }),
-      }).catch(e => {
-        clearTimeout(timeoutId);
-        console.error(`[Archie] Fetch CATCH block:`, e);
-        if (e.name === 'AbortError') throw new Error('Request timed out. Please try again!');
-        throw new Error(`Connection failed: ${e.message || 'Check internet'}.`);
-      });
-
-      clearTimeout(timeoutId);
-      console.log(`[Archie] Fetch COMPLETED. Status: ${response.status} ${response.statusText}`);
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => '');
-        console.error(`[Archie] Response NOT OK. Status: ${response.status}. Error: ${errorText}`);
-        throw new Error(errorText || `Server error: ${response.status}`);
-      }
-
-      let fullContent = '';
-      const contentType = response.headers.get('content-type');
-      console.log(`[Archie] Content-Type: ${contentType}`);
-
-      // Only treat as stream if explicitly told so by the server
-      const isStream = contentType?.includes('text/event-stream');
-      console.log(`[Archie] isStream: ${isStream}`);
-
-      if (isStream && response.body && typeof (response.body as any).getReader === 'function') {
-        console.log('[Archie] Starting STREAM processing...');
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        let chunkCount = 0;
-        for (let result = await reader.read(); !result.done; result = await reader.read()) {
-          const chunk = decoder.decode(result.value, { stream: true });
-          chunkCount++;
-          console.log(`[Archie] Received chunk #${chunkCount} (${chunk.length} chars)`);
-          fullContent += chunk;
-        }
-        setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, content: fullContent } : m))
-        );
-        console.log(`[Archie] STREAM finished. Total length: ${fullContent.length}`);
-      } else {
-        console.log('[Archie] Starting BUFFERED processing (text)...');
-        fullContent = await response.text();
-        console.log(`[Archie] BUFFERED finished. Length: ${fullContent?.length}`);
-        if (!fullContent) {
-          console.warn('[Archie] Received EMPTY content from server');
-          throw new Error('Received empty response from Archie.');
-        }
-
-        setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, content: fullContent } : m))
-        );
-      }
-
-      console.log(`[Archie] Parsing Archie message...`);
-      const { text } = parseArchieMessage(fullContent);
-      console.log(`[Archie] Final parsed text length: ${text?.length}`);
-      if (text) {
-        console.log(`[Archie] Triggering TTS speak...`);
-        speak(text);
-      } else {
-        console.warn('[Archie] No text to speak after parsing.');
-      }
-    } catch (err) {
-      console.error('Archie Chat Error:', err);
-      const fallback = currentQuestion
-        ? `I can still help offline. The question is ${currentQuestion}. Take it one step at a time and check each choice.`
-        : `I'm still here. I cannot reach the online teacher just now, but I can read the game and help with maths, spelling and instructions.`;
-      setError('Online Archie is unavailable, so I am helping offline.');
-      setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: fallback } : m));
-      speak(fallback);
+        .filter((message) => message.content.trim())
+        .map((message) => ({ role: message.role, content: message.content }));
+      const reply = await askArchie({ messages: history, localHint, signal: controller.signal });
+      if (controller.signal.aborted) return;
+      setMessages((prev) => prev.map((message) => (
+        message.id === assistantId ? { ...message, content: reply.text } : message
+      )));
+      const parsed = parseArchieMessage(reply.text);
+      if (parsed.text) speak(parsed.text);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      const message = friendlyArchieError(error);
+      setError(message);
+      setMessages((prev) => prev.map((item) => (
+        item.id === assistantId ? { ...item, content: message } : item
+      )));
+      speak(message);
     } finally {
+      requestInFlightRef.current = false;
+      if (requestAbortRef.current === controller) requestAbortRef.current = null;
       setIsLoading(false);
     }
   }
