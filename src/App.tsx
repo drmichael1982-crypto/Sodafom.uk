@@ -30,6 +30,8 @@ const rootElement = <Suspense fallback={<SpinnerFallback />}>
 // with its default route error UI before our boundary can catch render errors.
 const routeTree: RouteObject[] = [{
   element: rootElement,
+  // Reuse the existing spinner while an initial deep link loads its route chunk.
+  hydrateFallbackElement: <SpinnerFallback />,
   children: routes
 }];
 const isCapacitorApp = typeof window !== 'undefined' && !!(window as any).Capacitor;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
+import { motion, useAnimationControls } from 'motion/react';
+import { useAnimationVisibility } from '../hooks/useAnimationVisibility';
 
 /**
  * ArchieCharacter — Reusable 3D mascot component.
@@ -12,6 +13,7 @@ export interface ArchieCharacterProps {
   speaking?: boolean;
   character?: 'archie' | 'soda' | 'bella' | 'rocky';
   className?: string;
+  loading?: 'eager' | 'lazy';
 }
 
 const CHARACTER_ASSETS: Record<string, { src: string; emoji: string; alt: string; name: string }> = {
@@ -25,13 +27,46 @@ export function ArchieCharacter({
   size = 140,
   speaking = false,
   character = 'archie',
-  className = ''
+  className = '',
+  loading = 'lazy'
 }: ArchieCharacterProps) {
   const [mouthState, setMouthState] = useState<'closed' | 'partly-open' | 'open'>('closed');
+  const { ref, active } = useAnimationVisibility<HTMLDivElement>();
+  const auraControls = useAnimationControls();
+  const imageControls = useAnimationControls();
 
-  // 3-state mouth animation timing when speaking
+  // Stop decorative loops when clipped, backgrounded, or unmounted. Speech
+  // playback itself remains the responsibility of the existing voice system.
   useEffect(() => {
-    if (!speaking) {
+    const stop = () => {
+      auraControls.stop();
+      imageControls.stop();
+    };
+    if (!active) {
+      stop();
+      return;
+    }
+    void auraControls.start({
+      scale: [1, 1.15, 1],
+      opacity: speaking ? [0.5, 0.8, 0.5] : [0.2, 0.4, 0.2],
+      transition: { duration: speaking ? 1.2 : 3, repeat: Infinity, ease: 'easeInOut' },
+    });
+    void imageControls.start(speaking
+      ? {
+          scale: [1, 1.04, 1],
+          rotate: [0, -1.5, 1.5, 0],
+          transition: { duration: 0.3, repeat: Infinity, ease: 'easeInOut' },
+        }
+      : {
+          y: [0, -4, 0],
+          transition: { duration: 2.8, repeat: Infinity, ease: 'easeInOut' },
+        });
+    return stop;
+  }, [active, speaking, auraControls, imageControls]);
+
+  // 3-state mouth animation timing only while speaking and visible.
+  useEffect(() => {
+    if (!speaking || !active) {
       setMouthState('closed');
       return;
     }
@@ -45,19 +80,16 @@ export function ArchieCharacter({
     }, 120);
 
     return () => clearInterval(interval);
-  }, [speaking]);
+  }, [speaking, active]);
 
   const asset = CHARACTER_ASSETS[character] ?? CHARACTER_ASSETS.archie;
 
   return (
-    <div className={`relative inline-block ${className}`} style={{ width: size, height: size }}>
+    <div ref={ref} className={`relative inline-block ${className}`} style={{ width: size, height: size }}>
       {/* Glow aura background */}
       <motion.div
-        animate={{
-          scale: [1, 1.15, 1],
-          opacity: speaking ? [0.5, 0.8, 0.5] : [0.2, 0.4, 0.2],
-        }}
-        transition={{ duration: speaking ? 1.2 : 3, repeat: Infinity, ease: 'easeInOut' }}
+        initial={{ scale: 1, opacity: speaking ? 0.5 : 0.2 }}
+        animate={auraControls}
         className="absolute inset-0 rounded-full bg-amber-300/40 blur-xl -z-10"
       />
 
@@ -65,26 +97,21 @@ export function ArchieCharacter({
       <motion.img
         src={asset.src}
         alt={asset.alt}
+        width={size}
+        height={size}
+        loading={loading}
+        decoding="async"
         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         onError={(e) => {
           (e.target as HTMLImageElement).style.display = 'none';
           (e.target as HTMLImageElement).parentElement!.innerHTML += `<div class="flex flex-col items-center justify-center h-full w-full bg-amber-100 rounded-full border-2 border-amber-400 p-2"><span class="text-2xl">${asset.emoji}</span><span class="text-[10px] font-black text-amber-900">${asset.name}</span></div>`;
         }}
-        animate={
-          speaking
-            ? { scale: [1, 1.04, 1], rotate: [0, -1.5, 1.5, 0] }
-            : { y: [0, -4, 0] }
-        }
-        transition={
-          speaking
-            ? { duration: 0.3, repeat: Infinity, ease: 'easeInOut' }
-            : { duration: 2.8, repeat: Infinity, ease: 'easeInOut' }
-        }
+        animate={imageControls}
         className="drop-shadow-xl"
       />
 
       {/* 3-State Mouth Motion Overlay Indicator */}
-      {speaking && (
+      {speaking && active && (
         <motion.div
           animate={{ scale: mouthState === 'open' ? 1.2 : mouthState === 'partly-open' ? 1.0 : 0.8 }}
           transition={{ duration: 0.1 }}
@@ -96,7 +123,7 @@ export function ArchieCharacter({
       )}
 
       {/* Interactive Sparkle */}
-      {speaking && (
+      {speaking && active && (
         <motion.div
           initial={{ opacity: 0, scale: 0 }}
           animate={{ opacity: 1, scale: 1 }}

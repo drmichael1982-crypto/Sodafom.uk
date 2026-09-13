@@ -31,38 +31,11 @@ import CheckoutSuccess from './pages/checkout/success';
 import CheckoutCancel from './pages/checkout/cancel';
 import ProdNotFoundPage from './pages/_404';
 // Game pages
-import NumberPopGame from './pages/games/number-pop';
-import TimesTableRaceGame from './pages/games/times-table-race';
-import FractionPizzaGame from './pages/games/fraction-pizza';
-import WordScrambleGame from './pages/games/word-scramble';
-import TimesTablesChallengeGame from './pages/games/times-tables-challenge';
-import SentenceScrambleGame from './pages/games/sentence-scramble';
-import ScienceLabGame from './pages/games/science-lab';
-import ShapeSorterGame from './pages/games/shape-sorter';
-import WordWizardGame from './pages/games/word-wizard';
-import SpellingBeeGame from './pages/games/spelling-bee';
-import TrickyWordHuntGame from './pages/games/tricky-word-hunt';
-import StoryBuilderGame from './pages/games/story-builder';
-import PhonicsParrotGame from './pages/games/phonics-parrot';
-import ReadingQuestGame from './pages/games/reading-quest';
-import WordSearchGame from './pages/games/word-search';
-import CrosswordGame from './pages/games/crossword';
 import Header from './layouts/parts/Header';
-import SudokuGame from './pages/games/sudoku';
-import NumberPuzzleGame from './pages/games/number-puzzle';
-import ColourBookGame from './pages/games/colour-book';
-import AlphabetExplorerGame from './pages/games/alphabet-explorer';
-import TimesTablesReaderGame from './pages/games/times-tables-reader';
 import ReviewsPage from './pages/reviews';
 import RewardsPage from './pages/rewards';
 import VoiceStudioPage from './pages/voice-studio';
 import StoryWriterPage from './pages/story-writer';
-import ReadingHubPage from './pages/games/reading-hub';
-import MathsHubPage from './pages/games/maths-hub';
-import SpellingHubPage from './pages/games/spelling-hub';
-import NumberBondsGame from './pages/games/number-bonds';
-import AnimalHabitatsGame from './pages/games/animal-habitats';
-import SentenceBuilderGame from './pages/games/sentence-builder';
 import CertificatesPage from './pages/certificates';
 import MockExamsPage from './pages/mock-exams/index';
 import AdminPortal from './pages/admin/AdminPortal';
@@ -88,113 +61,10 @@ import NotificationsPage from './pages/notifications';
 import BadgesPage from './pages/badges';
 import BattleHubPage from './pages/battle/index';
 import BattleRoomPage from './pages/battle/[id]';
-import AnimalKingdomGame from './pages/games/animal-kingdom';
-import NatureExplorerGame from './pages/games/nature-explorer';
-import GeographyQuizGame from './pages/games/geography-quiz';
-import MentalMathsSprintGame from './pages/games/mental-maths-sprint';
-import ColourLearnGame from './pages/games/colour-learn';
 // Maths games (new)
-import OddEvenGame from './pages/games/odd-even';
-import PlaceValueGame from './pages/games/place-value';
-import MultiplicationGridGame from './pages/games/multiplication-grid';
-import DivisionDashGame from './pages/games/division-dash';
-import NumberLineGame from './pages/games/number-line';
-import MathsMysteryGame from './pages/games/maths-mystery';
-import PatternMakerGame from './pages/games/pattern-maker';
-import AngleExplorerGame from './pages/games/angle-explorer';
-import PerimeterQuestGame from './pages/games/perimeter-quest';
-import AreaAdventureGame from './pages/games/area-adventure';
-import DataDetectiveGame from './pages/games/data-detective';
-import FractionMatchGame from './pages/games/fraction-match';
-import SpeedTablesGame from './pages/games/speed-tables';
-import RoundingRocketGame from './pages/games/rounding-rocket';
-import NegativeNumbersGame from './pages/games/negative-numbers';
-import CoordinatesGridGame from './pages/games/coordinates-grid';
-import SymmetryStudioGame from './pages/games/symmetry-studio';
-import TimeTellerGame from './pages/games/time-teller';
-import MathsWordProblemsGame from './pages/games/maths-word-problems';
-import OrderingNumbersGame from './pages/games/ordering-numbers';
-import MissingNumbersGame from './pages/games/missing-numbers';
-import MathsSnapGame from './pages/games/maths-snap';
-import RatioRecipeGame from './pages/games/ratio-recipe';
-import PrimeNumbersGame from './pages/games/prime-numbers';
-import AlgebraQuestGame from './pages/games/algebra-quest';
-import MathsChallengeGame from './pages/games/maths-challenge';
-import MathsBingoGame from './pages/games/maths-bingo';
-import CoinCounterGame from './pages/games/coin-counter';
 // Spelling games (new)
-import LetterSoundsGame from './pages/games/letter-sounds';
-import RhymeTimeGame from './pages/games/rhyme-time';
-import SyllableSplitGame from './pages/games/syllable-split';
-import PrefixPowerGame from './pages/games/prefix-power';
-import SuffixQuestGame from './pages/games/suffix-quest';
-import HomophonesGame from './pages/games/homophones';
-import CompoundWordsGame from './pages/games/compound-words';
-import SpellingChallengeGame from './pages/games/spelling-challenge';
-import WordFamiliesGame from './pages/games/word-families';
-import MissingLettersGame from './pages/games/missing-letters';
-import AnagramAttackGame from './pages/games/anagram-attack';
-import SilentLettersGame from './pages/games/silent-letters';
-import DoubleLettersGame from './pages/games/double-letters';
-import VowelSoundsGame from './pages/games/vowel-sounds';
-import SpellingSnapGame from './pages/games/spelling-snap';
-import WordBuilderGame from './pages/games/word-builder';
-import DictionaryDashGame from './pages/games/dictionary-dash';
-import ContractionStationGame from './pages/games/contraction-station';
-import PluralRulesGame from './pages/games/plural-rules';
-import WordMatchGame from './pages/games/word-match';
-import SpellingRaceGame from './pages/games/spelling-race';
 // Reading games (new)
-import ComprehensionQuestGame from './pages/games/comprehension-quest';
-import StorySequenceGame from './pages/games/story-sequence';
-import ReadingDetectiveGame from './pages/games/reading-detective';
-import PunctuationPatrolGame from './pages/games/punctuation-patrol';
-import MoneyMathsGame from './pages/games/money-maths';
-import PartsOfSpeechGame from './pages/games/parts-of-speech';
-import TellingTimeGame from './pages/games/telling-time';
-import GeographyUKGame from './pages/games/geography-uk';
-import SynonymsAntonymsGame from './pages/games/synonyms-antonyms';
-import GrammarGarageGame from './pages/games/grammar-garage';
-import NounSpotterGame from './pages/games/noun-spotter';
-import VerbVolcanoGame from './pages/games/verb-volcano';
-import AdjectiveAdventureGame from './pages/games/adjective-adventure';
-import SynonymSwapGame from './pages/games/synonym-swap';
-import AntonymArenaGame from './pages/games/antonym-arena';
-import ReadingSpeedGame from './pages/games/reading-speed';
-import PoetryCornerGame from './pages/games/poetry-corner';
-import TextTypesGame from './pages/games/text-types';
-import ReadingMapGame from './pages/games/reading-map';
-import WordMeaningGame from './pages/games/word-meaning';
-import SpeechMarksGame from './pages/games/speech-marks';
-import ConnectivesBridgeGame from './pages/games/connectives-bridge';
-import ReadingFluencyGame from './pages/games/reading-fluency';
-import BookReviewGame from './pages/games/book-review';
-import ReadingBingoGame from './pages/games/reading-bingo';
-import StoryMapGame from './pages/games/story-map';
-import ReadingChallengeGame from './pages/games/reading-challenge';
 // Science games (new)
-import HumanBodyGame from './pages/games/human-body';
-import SolarSystemGame from './pages/games/solar-system';
-import FoodChainsGame from './pages/games/food-chains';
-import StatesOfMatterGame from './pages/games/states-of-matter';
-import ForcesLabGame from './pages/games/forces-lab';
-import ElectricityCircuitGame from './pages/games/electricity-circuit';
-import PlantPartsGame from './pages/games/plant-parts';
-import LifeCyclesGame from './pages/games/life-cycles';
-import WeatherWatchGame from './pages/games/weather-watch';
-import RockDetectiveGame from './pages/games/rock-detective';
-import LightShadowsGame from './pages/games/light-shadows';
-import SoundScienceGame from './pages/games/sound-science';
-import MaterialsSortGame from './pages/games/materials-sort';
-import SkeletonBuilderGame from './pages/games/skeleton-builder';
-import HealthyEatingGame from './pages/games/healthy-eating';
-import MicrohabitatsGame from './pages/games/microhabitats';
-import MagnetsMagicGame from './pages/games/magnets-magic';
-import WaterCycleGame from './pages/games/water-cycle';
-import ClassificationKeysGame from './pages/games/classification-keys';
-import EarthSpaceGame from './pages/games/earth-space';
-import EvolutionExplorerGame from './pages/games/evolution-explorer';
-import ScienceQuizGame from './pages/games/science-quiz';
 import BackToSchoolShopPage from './pages/shop/back-to-school';
 const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
 const NotFoundPage = ProdNotFoundPage;
@@ -259,396 +129,396 @@ export const routes: RouteObject[] = [{
 // Individual game routes
 {
   path: '/games/number-pop',
-  element: <NumberPopGame />
+  lazy: () => import('./pages/games/number-pop').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/times-table-race',
-  element: <TimesTableRaceGame />
+  lazy: () => import('./pages/games/times-table-race').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/fraction-pizza',
-  element: <FractionPizzaGame />
+  lazy: () => import('./pages/games/fraction-pizza').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/word-scramble',
-  element: <WordScrambleGame />
+  lazy: () => import('./pages/games/word-scramble').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/times-tables-challenge',
-  element: <TimesTablesChallengeGame />
+  lazy: () => import('./pages/games/times-tables-challenge').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/sentence-scramble',
-  element: <SentenceScrambleGame />
+  lazy: () => import('./pages/games/sentence-scramble').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/science-lab',
-  element: <ScienceLabGame />
+  lazy: () => import('./pages/games/science-lab').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/shape-sorter',
-  element: <ShapeSorterGame />
+  lazy: () => import('./pages/games/shape-sorter').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/word-wizard',
-  element: <WordWizardGame />
+  lazy: () => import('./pages/games/word-wizard').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/spelling-bee',
-  element: <SpellingBeeGame />
+  lazy: () => import('./pages/games/spelling-bee').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/tricky-word-hunt',
-  element: <TrickyWordHuntGame />
+  lazy: () => import('./pages/games/tricky-word-hunt').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/story-builder',
-  element: <StoryBuilderGame />
+  lazy: () => import('./pages/games/story-builder').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/phonics-parrot',
-  element: <PhonicsParrotGame />
+  lazy: () => import('./pages/games/phonics-parrot').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/reading-quest',
-  element: <ReadingQuestGame />
+  lazy: () => import('./pages/games/reading-quest').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/word-search',
-  element: <WordSearchGame />
+  lazy: () => import('./pages/games/word-search').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/crossword',
-  element: <CrosswordGame />
+  lazy: () => import('./pages/games/crossword').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/sudoku',
-  element: <SudokuGame />
+  lazy: () => import('./pages/games/sudoku').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/number-puzzle',
-  element: <NumberPuzzleGame />,
+  lazy: () => import('./pages/games/number-puzzle').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/colour-book',
-  element: <ColourBookGame />,
+  lazy: () => import('./pages/games/colour-book').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/alphabet-explorer',
-  element: <AlphabetExplorerGame />,
+  lazy: () => import('./pages/games/alphabet-explorer').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/times-tables-reader',
-  element: <TimesTablesReaderGame />,
+  lazy: () => import('./pages/games/times-tables-reader').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/reading',
-  element: <ReadingHubPage />,
+  lazy: () => import('./pages/games/reading-hub').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/maths',
-  element: <MathsHubPage />,
+  lazy: () => import('./pages/games/maths-hub').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/spelling',
-  element: <SpellingHubPage />,
+  lazy: () => import('./pages/games/spelling-hub').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/animal-kingdom',
-  element: <AnimalKingdomGame />,
+  lazy: () => import('./pages/games/animal-kingdom').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/nature-explorer',
-  element: <NatureExplorerGame />,
+  lazy: () => import('./pages/games/nature-explorer').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/geography-quiz',
-  element: <GeographyQuizGame />,
+  lazy: () => import('./pages/games/geography-quiz').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/mental-maths-sprint',
-  element: <MentalMathsSprintGame />,
+  lazy: () => import('./pages/games/mental-maths-sprint').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/colour-learn',
-  element: <ColourLearnGame />,
+  lazy: () => import('./pages/games/colour-learn').then((module) => ({ Component: module.default }))
 },
 // Maths games (new)
 {
   path: '/games/odd-even',
-  element: <OddEvenGame />,
+  lazy: () => import('./pages/games/odd-even').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/place-value',
-  element: <PlaceValueGame />,
+  lazy: () => import('./pages/games/place-value').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/geography-uk',
-  element: <GeographyUKGame />,
+  lazy: () => import('./pages/games/geography-uk').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/synonyms-antonyms',
-  element: <SynonymsAntonymsGame />,
+  lazy: () => import('./pages/games/synonyms-antonyms').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/multiplication-grid',
-  element: <MultiplicationGridGame />,
+  lazy: () => import('./pages/games/multiplication-grid').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/division-dash',
-  element: <DivisionDashGame />,
+  lazy: () => import('./pages/games/division-dash').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/number-line',
-  element: <NumberLineGame />,
+  lazy: () => import('./pages/games/number-line').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/maths-mystery',
-  element: <MathsMysteryGame />,
+  lazy: () => import('./pages/games/maths-mystery').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/game-pattern-maker',
   element: <Navigate to="/games/pattern-maker" replace />,
 }, {
   path: '/games/pattern-maker',
-  element: <PatternMakerGame />,
+  lazy: () => import('./pages/games/pattern-maker').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/angle-explorer',
-  element: <AngleExplorerGame />,
+  lazy: () => import('./pages/games/angle-explorer').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/perimeter-quest',
-  element: <PerimeterQuestGame />,
+  lazy: () => import('./pages/games/perimeter-quest').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/area-adventure',
-  element: <AreaAdventureGame />,
+  lazy: () => import('./pages/games/area-adventure').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/data-detective',
-  element: <DataDetectiveGame />,
+  lazy: () => import('./pages/games/data-detective').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/fraction-match',
-  element: <FractionMatchGame />,
+  lazy: () => import('./pages/games/fraction-match').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/speed-tables',
-  element: <SpeedTablesGame />,
+  lazy: () => import('./pages/games/speed-tables').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/rounding-rocket',
-  element: <RoundingRocketGame />,
+  lazy: () => import('./pages/games/rounding-rocket').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/negative-numbers',
-  element: <NegativeNumbersGame />,
+  lazy: () => import('./pages/games/negative-numbers').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/coordinates-grid',
-  element: <CoordinatesGridGame />,
+  lazy: () => import('./pages/games/coordinates-grid').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/symmetry-studio',
-  element: <SymmetryStudioGame />,
+  lazy: () => import('./pages/games/symmetry-studio').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/time-teller',
-  element: <TimeTellerGame />,
+  lazy: () => import('./pages/games/time-teller').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/maths-word-problems',
-  element: <MathsWordProblemsGame />,
+  lazy: () => import('./pages/games/maths-word-problems').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/ordering-numbers',
-  element: <OrderingNumbersGame />,
+  lazy: () => import('./pages/games/ordering-numbers').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/missing-numbers',
-  element: <MissingNumbersGame />,
+  lazy: () => import('./pages/games/missing-numbers').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/maths-snap',
-  element: <MathsSnapGame />,
+  lazy: () => import('./pages/games/maths-snap').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/ratio-recipe',
-  element: <RatioRecipeGame />,
+  lazy: () => import('./pages/games/ratio-recipe').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/prime-numbers',
-  element: <PrimeNumbersGame />,
+  lazy: () => import('./pages/games/prime-numbers').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/algebra-quest',
-  element: <AlgebraQuestGame />,
+  lazy: () => import('./pages/games/algebra-quest').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/maths-challenge',
-  element: <MathsChallengeGame />,
+  lazy: () => import('./pages/games/maths-challenge').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/maths-bingo',
-  element: <MathsBingoGame />,
+  lazy: () => import('./pages/games/maths-bingo').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/coin-counter',
-  element: <CoinCounterGame />,
+  lazy: () => import('./pages/games/coin-counter').then((module) => ({ Component: module.default }))
 },
 // Spelling games (new)
 {
   path: '/games/letter-sounds',
-  element: <LetterSoundsGame />,
+  lazy: () => import('./pages/games/letter-sounds').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/rhyme-time',
-  element: <RhymeTimeGame />,
+  lazy: () => import('./pages/games/rhyme-time').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/syllable-split',
-  element: <SyllableSplitGame />,
+  lazy: () => import('./pages/games/syllable-split').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/prefix-power',
-  element: <PrefixPowerGame />,
+  lazy: () => import('./pages/games/prefix-power').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/suffix-quest',
-  element: <SuffixQuestGame />,
+  lazy: () => import('./pages/games/suffix-quest').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/homophones',
-  element: <HomophonesGame />,
+  lazy: () => import('./pages/games/homophones').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/compound-words',
-  element: <CompoundWordsGame />,
+  lazy: () => import('./pages/games/compound-words').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/spelling-challenge',
-  element: <SpellingChallengeGame />,
+  lazy: () => import('./pages/games/spelling-challenge').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/word-families',
-  element: <WordFamiliesGame />,
+  lazy: () => import('./pages/games/word-families').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/missing-letters',
-  element: <MissingLettersGame />,
+  lazy: () => import('./pages/games/missing-letters').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/anagram-attack',
-  element: <AnagramAttackGame />,
+  lazy: () => import('./pages/games/anagram-attack').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/silent-letters',
-  element: <SilentLettersGame />,
+  lazy: () => import('./pages/games/silent-letters').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/double-letters',
-  element: <DoubleLettersGame />,
+  lazy: () => import('./pages/games/double-letters').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/vowel-sounds',
-  element: <VowelSoundsGame />,
+  lazy: () => import('./pages/games/vowel-sounds').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/spelling-snap',
-  element: <SpellingSnapGame />,
+  lazy: () => import('./pages/games/spelling-snap').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/word-builder',
-  element: <WordBuilderGame />,
+  lazy: () => import('./pages/games/word-builder').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/dictionary-dash',
-  element: <DictionaryDashGame />,
+  lazy: () => import('./pages/games/dictionary-dash').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/contraction-station',
-  element: <ContractionStationGame />,
+  lazy: () => import('./pages/games/contraction-station').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/plural-rules',
-  element: <PluralRulesGame />,
+  lazy: () => import('./pages/games/plural-rules').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/word-match',
-  element: <WordMatchGame />,
+  lazy: () => import('./pages/games/word-match').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/spelling-race',
-  element: <SpellingRaceGame />,
+  lazy: () => import('./pages/games/spelling-race').then((module) => ({ Component: module.default }))
 },
 // Reading games (new)
 {
   path: '/games/comprehension-quest',
-  element: <ComprehensionQuestGame />,
+  lazy: () => import('./pages/games/comprehension-quest').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/story-sequence',
-  element: <StorySequenceGame />,
+  lazy: () => import('./pages/games/story-sequence').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/reading-detective',
-  element: <ReadingDetectiveGame />,
+  lazy: () => import('./pages/games/reading-detective').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/punctuation-patrol',
-  element: <PunctuationPatrolGame />,
+  lazy: () => import('./pages/games/punctuation-patrol').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/grammar-garage',
-  element: <GrammarGarageGame />,
+  lazy: () => import('./pages/games/grammar-garage').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/noun-spotter',
-  element: <NounSpotterGame />,
+  lazy: () => import('./pages/games/noun-spotter').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/verb-volcano',
-  element: <VerbVolcanoGame />,
+  lazy: () => import('./pages/games/verb-volcano').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/adjective-adventure',
-  element: <AdjectiveAdventureGame />,
+  lazy: () => import('./pages/games/adjective-adventure').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/synonym-swap',
-  element: <SynonymSwapGame />,
+  lazy: () => import('./pages/games/synonym-swap').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/antonym-arena',
-  element: <AntonymArenaGame />,
+  lazy: () => import('./pages/games/antonym-arena').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/reading-speed',
-  element: <ReadingSpeedGame />,
+  lazy: () => import('./pages/games/reading-speed').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/poetry-corner',
-  element: <PoetryCornerGame />,
+  lazy: () => import('./pages/games/poetry-corner').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/text-types',
-  element: <TextTypesGame />,
+  lazy: () => import('./pages/games/text-types').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/reading-map',
-  element: <ReadingMapGame />,
+  lazy: () => import('./pages/games/reading-map').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/word-meaning',
-  element: <WordMeaningGame />,
+  lazy: () => import('./pages/games/word-meaning').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/speech-marks',
-  element: <SpeechMarksGame />,
+  lazy: () => import('./pages/games/speech-marks').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/connectives-bridge',
-  element: <ConnectivesBridgeGame />,
+  lazy: () => import('./pages/games/connectives-bridge').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/reading-fluency',
-  element: <ReadingFluencyGame />,
+  lazy: () => import('./pages/games/reading-fluency').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/book-review',
-  element: <BookReviewGame />,
+  lazy: () => import('./pages/games/book-review').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/reading-bingo',
-  element: <ReadingBingoGame />,
+  lazy: () => import('./pages/games/reading-bingo').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/story-map',
-  element: <StoryMapGame />,
+  lazy: () => import('./pages/games/story-map').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/reading-challenge',
-  element: <ReadingChallengeGame />,
+  lazy: () => import('./pages/games/reading-challenge').then((module) => ({ Component: module.default }))
 },
 // Science games (new)
 {
   path: '/games/human-body',
-  element: <HumanBodyGame />,
+  lazy: () => import('./pages/games/human-body').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/money-maths',
-  element: <MoneyMathsGame />,
+  lazy: () => import('./pages/games/money-maths').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/parts-of-speech',
-  element: <PartsOfSpeechGame />,
+  lazy: () => import('./pages/games/parts-of-speech').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/telling-time',
-  element: <TellingTimeGame />,
+  lazy: () => import('./pages/games/telling-time').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/solar-system',
-  element: <SolarSystemGame />,
+  lazy: () => import('./pages/games/solar-system').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/food-chains',
-  element: <FoodChainsGame />,
+  lazy: () => import('./pages/games/food-chains').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/states-of-matter',
-  element: <StatesOfMatterGame />,
+  lazy: () => import('./pages/games/states-of-matter').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/forces-lab',
-  element: <ForcesLabGame />,
+  lazy: () => import('./pages/games/forces-lab').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/electricity-circuit',
-  element: <ElectricityCircuitGame />,
+  lazy: () => import('./pages/games/electricity-circuit').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/plant-parts',
-  element: <PlantPartsGame />,
+  lazy: () => import('./pages/games/plant-parts').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/life-cycles',
-  element: <LifeCyclesGame />,
+  lazy: () => import('./pages/games/life-cycles').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/weather-watch',
-  element: <WeatherWatchGame />,
+  lazy: () => import('./pages/games/weather-watch').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/rock-detective',
-  element: <RockDetectiveGame />,
+  lazy: () => import('./pages/games/rock-detective').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/light-shadows',
-  element: <LightShadowsGame />,
+  lazy: () => import('./pages/games/light-shadows').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/sound-science',
-  element: <SoundScienceGame />,
+  lazy: () => import('./pages/games/sound-science').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/materials-sort',
-  element: <MaterialsSortGame />,
+  lazy: () => import('./pages/games/materials-sort').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/skeleton-builder',
-  element: <SkeletonBuilderGame />,
+  lazy: () => import('./pages/games/skeleton-builder').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/healthy-eating',
-  element: <HealthyEatingGame />,
+  lazy: () => import('./pages/games/healthy-eating').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/microhabitats',
-  element: <MicrohabitatsGame />,
+  lazy: () => import('./pages/games/microhabitats').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/magnets-magic',
-  element: <MagnetsMagicGame />,
+  lazy: () => import('./pages/games/magnets-magic').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/water-cycle',
-  element: <WaterCycleGame />,
+  lazy: () => import('./pages/games/water-cycle').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/classification-keys',
-  element: <ClassificationKeysGame />,
+  lazy: () => import('./pages/games/classification-keys').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/earth-space',
-  element: <EarthSpaceGame />,
+  lazy: () => import('./pages/games/earth-space').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/evolution-explorer',
-  element: <EvolutionExplorerGame />,
+  lazy: () => import('./pages/games/evolution-explorer').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/science-quiz',
-  element: <ScienceQuizGame />,
+  lazy: () => import('./pages/games/science-quiz').then((module) => ({ Component: module.default }))
 }, {
   path: '/reviews',
   element: <ReviewsPage />,
@@ -756,13 +626,13 @@ export const routes: RouteObject[] = [{
   element: <ParentsPage />
 }, {
   path: '/games/number-bonds',
-  element: <NumberBondsGame />,
+  lazy: () => import('./pages/games/number-bonds').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/animal-habitats',
-  element: <AnimalHabitatsGame />,
+  lazy: () => import('./pages/games/animal-habitats').then((module) => ({ Component: module.default }))
 }, {
   path: '/games/sentence-builder',
-  element: <SentenceBuilderGame />,
+  lazy: () => import('./pages/games/sentence-builder').then((module) => ({ Component: module.default }))
 }, {
   path: '/cartoon-mode',
   // Keep one canonical World system.  The previous CartoonModePage contained
