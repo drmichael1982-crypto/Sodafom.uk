@@ -35,7 +35,7 @@ export default function ResetPasswordPage() {
       }
       setDone(true);
     } catch (err) {
-      setError(String(err));
+      setError('We could not update your password just now. Please request a new reset link and try again.');
     } finally {
       setLoading(false);
     }
