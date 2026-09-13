@@ -10,6 +10,27 @@ export function validatePhoto(file: Pick<File, 'size' | 'type'>): string | null 
   return null;
 }
 
+/**
+ * Data URLs only live in the current component state. Checking their decoded
+ * size before a request prevents a captured frame from bypassing the file
+ * picker limit or being needlessly sent to the online helper.
+ */
+export function dataUrlByteLength(value: string): number | null {
+  const match = /^data:image\/(jpeg|jpg|png|webp);base64,([A-Za-z0-9+/]+={0,2})$/i.exec(value);
+  if (!match) return null;
+  const encoded = match[2];
+  if (encoded.length % 4 !== 0) return null;
+  const padding = encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0;
+  return (encoded.length / 4) * 3 - padding;
+}
+
+export function validatePhotoDataUrl(value: string): string | null {
+  const bytes = dataUrlByteLength(value);
+  if (bytes === null || bytes <= 0) return 'This photo could not be opened. Please take another one.';
+  if (bytes > MAX_PHOTO_BYTES) return 'Please choose a photograph smaller than 6 MB.';
+  return null;
+}
+
 export function readingWords(text: string) {
   return Array.from(text.matchAll(/\S+/gu), match => ({
     text: match[0], start: match.index!, end: match.index! + match[0].length,
@@ -43,12 +64,13 @@ export function scannerError(status: number): string {
   if (status === 413) return 'This photo is too large. Please choose a smaller photograph.';
   if (status === 429) return 'The photo helper is busy. Please wait a moment before trying again.';
   if (status === 400 || status === 422) return 'Please photograph one smaller, clearer section of the page and try again.';
+  if (status === 503) return 'The protected photo helper is temporarily unavailable. Your photo has not been saved. Please try again later.';
   return 'The photo helper could not finish this request. Please try again. Your page has not been read.';
 }
 
 export interface ScanRequest {
   image: string;
-  age: number;
+  childId: number;
   mode: ScannerMode;
   task: 'transcribe' | 'help';
   question: string;
@@ -56,10 +78,15 @@ export interface ScanRequest {
 }
 
 export async function requestScan(endpoint: string, request: ScanRequest, signal: AbortSignal): Promise<string> {
+  const photoProblem = validatePhotoDataUrl(request.image);
+  if (photoProblem) throw new Error(photoProblem);
+  // Only send fields the scanner endpoint needs. In particular, the teaching
+  // age comes from the owned child profile on the server, never this device.
+  const { image, childId, mode, task, question, previousExplanation } = request;
   const response = await fetch(endpoint, {
     method: 'POST', credentials: 'include', signal,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...request, scannerRequest: true }),
+    body: JSON.stringify({ image, childId, mode, task, question, previousExplanation }),
   });
   if (!response.ok) throw new Error(scannerError(response.status));
   const text = (await response.text()).trim();
