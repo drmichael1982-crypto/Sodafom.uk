@@ -4,11 +4,12 @@ import { useNavigate, useSearchParams } from 'react-router';
 import FeaturePageShell from '@/components/FeaturePageShell';
 import { ttsSpeak } from '@/lib/voice-context';
 import ArchieStoryCollectionPage from './ArchieStoryCollectionPage';
+import ScannerWorkspace from '@/components/scanners/ScannerWorkspace';
 
 const READING_CHOICES = [
   { title: "Archie’s Book Collection", text: 'Choose one of ten illustrated Archie storybooks.', icon: BookOpen, route: '/reading?books=1', colour: 'from-violet-600 to-purple-950' },
   { title: 'Reading Games', text: 'Play phonics, stories and comprehension games.', icon: Gamepad2, route: '/games/reading', colour: 'from-emerald-500 to-green-800' },
-  { title: 'Read With Archie', text: 'Photograph a book page for help with tricky words.', icon: Camera, route: '/ai-teacher', colour: 'from-purple-500 to-indigo-800' },
+  { title: 'Scan Reading Book', text: 'Photograph or upload a book page for reading and word help.', icon: Camera, route: '/reading?scan=1', colour: 'from-purple-500 to-indigo-800' },
   { title: 'Archie Reading Lesson', text: 'Start a spoken reading lesson with Archie.', icon: Volume2, route: '/lessons', colour: 'from-orange-500 to-rose-700' },
 ] as const;
 
@@ -16,6 +17,7 @@ export default function ReadingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   if (searchParams.get('books') === '1') return <ArchieStoryCollectionPage />;
+  if (searchParams.get('scan') === '1') return <ScannerWorkspace mode="reading" />;
   return (
     <>
       <Helmet><title>Reading With Archie — Sodafom</title></Helmet>
