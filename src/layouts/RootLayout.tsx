@@ -12,6 +12,7 @@ import { ProgressionProvider } from '@/contexts/ProgressionContext';
 import AccessibilityBar from '@/components/AccessibilityBar';
 import ArchieHelper from '@/components/ArchieHelper';
 import MobileTrialBar from '@/components/MobileTrialBar';
+import ClawMachineRewards from '@/components/rewards/ClawMachineRewards';
 import { usePageView } from '@/hooks/usePageView';
 
 interface RootLayoutProps {
@@ -74,6 +75,7 @@ export default function RootLayout({
       : location.pathname === route || location.pathname.startsWith(`${route}/`)
   );
   const isIndividualGame = location.pathname.startsWith('/games/');
+  const showClawMachine = location.pathname === '/rewards';
   return (
     <AccessibilityProvider>
       <VoiceProvider>
@@ -89,6 +91,7 @@ export default function RootLayout({
                 {!immersiveApp && <Header />}
                 <div className={immersiveApp ? 'sodafom-immersive-route' : undefined}>
                   {children}
+                  {showClawMachine && <ClawMachineRewards />}
                 </div>
                 {!immersiveApp && <Footer />}
                 {/* Floating UI — accessibility toolbar + unified Archie helper + mobile CTA */}
