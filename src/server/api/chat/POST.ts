@@ -8,14 +8,18 @@ interface ChatMessage {
   content: string;
 }
 
-// Production secrets come directly from process.env. Never reload local .env files in a request.
+// Ask Archie reaches this endpoint only after the client-side Local Archie path
+// has failed to answer. This endpoint is therefore the paid fallback and must
+// never contact OpenAI unless the server-side voucher gate approves the call.
 export default async function handler(req: Request, res: Response) {
   const messages = req.body?.messages as ChatMessage[] | undefined;
   const systemExtra = req.body?.systemExtra as string | undefined;
   if (!Array.isArray(messages)) return res.status(400).send('Invalid request: missing messages');
   const safeMessages = messages.filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim().length > 0);
   if (safeMessages.length === 0) return res.status(400).send('No valid messages provided');
-  if (!requirePaidAiBilling(res, 'text')) return;
+
+  // Fail closed before reading the paid-provider key or creating a provider client.
+  if (!(await requirePaidAiBilling(req, res, 'text'))) return;
 
   try {
     let apiKey = process.env.OPENAI_API_KEY?.trim();
