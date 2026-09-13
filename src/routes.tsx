@@ -55,6 +55,7 @@ import AlphabetExplorerGame from './pages/games/alphabet-explorer';
 import TimesTablesReaderGame from './pages/games/times-tables-reader';
 import ReviewsPage from './pages/reviews';
 import RewardsPage from './pages/rewards';
+import StickerBooksPage from './pages/StickerBooksPage';
 import VoiceStudioPage from './pages/voice-studio';
 import StoryWriterPage from './pages/story-writer';
 import ReadingHubPage from './pages/games/reading-hub';
@@ -655,6 +656,9 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/rewards',
   element: <RewardsPage />,
+}, {
+  path: '/sticker-books',
+  element: <StickerBooksPage />,
 }, {
   path: '/voice-studio',
   element: <VoiceStudioPage />,
