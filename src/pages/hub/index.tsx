@@ -6,7 +6,7 @@ import { useSession, LogoutButton } from '@/lib/auth/auth-client';
 import { ProtectedRoute } from '@/lib/auth/auth-client';
 import { useSubscription } from '@/hooks/useSubscription';
 import { setActiveChild, type AgeGroup } from '@/hooks/useChildAge';
-import { Plus, Trash2, BookOpen, Calculator, Pencil, TrendingUp, ChevronRight, Users, Award, Star, Sparkles, Play, Bell, Trophy, Zap, RotateCcw, CreditCard } from 'lucide-react';
+import { Plus, Trash2, BookOpen, Calculator, Pencil, TrendingUp, ChevronRight, Users, Award, Star, Sparkles, Play, Bell, Trophy, Zap, RotateCcw, CreditCard, CalendarDays } from 'lucide-react';
 import StreakBadge from '@/components/StreakTracker';
 import PushNotificationBanner from '@/components/PushNotificationBanner';
 import ArchieDailyTip from '@/components/ArchieDailyTip';
@@ -434,6 +434,14 @@ function ChildCard({
           <TrendingUp size={16} />
           View progress
           <ChevronRight size={14} />
+        </Link>
+        <Link
+          to="/daily-learning"
+          onClick={() => setActiveChild({ id: child.id, name: child.name, ageGroup: child.ageGroup as AgeGroup, avatarEmoji: child.avatarEmoji })}
+          className="flex items-center justify-center gap-2 py-2.5 rounded-xl border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary font-bold text-sm transition-colors"
+        >
+          <CalendarDays size={16} />
+          Daily learning
         </Link>
         <Link
           to={`/games?age=${child.ageGroup}`}
