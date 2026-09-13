@@ -35,6 +35,7 @@ export default function RootLayout({
     '/teacher-mode',
     '/cartoons',
     '/homework-helper',
+    '/museum',
     '/birthday',
     '/birthday-party',
     '/pocket-money',
