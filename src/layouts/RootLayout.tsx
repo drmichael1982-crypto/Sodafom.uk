@@ -80,7 +80,7 @@ export default function RootLayout({
         <ProgressionProvider>
           <ArchieProvider>
             <CartProvider>
-              <Website>
+              <Website className="sodafom-device-shell">
                 <Helmet>
                   <title>Sodafom — Learn The Key To Success</title>
                   <meta name="description" content="Fun, curriculum-aligned learning for children aged 5–13. Maths, Spelling and Reading games and activities." />

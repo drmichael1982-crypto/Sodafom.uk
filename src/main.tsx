@@ -23,6 +23,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import AiroErrorBoundary from '../export-plugins/AiroErrorBoundary';
 import App from './App';
 import './styles/globals.css';
+import './styles/device-compatibility.css';
 
 if (import.meta.env.MODE === 'development') {
   const meta = document.createElement('meta');
