@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent24 isolated performance fixture (not the application)</title>
+<style>
+  body { margin: 16px; font-family: sans-serif; }
+  .target { width: 140px; height: 140px; border: 1px solid; box-sizing: border-box; }
+  .gap { height: 6500px; }
+  img { display: block; }
+</style>
+<p>Isolated visibility and native image-loading checks; not production artwork.</p>
+<div id="top" class="target">Visible animation fixture</div>
+<div class="gap"></div>
+<div id="bottom" class="target">Off-screen animation fixture</div>
+<div class="gap"></div>
+<img id="lazyImage" src="image-fixture.svg" alt="Test fixture" width="140" height="140" loading="lazy" decoding="async">
+<div style="height: 1000px"></div>
+<script type="module">
+import { observeAnimationVisibility } from './out/animation-visibility.mjs';
+const NativeObserver = window.IntersectionObserver;
+const counters = { created: 0, unobserved: 0, disconnected: 0 };
+window.IntersectionObserver = class extends NativeObserver {
+  constructor(...args) { super(...args); counters.created++; }
+  unobserve(element) { counters.unobserved++; super.unobserve(element); }
+  disconnect() { counters.disconnected++; super.disconnect(); }
+};
+const targets = {};
+for (const id of ['top', 'bottom']) {
+  const element = document.getElementById(id);
+  const animation = element.animate([{ transform: 'translateY(0)' }, { transform: 'translateY(-4px)' }, { transform: 'translateY(0)' }], { duration: 2800, iterations: Infinity });
+  animation.pause();
+  const state = { ticks: 0, active: false, animation, interval: null, disposed: false };
+  targets[id] = state;
+  const off = observeAnimationVisibility(element, active => {
+    state.active = active;
+    if (state.interval !== null) { clearInterval(state.interval); state.interval = null; }
+    if (active) {
+      animation.play();
+      state.interval = setInterval(() => state.ticks++, 120);
+    } else animation.pause();
+  });
+  state.dispose = () => {
+    off();
+    if (state.interval !== null) clearInterval(state.interval);
+    state.interval = null; state.active = false; state.disposed = true;
+    animation.cancel(); element.remove();
+  };
+}
+// Explicitly simulated lifecycle signals, separate from actual scroll observation.
+let simulatedHidden;
+const hiddenGetter = Object.getOwnPropertyDescriptor(Document.prototype, 'hidden').get;
+Object.defineProperty(document, 'hidden', { configurable: true, get: () => simulatedHidden ?? hiddenGetter.call(document) });
+window.fixture = {
+  snapshot: () => ({ counters: { ...counters }, targets: Object.fromEntries(Object.entries(targets).map(([id,s]) => [id, { active: s.active, ticks: s.ticks, playState: s.animation.playState, disposed: s.disposed }])) }),
+  setHidden: hidden => { simulatedHidden = hidden; document.dispatchEvent(new Event('visibilitychange')); },
+  lifecycle: name => window.dispatchEvent(new Event(name)),
+  dispose: id => targets[id].dispose(),
+  disposeAll: () => Object.values(targets).forEach(state => { if (!state.disposed) state.dispose(); }),
+};
+</script>
