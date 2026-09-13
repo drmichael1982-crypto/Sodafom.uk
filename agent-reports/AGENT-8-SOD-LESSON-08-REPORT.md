@@ -4,7 +4,7 @@
 - Serial: `SOD-LESSON-08`
 - Branch: `agent8/sod-lesson-08-20260913`
 - Implementation commit: `02ec71cd053b8d9cd45c26ed0b5a582efb4ccd35`
-- GitHub status: report commit will be pushed with this branch; no merge requested or performed.
+- GitHub status: pushed and content-verified on this branch; no merge requested or performed.
 
 ## Original task
 
