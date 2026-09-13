@@ -63,6 +63,7 @@ export default function AITeacherPage() {
   const startLesson = (subject: string) => {
     localStorage.setItem('sodafom_lesson_subject', subject);
     localStorage.setItem('sodafom_lesson_minutes', String(lessonMinutes));
+    localStorage.setItem('sodafom_lesson_age', ageGroupFor(age));
     navigate('/tutor');
   };
 
