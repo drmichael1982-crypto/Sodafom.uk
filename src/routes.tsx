@@ -6,8 +6,6 @@ import ApprovedArtworkPage from './pages/ApprovedArtworkPage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
 import AITeacherPage from './pages/AITeacherPage';
 import TeacherModePage from './pages/tutor/TeacherModePage';
-import SubjectsPage from './pages/subjects';
-import GamesPage from './pages/games';
 import MathsSubjectPage from './pages/subjects/maths';
 import SpellingSubjectPage from './pages/subjects/spelling';
 import ReadingSubjectPage from './pages/subjects/reading';
@@ -67,9 +65,6 @@ import ReviewsPage from './pages/reviews';
 import RewardsPage from './pages/rewards';
 import VoiceStudioPage from './pages/voice-studio';
 import StoryWriterPage from './pages/story-writer';
-import ReadingHubPage from './pages/games/reading-hub';
-import MathsHubPage from './pages/games/maths-hub';
-import SpellingHubPage from './pages/games/spelling-hub';
 import NumberBondsGame from './pages/games/number-bonds';
 import AnimalHabitatsGame from './pages/games/animal-habitats';
 import SentenceBuilderGame from './pages/games/sentence-builder';
@@ -313,8 +308,9 @@ export const routes: RouteObject[] = [{
   path: '/classic-home',
   loader: () => redirect('/')
 }, {
+  // Old dark-green subject menu: retain saved links but send children to the approved Lessons screen.
   path: '/subjects',
-  element: <SubjectsPage />
+  loader: () => redirect('/lessons')
 }, {
   path: '/subjects/maths',
   element: <MathsSubjectPage />
@@ -328,8 +324,9 @@ export const routes: RouteObject[] = [{
   path: '/subjects/science',
   element: <ScienceSubjectPage />
 }, {
+  // Old rainbow Games & Activities menu: never show it from a current or saved link.
   path: '/games',
-  element: <GamesPage />,
+  loader: () => redirect('/game-islands'),
 }, {
   path: '/demo',
   element: <DemoPage />
@@ -406,14 +403,17 @@ export const routes: RouteObject[] = [{
   path: '/games/times-tables-reader',
   element: <TimesTablesReaderGame />,
 }, {
+  // Reading must open the book collection, never the legacy games hub.
   path: '/games/reading',
-  element: <ReadingHubPage />,
+  loader: () => redirect('/reading'),
 }, {
+  // Preserve old saved links while using the subject-correct Game Islands experience.
   path: '/games/maths',
-  element: <MathsHubPage />,
+  loader: () => redirect('/game-islands?island=maths'),
 }, {
+  // Preserve old saved links while using the subject-correct Game Islands experience.
   path: '/games/spelling',
-  element: <SpellingHubPage />,
+  loader: () => redirect('/game-islands?island=spelling'),
 }, {
   path: '/games/animal-kingdom',
   element: <AnimalKingdomGame />,
