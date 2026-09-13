@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { MemoryRouter } from 'react-router';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import FeatureHubPage from '../FeatureHubPage';
 import LessonsPage from '../LessonsPage';
 import HomeworkHelperPage from '../HomeworkHelperPage';
@@ -18,6 +18,8 @@ function renderPage(page: React.ReactNode) {
 }
 
 describe("Archie's new feature menu", () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
   it('shows all approved sections and marks travel as a future plan', () => {
     const view = renderPage(<FeatureHubPage />);
     for (const label of [
@@ -54,7 +56,7 @@ describe("Archie's new feature menu", () => {
     ['Homework Helper', <HomeworkHelperPage />],
     ['Pocket Money & Chores', <PocketMoneyPage />],
     ['Birthday Countdown', <BirthdayPage />],
-    ["Design Archie's Outfit", <ArchieOutfitPage />],
+    ['Characters & Outfits', <ArchieOutfitPage />],
     ['Seasonal Themes', <SeasonalThemesPage />],
     ['Holiday & Travel', <HolidayTravelPage />],
     ['Reading With Archie', <ReadingPage />],
@@ -63,4 +65,21 @@ describe("Archie's new feature menu", () => {
     renderPage(page);
     expect(screen.getByRole('heading', { name: heading })).toBeInTheDocument();
   });
+
+  it('keeps an existing Archie outfit while adding character choices', () => {
+    localStorage.setItem('sodafom_archie_outfit_v1', JSON.stringify({
+      colour: '#16a34a',
+      badge: '📚',
+      accessory: '🎧',
+    }));
+
+    renderPage(<ArchieOutfitPage />);
+
+    expect(screen.getByRole('button', { name: 'Hero Green' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '📚' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: '🎧' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /Annual Sign-up Outfit/i })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: /Birthday Outfit/i })).toBeDisabled();
+  });
+
 });
