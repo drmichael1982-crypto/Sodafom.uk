@@ -19,12 +19,13 @@ export default function ForgotPasswordPage() {
     setError('');
     setLoading(true);
     try {
-      await fetch(`${API_PREFIX}/auth/forgot-password`, {
+      const response = await fetch(`${API_PREFIX}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
+      if (!response.ok) throw new Error('Password reset request failed');
       setSent(true);
     } catch {
       setError('Something went wrong. Please try again.');
