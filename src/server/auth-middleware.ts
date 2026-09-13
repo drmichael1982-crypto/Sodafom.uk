@@ -13,61 +13,41 @@ import { toWebRequest, sendWebResponse } from '@/lib/auth/express-adapter';
 import { tryClearStaleSession } from '@/lib/auth/session-cookies';
 
 export async function authHandler(req: Request, res: Response) {
+  res.setHeader('Cache-Control', 'private, no-store');
   // Stale-session recovery escape hatch (`?clearCookies=1`). A stale
   // `better-auth.session_token` makes `useSession()` resolve to an error/pending
   // state with no thrown error to surface, leaving the app blank; the cookie is
   // HttpOnly so only the server can expire it. Handled before getAuth() so it
   // still works when auth/db is itself unavailable.
-  if (tryClearStaleSession(req, res, { preview: process.env.AIRO_PREVIEW === 'true' })) {
-    return;
-  }
+  if (tryClearStaleSession(req, res, { preview: process.env.AIRO_PREVIEW === 'true' })) return;
 
   try {
-    const auth = getAuth();
-    const webRequest = toWebRequest(req);
-    const webResponse = await auth.handler(webRequest);
-
-    // Debug logging for sign-in/sign-up errors
-    if (!webResponse.ok && (req.path.includes('sign-in') || req.path.includes('sign-up'))) {
-      const clone = webResponse.clone();
-      try {
-        const errorData = await clone.json();
-        console.error('[auth] Authentication error:', { path: req.path, status: webResponse.status, error: errorData });
-      } catch {
-        const text = await clone.text();
-        console.error('[auth] Authentication error (non-JSON):', { path: req.path, status: webResponse.status, body: text });
-      }
+    const webResponse = await getAuth().handler(toWebRequest(req));
+    if (!webResponse.ok) {
+      // The body can contain email addresses, submitted values or reset tokens.
+      console.error('[auth] request rejected', { status: webResponse.status });
     }
-
     await sendWebResponse(webResponse, res);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-
+    const message = error instanceof Error ? error.message : '';
+    let reason = 'request_failed';
+    let status = 500;
     if (message.includes('BETTER_AUTH_SECRET')) {
-      console.error(JSON.stringify({ event: 'auth.error', reason: 'missing_secret' }));
-      res.status(503).json({
-        error: 'Authentication not configured. Set BETTER_AUTH_SECRET via requestSecrets().',
-      });
-      return;
+      reason = 'missing_secret';
+      status = 503;
+    } else if (message.includes('Database not configured') || message.includes('SQLITE') || message.includes('ECONNREFUSED')) {
+      reason = 'database_unavailable';
+      status = 503;
+    } else if (message.includes("doesn't exist") || message.includes('no such table') || message.includes('relation') || message.includes('ER_NO_SUCH_TABLE')) {
+      reason = 'missing_tables';
+      status = 503;
     }
-
-    if (message.includes('Database not configured') || message.includes('SQLITE') || message.includes('ECONNREFUSED')) {
-      console.error(JSON.stringify({ event: 'auth.error', reason: 'database_unavailable' }));
-      res.status(503).json({
-        error: 'Database not available. Ensure the database skill is installed and configured.',
-      });
-      return;
-    }
-
-    if (message.includes("doesn't exist") || message.includes('no such table') || message.includes('relation') || message.includes('ER_NO_SUCH_TABLE')) {
-      console.error(JSON.stringify({ event: 'auth.error', reason: 'missing_tables', error: message }));
-      res.status(503).json({
-        error: 'Auth database tables not found. Run migrations: npm run db:generate && npm run db:migrate',
-      });
-      return;
-    }
-
-    console.error(JSON.stringify({ event: 'auth.middleware.error', path: req.path, error: message }));
-    res.status(500).json({ error: 'Authentication request failed' });
+    console.error('[auth] request failed', { reason });
+    if (res.headersSent) { res.end(); return; }
+    res.status(status).json({
+      error: status === 503
+        ? 'Sign-in is temporarily unavailable. Please try again later.'
+        : 'Authentication request failed',
+    });
   }
 }

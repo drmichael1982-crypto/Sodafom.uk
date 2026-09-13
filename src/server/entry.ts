@@ -1,4 +1,4 @@
-import express, { type Express, type NextFunction, type Request, type Response } from "express";
+import express, { type Express, type Request } from "express";
 import { fileURLToPath } from "node:url";
 import { dirname, extname, join } from "node:path";
 import { readFileSync } from "node:fs";
@@ -103,6 +103,7 @@ import {
 import { loadIndexNowKey } from "./indexnow-key";
 import { isSystemHost } from "./seo-host";
 import { llmsTxtHandler } from "./llms-txt";
+import { apiErrorHandler, httpSecurity } from "./http-security";
 import { existsSync, readFileSync as fsReadFileSync } from "node:fs";
 import { resolve as pathResolve } from "node:path";
 
@@ -205,46 +206,8 @@ normalizeCommerceApiBaseUrlEnv();
 
 const app = express();
 
-// DEBUG LOGGING MIDDLEWARE
-app.use((req, res, next) => {
-  console.log(`[server] ${req.method} ${req.url} - Origin: ${req.headers.origin || 'none'}`);
-  next();
-});
-
-// --- Extremely Robust CORS Middleware for Capacitor & Web ---
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const allowedOrigins = [
-    'http://localhost',
-    'https://localhost',
-    'capacitor://localhost',
-    'https://app.sodafom.uk',
-    'https://sodafom.uk'
-  ];
-
-  if (origin) {
-    if (allowedOrigins.includes(origin) || origin.endsWith('.sodafom.uk')) {
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    } else {
-      // Fallback: reflect origin to ensure connectivity during transition
-      res.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Vary', 'Origin');
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-  res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With, Content-Type, Authorization, Accept, Origin, Range, Cache-Control, Pragma, X-Capacitor-Http, Accept-Encoding, X-Accel-Buffering, User-Agent');
-  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, X-Accel-Buffering, Content-Type');
-  res.setHeader('Access-Control-Max-Age', '86400');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  next();
-});
+app.disable("x-powered-by");
+app.use(httpSecurity);
 
 // Honour x-forwarded-* from the load balancer so req.protocol/req.hostname
 // reflect the public-facing values. Express-maintained parsing respects the
@@ -546,17 +509,8 @@ initializeProject()
 
 
 
-// Error middleware must be registered AFTER the routes it protects
-app.use("/api", (err: unknown, req: Request, res: Response, _next: NextFunction) => {
-	console.error("ssr.api.error", {
-		url: req.url,
-		error: err instanceof Error ? err.stack : String(err),
-	});
-	res.status(500).json({
-    error: "Internal server error",
-    message: err instanceof Error ? err.message : String(err)
-  });
-});
+// Error middleware must be registered AFTER the routes it protects.
+app.use("/api", apiErrorHandler);
 
 function baseUrl(req: Request): string {
 	return `${req.protocol}://${req.hostname}`;

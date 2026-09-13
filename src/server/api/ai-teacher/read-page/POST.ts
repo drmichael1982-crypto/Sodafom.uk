@@ -15,6 +15,9 @@ export default async function handler(req: Request, res: Response) {
     const openai = new OpenAI({ apiKey, timeout: 45_000, maxRetries: 1 });
     const response = await openai.responses.create({
       model: 'gpt-4o-mini',
+      // Do not retain a retrievable response. Provider abuse-monitoring policies
+      // are separate; this does not claim Zero Data Retention.
+      store: false,
       instructions: `You are Archie, a patient UK reading teacher helping a child aged ${age} at ${schoolLevel} level. Follow the National Curriculum in England at an age-appropriate level. Transcribe only the visible educational text, then present it in short read-along chunks, give gentle phonics or comprehension help as appropriate, and explain up to five difficult words. Never identify people in photographs. If the page is unclear, ask for a clearer photograph.`,
       input: [{ role: 'user', content: [{ type: 'input_text', text: 'Help the child read this page.' }, { type: 'input_image', image_url: image, detail: 'auto' }] }] as any,
       max_output_tokens: 900,

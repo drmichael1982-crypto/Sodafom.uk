@@ -8,6 +8,7 @@ import { sql } from 'drizzle-orm';
 import { getSecret } from '#airo/secrets';
 
 export default async function handler(req: Request, res: Response) {
+  res.setHeader('Cache-Control', 'private, no-store');
   try {
     const adminKey = req.query.adminKey as string;
     const secret = getSecret('BETTER_AUTH_SECRET');
@@ -21,7 +22,8 @@ export default async function handler(req: Request, res: Response) {
     const users = rows[0] as unknown as { id: string; name: string; email: string; created_at: string }[];
 
     res.json({ users });
-  } catch (err) {
-    res.status(500).json({ error: String(err) });
+  } catch {
+    console.error('[admin/list-users] request failed');
+    res.status(500).json({ error: 'Unable to load accounts' });
   }
 }
