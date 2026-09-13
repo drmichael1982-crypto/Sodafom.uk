@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
@@ -50,10 +50,36 @@ describe("Archie's new feature menu", () => {
     }
   });
 
+  it('runs the local Birthday Party Room activities', () => {
+    renderPage(<BirthdayPage />);
+
+    expect(screen.getByRole('heading', { name: 'Birthday Party Room' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Play music' })).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'Party music volume' })).toHaveValue('0.45');
+
+    for (let index = 1; index <= 6; index += 1) {
+      fireEvent.click(screen.getByRole('button', { name: `Pop balloon ${index}` }));
+    }
+    expect(screen.getByText(/You popped them all!/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Play again' }));
+    expect(screen.getByText(/6 left\./)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Blow out candles' }));
+    expect(screen.getByRole('button', { name: 'Light candles again' })).toBeInTheDocument();
+    expect(screen.getByText(/Great wish!/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start dancing' }));
+    expect(screen.getByRole('button', { name: 'FREEZE!' })).toBeInTheDocument();
+    expect(screen.getByText(/Dance, dance, dance!/)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByRole('slider', { name: 'Party music volume' }), { target: { value: '0.75' } });
+    expect(screen.getByRole('slider', { name: 'Party music volume' })).toHaveValue('0.75');
+  });
+
   it.each([
     ['Homework Helper', <HomeworkHelperPage />],
     ['Pocket Money & Chores', <PocketMoneyPage />],
-    ['Birthday Countdown', <BirthdayPage />],
+    ['Birthday Party Room', <BirthdayPage />],
     ["Design Archie's Outfit", <ArchieOutfitPage />],
     ['Seasonal Themes', <SeasonalThemesPage />],
     ['Holiday & Travel', <HolidayTravelPage />],
