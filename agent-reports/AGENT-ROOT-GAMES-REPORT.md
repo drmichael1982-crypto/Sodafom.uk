@@ -21,7 +21,7 @@
 
 ## Handoff
 
-- **Latest commit at time of this report:** written by this report commit.
+- **Latest commit:** `dba3cdbf17196e7ac4098b5d031acab8f6bd4624` (this report commit).
 - **Pushed:** yes (GitHub branch update).
 - **Not merged:** confirmed.
 - **Not deployed:** confirmed.
