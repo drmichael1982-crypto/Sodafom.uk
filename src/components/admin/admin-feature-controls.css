@@ -1,0 +1,27 @@
+.sodafom-feature-controls { color: #182235; font-family: inherit; overflow-wrap: anywhere; }
+.sodafom-feature-controls * { box-sizing: border-box; }
+.sodafom-feature-controls .sfc-panel { background: #fff; border: 2px solid #cbd5e1; border-radius: 1.25rem; padding: clamp(1rem, 3vw, 1.5rem); }
+.sodafom-feature-controls h2 { font-size: 1.5rem; font-weight: 800; margin: 0 0 .75rem; }
+.sodafom-feature-controls h3 { font-size: 1.15rem; font-weight: 800; margin: 1.5rem 0 .75rem; }
+.sodafom-feature-controls h4 { font-size: 1.05rem; font-weight: 800; margin: 0; }
+.sodafom-feature-controls p { margin: .6rem 0; line-height: 1.5; }
+.sodafom-feature-controls .sfc-note { font-size: .9rem; color: #475569; }
+.sodafom-feature-controls .sfc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 1rem; }
+.sodafom-feature-controls .sfc-card { min-width: 0; display: flex; align-items: flex-start; flex-direction: column; border: 1px solid #cbd5e1; border-radius: 1rem; padding: 1rem; background: #f8fafc; }
+.sodafom-feature-controls .sfc-card > p { flex-grow: 1; }
+.sodafom-feature-controls .sfc-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; justify-content: space-between; }
+.sodafom-feature-controls button { min-height: 44px; max-width: 100%; padding: .7rem 1rem; border-radius: .7rem; border: 2px solid #334155; background: #fff; color: #182235; font: inherit; font-weight: 700; cursor: pointer; white-space: normal; }
+.sodafom-feature-controls button[role="switch"] { margin-top: .75rem; width: 100%; }
+.sodafom-feature-controls button:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 3px; }
+.sodafom-feature-controls button:disabled { cursor: not-allowed; opacity: .6; }
+.sodafom-feature-controls .sfc-badge { display: inline-block; border-radius: 1rem; padding: .3rem .75rem; font-weight: 800; font-size: .9rem; background: #e2e8f0; color: #334155; }
+.sodafom-feature-controls .sfc-on { background: #dcfce7; color: #14532d; }
+.sodafom-feature-controls .sfc-off { background: #fee2e2; color: #7f1d1d; }
+.sodafom-feature-controls .sfc-testing { background: #fef3c7; color: #78350f; }
+.sodafom-feature-controls .sfc-coming_soon { background: #e0e7ff; color: #312e81; }
+.sodafom-feature-controls .sfc-message, .sodafom-feature-controls .sfc-error { padding: .8rem; border: 1px solid #cbd5e1; border-radius: .7rem; background: #f1f5f9; }
+.sodafom-feature-controls .sfc-error { border-color: #f87171; background: #fff1f2; color: #881337; }
+.sodafom-feature-controls .sfc-dialog { position: fixed; inset: 0; margin: auto; width: min(32rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); overflow: auto; border: 2px solid #334155; border-radius: 1rem; padding: 1.25rem; background: #fff; color: #182235; }
+.sodafom-feature-controls .sfc-dialog::backdrop { background: rgb(15 23 42 / .65); }
+.sodafom-feature-controls .sfc-dialog h3 { margin-top: 0; }
+@media (prefers-reduced-motion: reduce) { .sodafom-feature-controls * { scroll-behavior: auto; } }

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle, Clock3, Mic, MicOff, Send, ShieldCheck, XCircle } from 'lucide-react';
 import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak, stopTts } from '@/lib/voice-context';
+import { AdminFeatureControls } from './admin/AdminFeatureControls';
 
 type ChangeRequest = {
   id: number;
@@ -120,6 +121,7 @@ export function FounderVoiceControl() {
 
   return (
     <div className="space-y-6">
+      <AdminFeatureControls />
       <section className="rounded-3xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6 shadow-sm">
         <div className="flex items-start gap-3">
           <ShieldCheck className="mt-1 shrink-0 text-blue-700" />

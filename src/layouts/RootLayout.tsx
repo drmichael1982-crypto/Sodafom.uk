@@ -13,6 +13,7 @@ import AccessibilityBar from '@/components/AccessibilityBar';
 import ArchieHelper from '@/components/ArchieHelper';
 import MobileTrialBar from '@/components/MobileTrialBar';
 import { usePageView } from '@/hooks/usePageView';
+import { AdminFeatureAvailability } from '@/components/admin/AdminFeatureAvailability';
 
 interface RootLayoutProps {
   children: ReactElement;
@@ -88,7 +89,7 @@ export default function RootLayout({
                 <ScrollRestoration />
                 {!immersiveApp && <Header />}
                 <div className={immersiveApp ? 'sodafom-immersive-route' : undefined}>
-                  {children}
+                  <AdminFeatureAvailability>{children}</AdminFeatureAvailability>
                 </div>
                 {!immersiveApp && <Footer />}
                 {/* Floating UI — accessibility toolbar + unified Archie helper + mobile CTA */}

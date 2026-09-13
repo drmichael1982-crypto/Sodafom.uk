@@ -4,9 +4,27 @@ import { db } from '@/server/db/client';
 import { founderChangeRequests } from '@/server/db/schema';
 import { hasAdminAccess } from '@/server/admin-auth';
 import { planFounderInstruction } from '@/lib/founder-change-planner';
+import { createFeatureService } from '@/server/admin-feature-controls/service';
+import { featureStore } from '@/server/admin-feature-controls/store';
 
 export default async function handler(req: Request, res: Response) {
   if (!(await hasAdminAccess(req))) return res.status(401).json({ error: 'Authorisation required' });
+
+  // A namespaced action reuses this registered owner endpoint without changing
+  // the existing prepare / approve-for-development / reject workflow.
+  if (req.body?.action === 'set-feature-control') {
+    const result = await createFeatureService(featureStore).write({
+      authorised: true,
+      origin: req.get('Origin'),
+      host: req.get('Host'),
+      contentType: req.get('Content-Type'),
+      actionHeader: req.get('X-Sodafom-Admin-Action'),
+      development: process.env.NODE_ENV === 'development',
+      trustedOrigins: [process.env.BETTER_AUTH_URL || ''],
+      body: req.body,
+    });
+    return res.set('Cache-Control', 'no-store').status(result.status).json(result.body);
+  }
 
   try {
     const { instruction, action, id } = req.body as { instruction?: string; action?: 'approve' | 'reject'; id?: number };
