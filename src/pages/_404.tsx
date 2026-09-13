@@ -5,13 +5,16 @@ import { motion } from 'motion/react';
 import { Home, ArrowLeft, MessageCircle, Shuffle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { games as gamesContent } from 'virtual:content';
+import { getNotFoundBackTarget, getRandomGameDestination, isGameNavigationCandidate } from '@/lib/navigation-recovery';
 
 interface SuggestedGame { id: string; title: string; emoji: string; slug: string; subject: string; }
 
 function useRandomGames(count = 3): SuggestedGame[] {
   const [picks, setPicks] = useState<SuggestedGame[]>([]);
   useEffect(() => {
-    const all = (gamesContent.games ?? []) as SuggestedGame[];
+    const all = Array.isArray(gamesContent.games)
+      ? (gamesContent.games as SuggestedGame[]).filter(isGameNavigationCandidate)
+      : [];
     if (!all.length) return;
     const shuffled = [...all].sort(() => Math.random() - 0.5);
     setPicks(shuffled.slice(0, count));
@@ -30,6 +33,18 @@ const floatVariants = {
 export default function NotFoundPage() {
   const navigate = useNavigate();
   const suggestedGames = useRandomGames(3);
+
+  function handleGoBack() {
+    let historyState: unknown;
+    try { historyState = window.history.state; } catch { /* Restricted history uses Home. */ }
+    const target = getNotFoundBackTarget(historyState);
+    if (target === -1) {
+      void navigate(-1);
+    } else {
+      // Replace the broken URL so Back does not immediately reopen it.
+      void navigate(target, { replace: true });
+    }
+  }
 
   // Archie message cycles
   const archieMessages = [
@@ -140,20 +155,19 @@ export default function NotFoundPage() {
               Go to homepage
             </Link>
             <button
-              onClick={() => navigate(-1)}
+              type="button"
+              onClick={handleGoBack}
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full border-2 border-border bg-card text-foreground font-black text-base hover:border-primary/50 hover:scale-105 active:scale-95 transition-all"
             >
               <ArrowLeft size={18} />
               Go back
             </button>
             <motion.button
+              type="button"
               whileHover={{ scale: 1.06, rotate: [0, -5, 5, 0] }}
               whileTap={{ scale: 0.95 }}
               onClick={() => {
-                const all = (gamesContent.games ?? []) as { slug: string }[];
-                if (!all.length) return;
-                const pick = all[Math.floor(Math.random() * all.length)];
-                navigate(`/games/${pick.slug}`);
+                void navigate(getRandomGameDestination(gamesContent.games));
               }}
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-accent text-accent-foreground font-black text-base shadow-lg"
             >
