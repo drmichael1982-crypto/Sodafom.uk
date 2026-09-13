@@ -1,12 +1,14 @@
 /**
  * GET /api/rewards/characters?childId=:id
  * Returns all active characters with unlocked + active flags for the given child.
+ * Agent 40 also exposes the learning-earned claw-machine state for the same child.
  */
 import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { rewardCharacters, childCharacters, children } from '@/server/db/schema';
 import { eq, asc, and } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
+import { getClawMachineState, type ClawMachineState } from '@/server/rewards/claw-machine';
 
 export default async function handler(req: Request, res: Response) {
   try {
@@ -23,6 +25,7 @@ export default async function handler(req: Request, res: Response) {
     let unlockedIds: Set<number> = new Set();
     let activeCharacterId: number | null = null;
     let totalStars = 0;
+    let clawMachine: ClawMachineState | null = null;
 
     if (childId && session?.user) {
       // Verify ownership
@@ -40,6 +43,14 @@ export default async function handler(req: Request, res: Response) {
           .from(childCharacters)
           .where(eq(childCharacters.childId, childId));
         unlockedIds = new Set(owned.map((r: any) => r.characterId));
+
+        // The claw feature must never break the existing Rewards page if its
+        // storage is temporarily unavailable. Existing character rewards still load.
+        try {
+          clawMachine = await getClawMachineState(childId, session.user.id);
+        } catch (clawError) {
+          console.warn('GET /api/rewards/characters claw state unavailable:', clawError);
+        }
       }
     }
 
@@ -49,7 +60,7 @@ export default async function handler(req: Request, res: Response) {
       isActive: c.id === activeCharacterId,
     }));
 
-    res.json({ characters: result, totalStars, activeCharacterId });
+    res.json({ characters: result, totalStars, activeCharacterId, clawMachine });
   } catch (err) {
     console.error('GET /api/rewards/characters error:', err);
     res.status(500).json({ error: 'Failed to fetch characters' });
