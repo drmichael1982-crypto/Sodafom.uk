@@ -51,7 +51,7 @@ export default function LoginPage() {
     try {
       console.log('Attempting sign in for:', email);
       const result = await signIn.email({
-        email,
+        email: email.trim().toLowerCase(),
         password
       });
 
@@ -106,7 +106,7 @@ export default function LoginPage() {
       });
     } catch (err) {
       console.error('Unexpected sign in catch:', err);
-      setError(String(err));
+      setError('We could not reach Sodafom securely. Please check your connection and try again. If it keeps happening, use the Home button and try again later.');
     } finally {
       setLoading(false);
     }
