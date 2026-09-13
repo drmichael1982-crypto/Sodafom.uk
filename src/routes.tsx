@@ -27,6 +27,7 @@ import ForgotPasswordPage from './pages/hub/forgot-password';
 import ResetPasswordPage from './pages/hub/reset-password';
 import ParentDashboardPage from './pages/parent-dashboard';
 import DailyChallengePage from './pages/daily-challenge';
+import DailyLearningPage from './pages/daily-learning';
 import CheckoutSuccess from './pages/checkout/success';
 import CheckoutCancel from './pages/checkout/cancel';
 import ProdNotFoundPage from './pages/_404';
@@ -745,6 +746,9 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/daily-challenge',
   element: <DailyChallengePage />,
+}, {
+  path: '/daily-learning',
+  element: <DailyLearningPage />,
 }, {
   path: '/hub/forgot-password',
   element: <ForgotPasswordPage />,
