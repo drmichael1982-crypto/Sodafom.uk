@@ -18,6 +18,8 @@ import { ArchieCharacter } from '../components/ArchieCharacter';
 import GamesPage from './games';
 import { useSession } from '@/lib/auth/auth-client';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
+import { SeasonalCoverDecorations, SeasonalCoverLink } from '@/components/SeasonalCoverDecorations';
+import { useSeasonalTheme } from '@/lib/seasonal-themes';
 
 const siteUrl = 'https://sodafom.uk';
 const ogImage = `${siteUrl}/og-image.png`;
@@ -204,6 +206,7 @@ type SubjectId = 'maths' | 'reading' | 'spelling' | 'science';
 const SUBJECTS = HOME_NAV.filter(item => item.type === 'subject') as Extract<typeof HOME_NAV[number], { type: 'subject' }>[];
 
 export default function HomePage() {
+  const { theme } = useSeasonalTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const urlSubject = searchParams.get('subject');
 
@@ -307,7 +310,14 @@ export default function HomePage() {
             exit={{ opacity: 0, y: -30, scale: 0.98 }}
             transition={{ duration: 0.35, ease: 'easeIn' as const }}
           >
-            <section className="hero-bg relative overflow-hidden min-h-screen flex flex-col" aria-label="Choose a subject">
+            <section
+              className="hero-bg relative min-h-screen overflow-hidden flex flex-col"
+              aria-label="Choose a subject"
+              data-seasonal-theme={theme.id}
+              style={theme.background ? { background: theme.background } : undefined}
+            >
+
+              <SeasonalCoverDecorations theme={theme} />
 
               {/* Sky decorations */}
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -353,6 +363,7 @@ export default function HomePage() {
                   transition={{ duration: 0.5, delay: 0.1 }}
                   className="flex items-center gap-2"
                 >
+                  <SeasonalCoverLink theme={theme} />
                   {!isAuthenticated ? (
                       <Link
                         to="/hub/login"
