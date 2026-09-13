@@ -40,6 +40,8 @@ const STORIES: Story[] = [
   ] },
 ];
 
+const shelfRows = [STORIES.slice(0, 5), STORIES.slice(5, 10)];
+
 export default function ArchieStoryCollectionPage() {
   const navigate = useNavigate();
   const [storyIndex, setStoryIndex] = useState<number | null>(null);
@@ -54,52 +56,305 @@ export default function ArchieStoryCollectionPage() {
   const story = storyIndex === null ? null : STORIES[storyIndex];
 
   useEffect(() => () => stopTts(), []);
+
   const words = story ? story.pages[page].split(/\s+/) : [];
   const clean = (word: string) => word.toLowerCase().replace(/[^a-z0-9']/g, '');
   const soundOut = (word: string) => {
     const sounds = clean(word).match(/tion|igh|air|ear|ure|oo|ee|ai|ay|oa|ow|oi|oy|ch|sh|th|ph|ck|ng|qu|[a-z]/g) ?? [];
     return sounds.join(' … ');
   };
-  const resetReadAlong = () => { recognitionRef.current?.stop?.(); setListening(false); setWordStates(words.map(() => 'pending')); setWordIndex(0); };
-  const open = (index: number) => { setStoryIndex(index); setPage(0); setWelcome(true); setWordStates(STORIES[index].pages[0].split(/\s+/).map(() => 'pending')); setWordIndex(0); };
-  const close = () => { resetReadAlong(); stopTts(); setStoryIndex(null); };
-  const changePage = (next: number) => { if (!story || turning) return; const safe = Math.max(0, Math.min(story.pages.length - 1, next)); if (safe === page) return; resetReadAlong(); setTurning(true); window.setTimeout(() => { setPage(safe); setWordStates(story.pages[safe].split(/\s+/).map(() => 'pending')); setWordIndex(0); setTurning(false); }, 750); };
+
+  const resetReadAlong = () => {
+    recognitionRef.current?.stop?.();
+    setListening(false);
+    setWordStates(words.map(() => 'pending'));
+    setWordIndex(0);
+  };
+
+  const open = (index: number) => {
+    setStoryIndex(index);
+    setPage(0);
+    setArchiesView(false);
+    setWelcome(true);
+    setWordStates(STORIES[index].pages[0].split(/\s+/).map(() => 'pending'));
+    setWordIndex(0);
+  };
+
+  const close = () => {
+    resetReadAlong();
+    stopTts();
+    setWelcome(false);
+    setStoryIndex(null);
+  };
+
+  const changePage = (next: number) => {
+    if (!story || turning) return;
+    const safe = Math.max(0, Math.min(story.pages.length - 1, next));
+    if (safe === page) return;
+    resetReadAlong();
+    setTurning(true);
+    window.setTimeout(() => {
+      setPage(safe);
+      setWordStates(story.pages[safe].split(/\s+/).map(() => 'pending'));
+      setWordIndex(0);
+      setTurning(false);
+    }, 750);
+  };
+
   const startReading = () => {
     if (!story) return;
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) { ttsSpeak('Your browser does not support reading aloud yet.'); return; }
-    const recognition = new SpeechRecognition(); recognition.lang = 'en-GB'; recognition.continuous = true; recognition.interimResults = false;
+    if (!SpeechRecognition) {
+      ttsSpeak('Your browser does not support reading aloud yet.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-GB';
+    recognition.continuous = true;
+    recognition.interimResults = false;
     recognition.onresult = (event: any) => {
       const heard = String(event.results[event.results.length - 1][0].transcript).split(/\s+/).map(clean).filter(Boolean);
-      let position = wordIndex; const nextStates = [...(wordStates.length ? wordStates : words.map(() => 'pending' as const))];
+      let position = wordIndex;
+      const nextStates = [...(wordStates.length ? wordStates : words.map(() => 'pending' as const))];
       for (const spoken of heard) {
         if (position >= words.length) break;
         const expected = clean(words[position]);
         const previous = position > 0 ? clean(words[position - 1]) : '';
         if (spoken === previous || spoken.length < 2) continue;
-        if (spoken === expected || expected.startsWith(spoken) || spoken.startsWith(expected)) { nextStates[position] = 'correct'; position += 1; }
-        else if (heard.includes(expected)) continue;
-        else { nextStates[position] = 'wrong'; ttsSpeak(`Let us sound it out: ${soundOut(words[position])}. Your turn.`); break; }
+        if (spoken === expected || expected.startsWith(spoken) || spoken.startsWith(expected)) {
+          nextStates[position] = 'correct';
+          position += 1;
+        } else if (heard.includes(expected)) {
+          continue;
+        } else {
+          nextStates[position] = 'wrong';
+          ttsSpeak(`Let us sound it out: ${soundOut(words[position])}. Your turn.`);
+          break;
+        }
       }
-      setWordStates(nextStates); setWordIndex(position); if (position >= words.length) recognition.stop();
-      if (position >= words.length && page < 9) window.setTimeout(() => changePage(page + 1), 1100);
+      setWordStates(nextStates);
+      setWordIndex(position);
+      if (position >= words.length) recognition.stop();
+      if (position >= words.length && page < story.pages.length - 1) {
+        window.setTimeout(() => changePage(page + 1), 1100);
+      }
     };
-    recognition.onerror = () => setListening(false); recognition.onend = () => setListening(false); recognitionRef.current = recognition; setListening(true); recognition.start();
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+    recognitionRef.current = recognition;
+    setListening(true);
+    recognition.start();
   };
 
-  if (story && welcome) return <main className={`min-h-screen bg-gradient-to-b ${story.colour} px-4 py-5 text-slate-950`}><div className="mx-auto max-w-4xl"><button onClick={close} className="mb-4 flex min-h-12 items-center gap-2 rounded-full bg-white px-5 font-black shadow-xl"><ArrowLeft /> Back to shelf</button><motion.section initial={{ scale: .75, opacity: 0, rotateY: -55 }} animate={{ scale: 1, opacity: 1, rotateY: 0 }} transition={{ type: 'spring', stiffness: 115, damping: 17 }} className="relative overflow-hidden rounded-[2.5rem] border-8 border-amber-200 bg-slate-900 shadow-2xl"><img src="/assets/stories/archie-library-welcome.jpg" alt="Archie and his dogs waiting in the magical library" className="h-[520px] w-full object-cover" /><div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-transparent" /><motion.span aria-label="A spinning globe" className="absolute left-[5%] top-[9%] text-6xl drop-shadow-2xl" animate={{ rotate: 360, y: [0, -4, 0] }} transition={{ rotate: { duration: 12, ease: 'linear', repeat: Infinity }, y: { duration: 2.4, repeat: Infinity } }}>🌍</motion.span><motion.div className="absolute bottom-8 left-7" animate={{ y: [0, -6, 0], scale: [1, 1.03, 1] }} transition={{ duration: 1.5, repeat: Infinity }}><ArchieCharacter size={116} speaking /></motion.div><motion.span className="absolute bottom-12 right-12 text-6xl" initial={{ x: 180, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 1.2 }}>🧒</motion.span><motion.span className="absolute left-[68%] top-[19%] text-5xl" animate={{ y: [0, 260], rotate: [0, 35, 90] }} transition={{ duration: 3.5, repeat: Infinity, repeatDelay: 2 }}>📚</motion.span><div className="absolute inset-x-0 bottom-0 p-7 text-white"><p className="text-2xl font-black sm:text-3xl">Come and sit down, friend! Let’s look at the book together.</p><p className="mt-2 max-w-xl font-bold text-white/90">The dogs wiggle, Archie’s lips move, and the storybook sparkles before you step into the adventure.</p><button onClick={() => setWelcome(false)} className="mt-5 min-h-12 rounded-full bg-yellow-300 px-6 font-black text-purple-950 shadow-xl">Let’s look at the book ✨</button></div></motion.section></div></main>;
+  if (story && welcome) {
+    return (
+      <main className={`min-h-screen bg-gradient-to-b ${story.colour} px-4 py-5 text-slate-950`}>
+        <div className="mx-auto max-w-5xl">
+          <button onClick={close} className="mb-4 flex min-h-12 items-center gap-2 rounded-full bg-white px-5 font-black shadow-xl">
+            <ArrowLeft /> Back to library
+          </button>
 
-  if (story) return <main className={`min-h-screen bg-gradient-to-b ${story.colour} px-4 py-5 text-slate-950`}><style>{`.h-3.w-3,[aria-label="Jessica walking"],[aria-label="Sally walking"]{display:none!important}`}</style>
-    <div className="mx-auto max-w-4xl">
-      <button onClick={close} className="mb-4 flex min-h-12 items-center gap-2 rounded-full bg-white px-5 font-black shadow-xl"><ArrowLeft /> Back to shelf</button>
-      <motion.article initial={{ rotateY: -80, scale: .72, opacity: 0 }} animate={{ rotateY: 0, scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 115, damping: 18 }} className="overflow-hidden rounded-[2rem] border-8 border-amber-200 bg-[#fff9e8] shadow-2xl">
-        <div className="grid min-h-[620px] md:grid-cols-2">
-          <div className="relative min-h-72 overflow-hidden bg-indigo-950"><motion.img key={`${story.title}-${page}-${archiesView}`} src={story.image ?? '/assets/approved/stories.png'} alt={`${story.title} illustrated scene`} className="absolute inset-0 h-full w-full object-cover object-center" initial={{ scale: archiesView ? 1.42 : 1.16, x: page % 2 ? '5%' : '-5%', opacity: .55 }} animate={{ scale: archiesView ? 1.26 : 1.04, x: archiesView ? (page % 2 ? '-13%' : '13%') : (page % 2 ? '-3%' : '3%'), opacity: 1 }} transition={{ duration: 7, ease: 'linear' }} /><div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 to-transparent" />{[0, 1, 2, 3, 4].map((star) => <motion.span key={star} className="absolute h-3 w-3 rounded-full bg-yellow-200 shadow-[0_0_16px_5px_rgba(253,224,71,.9)]" initial={{ left: `${12 + star * 18}%`, top: '88%', opacity: 0 }} animate={{ top: '10%', opacity: [0, 1, 1, 0], scale: [0.4, 1.2, .8] }} transition={{ duration: 3.5 + star * .4, delay: star * .3, repeat: Infinity }} />)}<motion.div className="absolute bottom-5 left-5 h-16 w-16 rounded-full border-4 border-yellow-200 bg-amber-400 shadow-[0_0_32px_9px_rgba(250,204,21,.8)]" animate={{ rotate: 360, scale: [1, 1.16, 1] }} transition={{ rotate: { duration: 9, repeat: Infinity, ease: 'linear' }, scale: { duration: 1.8, repeat: Infinity } }} />{story.title === 'The Forest Adventure' && <><motion.div aria-label="A friendly owl looks around" className="absolute right-[17%] top-[13%] text-6xl drop-shadow-xl" animate={{ rotate: [-18, 18, -18], y: [0, -4, 0] }} transition={{ duration: 2.4, repeat: Infinity }}><motion.span animate={{ scaleY: [1, .12, 1, 1] }} transition={{ duration: 3, repeat: Infinity }}>🦉</motion.span></motion.div><motion.span aria-hidden className="absolute right-[24%] top-[18%] text-sm" animate={{ opacity: [0, 1, 0], x: [-4, 3, -4] }} transition={{ duration: 1.6, repeat: Infinity }}>👀</motion.span></>}{!archiesView && <><motion.div className="absolute bottom-2 left-2" animate={turning ? { x: ['0%', '290%'], rotate: [0, -8, 8, 0] } : { x: ['0%', '24%', '0%'], y: [0, -10, 0, -10, 0], rotate: [0, -2, 2, -2, 0] }} transition={turning ? { duration: .7, ease: 'easeInOut' } : { duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}><ArchieCharacter size={96} speaking={turning} /></motion.div><motion.img src="/assets/cartoon/friends/daisy.png" alt="Daisy walking beside Archie" className="absolute bottom-3 right-4 h-20 w-20 object-contain drop-shadow-xl" animate={turning ? { x: ['0%', '-300%'], rotate: [0, 10, -10, 0] } : { x: ['0%', '-42%', '0%'], y: [0, -6, 0, -6, 0], rotate: [-3, 4, -3, 4, -3] }} transition={turning ? { duration: .65, ease: 'easeInOut' } : { duration: 2.6, repeat: Infinity, ease: 'easeInOut' }} /><motion.span aria-label="Jessica walking" className="absolute bottom-4 right-[25%] text-4xl" animate={{ x: ['0%', '-45%', '0%'], y: [0, -5, 0, -5, 0] }} transition={{ duration: 2.3, repeat: Infinity }}>🐕‍🦺</motion.span><motion.span aria-label="Sally walking" className="absolute bottom-4 right-[40%] text-4xl" animate={{ x: ['0%', '-38%', '0%'], y: [0, -5, 0, -5, 0] }} transition={{ duration: 2.1, delay: .25, repeat: Infinity }}>🐕‍🦺</motion.span></>}<div className="absolute bottom-4 left-4 rounded-full bg-white/90 px-4 py-2 font-black">{archiesView ? '👀 Looking through Archie’s eyes' : '✨ Moving illustrated story page'}</div></div>
-          <div className="flex flex-col justify-between p-7 sm:p-10"><div><p className="text-sm font-black uppercase tracking-widest text-purple-700">Archie’s Stories · Page {page + 1} of 10</p><h1 className="mt-2 font-serif text-3xl font-black text-purple-950 sm:text-5xl">{story.title}</h1><p className="mt-8 font-serif text-2xl leading-relaxed text-slate-800 sm:text-3xl">{words.map((word, index) => <span key={`${page}-${index}`} className={wordStates[index] === 'correct' ? 'text-green-600' : wordStates[index] === 'wrong' ? 'text-red-600 underline decoration-red-500 decoration-2' : 'text-slate-900'}>{word}{' '}</span>)}</p><p className="mt-3 text-sm font-bold text-purple-700">{listening ? '🎙️ Archie is listening…' : wordIndex === words.length && words.length > 0 ? '⭐ Brilliant reading!' : 'Black = to read · Green = correct · Red = Archie will help'}</p></div><div className="mt-8 flex flex-wrap items-center justify-between gap-3"><button onClick={() => ttsSpeak(story.pages[page])} className="flex min-h-12 items-center gap-2 rounded-full bg-purple-700 px-5 font-black text-white"><Volume2 /> Read to me</button><button onClick={startReading} disabled={listening || wordIndex === words.length} className="flex min-h-12 items-center gap-2 rounded-full bg-emerald-600 px-5 font-black text-white disabled:opacity-50"><Mic /> {listening ? 'Listening…' : wordIndex === words.length ? 'Page completed' : 'I want to read'}</button><button onClick={() => setArchiesView(value => !value)} className="flex min-h-12 items-center gap-2 rounded-full bg-sky-600 px-5 font-black text-white"><Eye /> {archiesView ? 'Leave Archie’s view' : 'Look through Archie’s eyes'}</button><div className="flex gap-2"><button disabled={page === 0 || turning} onClick={() => changePage(page - 1)} className="rounded-full bg-amber-300 p-3 font-black disabled:opacity-40"><ChevronLeft /></button><button disabled={page === 9 || turning} onClick={() => changePage(page + 1)} className="rounded-full bg-amber-300 p-3 font-black disabled:opacity-40"><ChevronRight /></button></div></div></div>
+          <motion.section
+            initial={{ scale: 0.94, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.35 }}
+            className="overflow-hidden rounded-[2.5rem] border-8 border-amber-200 bg-[#f9e7bd] shadow-2xl"
+          >
+            <div className="grid min-h-[590px] items-stretch md:grid-cols-[0.9fr_1.1fr]">
+              <div className="relative flex items-center justify-center overflow-hidden bg-amber-950/10 p-8">
+                <motion.div
+                  initial={{ rotateY: -28, rotateZ: -2 }}
+                  animate={{ rotateY: 0, rotateZ: 0 }}
+                  transition={{ type: 'spring', stiffness: 110, damping: 16 }}
+                  className={`relative h-[420px] w-[280px] overflow-hidden rounded-r-2xl border-y-4 border-r-4 border-amber-100 bg-gradient-to-br ${story.colour} shadow-2xl [box-shadow:-16px_0_0_#5b341d,0_28px_50px_rgba(60,28,10,.35)]`}
+                >
+                  {story.image ? (
+                    <img src={story.image} alt={`${story.title} cover illustration`} className="absolute inset-0 h-full w-full object-cover" />
+                  ) : (
+                    <img src="/assets/images/archie-character-v2.png" alt="Archie on the book cover" className="absolute bottom-20 left-1/2 h-56 w-56 -translate-x-1/2 object-contain drop-shadow-2xl" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-900/10 to-black/20" />
+                  <div className="absolute inset-x-0 bottom-0 p-6 text-white">
+                    <p className="font-serif text-3xl font-black leading-tight">{story.title}</p>
+                    <p className="mt-2 font-bold text-white/90">{story.strapline}</p>
+                  </div>
+                </motion.div>
+              </div>
+
+              <div className="relative flex min-h-[470px] flex-col justify-end overflow-hidden bg-gradient-to-b from-sky-100 via-amber-50 to-amber-100 p-7 sm:p-10">
+                <div className="absolute inset-x-0 bottom-0 h-24 border-t-4 border-amber-300 bg-amber-200/80" />
+                <motion.div
+                  aria-label={`Archie steps out of ${story.title}`}
+                  className="absolute bottom-16 left-1/2 -translate-x-1/2"
+                  initial={{ x: -150, y: 18, scale: 0.38, opacity: 0 }}
+                  animate={{ x: [-150, -105, -55, -10, 24], y: [18, -12, 8, -10, 0], scale: [0.38, 0.55, 0.72, 0.9, 1], opacity: [0, 1, 1, 1, 1] }}
+                  transition={{ duration: 1.65, ease: 'easeOut' }}
+                >
+                  <ArchieCharacter size={190} />
+                </motion.div>
+
+                <div className="relative z-10 rounded-3xl bg-white/95 p-6 shadow-xl backdrop-blur-sm">
+                  <p className="text-sm font-black uppercase tracking-[0.2em] text-purple-700">Selected book</p>
+                  <h1 className="mt-2 font-serif text-3xl font-black text-purple-950 sm:text-4xl">{story.title}</h1>
+                  <p className="mt-2 font-bold text-slate-700">Archie has stepped out of the cover. Open the book when you are ready.</p>
+                  <button onClick={() => setWelcome(false)} className="mt-5 min-h-12 rounded-full bg-purple-700 px-7 font-black text-white shadow-lg transition hover:bg-purple-800 active:scale-95">
+                    Open the book
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.section>
         </div>
-      </motion.article>
-    </div>
-  </main>;
+      </main>
+    );
+  }
 
-  return <main className="min-h-screen bg-gradient-to-b from-amber-100 via-orange-100 to-sky-200 px-4 py-5 text-slate-950"><div className="mx-auto max-w-6xl"><div className="mb-5 flex items-center justify-between gap-3"><button onClick={() => navigate('/reading')} className="flex min-h-12 items-center gap-2 rounded-full bg-white px-5 font-black shadow-xl"><ArrowLeft /> Reading</button><h1 className="text-center text-2xl font-black text-purple-950 sm:text-4xl">📚 ARCHIE’S BOOK COLLECTION</h1><span className="w-24" /></div><section className="relative overflow-hidden rounded-[2rem] border-8 border-amber-800 bg-amber-900 shadow-2xl"><img src="/assets/approved/stories.png" alt="Archie’s Stories book shelf" className="w-full border-b-8 border-amber-800" /><motion.div className="absolute left-[28%] top-[30%]" animate={{ y: [0, -6, 0], rotate: [-2, 2, -2] }} transition={{ duration: 2.1, repeat: Infinity }}><ArchieCharacter size={62} /></motion.div><motion.img src="/assets/cartoon/friends/daisy.png" alt="Daisy balancing safely on the shelf" className="absolute left-[48%] top-[39%] h-14 w-14 object-contain" animate={{ rotate: [-5, 5, -5], y: [0, -5, 0] }} transition={{ duration: 1.6, repeat: Infinity }} /><motion.div aria-label="Archie hangs on safely while a friend pulls him back up" className="absolute right-[13%] top-[16%] origin-top" animate={{ rotate: [-16, 9, -16], y: [0, 7, 0] }} transition={{ duration: 1.45, repeat: Infinity }}><ArchieCharacter size={58} /></motion.div><motion.img src="/assets/cartoon/friends/daisy.png" alt="Daisy helps Archie back onto the shelf" className="absolute right-[4%] top-[14%] h-16 w-16 object-contain" animate={{ x: [0, -12, 0], y: [0, -3, 0] }} transition={{ duration: 1.45, repeat: Infinity }} /><motion.span aria-hidden className="absolute left-[10%] top-[19%] text-3xl" animate={{ y: [0, -26, 0], rotate: [-9, 8, -9] }} transition={{ duration: 2.2, repeat: Infinity }}>📕</motion.span><motion.span aria-hidden className="absolute right-[35%] top-[27%] text-3xl" animate={{ y: [0, -21, 0], rotate: [6, -10, 6] }} transition={{ duration: 1.85, repeat: Infinity, delay: .35 }}>📗</motion.span><motion.span aria-hidden className="absolute left-[65%] top-[12%] text-3xl" animate={{ x: [0, 28, 0], y: [0, -12, 0] }} transition={{ duration: 2.5, repeat: Infinity }}>🐭</motion.span><div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">{STORIES.map((item, index) => <button key={item.title} onClick={() => open(index)} className={`min-h-48 rounded-2xl bg-gradient-to-br ${item.colour} p-4 text-left text-white shadow-lg transition hover:-translate-y-1 active:scale-95`}><BookOpen size={32} /><h2 className="mt-6 text-xl font-black">{item.title}</h2><p className="mt-2 text-sm font-bold text-white/85">{item.strapline}</p><span className="mt-4 inline-block rounded-full bg-white/20 px-3 py-1 text-xs font-black">Open book</span></button>)}</div></section><p className="mt-4 text-center font-bold text-slate-700">Tap a book, then use “Read to me” or the arrows to turn all ten pages.</p></div></main>;
+  if (story) {
+    return (
+      <main className={`min-h-screen bg-gradient-to-b ${story.colour} px-4 py-5 text-slate-950`}>
+        <div className="mx-auto max-w-4xl">
+          <button onClick={close} className="mb-4 flex min-h-12 items-center gap-2 rounded-full bg-white px-5 font-black shadow-xl">
+            <ArrowLeft /> Back to library
+          </button>
+
+          <motion.article
+            initial={{ rotateY: -80, scale: 0.72, opacity: 0 }}
+            animate={{ rotateY: 0, scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 115, damping: 18 }}
+            className="overflow-hidden rounded-[2rem] border-8 border-amber-200 bg-[#fff9e8] shadow-2xl"
+          >
+            <div className="grid min-h-[620px] md:grid-cols-2">
+              <div className="relative min-h-72 overflow-hidden bg-indigo-950">
+                <motion.img
+                  key={`${story.title}-${page}-${archiesView}`}
+                  src={story.image ?? '/assets/approved/stories.png'}
+                  alt={`${story.title} illustrated scene`}
+                  className="absolute inset-0 h-full w-full object-cover object-center"
+                  initial={{ scale: archiesView ? 1.42 : 1.16, x: page % 2 ? '5%' : '-5%', opacity: 0.55 }}
+                  animate={{ scale: archiesView ? 1.26 : 1.04, x: archiesView ? (page % 2 ? '-13%' : '13%') : (page % 2 ? '-3%' : '3%'), opacity: 1 }}
+                  transition={{ duration: 7, ease: 'linear' }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/45 to-transparent" />
+                {!archiesView && (
+                  <motion.div
+                    className="absolute bottom-2 left-2"
+                    animate={turning ? { x: ['0%', '290%'], y: [0, -8, 0], rotate: [0, -6, 5, 0] } : { x: ['0%', '20%', '0%'], y: [0, -7, 0, -7, 0], rotate: [0, -2, 2, -2, 0] }}
+                    transition={turning ? { duration: 0.7, ease: 'easeInOut' } : { duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <ArchieCharacter size={96} />
+                  </motion.div>
+                )}
+                <div className="absolute bottom-4 right-4 rounded-full bg-white/90 px-4 py-2 font-black text-slate-900 shadow-lg">
+                  {archiesView ? 'Looking through Archie’s eyes' : 'Illustrated story scene'}
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-between p-7 sm:p-10">
+                <div>
+                  <p className="text-sm font-black uppercase tracking-widest text-purple-700">Archie’s Stories · Page {page + 1} of {story.pages.length}</p>
+                  <h1 className="mt-2 font-serif text-3xl font-black text-purple-950 sm:text-5xl">{story.title}</h1>
+                  <p className="mt-8 font-serif text-2xl leading-relaxed text-slate-800 sm:text-3xl">
+                    {words.map((word, index) => (
+                      <span key={`${page}-${index}`} className={wordStates[index] === 'correct' ? 'text-green-600' : wordStates[index] === 'wrong' ? 'text-red-600 underline decoration-red-500 decoration-2' : 'text-slate-900'}>
+                        {word}{' '}
+                      </span>
+                    ))}
+                  </p>
+                  <p className="mt-3 text-sm font-bold text-purple-700">
+                    {listening ? 'Archie is listening…' : wordIndex === words.length && words.length > 0 ? 'Brilliant reading!' : 'Black = to read · Green = correct · Red = Archie will help'}
+                  </p>
+                </div>
+
+                <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+                  <button onClick={() => ttsSpeak(story.pages[page])} className="flex min-h-12 items-center gap-2 rounded-full bg-purple-700 px-5 font-black text-white">
+                    <Volume2 /> Read to me
+                  </button>
+                  <button onClick={startReading} disabled={listening || wordIndex === words.length} className="flex min-h-12 items-center gap-2 rounded-full bg-emerald-600 px-5 font-black text-white disabled:opacity-50">
+                    <Mic /> {listening ? 'Listening…' : wordIndex === words.length ? 'Page completed' : 'I want to read'}
+                  </button>
+                  <button onClick={() => setArchiesView(value => !value)} className="flex min-h-12 items-center gap-2 rounded-full bg-sky-600 px-5 font-black text-white">
+                    <Eye /> {archiesView ? 'Leave Archie’s view' : 'Look through Archie’s eyes'}
+                  </button>
+                  <div className="flex gap-2">
+                    <button disabled={page === 0 || turning} onClick={() => changePage(page - 1)} aria-label="Previous page" className="rounded-full bg-amber-300 p-3 font-black disabled:opacity-40">
+                      <ChevronLeft />
+                    </button>
+                    <button disabled={page === story.pages.length - 1 || turning} onClick={() => changePage(page + 1)} aria-label="Next page" className="rounded-full bg-amber-300 p-3 font-black disabled:opacity-40">
+                      <ChevronRight />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.article>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-sky-200 via-amber-50 to-amber-100 px-4 py-5 text-slate-950">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <button onClick={() => navigate('/reading')} className="flex min-h-12 items-center gap-2 rounded-full bg-white px-5 font-black shadow-xl">
+            <ArrowLeft /> Reading
+          </button>
+          <div className="rounded-3xl border-4 border-amber-700 bg-white px-5 py-3 text-center shadow-lg">
+            <div className="flex items-center justify-center gap-2 text-purple-950">
+              <BookOpen aria-hidden />
+              <h1 className="text-2xl font-black sm:text-4xl">ARCHIE’S BOOK COLLECTION</h1>
+            </div>
+            <p className="mt-1 font-bold text-slate-600">Choose a cover from the library shelves.</p>
+          </div>
+          <span className="hidden w-28 sm:block" />
+        </div>
+
+        <section className="overflow-hidden rounded-[2.5rem] border-8 border-amber-900 bg-gradient-to-b from-[#f7dca6] via-[#edc47d] to-[#d19a50] shadow-2xl">
+          <div className="border-b-4 border-amber-800 bg-[#6f3f24] px-6 py-4 text-center text-lg font-black text-amber-50 shadow-inner">
+            The Story Library
+          </div>
+
+          <div className="space-y-10 px-4 py-8 sm:px-8">
+            {shelfRows.map((row, rowIndex) => (
+              <div key={`shelf-${rowIndex}`} className="relative pb-8">
+                <div className="flex gap-5 overflow-x-auto px-2 pb-4 pt-3 sm:justify-center">
+                  {row.map((item) => {
+                    const index = STORIES.indexOf(item);
+                    return (
+                      <button
+                        key={item.title}
+                        onClick={() => open(index)}
+                        className="group relative h-64 w-44 shrink-0 overflow-hidden rounded-r-2xl border-y-4 border-r-4 border-amber-100 bg-slate-900 text-left text-white shadow-[inset_9px_0_0_rgba(42,20,12,.6),0_14px_20px_rgba(61,31,13,.35)] transition duration-200 hover:-translate-y-3 hover:rotate-1 focus:outline-none focus:ring-4 focus:ring-purple-400 active:scale-95"
+                        aria-label={`Open ${item.title}`}
+                      >
+                        {item.image ? (
+                          <img src={item.image} alt={`${item.title} cover illustration`} className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                        ) : (
+                          <div className={`absolute inset-0 bg-gradient-to-br ${item.colour}`}>
+                            <img src="/assets/images/archie-character-v2.png" alt="Archie" className="absolute bottom-16 left-1/2 h-36 w-36 -translate-x-1/2 object-contain drop-shadow-2xl" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-black/10" />
+                        <div className="absolute inset-y-0 left-0 w-3 border-r border-amber-100/30 bg-black/35" />
+                        <div className="absolute inset-x-0 bottom-0 p-4">
+                          <h2 className="font-serif text-xl font-black leading-tight drop-shadow-lg">{item.title}</h2>
+                          <p className="mt-1 text-xs font-bold text-white/90">{item.strapline}</p>
+                          <span className="mt-3 inline-block rounded-full bg-white/95 px-3 py-1 text-xs font-black text-purple-900">Open book</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div aria-hidden className="absolute inset-x-0 bottom-1 h-7 rounded-md border-y-4 border-[#6b351c] bg-gradient-to-b from-[#b96f35] to-[#7a3f21] shadow-[0_12px_18px_rgba(62,31,13,.35)]" />
+                <div aria-hidden className="absolute inset-x-4 bottom-0 h-2 rounded-b-full bg-[#4d2819]" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <p className="mt-5 text-center font-bold text-slate-700">Select a book to see Archie step out of its cover, then open it and read all ten pages.</p>
+      </div>
+    </main>
+  );
 }
