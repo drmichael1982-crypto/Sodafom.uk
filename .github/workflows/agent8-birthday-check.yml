@@ -19,7 +19,7 @@ jobs:
           node-version: 22.22.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec eslint src/pages/BirthdayPage.tsx
+      - run: pnpm exec eslint src/pages/BirthdayPage.tsx src/pages/__tests__/FeatureHubPage.test.tsx
       - run: pnpm type-check
-      - run: pnpm test -- --run
+      - run: pnpm test -- --run src/pages/__tests__/FeatureHubPage.test.tsx
       - run: pnpm build
