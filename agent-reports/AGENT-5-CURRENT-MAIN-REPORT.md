@@ -4,7 +4,7 @@
 - **Recovery branch:** `recovery/agent5-current-main-outfits-20260913`
 - **Base:** current `main` at `305401dd15acfaa60d8bd12f32a1aafd5f351f34`
 - **Legacy reference only:** `recovery/agent5-handoff-20260913` and `agent5-characters-outfits`
-- **Pushed:** Pending upload through the authorised GitHub connector.
+- **Pushed:** Yes — verified on this recovery branch through the authorised GitHub connector. No pull request, merge, deployment, Railway action, or 797 change was made.
 
 ## Delivered
 
