@@ -11,6 +11,7 @@ import { ArchieProvider } from '@/contexts/ArchieContext';
 import { ProgressionProvider } from '@/contexts/ProgressionContext';
 import AccessibilityBar from '@/components/AccessibilityBar';
 import ArchieHelper from '@/components/ArchieHelper';
+import ChildPageMischief from '@/components/ChildPageMischief';
 import MobileTrialBar from '@/components/MobileTrialBar';
 import { usePageView } from '@/hooks/usePageView';
 
@@ -46,6 +47,9 @@ export default function RootLayout({
                 {!immersiveHome && <AccessibilityBar gameMode={isIndividualGame} />}
                 {!immersiveHome && <ArchieHelper gameMode={isIndividualGame} />}
                 {!immersiveHome && <MobileTrialBar />}
+                {/* A visual-only, rate-limited layer for child learning pages.
+                    It self-excludes parent, payment, checkout, admin and teacher routes. */}
+                <ChildPageMischief />
               </Website>
             </CartProvider>
           </ArchieProvider>
