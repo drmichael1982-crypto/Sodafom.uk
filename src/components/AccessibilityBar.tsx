@@ -6,8 +6,9 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAccessibility } from '@/lib/accessibility';
 import { Settings, Type, Sun, BookOpen, X } from 'lucide-react';
+import AudioSettings from '@/components/audio/AudioSettings';
 
-export default function AccessibilityBar({ gameMode = false }: { gameMode?: boolean }) {
+export default function AccessibilityBar({ gameMode: _gameMode = false }: { gameMode?: boolean }) {
   const { settings, toggle } = useAccessibility();
   const [open, setOpen] = useState(false);
 
@@ -23,7 +24,7 @@ export default function AccessibilityBar({ gameMode = false }: { gameMode?: bool
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 10 }}
             transition={{ duration: 0.2 }}
-            className="bg-card border-2 border-border rounded-2xl shadow-xl p-4 w-64"
+            className="bg-card border-2 border-border rounded-2xl shadow-xl p-4 w-64 max-h-[75vh] overflow-y-auto"
             role="dialog"
             aria-label="Accessibility settings"
           >
@@ -95,6 +96,8 @@ export default function AccessibilityBar({ gameMode = false }: { gameMode?: bool
                 <div className={`ml-auto w-4 h-4 rounded-full border-2 shrink-0 ${settings.largeText ? 'bg-primary border-primary' : 'border-muted-foreground'}`} />
               </button>
             </div>
+
+            <AudioSettings />
 
             <p className="text-xs text-muted-foreground mt-3 text-center">
               Settings saved automatically
