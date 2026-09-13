@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { ArrowLeft, Volume2, Mic, MicOff, Lightbulb, RotateCcw, Pause, Play, Settings, Award, Clock3 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { ArchieCharacter } from '@/components/ArchieCharacter';
 import { Blackboard } from '@/components/Blackboard';
 import { ChildProfileManager } from '@/components/ChildProfileManager';
-import { loadTutorMemory, ChildTutorProfile, recordQuestionAnswer } from '@/lib/tutor/memory';
+import { loadTutorMemory, ChildTutorProfile, recordQuestionAnswer, recordTutorLessonResult, type TutorLessonResult } from '@/lib/tutor/memory';
 import { CURRICULUM_LESSONS, TopicLesson, LessonQuestion } from '@/lib/tutor/curriculum';
 import { parseTutorVoiceCommand } from '@/lib/tutor/voice-commands';
 import { buildMathsPracticeLesson } from '@/lib/tutor/maths-practice';
@@ -16,6 +16,37 @@ import {
   type CurriculumAgeGroup,
   type CurriculumSubject,
 } from '@/lib/tutor/curriculum-year-plan';
+import {
+  clampLessonDay,
+  isLessonDuration,
+  lessonAccuracyPercent,
+  lessonProgressPercent,
+  LESSON_DURATIONS,
+  nextCurriculumLessonDay,
+  type LessonDuration,
+} from '@/lib/tutor/lesson-flow';
+
+function readStoredLessonDuration(): LessonDuration {
+  if (typeof window === 'undefined') return 30;
+  const stored = Number(localStorage.getItem('sodafom_lesson_minutes') || '30');
+  return isLessonDuration(stored) ? stored : 30;
+}
+
+function readStoredAgeGroup(): CurriculumAgeGroup | null {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem('sodafom_lesson_age');
+  return stored === '5-7' || stored === '8-10' || stored === '11-13' ? stored : null;
+}
+
+function readStoredLessonDay(): number {
+  if (typeof window === 'undefined') return 1;
+  return clampLessonDay(Number(localStorage.getItem('sodafom_lesson_day') || '1'));
+}
+
+function readStoredLessonSubject(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('sodafom_lesson_subject');
+}
 
 export default function TeacherModePage() {
   const navigate = useNavigate();
@@ -26,30 +57,42 @@ export default function TeacherModePage() {
   const [profile, setProfile] = useState<ChildTutorProfile>(() => loadTutorMemory());
   const [showProfileSetup, setShowProfileSetup] = useState<boolean>(() => !directLesson && !profile.childName);
 
-  const [selectedSubject, setSelectedSubject] = useState<string>(() => requestedSubject || 'Any Subject');
-  const [lessonMinutes, setLessonMinutes] = useState<15 | 20 | 30 | 60>(30);
+  const [selectedSubject, setSelectedSubject] = useState<string>(() => requestedSubject || readStoredLessonSubject() || 'Any Subject');
+  const [lessonMinutes, setLessonMinutes] = useState<LessonDuration>(() => readStoredLessonDuration());
   const [requestedAgeGroup, setRequestedAgeGroup] = useState<CurriculumAgeGroup | null>(() =>
-    requestedAge === '5-7' || requestedAge === '8-10' || requestedAge === '11-13' ? requestedAge : null
+    requestedAge === '5-7' || requestedAge === '8-10' || requestedAge === '11-13' ? requestedAge : readStoredAgeGroup()
   );
-  const [lessonDay, setLessonDay] = useState(1);
+  const [lessonDay, setLessonDay] = useState(() => readStoredLessonDay());
   const ageGroup: CurriculumAgeGroup = requestedAgeGroup ?? profile.ageGroup ?? '8-10';
   const normalisedSubject = selectedSubject === 'Writing' ? 'English' : selectedSubject === 'Technology' ? 'Computing' : selectedSubject;
   const curriculumSubject = CURRICULUM_SUBJECTS.includes(normalisedSubject as CurriculumSubject)
     ? normalisedSubject as CurriculumSubject
     : null;
   const lessonSubject = ['Reading', 'Writing', 'Spelling'].includes(selectedSubject) ? 'English' : selectedSubject;
-  const ageLessons = CURRICULUM_LESSONS.filter((lesson) => lesson.ageGroup === ageGroup);
-  const lessonPool = lessonSubject === 'Any Subject'
-    ? ageLessons
-    : ageLessons.filter((lesson) => lesson.subject.toLowerCase() === lessonSubject.toLowerCase());
-  const dailyLesson = curriculumSubject
-    ? buildDailyCurriculumLesson({ subject: curriculumSubject, ageGroup, day: lessonDay, durationMinutes: lessonMinutes })
-    : null;
-  const lessons = dailyLesson
-    ? [dailyLesson]
-    : lessonSubject === 'Maths'
-      ? [...lessonPool, buildMathsPracticeLesson(ageGroup)]
-      : (lessonPool.length ? lessonPool : ageLessons.length ? ageLessons : CURRICULUM_LESSONS);
+  const ageLessons = useMemo(
+    () => CURRICULUM_LESSONS.filter((lesson) => lesson.ageGroup === ageGroup),
+    [ageGroup],
+  );
+  const lessonPool = useMemo(
+    () => lessonSubject === 'Any Subject'
+      ? ageLessons
+      : ageLessons.filter((lesson) => lesson.subject.toLowerCase() === lessonSubject.toLowerCase()),
+    [ageLessons, lessonSubject],
+  );
+  const dailyLesson = useMemo(
+    () => curriculumSubject
+      ? buildDailyCurriculumLesson({ subject: curriculumSubject, ageGroup, day: lessonDay, durationMinutes: lessonMinutes })
+      : null,
+    [ageGroup, curriculumSubject, lessonDay, lessonMinutes],
+  );
+  const lessons = useMemo(
+    () => dailyLesson
+      ? [dailyLesson]
+      : lessonSubject === 'Maths'
+        ? [...lessonPool, buildMathsPracticeLesson(ageGroup)]
+        : (lessonPool.length ? lessonPool : ageLessons.length ? ageLessons : CURRICULUM_LESSONS),
+    [ageGroup, ageLessons, dailyLesson, lessonPool, lessonSubject],
+  );
   const [currentLessonIndex, setCurrentLessonIndex] = useState<number>(0);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(() => lessonMinutes * 60);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
@@ -60,32 +103,23 @@ export default function TeacherModePage() {
   const [showHint, setShowHint] = useState<boolean>(false);
   const [showSimpler, setShowSimpler] = useState<boolean>(false);
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; message: string } | null>(null);
+  const [answerLocked, setAnswerLocked] = useState(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [lessonComplete, setLessonComplete] = useState(false);
+  const [lessonResult, setLessonResult] = useState<TutorLessonResult | null>(null);
   const [voiceStatus, setVoiceStatus] = useState('Microphone ready');
   const [answerSource, setAnswerSource] = useState<'Local AI' | 'OpenAI'>('Local AI');
   const recognitionRef = useRef<any>(null);
+  const advanceTimeoutRef = useRef<number | null>(null);
+  const completionRecordedRef = useRef(false);
+  const attemptedQuestionKeysRef = useRef(new Set<string>());
+  const completedQuestionKeysRef = useRef(new Set<string>());
+  const attemptedQuestionsRef = useRef(0);
+  const correctAnswersRef = useRef(0);
 
   useEffect(() => {
-    const storedSubject = localStorage.getItem('sodafom_lesson_subject');
-    if (!requestedSubject && storedSubject) setSelectedSubject(storedSubject);
-
-    const storedMinutes = Number(localStorage.getItem('sodafom_lesson_minutes') || '30');
-    if (([15, 20, 30, 60] as const).includes(storedMinutes as 15 | 20 | 30 | 60)) {
-      const validMinutes = storedMinutes as 15 | 20 | 30 | 60;
-      setLessonMinutes(validMinutes);
-      setSecondsRemaining(validMinutes * 60);
-    }
-
-    const storedAgeGroup = localStorage.getItem('sodafom_lesson_age');
-    if (!requestedAge && (storedAgeGroup === '5-7' || storedAgeGroup === '8-10' || storedAgeGroup === '11-13')) {
-      setRequestedAgeGroup(storedAgeGroup);
-    }
-
-    const storedLessonDay = Number(localStorage.getItem('sodafom_lesson_day') || '1');
-    if (Number.isInteger(storedLessonDay)) {
-      setLessonDay(Math.min(365, Math.max(1, storedLessonDay)));
-    }
+    if (requestedSubject) setSelectedSubject(requestedSubject);
+    if (requestedAge === '5-7' || requestedAge === '8-10' || requestedAge === '11-13') setRequestedAgeGroup(requestedAge);
   }, [requestedAge, requestedSubject]);
 
   const currentLesson: TopicLesson = lessons[currentLessonIndex] ?? lessons[0] ?? CURRICULUM_LESSONS[0];
@@ -106,13 +140,68 @@ export default function TeacherModePage() {
     setShowProfileSetup(false);
   };
 
-  const handleNextQuestion = () => {
+  const clearAdvanceTimeout = useCallback(() => {
+    if (advanceTimeoutRef.current !== null) {
+      window.clearTimeout(advanceTimeoutRef.current);
+      advanceTimeoutRef.current = null;
+    }
+  }, []);
+
+  const resetQuestionState = useCallback(() => {
     setFeedback(null);
     setSelectedOption('');
     setTypedInput('');
     setShowHint(false);
     setShowSimpler(false);
+    setAnswerLocked(false);
     setAnswerSource('Local AI');
+  }, []);
+
+  const resetLessonSession = useCallback((duration: LessonDuration = lessonMinutes) => {
+    clearAdvanceTimeout();
+    completionRecordedRef.current = false;
+    attemptedQuestionKeysRef.current.clear();
+    completedQuestionKeysRef.current.clear();
+    attemptedQuestionsRef.current = 0;
+    correctAnswersRef.current = 0;
+    setLessonResult(null);
+    setLessonComplete(false);
+    setIsPaused(false);
+    setCurrentLessonIndex(0);
+    setCurrentQuestionIndex(0);
+    setSecondsRemaining(duration * 60);
+    resetQuestionState();
+  }, [clearAdvanceTimeout, lessonMinutes, resetQuestionState]);
+
+  const finishLesson = useCallback((completionReason: 'time' | 'all-questions') => {
+    if (completionRecordedRef.current) return;
+
+    completionRecordedRef.current = true;
+    clearAdvanceTimeout();
+    const result = recordTutorLessonResult({
+      lessonId: currentLesson.id,
+      subject: currentLesson.subject,
+      topic: currentLesson.topic,
+      ageGroup,
+      lessonDay,
+      durationMinutes: lessonMinutes,
+      attemptedQuestions: attemptedQuestionsRef.current,
+      correctAnswers: correctAnswersRef.current,
+      completionReason,
+    });
+
+    setLessonResult(result);
+    setLessonComplete(true);
+    setIsPaused(true);
+    setAnswerLocked(true);
+    if (completionReason === 'all-questions') setSecondsRemaining(0);
+    speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! Your ${lessonMinutes} minute lesson is complete.`);
+  }, [ageGroup, clearAdvanceTimeout, currentLesson, lessonDay, lessonMinutes, profile.childName, speakText]);
+
+  const handleNextQuestion = useCallback(() => {
+    if (lessonComplete || completionRecordedRef.current) return;
+
+    resetQuestionState();
 
     if (currentQuestionIndex + 1 < currentLesson.questions.length) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -124,34 +213,51 @@ export default function TeacherModePage() {
     } else if (curriculumSubject && secondsRemaining > 0) {
       // A timed curriculum lesson contains several short teach/practise blocks.
       // Move to the next unique daily block rather than ending after three questions.
-      const nextDay = lessonDay >= 365 ? 1 : lessonDay + 1;
-      setLessonDay(nextDay);
-      setCurrentLessonIndex(0);
-      setCurrentQuestionIndex(0);
-      localStorage.setItem('sodafom_lesson_day', String(nextDay));
-      speakText(`Brilliant. Now let's continue with a fresh ${curriculumSubject} activity.`);
+      const nextDay = nextCurriculumLessonDay(lessonDay);
+      if (nextDay !== null) {
+        setLessonDay(nextDay);
+        setCurrentLessonIndex(0);
+        setCurrentQuestionIndex(0);
+        localStorage.setItem('sodafom_lesson_day', String(nextDay));
+        speakText(`Brilliant. Now let's continue with a fresh ${curriculumSubject} activity.`);
+      } else {
+        finishLesson('all-questions');
+      }
     } else {
       // Never repeat questions in the same lesson session.
-      setLessonComplete(true);
-      setIsPaused(true);
-      speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! You answered every available question without repeats.`);
+      finishLesson('all-questions');
     }
-  };
+  }, [currentLesson, currentLessonIndex, currentQuestionIndex, curriculumSubject, finishLesson, lessonComplete, lessonDay, lessons, resetQuestionState, secondsRemaining, speakText]);
 
   const handleAnswerSubmit = (givenAnswer: string) => {
-    if (!currentQuestion) return;
+    if (!currentQuestion || answerLocked || lessonComplete || isPaused) return;
+    const questionKey = `${currentLesson.id}:${currentQuestion.id}`;
+    if (completedQuestionKeysRef.current.has(questionKey)) return;
+
     const expected = currentQuestion.answer.toLowerCase();
     const isCorrect = givenAnswer.trim().toLowerCase() === expected ||
       (currentQuestion.alternateAnswers?.some(a => a.toLowerCase() === givenAnswer.trim().toLowerCase()) ?? false);
+
+    if (!attemptedQuestionKeysRef.current.has(questionKey)) {
+      attemptedQuestionKeysRef.current.add(questionKey);
+      attemptedQuestionsRef.current += 1;
+    }
 
     // Save progress locally
     recordQuestionAnswer(currentLesson.subject, currentLesson.topic, isCorrect);
 
     if (isCorrect) {
+      completedQuestionKeysRef.current.add(questionKey);
+      correctAnswersRef.current += 1;
       const msg = `Well done${profile.childName ? ' ' + profile.childName : ''}! ${currentQuestion.explanation}`;
       setFeedback({ isCorrect: true, message: msg });
+      setAnswerLocked(true);
       speakText(msg);
-      setTimeout(handleNextQuestion, 2500);
+      clearAdvanceTimeout();
+      advanceTimeoutRef.current = window.setTimeout(() => {
+        advanceTimeoutRef.current = null;
+        handleNextQuestion();
+      }, 2500);
     } else {
       const msg = `Good try! Here is a hint: ${currentQuestion.hint}`;
       setFeedback({ isCorrect: false, message: msg });
@@ -272,10 +378,11 @@ export default function TeacherModePage() {
   }, [currentLessonIndex, currentQuestionIndex, showProfileSetup, lessonComplete]);
 
   useEffect(() => () => {
+    clearAdvanceTimeout();
     try { recognitionRef.current?.abort?.(); } catch { /* ignore */ }
     recognitionRef.current = null;
     stopTts();
-  }, []);
+  }, [clearAdvanceTimeout]);
 
   useEffect(() => {
     if (showProfileSetup || isPaused || secondsRemaining <= 0) return;
@@ -285,19 +392,27 @@ export default function TeacherModePage() {
 
   useEffect(() => {
     if (secondsRemaining !== 0) return;
-    setLessonComplete(true);
-    setIsPaused(true);
-    speakText(`Brilliant work${profile.childName ? ` ${profile.childName}` : ''}! Your ${lessonMinutes} minute lesson is complete.`);
-  }, [lessonMinutes, profile.childName, secondsRemaining, speakText]);
+    finishLesson('time');
+  }, [finishLesson, secondsRemaining]);
 
   const minutes = Math.floor(secondsRemaining / 60);
   const seconds = secondsRemaining % 60;
   // Progress represents the chosen lesson duration, not the number of questions
   // in one short curriculum block. This starts at 0% and reaches 100% at time.
   const totalLessonSeconds = lessonMinutes * 60;
-  const progressPercent = Math.min(100, Math.max(0,
-    ((totalLessonSeconds - secondsRemaining) / totalLessonSeconds) * 100,
-  ));
+  const progressPercent = lessonProgressPercent(totalLessonSeconds, secondsRemaining);
+  const resultAccuracy = lessonResult
+    ? lessonAccuracyPercent(lessonResult.correctAnswers, lessonResult.attemptedQuestions)
+    : 0;
+
+  const startNextLesson = () => {
+    if (curriculumSubject) {
+      const nextDay = nextCurriculumLessonDay(lessonDay) ?? 1;
+      setLessonDay(nextDay);
+      localStorage.setItem('sodafom_lesson_day', String(nextDay));
+    }
+    resetLessonSession();
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-sky-800 flex flex-col font-sans">
@@ -377,13 +492,17 @@ export default function TeacherModePage() {
               {/* Toolbar Controls */}
               <div className="flex flex-wrap gap-2 justify-end">
                 <select value={lessonMinutes} onChange={(event) => {
-                  const next = Number(event.target.value) as 15 | 20 | 30 | 60;
-                  setLessonMinutes(next); setSecondsRemaining(next * 60); setLessonComplete(false); setIsPaused(false); localStorage.setItem('sodafom_lesson_minutes', String(next));
+                  const next = Number(event.target.value);
+                  if (!isLessonDuration(next)) return;
+                  setLessonMinutes(next);
+                  localStorage.setItem('sodafom_lesson_minutes', String(next));
+                  resetLessonSession(next);
                 }} aria-label="Lesson length" className="rounded-2xl border border-blue-300 bg-blue-50 p-2 text-xs font-black text-blue-900">
-                  {[15, 20, 30, 60].map((value) => <option key={value} value={value}>{value} min</option>)}
+                  {LESSON_DURATIONS.map((value) => <option key={value} value={value}>{value} min</option>)}
                 </select>
                 <button
                   onClick={() => setIsPaused((value) => !value)}
+                  disabled={lessonComplete}
                   className="p-2.5 bg-purple-100 hover:bg-purple-200 text-purple-900 rounded-2xl border border-purple-300 font-bold text-xs flex items-center gap-1"
                   title={isPaused ? 'Resume lesson' : 'Pause lesson'}
                 >
@@ -429,10 +548,10 @@ export default function TeacherModePage() {
             <Blackboard
               subject={currentLesson.subject}
               topicTitle={currentLesson.title}
-              mode={currentQuestion ? 'question' : 'explain'}
+              mode={lessonComplete ? 'summary' : currentQuestion ? 'question' : 'explain'}
               explanationText={currentLesson.explanation}
               exampleText={currentLesson.examples[0]}
-              questionText={currentQuestion?.question}
+              questionText={lessonComplete ? undefined : currentQuestion?.question}
               options={currentQuestion?.options}
               selectedOption={selectedOption}
               typedInput={typedInput}
@@ -447,7 +566,29 @@ export default function TeacherModePage() {
               feedback={feedback}
               progressPercent={progressPercent}
               isLocalMode={true}
+              answerLocked={answerLocked}
             />
+            {lessonResult && (
+              <section aria-label="Lesson results" className="rounded-[2rem] border-4 border-yellow-300 bg-white/95 p-5 text-sky-950 shadow-2xl">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-widest text-purple-700">Saved on this device</p>
+                    <h2 className="mt-1 text-2xl font-black">Lesson complete! 🎉</h2>
+                    <p className="mt-1 font-bold text-slate-600">{lessonResult.subject} · Day {lessonResult.lessonDay} · {lessonResult.durationMinutes}-minute lesson</p>
+                  </div>
+                  <span className="rounded-full bg-emerald-100 px-3 py-2 text-sm font-black text-emerald-800">{resultAccuracy}% accuracy</span>
+                </div>
+                <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <div className="rounded-2xl bg-sky-50 p-3"><dt className="text-xs font-black text-sky-700">Correct</dt><dd className="mt-1 text-2xl font-black">{lessonResult.correctAnswers}/{lessonResult.attemptedQuestions}</dd></div>
+                  <div className="rounded-2xl bg-purple-50 p-3"><dt className="text-xs font-black text-purple-700">Progress</dt><dd className="mt-1 text-2xl font-black">100%</dd></div>
+                  <div className="col-span-2 rounded-2xl bg-amber-50 p-3 sm:col-span-1"><dt className="text-xs font-black text-amber-700">Completed</dt><dd className="mt-1 text-sm font-black">{lessonResult.completionReason === 'time' ? 'Lesson time reached' : 'All unique questions finished'}</dd></div>
+                </dl>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button type="button" onClick={startNextLesson} className="rounded-2xl bg-purple-700 px-4 py-3 font-black text-white shadow active:scale-95">Start next lesson</button>
+                  <button type="button" onClick={() => navigate('/parent-dashboard')} className="rounded-2xl border-2 border-sky-300 bg-sky-50 px-4 py-3 font-black text-sky-900 active:scale-95">View parent report</button>
+                </div>
+              </section>
+            )}
           </>
         )}
       </main>
