@@ -8,7 +8,7 @@
  *   onSaved?   — callback after saving
  *   compact?   — smaller inline version for use inside game shells
  */
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, Square, Play, Trash2, Check, RefreshCw } from 'lucide-react';
 import { useVoice, type ClipKey } from '@/lib/voice-context';
@@ -27,7 +27,7 @@ const COUNTDOWN_SECS = 3;
 const MAX_RECORD_SECS = 8;
 
 export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact = false }: Props) {
-  const { clips, saveClip, deleteClip } = useVoice();
+  const { childId, clips, saveClip, deleteClip } = useVoice();
   const existing = Object.hasOwn(clips, clipKey) ? clips[clipKey as keyof typeof clips] : undefined;
 
   const [state, setState] = useState<RecordState>(existing ? 'saved' : 'idle');
@@ -41,19 +41,80 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Sync if external clip changes
-  useEffect(() => {
-    if (existing) {
-      setDataUrl(existing.dataUrl);
-      setState('saved');
-    }
-  }, [existing]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const readerRef = useRef<FileReader | null>(null);
+  const generationRef = useRef(0);
+  const capturePendingRef = useRef(false);
 
-  const clearTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-  };
+  const clearTimer = useCallback(() => {
+    if (timerRef.current !== null) clearInterval(timerRef.current);
+    timerRef.current = null;
+  }, []);
+
+  const releaseMicrophone = useCallback(() => {
+    const stream = streamRef.current;
+    streamRef.current = null;
+    stream?.getTracks().forEach((track) => track.stop());
+  }, []);
+
+  const cancelCapture = useCallback(() => {
+    // Invalidate callbacks, including a permission grant that arrives later.
+    generationRef.current++;
+    capturePendingRef.current = false;
+    clearTimer();
+    const reader = readerRef.current;
+    readerRef.current = null;
+    if (reader) {
+      reader.onloadend = null;
+      if (reader.readyState === 1) reader.abort();
+    }
+    const recorder = mediaRef.current;
+    mediaRef.current = null;
+    if (recorder) {
+      recorder.ondataavailable = null;
+      recorder.onstop = null;
+      recorder.onerror = null;
+      try { if (recorder.state !== 'inactive') recorder.stop(); } catch { /* Release tracks below. */ }
+    }
+    releaseMicrophone();
+    chunksRef.current = [];
+    if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+  }, [clearTimer, releaseMicrophone]);
+
+  // Never carry a previous child's recording or preview into a new profile.
+  useEffect(() => {
+    setDataUrl(existing?.dataUrl ?? null);
+    setState(existing ? 'saved' : 'idle');
+    setPlaying(false);
+  }, [existing, childId, clipKey]);
+
+  useEffect(() => {
+    const pauseCapture = () => {
+      cancelCapture();
+      setDataUrl(existing?.dataUrl ?? null);
+      setState(existing ? 'saved' : 'idle');
+      setPlaying(false);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') pauseCapture();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('pagehide', pauseCapture);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('pagehide', pauseCapture);
+      cancelCapture();
+    };
+  }, [childId, clipKey, existing, cancelCapture]);
 
   const startCountdown = () => {
+    // A synchronous lock also protects compact mode from repeated taps.
+    if (capturePendingRef.current || document.visibilityState === 'hidden') return;
+    capturePendingRef.current = true;
     setState('countdown');
     setCountdown(COUNTDOWN_SECS);
     let c = COUNTDOWN_SECS;
@@ -62,28 +123,54 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
       setCountdown(c);
       if (c <= 0) {
         clearTimer();
-        startRecording();
+        void startRecording();
       }
     }, 1000);
   };
 
   const startRecording = async () => {
+    const generation = generationRef.current;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Only reached after the child's explicit Record action. Never request video.
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      if (generation !== generationRef.current || document.visibilityState === 'hidden') {
+        stream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+      // Track ownership before constructing MediaRecorder so failures also release it.
+      streamRef.current = stream;
       const mr = new MediaRecorder(stream, { mimeType: getSupportedMimeType() });
       mediaRef.current = mr;
       chunksRef.current = [];
 
       mr.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
+        if (generation === generationRef.current && e.data.size > 0) chunksRef.current.push(e.data);
+      };
+      mr.onerror = () => {
+        if (generation !== generationRef.current) return;
+        cancelCapture();
+        setState('idle');
+        alert('Recording stopped. You can try again when you are ready.');
       };
       mr.onstop = () => {
-        stream.getTracks().forEach((t) => t.stop());
-        const blob = new Blob(chunksRef.current, { type: getSupportedMimeType() });
+        if (generation !== generationRef.current) return;
+        clearTimer();
+        releaseMicrophone();
+        mediaRef.current = null;
+        mr.ondataavailable = null;
+        mr.onstop = null;
+        mr.onerror = null;
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || getSupportedMimeType() });
+        chunksRef.current = [];
         const reader = new FileReader();
+        readerRef.current = reader;
         reader.onloadend = () => {
-          setDataUrl(reader.result as string);
-          setState('preview');
+          if (generation !== generationRef.current) return;
+          readerRef.current = null;
+          capturePendingRef.current = false;
+          const recorded = typeof reader.result === 'string' ? reader.result : null;
+          setDataUrl(recorded);
+          setState(recorded ? 'preview' : 'idle');
         };
         reader.readAsDataURL(blob);
       };
@@ -98,14 +185,22 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
         if (s >= MAX_RECORD_SECS) stopRecording();
       }, 1000);
     } catch {
+      if (generation !== generationRef.current) return;
+      cancelCapture();
       setState('idle');
-      alert('Microphone access is needed to record your voice. Please allow it in your settings.');
+      alert('The microphone is unavailable. Recording is optional; you can continue without it.');
     }
   };
 
   const stopRecording = () => {
     clearTimer();
-    mediaRef.current?.stop();
+    try {
+      const recorder = mediaRef.current;
+      if (recorder && recorder.state !== 'inactive') recorder.stop();
+    } finally {
+      // Do not keep the microphone open while waiting for an asynchronous stop event.
+      releaseMicrophone();
+    }
   };
 
   const playPreview = () => {
@@ -131,11 +226,15 @@ export default function VoiceRecorder({ clipKey, label, prompt, onSaved, compact
   };
 
   const discard = () => {
+    cancelCapture();
+    setPlaying(false);
     setDataUrl(null);
     setState('idle');
   };
 
   const remove = () => {
+    cancelCapture();
+    setPlaying(false);
     deleteClip(clipKey);
     setDataUrl(null);
     setState('idle');

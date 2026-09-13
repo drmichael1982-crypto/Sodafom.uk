@@ -27,16 +27,9 @@ export async function authHandler(req: Request, res: Response) {
     const webRequest = toWebRequest(req);
     const webResponse = await auth.handler(webRequest);
 
-    // Debug logging for sign-in/sign-up errors
+    // Keep status diagnostics, never response bodies, URLs or account details.
     if (!webResponse.ok && (req.path.includes('sign-in') || req.path.includes('sign-up'))) {
-      const clone = webResponse.clone();
-      try {
-        const errorData = await clone.json();
-        console.error('[auth] Authentication error:', { path: req.path, status: webResponse.status, error: errorData });
-      } catch {
-        const text = await clone.text();
-        console.error('[auth] Authentication error (non-JSON):', { path: req.path, status: webResponse.status, body: text });
-      }
+      console.error(JSON.stringify({ event: 'auth.request.failed', status: webResponse.status }));
     }
 
     await sendWebResponse(webResponse, res);
@@ -46,7 +39,7 @@ export async function authHandler(req: Request, res: Response) {
     if (message.includes('BETTER_AUTH_SECRET')) {
       console.error(JSON.stringify({ event: 'auth.error', reason: 'missing_secret' }));
       res.status(503).json({
-        error: 'Authentication not configured. Set BETTER_AUTH_SECRET via requestSecrets().',
+        error: 'Sign-in is temporarily unavailable. Please try again later.',
       });
       return;
     }
@@ -54,20 +47,20 @@ export async function authHandler(req: Request, res: Response) {
     if (message.includes('Database not configured') || message.includes('SQLITE') || message.includes('ECONNREFUSED')) {
       console.error(JSON.stringify({ event: 'auth.error', reason: 'database_unavailable' }));
       res.status(503).json({
-        error: 'Database not available. Ensure the database skill is installed and configured.',
+        error: 'Sign-in is temporarily unavailable. Please try again later.',
       });
       return;
     }
 
     if (message.includes("doesn't exist") || message.includes('no such table') || message.includes('relation') || message.includes('ER_NO_SUCH_TABLE')) {
-      console.error(JSON.stringify({ event: 'auth.error', reason: 'missing_tables', error: message }));
+      console.error(JSON.stringify({ event: 'auth.error', reason: 'missing_tables' }));
       res.status(503).json({
-        error: 'Auth database tables not found. Run migrations: npm run db:generate && npm run db:migrate',
+        error: 'Sign-in is temporarily unavailable. Please try again later.',
       });
       return;
     }
 
-    console.error(JSON.stringify({ event: 'auth.middleware.error', path: req.path, error: message }));
+    console.error(JSON.stringify({ event: 'auth.middleware.error' }));
     res.status(500).json({ error: 'Authentication request failed' });
   }
 }

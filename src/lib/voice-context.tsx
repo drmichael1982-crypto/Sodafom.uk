@@ -148,7 +148,7 @@ function ttsSpeak(text: string, onEnd?: () => void) {
   }
 
   const speakable = cleanSpeakableText(text);
-  console.log('ttsSpeak starting:', { text, speakable });
+  // Spoken text can include children's personal information; never log it.
   if (!speakable) {
     console.warn('ttsSpeak: Nothing speakable');
     onEnd?.();
@@ -159,12 +159,12 @@ function ttsSpeak(text: string, onEnd?: () => void) {
   if (native?.speak) {
     console.info('ARCHIE_TTS_START', { engine: 'android-native' });
     native.speak({ text: speakable })
-      .then((res: any) => {
-        console.info('ARCHIE_TTS_SUCCESS', { engine: 'android-native', response: res });
+      .then(() => {
+        console.info('ARCHIE_TTS_SUCCESS', { engine: 'android-native' });
         onEnd?.();
       })
-      .catch((err: unknown) => {
-        console.error('ARCHIE_TTS_ERROR', err);
+      .catch(() => {
+        console.error('ARCHIE_TTS_ERROR', { engine: 'android-native' });
         // If native speech fails, make one browser fallback attempt.
         browserTtsSpeak(speakable, onEnd);
       });
@@ -197,8 +197,8 @@ function browserTtsSpeak(text: string, onEnd?: () => void) {
       console.info('ARCHIE_TTS_SUCCESS', { engine: 'browser' });
       onEnd?.();
     };
-    utt.onerror = (err) => {
-      console.error('ARCHIE_TTS_ERROR', err);
+    utt.onerror = () => {
+      console.error('ARCHIE_TTS_ERROR', { engine: 'browser' });
       onEnd?.();
     };
     console.info('ARCHIE_TTS_START', { engine: 'browser', voice: voice?.name ?? 'default' });
@@ -229,7 +229,7 @@ function stopTts() {
   if (typeof window === 'undefined') return;
   const native = getNativeArchieSpeech();
   if (native?.stop) {
-    native.stop().catch((err: unknown) => console.warn('ARCHIE_TTS_STOP native error', err));
+    native.stop().catch(() => console.warn('ARCHIE_TTS_STOP native error'));
   }
   window.speechSynthesis?.cancel();
   console.info('ARCHIE_TTS_STOP');

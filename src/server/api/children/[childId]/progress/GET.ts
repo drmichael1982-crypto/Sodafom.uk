@@ -58,7 +58,8 @@ export default async function handler(req: Request, res: Response) {
       streakDays: 0,
       badgeCount: 0,
     });
-  } catch (e) {
-    res.status(500).json({ error: String(e) });
+  } catch {
+    // Database/auth exceptions can contain personal data or connection details.
+    res.status(500).json({ error: 'Progress is temporarily unavailable. Please try again later.' });
   }
 }
