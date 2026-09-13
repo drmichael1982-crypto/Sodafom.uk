@@ -148,7 +148,6 @@ function ttsSpeak(text: string, onEnd?: () => void) {
   }
 
   const speakable = cleanSpeakableText(text);
-  console.log('ttsSpeak starting:', { text, speakable });
   if (!speakable) {
     console.warn('ttsSpeak: Nothing speakable');
     onEnd?.();
