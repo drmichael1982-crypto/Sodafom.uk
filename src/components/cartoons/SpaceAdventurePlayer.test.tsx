@@ -41,7 +41,7 @@ describe('SpaceAdventurePlayer', () => {
   });
 
   it('keeps play, skip, restart and sound controls available', () => {
-    render(<SpaceAdventurePlayer onExit={vi.fn() />);
+    render(<SpaceAdventurePlayer onExit={vi.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Play cartoon' }));
     expect(screen.getByRole('button', { name: 'Pause cartoon' })).toBeEnabled();
