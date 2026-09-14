@@ -4,8 +4,8 @@
 - **Serial:** S-O-D-cartoon-dinosaurs-26
 - **Task:** Create Archie's Dinosaur Adventure, a 5–7 minute educational cartoon.
 - **Branch:** `S-O-D-cartoon-dinosaurs-26`
-- **Commit:** Filled after the final branch commit.
-- **Pushed:** Yes, after final commit.
+- **Code commit:** `922661cf690ab2a2c40f586c98b4895f7156ab77`
+- **Pushed:** Yes.
 - **Merge:** No merge into `main` or `master`.
 - **Deploy:** No Railway deployment.
 
@@ -13,8 +13,8 @@
 
 - A six-minute, 18-scene episode (18 × 20 seconds) for ages 5–12.
 - Existing approved Archie, Bella, Soda Bot and Professor Thinkwell artwork is reused. No character artwork was redrawn or replaced.
-- No founder cameo was added: no standalone approved founder artwork was available on the starting branch, and the brief was optional. No likeness or voice was invented.
-- Temporary device-generated narration, synthetic gentle music, scene effects, subtitles, scene transitions, play, pause, previous, continue, restart, read-aloud, sound and music controls.
+- No founder cameo was added: no standalone approved founder artwork was available on the starting branch, and the brief made the cameo optional. No likeness or voice was invented.
+- Temporary device-generated narration, gentle synthetic music, scene effects, subtitles, scene transitions, play, pause, previous, continue, restart, read-aloud, sound and music controls.
 - Reduced-motion detection removes looping movement/music effects while leaving the story and controls usable.
 - An Agent 22-compatible episode manifest contract. Agent 22's cartoon-engine branch was not available in the repository at start, so this renderer is an intentionally isolated integration fallback rather than a merge or copied engine.
 - Cartoon Theatre contains a featured card which opens `/cartoons/dinosaur-adventure`.
