@@ -106,9 +106,14 @@ export function useSession() {
   const isAuthenticated = !isPending && !!session?.user;
   useStaleSessionRecovery(error, isAuthenticated);
 
+  type SodafomSessionUser = NonNullable<typeof session>['user'] & {
+    isAdmin?: boolean;
+    role?: string;
+  };
+
   return {
     session,
-    user: session?.user ?? null,
+    user: (session?.user as SodafomSessionUser | undefined) ?? null,
     isPending,
     error,
     isAuthenticated
