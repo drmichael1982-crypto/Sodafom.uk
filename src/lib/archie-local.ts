@@ -1,15 +1,18 @@
+import { arithmeticAnswer } from './archie-maths';
+import { localWordAnswer, localKnowledgeAnswer } from './archie-knowledge';
+export { safeEvaluateMath } from './archie-maths';
 export type LocalArchieResult = {
   text: string;
-  intent: 'maths' | 'spelling' | 'app-help' | 'repeat' | 'science' | 'reading';
+  intent: 'maths' | 'spelling' | 'app-help' | 'repeat' | 'science' | 'reading' | 'geography';
 };
 
 // ── Child Name Memory ─────────────────────────────────────────────────────────
 
 export function getRememberedChildName(): string | null {
   if (typeof window === 'undefined') return null;
-  const direct = localStorage.getItem('sodafom_child_name')?.trim();
-  if (direct) return direct;
   try {
+    const direct = localStorage.getItem('sodafom_child_name')?.trim();
+    if (direct) return direct;
     const rawActive = localStorage.getItem('sodafom_active_child');
     if (rawActive) {
       const parsed = JSON.parse(rawActive);
@@ -23,12 +26,12 @@ export function getRememberedChildName(): string | null {
 
 export function saveRememberedChildName(name: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('sodafom_child_name', name.trim());
+  try { localStorage.setItem('sodafom_child_name', name.trim()); } catch { /* Optional memory. */ }
 }
 
 export function clearRememberedChildName(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('sodafom_child_name');
+  try { localStorage.removeItem('sodafom_child_name'); } catch { /* Optional memory. */ }
 }
 
 export function tryLocalChildName(input: string): LocalArchieResult | null {
@@ -58,7 +61,7 @@ export function tryLocalChildName(input: string): LocalArchieResult | null {
     }
   }
 
-  const nameMatch = lower.match(/(?:my name is|i am|i'm|call me)\s+([a-z'-]+)/i);
+  const nameMatch = lower.match(/^(?:my name is|call me)\s+([a-z][a-z'-]{0,29})[.!]?$/i);
   if (nameMatch) {
     const rawName = nameMatch[1];
     const commonWords = ['fine', 'good', 'happy', 'ready', 'sad', 'tired', 'playing', 'learning', 'here', 'doing', 'great', 'archie', 'bot', 'sodafom'];
@@ -66,7 +69,7 @@ export function tryLocalChildName(input: string): LocalArchieResult | null {
       const capitalized = rawName.charAt(0).toUpperCase() + rawName.slice(1);
       saveRememberedChildName(capitalized);
       return {
-        text: `Nice to meet you, ${capitalized}! I will remember your name.`,
+        text: `Nice to meet you, ${capitalized}! You can ask me to forget your name.`,
         intent: 'app-help'
       };
     }
@@ -75,299 +78,27 @@ export function tryLocalChildName(input: string): LocalArchieResult | null {
   return null;
 }
 
-// ── Word to Number Normalizer & Maths Parser ──────────────────────────────────
-
-const WORD_NUMBERS: Array<[RegExp, string]> = [
-  [/\bzero\b/gi, '0'],
-  [/\bone\b/gi, '1'],
-  [/\btwo\b/gi, '2'],
-  [/\bthree\b/gi, '3'],
-  [/\bfour\b/gi, '4'],
-  [/\bfive\b/gi, '5'],
-  [/\bsix\b/gi, '6'],
-  [/\bseven\b/gi, '7'],
-  [/\beight\b/gi, '8'],
-  [/\bnine\b/gi, '9'],
-  [/\bten\b/gi, '10'],
-  [/\beleven\b/gi, '11'],
-  [/\btwelve\b/gi, '12'],
-  [/\bthirteen\b/gi, '13'],
-  [/\bfourteen\b/gi, '14'],
-  [/\bfifteen\b/gi, '15'],
-  [/\bsixteen\b/gi, '16'],
-  [/\bseventeen\b/gi, '17'],
-  [/\beighteen\b/gi, '18'],
-  [/\bnineteen\b/gi, '19'],
-  [/\btwenty\b/gi, '20'],
-  [/\bthirty\b/gi, '30'],
-  [/\bforty\b/gi, '40'],
-  [/\bfifty\b/gi, '50'],
-  [/\bsixty\b/gi, '60'],
-  [/\bseventy\b/gi, '70'],
-  [/\beighty\b/gi, '80'],
-  [/\bninety\b/gi, '90'],
-];
-
-function replaceWordNumbers(input: string): string {
-  let s = input.toLowerCase();
-
-  // Multiplier scale phrases
-  s = s.replace(/\b(?:a|one)\s+trillion\b/g, '1000000000000');
-  s = s.replace(/\b(?:a|one)\s+billion\b/g, '1000000000');
-  s = s.replace(/\b(?:a|one)\s+million\b/g, '1000000');
-  s = s.replace(/\b(?:a|one)\s+thousand\b/g, '1000');
-  s = s.replace(/\b(?:a|one)\s+hundred\b/g, '100');
-
-  // Handle number + scale e.g. "2 million", "5 thousand"
-  s = s.replace(/(\d+)\s+trillion\b/g, (_m, n) => String(Number(n) * 1000000000000));
-  s = s.replace(/(\d+)\s+billion\b/g, (_m, n) => String(Number(n) * 1000000000));
-  s = s.replace(/(\d+)\s+million\b/g, (_m, n) => String(Number(n) * 1000000));
-  s = s.replace(/(\d+)\s+thousand\b/g, (_m, n) => String(Number(n) * 1000));
-  s = s.replace(/(\d+)\s+hundred\b/g, (_m, n) => String(Number(n) * 100));
-
-  for (const [pattern, replacement] of WORD_NUMBERS) {
-    s = s.replace(pattern, replacement);
-  }
-
-  // Handle compound tens like "20 5" -> "25", "80 1" -> "81"
-  s = s.replace(/\b(20|30|40|50|60|70|80|90)\s+([1-9])\b/g, (_m, tens, units) => String(Number(tens) + Number(units)));
-
-  return s;
-}
-
-function tokenizeMath(expr: string): string[] | null {
-  const tokens: string[] = [];
-  let i = 0;
-  while (i < expr.length) {
-    const ch = expr[i];
-    if (/\s/.test(ch)) {
-      i++;
-      continue;
-    }
-    if (/[0-9.]/.test(ch)) {
-      let numStr = '';
-      while (i < expr.length && /[0-9.]/.test(expr[i])) {
-        numStr += expr[i];
-        i++;
-      }
-      tokens.push(numStr);
-      continue;
-    }
-    if (/[a-zA-Z]/.test(ch)) {
-      let fnStr = '';
-      while (i < expr.length && /[a-zA-Z]/.test(expr[i])) {
-        fnStr += expr[i];
-        i++;
-      }
-      if (fnStr.toLowerCase() === 'sqrt') {
-        tokens.push('sqrt');
-      } else {
-        return null;
-      }
-      continue;
-    }
-    if (['+', '-', '*', '/', '^', '%', '(', ')'].includes(ch)) {
-      tokens.push(ch);
-      i++;
-      continue;
-    }
-    return null;
-  }
-  return tokens;
-}
-
-function parseTokens(tokens: string[]): number | null {
-  let pos = 0;
-
-  function parseExpression(): number | null {
-    let left = parseTerm();
-    if (left === null) return null;
-
-    while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
-      const op = tokens[pos++];
-      const right = parseTerm();
-      if (right === null) return null;
-      left = op === '+' ? left + right : left - right;
-    }
-    return left;
-  }
-
-  function parseTerm(): number | null {
-    let left = parseFactor();
-    if (left === null) return null;
-
-    while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/' || tokens[pos] === '%')) {
-      const op = tokens[pos++];
-      const right = parseFactor();
-      if (right === null) return null;
-      if (op === '*') left = left * right;
-      else if (op === '/') {
-        if (right === 0) return null;
-        left = left / right;
-      } else {
-        left = left % right;
-      }
-    }
-    return left;
-  }
-
-  function parseFactor(): number | null {
-    let left = parsePower();
-    if (left === null) return null;
-
-    while (pos < tokens.length && tokens[pos] === '^') {
-      tokens[pos++];
-      const right = parsePower();
-      if (right === null) return null;
-      left = Math.pow(left, right);
-    }
-    return left;
-  }
-
-  function parsePower(): number | null {
-    if (pos >= tokens.length) return null;
-
-    const token = tokens[pos];
-
-    if (token === '-') {
-      pos++;
-      const val = parsePower();
-      return val !== null ? -val : null;
-    }
-    if (token === '+') {
-      pos++;
-      return parsePower();
-    }
-    if (token === 'sqrt') {
-      pos++;
-      const val = parsePower();
-      return val !== null && val >= 0 ? Math.sqrt(val) : null;
-    }
-    if (token === '(') {
-      pos++;
-      const val = parseExpression();
-      if (pos >= tokens.length || tokens[pos] !== ')') return null;
-      pos++;
-      return val;
-    }
-
-    const num = Number(token);
-    if (!isNaN(num)) {
-      pos++;
-      return num;
-    }
-
-    return null;
-  }
-
-  const result = parseExpression();
-  if (pos !== tokens.length) return null;
-  return result;
-}
-
-export function safeEvaluateMath(expr: string): number | null {
-  const tokens = tokenizeMath(expr);
-  if (!tokens || tokens.length === 0) return null;
-  return parseTokens(tokens);
-}
-
-export function tryLocalMaths(input: string): LocalArchieResult | null {
-  const lowered = input.toLowerCase().replace(/,/g, '');
-
-  // 1. Check percentage "X% of Y" or "X percent of Y"
-  const percentMatch = lowered.match(/(?:what\s+is\s+)?(?:the\s+)?(\d+(?:\.\d+)?)\s*(?:percent|%)\s+of\s+(.+)/i);
-  if (percentMatch) {
-    const pct = Number(percentMatch[1]);
-    const targetExpr = replaceWordNumbers(percentMatch[2]);
-    const targetVal = safeEvaluateMath(targetExpr);
-    if (targetVal !== null) {
-      const answer = (pct / 100) * targetVal;
-      const tidy = Number.isInteger(answer) ? answer.toLocaleString('en-GB') : (Math.round(answer * 10000) / 10000).toLocaleString('en-GB');
-      const name = getRememberedChildName();
-      const prefix = name ? `Well done, ${name}! ` : '';
-      return {
-        text: `${prefix}${pct} percent of ${targetVal.toLocaleString('en-GB')} is ${tidy}.`,
-        intent: 'maths'
-      };
-    }
-  }
-
-  // 2. Check special phrases: "double X", "half of X", "quarter of X"
-  const specialMatch = lowered.match(/\b(double|half\s+of|quarter\s+of)\s+(.+)/i);
-  if (specialMatch) {
-    const mode = specialMatch[1].toLowerCase();
-    const valExpr = replaceWordNumbers(specialMatch[2]);
-    const val = safeEvaluateMath(valExpr);
-    if (val !== null) {
-      const answer = mode.includes('double') ? val * 2 : mode.includes('half') ? val / 2 : val / 4;
-      const tidy = Number.isInteger(answer) ? answer.toLocaleString('en-GB') : (Math.round(answer * 10000) / 10000).toLocaleString('en-GB');
-      const name = getRememberedChildName();
-      const prefix = name ? `Well done, ${name}! ` : '';
-      return {
-        text: `${prefix}${mode} ${val.toLocaleString('en-GB')} is ${tidy}.`,
-        intent: 'maths'
-      };
-    }
-  }
-
-  // 3. Prepare normalized mathematical expression
-  let expr = replaceWordNumbers(lowered);
-
-  // Strip question prefixes
-  expr = expr.replace(/^(?:what\s+is|what's|calculate|work\s+out|please|archie|can\s+you\s+tell\s+me|how\s+much\s+is|how\s+many\s+is)\s+/i, '');
-
-  // Operator replacements
-  expr = expr.replace(/\b(?:the\s+)?square\s+root\s+of\s+([0-9.]+)\b/gi, 'sqrt($1)');
-  expr = expr.replace(/\b([0-9.]+)\s+squared\b/gi, '($1 ^ 2)');
-  expr = expr.replace(/\b([0-9.]+)\s+cubed\b/gi, '($1 ^ 3)');
-  expr = expr.replace(/\b([0-9.]+)\s+to\s+the\s+power\s+of\s+([0-9.]+)\b/gi, '($1 ^ $2)');
-  expr = expr.replace(/\bmultiplied\s+by\b|\btimes\b|\bx\b|×/gi, '*');
-  expr = expr.replace(/\bdivided\s+by\b|\bdivide\s+by\b|[÷]/gi, '/');
-  expr = expr.replace(/\bplus\b|\badded\s+to\b/gi, '+');
-  expr = expr.replace(/\bminus\b|\btake\s+away\b|\bsubtracted\s+from\b/gi, '-');
-  expr = expr.replace(/equals?/gi, '');
-  expr = expr.replace(/[?,!]/g, '');
-
-  const answer = safeEvaluateMath(expr);
-  if (answer !== null && Number.isFinite(answer)) {
-    const name = getRememberedChildName();
-    const prefix = name ? `Well done, ${name}! ` : '';
-    const tidy = Number.isInteger(answer) ? answer.toLocaleString('en-GB') : (Math.round(answer * 10000) / 10000).toLocaleString('en-GB');
-
-    // Clean original phrase for speech output
-    let cleanPrompt = input.trim().replace(/[?,!]/g, '');
-    cleanPrompt = cleanPrompt.replace(/^(?:what\s+is|what's|calculate|work\s+out|please|archie|can\s+you\s+tell\s+me)\s+/i, '');
-    cleanPrompt = cleanPrompt.charAt(0).toUpperCase() + cleanPrompt.slice(1);
-
-    return {
-      text: `${prefix}${cleanPrompt} is ${tidy}.`,
-      intent: 'maths'
-    };
-  }
-
-  return null;
+export function tryLocalMaths(input: string, age = 9): LocalArchieResult | null {
+  const answer = arithmeticAnswer(input, age);
+  if (!answer) return null;
+  const name = getRememberedChildName();
+  return { text: `${name ? `Well done, ${name}! ` : ''}${answer}`, intent: 'maths' };
 }
 
 export function tryLocalSpelling(input: string): LocalArchieResult | null {
-  const lower = input.trim().toLowerCase();
-  const match = lower.match(/(?:how do you spell|spell|spell the word)\s+["']?([a-z-]+)["']?/i);
-  if (!match) return null;
-  const word = match[1].replace(/[^a-z-]/gi, '');
-  if (!word || word.length > 30) return null;
-  const letters = word.replace(/-/g, '').toUpperCase().split('').join(', ');
-  return { text: `${word}. ${letters}. ${word}.`, intent: 'spelling' };
+  return localWordAnswer(input);
 }
 
 const SCIENCE_FACTS: Array<[RegExp, string]> = [
-  [/\bwater cycle\b/i, 'The water cycle has four main stages: evaporation, condensation, precipitation and collection.'],
-  [/\bhow many planets\b|\bplanets in (?:the )?solar system\b/i, 'There are eight planets in our solar system.'],
-  [/\bplants? (?:make|makes) food|photosynthesis/i, 'Plants use sunlight, water and carbon dioxide to make food in a process called photosynthesis.'],
-  [/\bwhat is gravity\b/i, 'Gravity is a force that pulls objects towards each other. On Earth, it pulls us towards the ground.'],
+  [/^(?:(?:what is|explain|tell me about) (?:the )?)?water cycle[?!.*]?$/i, 'The water cycle has four main stages: evaporation, condensation, precipitation and collection.'],
+  [/^(?:how many planets(?: are there)?(?: in (?:the|our) solar system)?|planets in (?:the|our) solar system)[?!]?$/i, 'There are eight planets in our solar system.'],
+  [/^(?:(?:what is|explain|tell me about) )?photosynthesis[?!]?$/i, 'Plants use sunlight, water and carbon dioxide to make food in a process called photosynthesis.'],
+  [/^(?:what is|explain) gravity[?!]?$/i, 'Gravity is a force that pulls objects towards each other. On Earth, it pulls us towards the ground.'],
 ];
 
 export function tryLocalScience(input: string): LocalArchieResult | null {
   for (const [pattern, answer] of SCIENCE_FACTS) {
-    if (pattern.test(input)) return { text: answer, intent: 'science' };
+    if (pattern.test(input.trim())) return { text: answer, intent: 'science' };
   }
   return null;
 }
@@ -446,15 +177,26 @@ export function tryLocalFounderKnowledge(input: string): LocalArchieResult | nul
   return null;
 }
 
-import { tryLocalTutor } from './tutor/engine';
+import { tryLocalTutor, getActivePendingQuestion } from './tutor/engine';
 
-export function tryLocalArchieResponse(input: string): LocalArchieResult | null {
-  return tryLocalChildName(input)
-    ?? tryLocalFounderKnowledge(input)
-    ?? tryLocalMaths(input)
-    ?? tryLocalTutor(input)
+export function tryLocalArchieResponse(input: string, options: { age?: number } = {}): LocalArchieResult | null {
+  if (!input.trim() || input.length > 2000) return null;
+  const childNameAnswer = tryLocalChildName(input);
+  if (childNameAnswer) return childNameAnswer;
+  if (/\b(?:teach|quiz|practice|learn)\b/i.test(input)) {
+    const lesson = tryLocalTutor(input);
+    if (lesson) return lesson;
+  }
+  // A short answer to an active lesson belongs to its question, not the calculator.
+  if (getActivePendingQuestion() && (/^\s*-?\d+(?:\.\d+)?(?:\s*\/\s*-?\d+)?[.!]?\s*$/.test(input) || (!/[?=+*/^]/.test(input) && input.trim().split(/\s+/).length <= 8 && !/\b(?:what|how|why|where|which|who|teach|explain|quiz|practice|spell)\b/i.test(input)))) {
+    return tryLocalTutor(input);
+  }
+  return tryLocalFounderKnowledge(input)
+    ?? tryLocalMaths(input, options.age)
+    ?? localKnowledgeAnswer(input, options.age)
     ?? tryLocalSpelling(input)
     ?? tryLocalScience(input)
     ?? tryLocalReading(input)
-    ?? tryLocalAppHelp(input);
+    ?? tryLocalAppHelp(input)
+    ?? (/^(?:explain|continue|recent|previous)\b|^what was i\b/i.test(input.trim()) ? tryLocalTutor(input) : null);
 }

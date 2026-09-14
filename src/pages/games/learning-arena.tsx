@@ -1,3 +1,5 @@
+import { ROUND_LENGTH, nextRound } from '@/lib/games/ten-question-round';
+import { useAnswerTransition } from '@/lib/games/use-answer-transition';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { AnimatePresence, motion } from 'motion/react';
@@ -13,7 +15,7 @@ import {
   type LearningArenaConfig,
 } from '@/lib/games/learning-arena-data';
 
-const TOTAL_ROUNDS = 8;
+
 
 function speakAsArchie(text: string): void {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
@@ -24,7 +26,7 @@ function speakAsArchie(text: string): void {
   window.speechSynthesis.speak(speech);
 }
 
-function LearningArenaPlay({
+export function LearningArenaPlay({
   config,
   level,
   onComplete,
@@ -37,6 +39,10 @@ function LearningArenaPlay({
   onLevelChange: (stars: number) => void;
   onQuestionChange: (question: string, options: string[]) => void;
 }) {
+  const TOTAL_ROUNDS = config.slug === 'shopkeeper-change' ? ROUND_LENGTH : 8;
+  const transition = useAnswerTransition();
+  const [roundLevel] = useState(level);
+  const [questions] = useState(() => config.slug === 'shopkeeper-change' ? nextRound(Array.from({length: 40}, (_, n) => getLearningArenaQuestion(config.slug, n, roundLevel)), q => q.prompt, `arena-${config.slug}-${roundLevel}`) : null);
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [actionPoints, setActionPoints] = useState(0);
@@ -46,7 +52,7 @@ function LearningArenaPlay({
   const [chosenTarget, setChosenTarget] = useState<number | null>(null);
   const [actionSuccess, setActionSuccess] = useState<boolean | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const question = useMemo(() => getLearningArenaQuestion(config.slug, round, level), [config.slug, level, round]);
+  const question = useMemo(() => questions?.[round] ?? getLearningArenaQuestion(config.slug, round, roundLevel), [config.slug, roundLevel, round, questions]);
 
   useEffect(() => {
     onQuestionChange(question.prompt, question.options);
@@ -57,7 +63,7 @@ function LearningArenaPlay({
     if (typeof window !== 'undefined') window.speechSynthesis?.cancel();
   }, []);
 
-  const finishOrContinue = useCallback((nextCorrect: number) => {
+  const finishOrContinue = (nextCorrect: number) => {
     const nextRound = round + 1;
     if (nextRound >= TOTAL_ROUNDS) {
       const score = Math.round((nextCorrect / TOTAL_ROUNDS) * 100);
@@ -66,16 +72,17 @@ function LearningArenaPlay({
       onComplete({ score, correct: nextCorrect, total: TOTAL_ROUNDS, stars });
       return;
     }
+    transition.release();
     setRound(nextRound);
     setPhase('question');
     setFeedback(null);
     setChosenAnswer(null);
     setChosenTarget(null);
     setActionSuccess(null);
-  }, [onComplete, onLevelChange, round]);
+  };
 
   function chooseAnswer(option: string) {
-    if (feedback || phase !== 'question') return;
+    if (feedback || phase !== 'question' || !transition.claim()) return;
     const isCorrect = option === question.answer;
     setChosenAnswer(option);
     setFeedback(isCorrect ? 'correct' : 'wrong');
@@ -83,6 +90,7 @@ function LearningArenaPlay({
       setCorrect((value) => value + 1);
       timerRef.current = setTimeout(() => {
         setFeedback(null);
+        transition.release();
         setPhase('action');
       }, 750);
     } else {
@@ -91,7 +99,7 @@ function LearningArenaPlay({
   }
 
   function chooseTarget(targetIndex: number) {
-    if (chosenTarget !== null || phase !== 'action') return;
+    if (chosenTarget !== null || phase !== 'action' || !transition.claim()) return;
     const success = learningArenaActionSucceeds(config.slug, round, targetIndex);
     setChosenTarget(targetIndex);
     setActionSuccess(success);
@@ -107,7 +115,7 @@ function LearningArenaPlay({
             <p className="text-xs font-black uppercase tracking-wide text-muted-foreground">Round {round + 1} of {TOTAL_ROUNDS}</p>
             <p className="text-sm font-bold text-foreground">Learning ⭐ {correct} · Action points 🏆 {actionPoints}</p>
           </div>
-          <LevelBadge level={level} />
+          <LevelBadge level={Math.min(roundLevel, 5)} />
         </div>
 
         <AnimatePresence mode="wait">
@@ -231,13 +239,9 @@ export default function LearningArenaGame({ slug }: { slug: string }) {
   const config = learningArenaConfigs[slug];
   if (!config) throw new Error(`Unknown learning arena: ${slug}`);
   const { level, loading, recordResult } = useGameLevel(config.slug);
-  const [displayLevel, setDisplayLevel] = useState(level);
   const [currentQuestion, setCurrentQuestion] = useState('');
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
 
-  useEffect(() => {
-    if (!loading) setDisplayLevel(level);
-  }, [level, loading]);
 
   const handleQuestionChange = useCallback((question: string, options: string[]) => {
     setCurrentQuestion(question);
@@ -245,8 +249,7 @@ export default function LearningArenaGame({ slug }: { slug: string }) {
   }, []);
 
   async function handleLevelChange(stars: number) {
-    const next = await recordResult(stars);
-    setDisplayLevel(next);
+    await recordResult(stars);
   }
 
   return (
@@ -269,7 +272,8 @@ export default function LearningArenaGame({ slug }: { slug: string }) {
         ) : (
           <LearningArenaPlay
             config={config}
-            level={displayLevel}
+            key={level}
+            level={Math.min(level, 5)}
             onComplete={onComplete}
             onLevelChange={handleLevelChange}
             onQuestionChange={handleQuestionChange}

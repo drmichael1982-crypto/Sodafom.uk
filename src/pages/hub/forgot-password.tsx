@@ -19,12 +19,16 @@ export default function ForgotPasswordPage() {
     setError('');
     setLoading(true);
     try {
-      await fetch(`${API_PREFIX}/auth/forgot-password`, {
+      const response = await fetch(`${API_PREFIX}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
+      if (!response.ok) {
+        setError(response.status === 429 ? 'Too many requests. Please wait before trying again.' : 'Password reset is temporarily unavailable. Please try again.');
+        return;
+      }
       setSent(true);
     } catch {
       setError('Something went wrong. Please try again.');

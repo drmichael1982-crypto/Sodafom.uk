@@ -1,27 +1,13 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { ROUND_LENGTH } from '@/lib/games/ten-question-round';
+import { patternRound, type PatternItem, type Question } from '@/lib/games/pattern-round-data';
+import { useAnswerTransition } from '@/lib/games/use-answer-transition';
+import { useState, useEffect } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
-import GameShell, { type GameResult } from '@/components/games/GameShell';
+import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
 import { Volume2, Star, ChevronRight, RotateCcw, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type PatternItem = {
-  shape: 'circle' | 'square' | 'triangle' | 'star' | 'diamond';
-  color: string;
-  label: string; // for accessibility / speech
-};
-
-type Question = {
-  id: string;
-  type: 'shape-color' | 'number' | 'emoji';
-  sequence: (PatternItem | string)[];
-  blankIndex: number; // which position is the blank
-  options: (PatternItem | string)[];
-  answer: PatternItem | string;
-  hint: string;
-  ageGroup: '4-6' | '7-9' | '10-13';
-};
-
 // ── Shape renderer ────────────────────────────────────────────────────────────
 const SHAPE_COLORS: Record<string, string> = {
   red:    '#EF4444',
@@ -73,134 +59,6 @@ function ShapeIcon({ item, size = 44, pulse = false }: { item: PatternItem; size
 }
 
 // ── Questions bank ────────────────────────────────────────────────────────────
-const C = (shape: PatternItem['shape'], color: string): PatternItem => ({ shape, color, label: `${color} ${shape}` });
-
-const ALL_QUESTIONS: Question[] = [
-  // ── Easy (ages 4–6): simple 2-element repeating colour/shape patterns ──────
-  {
-    id: 'q1', type: 'shape-color', ageGroup: '4-6',
-    sequence: [C('circle','red'), C('circle','blue'), C('circle','red'), C('circle','blue'), C('circle','red'), null as unknown as PatternItem],
-    blankIndex: 5,
-    options: [C('circle','blue'), C('circle','red'), C('circle','green'), C('circle','yellow')],
-    answer: C('circle','blue'),
-    hint: 'Red, blue, red, blue… what comes next?',
-  },
-  {
-    id: 'q2', type: 'shape-color', ageGroup: '4-6',
-    sequence: [C('square','yellow'), C('square','green'), C('square','yellow'), C('square','green'), null as unknown as PatternItem],
-    blankIndex: 4,
-    options: [C('square','yellow'), C('square','green'), C('square','blue'), C('square','red')],
-    answer: C('square','yellow'),
-    hint: 'Yellow, green, yellow, green… what comes next?',
-  },
-  {
-    id: 'q3', type: 'shape-color', ageGroup: '4-6',
-    sequence: [C('triangle','red'), C('circle','red'), C('triangle','red'), C('circle','red'), C('triangle','red'), null as unknown as PatternItem],
-    blankIndex: 5,
-    options: [C('triangle','red'), C('circle','red'), C('square','red'), C('diamond','red')],
-    answer: C('circle','red'),
-    hint: 'Triangle, circle, triangle, circle… what comes next?',
-  },
-  {
-    id: 'q4', type: 'shape-color', ageGroup: '4-6',
-    sequence: [C('star','yellow'), C('star','yellow'), C('circle','blue'), C('star','yellow'), C('star','yellow'), null as unknown as PatternItem],
-    blankIndex: 5,
-    options: [C('star','yellow'), C('circle','blue'), C('star','blue'), C('circle','yellow')],
-    answer: C('circle','blue'),
-    hint: 'Star, star, circle, star, star… what comes next?',
-  },
-  {
-    id: 'q5', type: 'shape-color', ageGroup: '4-6',
-    sequence: [C('circle','purple'), C('square','orange'), C('circle','purple'), C('square','orange'), null as unknown as PatternItem],
-    blankIndex: 4,
-    options: [C('circle','purple'), C('square','orange'), C('circle','orange'), C('square','purple')],
-    answer: C('circle','purple'),
-    hint: 'Purple circle, orange square… what comes next?',
-  },
-  // ── Medium (ages 7–9): 3-element patterns + growing patterns ──────────────
-  {
-    id: 'q6', type: 'shape-color', ageGroup: '7-9',
-    sequence: [C('circle','red'), C('square','blue'), C('triangle','green'), C('circle','red'), C('square','blue'), null as unknown as PatternItem],
-    blankIndex: 5,
-    options: [C('triangle','green'), C('circle','red'), C('square','blue'), C('diamond','green')],
-    answer: C('triangle','green'),
-    hint: 'Red circle, blue square, green triangle… the pattern repeats!',
-  },
-  {
-    id: 'q7', type: 'shape-color', ageGroup: '7-9',
-    sequence: [C('diamond','pink'), C('star','yellow'), C('diamond','pink'), C('star','yellow'), C('diamond','pink'), null as unknown as PatternItem],
-    blankIndex: 5,
-    options: [C('star','yellow'), C('diamond','pink'), C('star','pink'), C('diamond','yellow')],
-    answer: C('star','yellow'),
-    hint: 'Pink diamond, yellow star… what comes after the pink diamond?',
-  },
-  {
-    id: 'q8', type: 'number', ageGroup: '7-9',
-    sequence: ['2', '4', '6', '8', '?'],
-    blankIndex: 4,
-    options: ['9', '10', '11', '12'],
-    answer: '10',
-    hint: 'Add 2 each time: 2, 4, 6, 8…',
-  },
-  {
-    id: 'q9', type: 'number', ageGroup: '7-9',
-    sequence: ['5', '10', '15', '20', '?'],
-    blankIndex: 4,
-    options: ['22', '24', '25', '30'],
-    answer: '25',
-    hint: 'Count in 5s!',
-  },
-  {
-    id: 'q10', type: 'emoji', ageGroup: '7-9',
-    sequence: ['🔴', '🔵', '🟡', '🔴', '🔵', '?'],
-    blankIndex: 5,
-    options: ['🟡', '🔴', '🔵', '🟢'],
-    answer: '🟡',
-    hint: 'Red, blue, yellow, red, blue… what comes next?',
-  },
-  // ── Hard (ages 10–13): number sequences, Fibonacci, square numbers ─────────
-  {
-    id: 'q11', type: 'number', ageGroup: '10-13',
-    sequence: ['1', '4', '9', '16', '?'],
-    blankIndex: 4,
-    options: ['20', '24', '25', '36'],
-    answer: '25',
-    hint: 'These are square numbers: 1², 2², 3², 4²…',
-  },
-  {
-    id: 'q12', type: 'number', ageGroup: '10-13',
-    sequence: ['2', '4', '8', '16', '?'],
-    blankIndex: 4,
-    options: ['24', '28', '32', '36'],
-    answer: '32',
-    hint: 'Double each time!',
-  },
-  {
-    id: 'q13', type: 'number', ageGroup: '10-13',
-    sequence: ['1', '1', '2', '3', '5', '8', '?'],
-    blankIndex: 6,
-    options: ['10', '11', '12', '13'],
-    answer: '13',
-    hint: 'Add the two previous numbers together — Fibonacci!',
-  },
-  {
-    id: 'q14', type: 'number', ageGroup: '10-13',
-    sequence: ['3', '9', '27', '81', '?'],
-    blankIndex: 4,
-    options: ['162', '243', '324', '405'],
-    answer: '243',
-    hint: 'Multiply by 3 each time!',
-  },
-  {
-    id: 'q15', type: 'number', ageGroup: '10-13',
-    sequence: ['100', '90', '80', '70', '?'],
-    blankIndex: 4,
-    options: ['55', '60', '65', '75'],
-    answer: '60',
-    hint: 'Count backwards in 10s!',
-  },
-];
-
 // ── Utility ───────────────────────────────────────────────────────────────────
 function isPatternItem(v: PatternItem | string | null): v is PatternItem {
   return typeof v === 'object' && v !== null && 'shape' in v;
@@ -279,6 +137,7 @@ function OptionBtn({
     <motion.button
       whileHover={disabled ? {} : { scale: 1.06 }}
       whileTap={disabled ? {} : { scale: 0.94 }}
+      disabled={disabled}
       onClick={disabled ? undefined : onClick}
       className={`${base} ${state}`}
       style={{ width: 80, height: 80 }}
@@ -296,9 +155,10 @@ function OptionBtn({
 }
 
 // ── Main game inner ───────────────────────────────────────────────────────────
-function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
-  const questions = ALL_QUESTIONS;
-  const TOTAL = questions.length;
+export function PatternMakerInner({ onComplete, ageGroup }: { onComplete: (r: GameResult) => void; ageGroup: Question['ageGroup'] }) {
+  const [questions] = useState(() => patternRound(ageGroup));
+  const TOTAL = ROUND_LENGTH;
+  const transition = useAnswerTransition();
 
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState<PatternItem | string | null>(null);
@@ -309,7 +169,7 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
   const [hintsUsed, setHintsUsed] = useState(0);
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
 
   const q = questions[qIdx];
 
@@ -319,10 +179,10 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
       .map((item, i) => i === q.blankIndex ? 'blank' : typeof item === 'string' ? item : item?.label ?? '')
       .join(', ');
     speak(`Pattern ${qIdx + 1}. The sequence is: ${seqText}. What comes next?`);
-  }, [qIdx]);
+  }, [qIdx, q.blankIndex, q.sequence]);
 
-  const handleAnswer = useCallback((opt: PatternItem | string) => {
-    if (phase !== 'answering') return;
+  const handleAnswer = (opt: PatternItem | string) => {
+    if (phase !== 'answering' || !transition.claim()) return;
     setSelected(opt);
     const isCorrect = itemsMatch(opt, q.answer);
 
@@ -335,38 +195,40 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
       if (newStreak > bestStreak) setBestStreak(newStreak);
       setPhase('correct');
       speak('Correct! Well done!');
-      timerRef.current = setTimeout(() => advance(), 1400);
+      transition.schedule(() => advance(correct + 1, score + pts), 1400);
     } else {
       setStreak(0);
       setPhase('wrong');
       speak(`Not quite. The answer is ${typeof q.answer === 'string' ? q.answer : q.answer.label}.`);
-      timerRef.current = setTimeout(() => advance(), 1800);
+      transition.schedule(() => advance(correct, score), 1800);
     }
-  }, [phase, q, showHint, streak, bestStreak]);
+  };
 
-  function advance() {
+  function advance(nextCorrect: number, nextScore: number) {
     setSelected(null);
     setPhase('answering');
     setShowHint(false);
     if (qIdx + 1 >= TOTAL) {
-      finish();
+      finish(nextCorrect, nextScore);
     } else {
+      transition.release();
       setQIdx(i => i + 1);
     }
   }
 
-  function finish() {
+  function finish(correct: number, score: number) {
     const stars = correct >= TOTAL * 0.9 ? 3 : correct >= TOTAL * 0.6 ? 2 : correct >= TOTAL * 0.3 ? 1 : 0;
-    onComplete({ score, correct, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
+    onComplete({ score, correct, total: TOTAL, stars, maxScore: TOTAL * 10 });
   }
 
   function handleHint() {
+    if (phase !== 'answering' || showHint) return;
     setShowHint(true);
     setHintsUsed(h => h + 1);
     speak(q.hint);
   }
 
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+  useEffect(() => () => { window.speechSynthesis?.cancel(); }, []);
 
   const progress = (qIdx / TOTAL) * 100;
 
@@ -539,7 +401,7 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
       <div className="flex items-center gap-3">
         {phase === 'answering' && (
           <button
-            onClick={() => { setStreak(0); advance(); }}
+            onClick={() => { if (!transition.claim()) return; setStreak(0); transition.schedule(() => advance(correct, score), 0); }}
             className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted"
           >
             <RotateCcw size={13} /> Skip
@@ -571,8 +433,15 @@ export default function PatternMakerGame() {
       </Helmet>
       <h1 className="sr-only">Pattern Maker — Maths Game for Kids — Sodafom</h1>
       <GameShell title="Pattern Maker" emoji="🔷" subject="maths" ageGroups={['4–6', '5–7', '8–10', '11–13']}>
-        {(onComplete) => <PatternMakerInner onComplete={onComplete} />}
+        {(onComplete) => <PatternDifficulty onComplete={onComplete} />}
       </GameShell>
     </>
   );
+}
+
+function PatternDifficulty({onComplete}: {onComplete: (r: GameResult) => void}) {
+  const { ageGroup } = useChildAge();
+  const [selected, setSelected] = useState<Question['ageGroup'] | null>(() => ageGroup === '5-7' ? '4-6' : ageGroup === '8-10' ? '7-9' : ageGroup === '11-13' ? '10-13' : null);
+  if (selected) return <PatternMakerInner ageGroup={selected} onComplete={onComplete} />;
+  return <div className="flex flex-col gap-4 p-6 items-center"><h2 className="text-xl font-bold">Choose your pattern challenge</h2>{(['4-6', '7-9', '10-13'] as const).map(age => <button className="rounded-xl border-2 px-6 py-4 font-bold" key={age} onClick={() => setSelected(age)}>Ages {age} · {age === '4-6' ? 'Repeating shapes' : age === '7-9' ? 'Repeating and growing patterns' : 'Number sequences'}</button>)}</div>;
 }

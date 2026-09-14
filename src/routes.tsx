@@ -216,6 +216,11 @@ import {
 import BackToSchoolShopPage from './pages/shop/back-to-school';
 import ChoresPage, { ParentChoresPage } from './pages/ChoresPage';
 const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
+const VictorianStreet = lazy(() => import('./components/world/VictorianStreet'));
+const FloatingLearningRoom = lazy(() => import('./components/world/FloatingLearningRoom'));
+const PlanetRoom = lazy(() => import('./components/world/PlanetRoom'));
+const CinemaPage = lazy(() => import('./pages/CinemaPage'));
+const AnimatedBooksPage = lazy(() => import('./pages/CinemaPage').then(module => ({ default: module.AnimatedBooksPage })));
 export const routes: RouteObject[] = [{
   path: '/',
   element: <ApprovedArtworkPage variant="home" />
@@ -252,6 +257,21 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/archie-menu',
   element: <FeatureHubPage />
+}, {
+  path: '/world/victorian',
+  element: <VictorianStreet />
+}, {
+  path: '/world/floating',
+  element: <FloatingLearningRoom />
+}, {
+  path: '/world/planets',
+  element: <PlanetRoom />
+}, {
+  path: '/cinema',
+  element: <CinemaPage />
+}, {
+  path: '/books/animated',
+  element: <AnimatedBooksPage />
 }, {
   path: '/lessons',
   element: <ApprovedArtworkPage variant="lessons" />

@@ -2,7 +2,7 @@
  * /badges — Achievement badges page
  * Shows all badges with earned/locked state for the active child.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion } from 'motion/react';
@@ -85,18 +85,46 @@ function BadgesContent() {
   const [showEarned, setShowEarned] = useState<'all' | 'earned' | 'locked'>('all');
 
   React.useEffect(() => {
-    const raw = localStorage.getItem('sodafom_active_child');
-    if (!raw) { setError('No active child selected. Go to the Hub to select a learner.'); setLoading(false); return; }
-    const child = JSON.parse(raw) as { id: string };
-
-    fetch(`${API_PREFIX}/badges?childId=${child.id}`, { credentials: 'include' })
-      .then(r => r.json())
-      .then((data: { badges: Badge[]; stats: BadgeStats }) => {
-        setBadges(data.badges);
-        setStats(data.stats);
-      })
-      .catch(() => setError('Failed to load badges'))
-      .finally(() => setLoading(false));
+    const controller = new AbortController();
+    let active = true;
+    void (async () => {
+      try {
+        const raw = window.localStorage.getItem('sodafom_active_child');
+        if (!raw) throw new Error('child');
+        const child: unknown = JSON.parse(raw);
+        const rawId = child && typeof child === 'object' && 'id' in child ? child.id : null;
+        const id = String(rawId ?? '');
+        if (!/^[1-9]\d*$/.test(id) || !Number.isSafeInteger(Number(id))) throw new Error('child');
+        const response = await fetch(`${API_PREFIX}/badges?childId=${encodeURIComponent(id)}`, {
+          credentials: 'include', signal: controller.signal,
+        });
+        if (!response.ok) throw new Error('response');
+        const data = await response.json();
+        if (!data || !Array.isArray(data.badges) || !data.badges.every((badge: unknown) => {
+          if (!badge || typeof badge !== 'object') return false;
+          const b = badge as Record<string, unknown>;
+          return ['id', 'name', 'desc', 'emoji', 'category'].every(key => typeof b[key] === 'string')
+            && typeof b.earned === 'boolean' && typeof b.rarity === 'string'
+            && ['common', 'rare', 'epic', 'legendary'].includes(b.rarity);
+        })) throw new Error('response');
+        if (active) {
+          setBadges(data.badges);
+          const keys: (keyof BadgeStats)[] = ['gamesPlayed', 'totalStars', 'currentStreak', 'maxStreak', 'perfectGames'];
+          setStats(data.stats && keys.every(key => typeof data.stats[key] === 'number' && Number.isFinite(data.stats[key]) && data.stats[key] >= 0) ? data.stats : null);
+        }
+      } catch (failure) {
+        if (active) {
+          setBadges([]);
+          setStats(null);
+          setError(failure instanceof Error && failure.message === 'child'
+            ? 'No active child selected. Go to the Hub to select a learner.'
+            : 'Unable to load badges. Return to the Hub, select your learner and try again.');
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => { active = false; controller.abort(); };
   }, []);
 
   const filtered = badges
@@ -246,7 +274,7 @@ function BadgesContent() {
 
           {/* Error */}
           {error && (
-            <div className="bg-destructive/10 border border-destructive/30 rounded-2xl p-6 text-center">
+            <div role="alert" className="bg-destructive/10 border border-destructive/30 rounded-2xl p-6 text-center">
               <p className="text-destructive font-bold text-sm">{error}</p>
               <Link to="/hub" className="mt-3 inline-block text-primary font-black text-sm underline">Go to Hub</Link>
             </div>

@@ -60,6 +60,8 @@ export default function Header() {
   const [archieActive, setArchieActive] = useState(false);
   const [archieMsg, setArchieMsg] = useState('');
   const [profileOpen, setProfileOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState(false);
   const archieTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -130,13 +132,30 @@ export default function Header() {
   }, [location.pathname]);
 
   const handleSignOut = async () => {
-    setProfileOpen(false);
-    await signOut();
-    navigate('/');
+    if (signingOut) return;
+    setSigningOut(true);
+    setSignOutError(false);
+    try {
+      const result = await signOut();
+      if (result.error) throw new Error('Sign out failed');
+      setProfileOpen(false);
+      setMenuOpen(false);
+      navigate('/');
+    } catch {
+      setSignOutError(true);
+    } finally {
+      setSigningOut(false);
+    }
   };
 
   return (
     <header className={`sticky top-0 z-50 bg-primary transition-shadow duration-300 ${scrolled ? 'shadow-lg' : ''}`}>
+      {signOutError && (
+        <div role="alert" className="flex flex-wrap items-center justify-center gap-3 bg-white p-3 text-sm font-bold text-destructive">
+          <span>Sign out could not be confirmed. Please try again.</span>
+          <button type="button" onClick={handleSignOut} disabled={signingOut} className="min-h-11 rounded-lg border px-3 disabled:opacity-50">Try sign out again</button>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20 gap-3">
 
@@ -335,6 +354,7 @@ export default function Header() {
                         )}
                         <button
                           onClick={handleSignOut}
+                          disabled={signingOut}
                           className="w-full flex items-center gap-3 px-4 py-3 hover:bg-destructive/10 transition-colors text-sm font-bold text-destructive"
                         >
                           <LogOut size={14} />
@@ -515,6 +535,7 @@ export default function Header() {
                     </Link>
                     <button
                       onClick={handleSignOut}
+                      disabled={signingOut}
                       className="flex-1 px-4 py-3 rounded-xl font-bold text-base text-center bg-white/20 text-primary-foreground hover:bg-white/30 transition-all flex items-center justify-center gap-2"
                     >
                       <LogOut size={16} /> Sign Out

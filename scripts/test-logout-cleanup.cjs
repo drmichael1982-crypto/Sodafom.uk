@@ -9,9 +9,9 @@ const vm = require('node:vm');
 const root = path.resolve(__dirname, '..');
 const helperSource = stripTypeScriptTypes(fs.readFileSync(path.join(root, 'src/lib/auth/logout-cleanup.ts'), 'utf8'));
 const clientSource = fs.readFileSync(path.join(root, 'src/lib/auth/auth-client.tsx'), 'utf8');
-const handlerMatch = clientSource.match(/async function handleLogout\(\) \{[\s\S]*?\n  \}\n  return <button/);
+const handlerMatch = clientSource.match(/async function handleLogout\(\) \{[\s\S]*?\n  \}\n  return <><button/);
 assert.ok(handlerMatch, 'Locate the actual LogoutButton handler for isolated execution');
-const handlerSource = handlerMatch[0].replace(/\n  return <button$/, '');
+const handlerSource = handlerMatch[0].replace(/\n  return <><button$/, '');
 
 function loadHelper() {
   const context = {};
@@ -22,14 +22,15 @@ function loadHelper() {
 function loadHandler(storageDescriptor, signOut) {
   const loading = [];
   const loggedErrors = [];
+  const userErrors = [];
   const redirects = [];
   const location = {};
   Object.defineProperty(location, 'href', { set: value => redirects.push(value) });
   const browser = { location };
   Object.defineProperty(browser, 'localStorage', storageDescriptor);
-  const context = { window: browser, signOut, setIsLoading: value => loading.push(value), console: { error: (...args) => loggedErrors.push(args) } };
+  const context = { window: browser, signOut, setLogoutError: value => { if (value) userErrors.push(value); }, setIsLoading: value => loading.push(value), console: { error: (...args) => loggedErrors.push(args) } };
   vm.runInNewContext(helperSource.replace(/^export /gm, '') + '\n' + handlerSource + '\nglobalThis.runLogout = handleLogout;', context);
-  return { runLogout: context.runLogout, loading, loggedErrors, redirects };
+  return { runLogout: context.runLogout, loading, loggedErrors, userErrors, redirects };
 }
 
 test('normal cleanup removes only the obsolete free-access flag', () => {
@@ -80,9 +81,8 @@ for (const [label, descriptor] of [
     assert.equal(calls, 1);
     assert.deepEqual(handler.redirects, []);
     assert.deepEqual(handler.loading, [true, false]);
-    assert.equal(handler.loggedErrors.length, 1);
-    assert.equal(handler.loggedErrors[0][0], 'Logout failed:');
-    assert.equal(handler.loggedErrors[0][1], failure);
+    assert.deepEqual(handler.userErrors, ['Sign out failed. Please try again.']);
+    assert.deepEqual(handler.loggedErrors, []);
   });
 }
 

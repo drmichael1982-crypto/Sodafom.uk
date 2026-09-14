@@ -28,7 +28,9 @@ export function clearActivePendingQuestion() {
 export function tryLocalTutor(input: string): LocalArchieResult | null {
   const trimmed = input.trim();
   const lower = trimmed.toLowerCase();
-  const memory = loadTutorMemory();
+  const memory: ReturnType<typeof loadTutorMemory> = (() => {
+    try { return loadTutorMemory(); } catch { return { topics: {} }; }
+  })();
   const childName = memory.childName ? memory.childName : '';
 
   const isNewLessonRequest = /\b(?:teach|quiz|practice|explain|learn)\b/i.test(lower);
@@ -64,26 +66,25 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
   }
 
   // 3. Evaluate active pending question answer if one is waiting
-  if (activePendingQuestion) {
+  if (activePendingQuestion && !/^(?:what|how|why|where|which|who)\b/i.test(trimmed)) {
     const q = activePendingQuestion.question;
-    const expected = q.answer.toLowerCase();
-    const alternates = q.alternateAnswers?.map(a => a.toLowerCase()) ?? [];
-
-    const isCorrect = lower === expected || alternates.includes(lower) || lower.includes(expected);
+    const normaliseAnswer = (value: string) => value.toLowerCase().trim().replace(/^(?:the answer is|it is|it's)\s+/, '').replace(/[.!?]+$/, '').replace(/\s+/g, ' ');
+    const expected = normaliseAnswer(q.answer);
+    const alternates = q.alternateAnswers?.map(normaliseAnswer) ?? [];
+    const given = normaliseAnswer(trimmed);
+    const isCorrect = given === expected || alternates.includes(given);
 
     // Update child memory & adaptive difficulty
-    const result = recordQuestionAnswer(
-      activePendingQuestion.subject,
-      activePendingQuestion.topic,
-      isCorrect
-    );
+    let status: string = 'AMBER';
+    try {
+      status = recordQuestionAnswer(activePendingQuestion.subject, activePendingQuestion.topic, isCorrect).status;
+    } catch { /* Feedback still works when optional device progress cannot be saved. */ }
 
-    const pendingSubject = activePendingQuestion.subject;
     const pendingTopic = activePendingQuestion.topic;
     activePendingQuestion = null; // reset pending question
 
     if (isCorrect) {
-      const statusText = result.status === 'GREEN' ? ' You are now confident (GREEN level) in this topic!' : '';
+      const statusText = status === 'GREEN' ? ' You are now confident (GREEN level) in this topic!' : '';
       return {
         text: `Spot on${childName ? ' ' + childName : ''}! ${q.explanation}${statusText} Great job!`,
         intent: 'app-help'

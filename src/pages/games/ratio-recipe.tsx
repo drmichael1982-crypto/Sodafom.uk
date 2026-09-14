@@ -30,9 +30,9 @@ const L2: QuizQuestion[] = [
   { question: 'Simplify the ratio 30:45', options: ['2:3','3:4','5:7','6:9'], answer: '2:3' },
 ];
 const L3: QuizQuestion[] = [
-  { question: 'If a:b = 3:4 and b:c = 2:5, what is a:c?', options: ['3:10','6:20','3:5','6:10'], answer: '3:10' },
+  { question: 'If a:b = 3:4 and b:c = 2:5, what is a:c in its simplest form?', options: ['3:10','6:20','3:5','6:10'], answer: '3:10' },
   { question: 'Share £200 in ratio 3:5:2', options: ['£60, £100, £40','£50, £100, £50','£60, £80, £60','£40, £120, £40'], answer: '£60, £100, £40' },
-  { question: 'A mixture is 40% water. What is the ratio of water to non-water?', options: ['2:3','4:6','2:5','4:10'], answer: '2:3' },
+  { question: 'A mixture is 40% water. What is the simplest ratio of water to non-water?', options: ['2:3','4:6','2:5','4:10'], answer: '2:3' },
   { question: 'If x:y = 5:3 and x = 35, what is y?', options: ['21','15','28','18'], answer: '21' },
   { question: 'A recipe for 8 people needs 600g flour. How much for 5 people?', options: ['375g','400g','350g','450g'], answer: '375g' },
   { question: 'Increase £150 in ratio 3:5', options: ['£250','£225','£275','£200'], answer: '£250' },
@@ -43,8 +43,7 @@ const L3: QuizQuestion[] = [
   { question: 'A recipe uses butter and flour in ratio 1:4. For 500g total, how much butter?', options: ['100g','125g','80g','150g'], answer: '100g' },
   { question: 'Simplify the ratio 0.6:0.9', options: ['2:3','6:9','3:4','1:2'], answer: '2:3' },
 ];
-const L4 = L3;
-const L5 = L3;
+export const RATIO_LEVELS = [L1, L2, L3];
 
 export default makeGame({
   slug: 'ratio-recipe',
@@ -54,5 +53,5 @@ export default makeGame({
   ageGroups: ['10–13'],
   description: 'Master ratios and proportions through cooking and real-world problems!',
   accentClass: 'bg-primary',
-  questionsByLevel: [L1, L2, L3, L4, L5],
+  questionsByLevel: RATIO_LEVELS,
 });

@@ -71,10 +71,11 @@ test('real config initialization survives blocked localStorage', () => {
   };
   assert.doesNotThrow(() => vm.runInNewContext(js, sandbox));
 });
-test('client is wired to the tested endpoint resolvers and retains credentialed recovery', () => {
+test('client retains endpoint configuration without clearing cookies on session errors', () => {
   const client = fs.readFileSync(path.join(root, 'src/lib/auth/auth-client.tsx'), 'utf8');
   assert.match(client, /baseURL:\s*resolveAuthBaseURL\(API_PREFIX, API_BASE_URL,/);
-  assert.match(client, /const recoveryUrl = resolveSessionRecoveryURL\(API_PREFIX\)/);
-  assert.match(client, /credentials: 'include'/);
+  assert.doesNotMatch(client, /recoverFromStaleSession|clearCookies|resolveSessionRecoveryURL/);
+  assert.match(client, /if \(timedOut \|\| error\)/);
+  assert.match(client, /window\.location\.reload\(\)/);
   assert.doesNotMatch(client, /\$\{API_PREFIX\}\$\{SESSION_RECOVERY_URL\}/);
 });

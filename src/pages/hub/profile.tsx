@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { Helmet } from '@dr.pogodin/react-helmet';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSession, ProtectedRoute, signOut } from '@/lib/auth/auth-client';
 import { useSubscription } from '@/hooks/useSubscription';
@@ -204,6 +204,9 @@ function StarProgress({ stars }: { stars: number }) {
 
 // ── Profile inner (rendered once auth confirmed) ──────────────────────────────
 function ProfileInner() {
+  const navigate = useNavigate();
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState(false);
   const sessionData = useSession();
   const { subscribed } = useSubscription();
 
@@ -229,6 +232,21 @@ function ProfileInner() {
   const [pwMsg, setPwMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const user = sessionData.user;
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    setSignOutError(false);
+    try {
+      const result = await signOut();
+      if (result.error) throw new Error('Sign out failed');
+      navigate('/');
+    } catch {
+      setSignOutError(true);
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   useEffect(() => {
     if (user?.name) setNameInput(user.name);
@@ -367,7 +385,9 @@ function ProfileInner() {
               <ChevronRight size={13} className="rotate-180" /> Hub
             </Link>
             <button
-              onClick={() => signOut().then(() => window.location.href = '/')}
+              onClick={handleSignOut}
+              disabled={signingOut}
+              aria-label="Sign out"
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary-foreground/10 text-primary-foreground/80 text-sm font-bold hover:bg-primary-foreground/20 transition-colors"
               title="Sign out"
             >
@@ -379,6 +399,12 @@ function ProfileInner() {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 sm:px-6 pt-6 flex flex-col gap-6">
+        {signOutError && (
+          <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl border border-destructive/30 bg-card p-4 text-sm font-bold text-destructive">
+            <span>Sign out could not be confirmed. Please try again.</span>
+            <button type="button" onClick={handleSignOut} disabled={signingOut} className="min-h-11 rounded-lg border px-3 disabled:opacity-50">Try sign out again</button>
+          </div>
+        )}
 
         {/* ── Account details (editable) ───────────────────────────────────── */}
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>

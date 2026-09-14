@@ -1,15 +1,24 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { Request, Response } from 'express';
 import { hasFounderSession, isConfiguredAdminCode, issueFounderSession } from '@/server/admin-auth';
 
 const originalAdminCode = process.env.ADMIN_MASTER_CODE;
 const originalAuthSecret = process.env.BETTER_AUTH_SECRET;
+const originalAdminCodeHash = process.env.ADMIN_MASTER_CODE_HASH;
+
+beforeEach(() => {
+  delete process.env.ADMIN_MASTER_CODE;
+  delete process.env.ADMIN_MASTER_CODE_HASH;
+  delete process.env.BETTER_AUTH_SECRET;
+});
 
 afterEach(() => {
   if (originalAdminCode === undefined) delete process.env.ADMIN_MASTER_CODE;
   else process.env.ADMIN_MASTER_CODE = originalAdminCode;
   if (originalAuthSecret === undefined) delete process.env.BETTER_AUTH_SECRET;
   else process.env.BETTER_AUTH_SECRET = originalAuthSecret;
+  if (originalAdminCodeHash === undefined) delete process.env.ADMIN_MASTER_CODE_HASH;
+  else process.env.ADMIN_MASTER_CODE_HASH = originalAdminCodeHash;
 });
 
 describe('founder authentication', () => {
@@ -25,6 +34,7 @@ describe('founder authentication', () => {
   });
 
   it('issues a signed, short-lived HttpOnly cookie', () => {
+    process.env.ADMIN_MASTER_CODE = 'test-only-founder-code';
     process.env.BETTER_AUTH_SECRET = 'test-only-secret-with-enough-entropy';
     let value = '';
     let options: Record<string, unknown> = {};

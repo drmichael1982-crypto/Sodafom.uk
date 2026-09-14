@@ -35,7 +35,7 @@ export default function ResetPasswordPage() {
       }
       setDone(true);
     } catch (err) {
-      setError(String(err));
+      setError('Password reset is temporarily unavailable. Please try again.');
     } finally {
       setLoading(false);
     }

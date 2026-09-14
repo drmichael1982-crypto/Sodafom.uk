@@ -1,19 +1,10 @@
+import { ROUND_LENGTH, nextRound } from '@/lib/games/ten-question-round';
+import { FRACTION_SETS, type Fraction, type Difficulty } from '@/lib/games/fraction-round-data';
+import { useAnswerTransition } from '@/lib/games/use-answer-transition';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-type Difficulty = 'Easy' | 'Medium' | 'Hard';
-
-interface Fraction {
-  label: string;
-  numerator: number;
-  denominator: number;
-  slices: number;
-  fill: number;
-  description?: string;
-}
 
 // ── Safe record lookup (prevents object injection lint warnings) ──────────────
 function safeGet<T>(record: Record<string, T>, key: string, fallback: T): T {
@@ -21,49 +12,7 @@ function safeGet<T>(record: Record<string, T>, key: string, fallback: T): T {
   return entry ? (entry[1] as T) : fallback;
 }
 
-// ── Fraction sets by difficulty ───────────────────────────────────────────────
-const FRACTIONS_EASY: Fraction[] = [
-  { label: '½',  numerator: 1, denominator: 2, slices: 2, fill: 1, description: 'one half' },
-  { label: '¼',  numerator: 1, denominator: 4, slices: 4, fill: 1, description: 'one quarter' },
-  { label: '¾',  numerator: 3, denominator: 4, slices: 4, fill: 3, description: 'three quarters' },
-  { label: '⅓',  numerator: 1, denominator: 3, slices: 3, fill: 1, description: 'one third' },
-  { label: '⅔',  numerator: 2, denominator: 3, slices: 3, fill: 2, description: 'two thirds' },
-  { label: '2/4', numerator: 2, denominator: 4, slices: 4, fill: 2, description: 'two quarters' },
-];
-
-const FRACTIONS_MEDIUM: Fraction[] = [
-  { label: '⅛',  numerator: 1, denominator: 8, slices: 8, fill: 1 },
-  { label: '⅜',  numerator: 3, denominator: 8, slices: 8, fill: 3 },
-  { label: '⅝',  numerator: 5, denominator: 8, slices: 8, fill: 5 },
-  { label: '⅞',  numerator: 7, denominator: 8, slices: 8, fill: 7 },
-  { label: '2/6', numerator: 2, denominator: 6, slices: 6, fill: 2 },
-  { label: '4/6', numerator: 4, denominator: 6, slices: 6, fill: 4 },
-  { label: '5/6', numerator: 5, denominator: 6, slices: 6, fill: 5 },
-  { label: '3/5', numerator: 3, denominator: 5, slices: 5, fill: 3 },
-  { label: '2/5', numerator: 2, denominator: 5, slices: 5, fill: 2 },
-  { label: '4/5', numerator: 4, denominator: 5, slices: 5, fill: 4 },
-];
-
-const FRACTIONS_HARD: Fraction[] = [
-  { label: '3/9',  numerator: 3, denominator: 9, slices: 9, fill: 3 },
-  { label: '6/9',  numerator: 6, denominator: 9, slices: 9, fill: 6 },
-  { label: '7/9',  numerator: 7, denominator: 9, slices: 9, fill: 7 },
-  { label: '2/10', numerator: 2, denominator: 10, slices: 10, fill: 2 },
-  { label: '4/10', numerator: 4, denominator: 10, slices: 10, fill: 4 },
-  { label: '7/10', numerator: 7, denominator: 10, slices: 10, fill: 7 },
-  { label: '9/10', numerator: 9, denominator: 10, slices: 10, fill: 9 },
-  { label: '5/12', numerator: 5, denominator: 12, slices: 12, fill: 5 },
-  { label: '7/12', numerator: 7, denominator: 12, slices: 12, fill: 7 },
-  { label: '11/12', numerator: 11, denominator: 12, slices: 12, fill: 11 },
-];
-
-const FRACTION_SETS: Record<Difficulty, Fraction[]> = {
-  'Easy':   FRACTIONS_EASY,
-  'Medium': FRACTIONS_MEDIUM,
-  'Hard':   FRACTIONS_HARD,
-};
-
-const TOTAL_ROUNDS = 8;
+const TOTAL_ROUNDS = ROUND_LENGTH;
 
 const DIFFICULTY_COLORS: Record<Difficulty, string> = {
   'Easy':   'bg-green-100 text-green-700 border-green-300',
@@ -96,6 +45,11 @@ function PizzaSlice({
       stroke="#92400e"
       strokeWidth="2"
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      aria-label={`Slice ${index + 1}`}
+      aria-pressed={selected}
+      onKeyDown={event => { if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); onClick(); } }}
       className="cursor-pointer hover:opacity-80 transition-opacity"
     />
   );
@@ -141,7 +95,7 @@ function DifficultyPicker({ onSelect }: { onSelect: (d: Difficulty) => void }) {
 }
 
 // ── Game inner ────────────────────────────────────────────────────────────────
-function FractionPizzaPlay({
+export function FractionPizzaPlay({
   onComplete,
   difficulty,
 }: {
@@ -149,13 +103,14 @@ function FractionPizzaPlay({
   difficulty: Difficulty;
 }) {
   const pool = safeGet(FRACTION_SETS as Record<string, Fraction[]>, difficulty, FRACTION_SETS['Easy']);
-  const [shuffled] = useState<Fraction[]>(() => [...pool].sort(() => Math.random() - 0.5));
+  const [shuffled] = useState<Fraction[]>(() => nextRound(pool, q => q.label, `fractions-${difficulty}`));
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [selected, setSelected] = useState<number[]>([]);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 
-  const frac = shuffled.at(round % shuffled.length)!;
+  const frac = shuffled[round];
+  const transition = useAnswerTransition();
 
   const toggleSlice = (i: number) => {
     if (feedback) return;
@@ -163,18 +118,19 @@ function FractionPizzaPlay({
   };
 
   const checkAnswer = () => {
-    if (feedback) return;
+    if (!transition.claim()) return;
     const isRight = selected.length === frac.fill;
     setFeedback(isRight ? 'correct' : 'wrong');
     const newCorrect = isRight ? correct + 1 : correct;
     if (isRight) setCorrect(newCorrect);
-    setTimeout(() => {
+    transition.schedule(() => {
       const next = round + 1;
       if (next >= TOTAL_ROUNDS) {
         const score = Math.round((newCorrect / TOTAL_ROUNDS) * 100);
         const stars = score >= 90 ? 3 : score >= 75 ? 2 : score >= 50 ? 1 : 0;
         onComplete({ score, correct: newCorrect, total: TOTAL_ROUNDS, stars });
       } else {
+        transition.release();
         setRound(next);
         setSelected([]);
         setFeedback(null);
@@ -222,7 +178,7 @@ function FractionPizzaPlay({
           <p className="text-sm text-muted-foreground mt-1 italic">({frac.description})</p>
         )}
         <p className="text-sm text-muted-foreground mt-1">
-          Select <strong>{frac.fill}</strong> slice{frac.fill !== 1 ? 's' : ''} out of <strong>{frac.denominator}</strong>
+          The pizza has <strong>{frac.denominator}</strong> equal slices.
         </p>
       </motion.div>
 
@@ -257,6 +213,7 @@ function FractionPizzaPlay({
                 key={i}
                 x={100 + 38 * Math.cos(rad)}
                 y={100 + 38 * Math.sin(rad)}
+                pointerEvents="none"
                 fontSize="13"
                 textAnchor="middle"
                 dominantBaseline="middle"
@@ -299,7 +256,7 @@ function FractionPizzaPlay({
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.96 }}
           onClick={checkAnswer}
-          disabled={!!feedback || selected.length === 0}
+          disabled={!!feedback}
           className="px-8 py-3 rounded-xl font-black bg-primary text-primary-foreground disabled:opacity-50 shadow-md"
         >
           Serve it! 🍕
@@ -318,12 +275,13 @@ function FractionPizzaPlay({
 
 // ── Wrapper with difficulty gate ──────────────────────────────────────────────
 function FractionPizzaWithDifficulty({ onComplete }: { onComplete: (r: GameResult) => void }) {
-  const { tier } = useChildAge();
+  const { tier, ageGroup } = useChildAge();
   const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
   useEffect(() => {
+    if (!ageGroup) return;
     const auto: Difficulty = tier === 1 ? 'Easy' : tier === 2 ? 'Medium' : 'Hard';
     setDifficulty(auto);
-  }, [tier]);
+  }, [tier, ageGroup]);
   if (!difficulty) return <DifficultyPicker onSelect={setDifficulty} />;
   return <FractionPizzaPlay onComplete={onComplete} difficulty={difficulty} />;
 }

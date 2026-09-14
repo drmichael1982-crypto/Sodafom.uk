@@ -1,3 +1,6 @@
+import { ROUND_LENGTH } from '@/lib/games/ten-question-round';
+import { coinRound, numberOptions as makeOptions } from '@/lib/games/maths-round-data';
+import { useAnswerTransition } from '@/lib/games/use-answer-transition';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
@@ -7,43 +10,9 @@ import { useGameLevel } from '@/hooks/useGameLevel';
 
 const SLUG = 'coin-counter';
 
-const ALL_COINS = [
-  { label: '1p', value: 1, emoji: '🟤' },
-  { label: '2p', value: 2, emoji: '🟤' },
-  { label: '5p', value: 5, emoji: '⚪' },
-  { label: '10p', value: 10, emoji: '⚪' },
-  { label: '20p', value: 20, emoji: '🟡' },
-  { label: '50p', value: 50, emoji: '🟡' },
-  { label: '£1', value: 100, emoji: '🥇' },
-  { label: '£2', value: 200, emoji: '🥇' },
-];
+const TOTAL_ROUNDS = ROUND_LENGTH;
 
-// Level 1: 1p/2p/5p, max 2 types, count≤3 | Level 5: all coins, 4 types, count≤5
-function generatePurse(level: number): { coin: typeof ALL_COINS[0]; count: number }[] {
-  const coinPool = level <= 1 ? ALL_COINS.slice(0, 3) : level <= 2 ? ALL_COINS.slice(0, 4) : level <= 3 ? ALL_COINS.slice(0, 5) : level <= 4 ? ALL_COINS.slice(0, 6) : ALL_COINS;
-  const numTypes = level <= 1 ? 2 : level <= 3 ? 3 : 4;
-  const maxCount = level <= 1 ? 3 : level <= 3 ? 4 : 5;
-  const shuffled = [...coinPool].sort(() => Math.random() - 0.5).slice(0, numTypes);
-  return shuffled.map(coin => ({ coin, count: Math.floor(Math.random() * maxCount) + 1 }));
-}
-
-function makeOptions(answer: number): number[] {
-  const opts = new Set<number>([answer]);
-  const candidates = [answer - 20, answer - 10, answer - 5, answer - 2, answer + 2, answer + 5, answer + 10, answer + 20, answer + 50];
-  for (const c of candidates.sort(() => Math.random() - 0.5)) {
-    if (c > 0 && c !== answer) { opts.add(c); if (opts.size === 4) break; }
-  }
-  while (opts.size < 4) {
-    const delta = Math.floor(Math.random() * 15) + 1;
-    const c = answer + (Math.random() < 0.5 ? delta : -delta);
-    if (c > 0) opts.add(c);
-  }
-  return [...opts].sort(() => Math.random() - 0.5);
-}
-
-const TOTAL_ROUNDS = 8;
-
-function CoinInner({ onComplete, level, onLevelChange, onQuestionChange }: {
+export function CoinInner({ onComplete, level, onLevelChange, onQuestionChange }: {
   onComplete: (r: GameResult) => void;
   level: number;
   onLevelChange: (stars: number) => void;
@@ -51,7 +20,9 @@ function CoinInner({ onComplete, level, onLevelChange, onQuestionChange }: {
 }) {
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const [currentPurse, setCurrentPurse] = useState(() => generatePurse(level));
+  const [purses] = useState(() => coinRound(level));
+  const currentPurse = purses[round];
+  const transition = useAnswerTransition();
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
 
@@ -65,12 +36,12 @@ function CoinInner({ onComplete, level, onLevelChange, onQuestionChange }: {
   }, [total, onQuestionChange]);
 
   function pick(opt: number) {
-    if (feedback) return;
+    if (!transition.claim()) return;
     setChosen(opt);
     const isCorrect = opt === total;
     setFeedback(isCorrect ? 'correct' : 'wrong');
     const nc = correct + (isCorrect ? 1 : 0);
-    setTimeout(() => {
+    transition.schedule(() => {
       setFeedback(null); setChosen(null);
       const nr = round + 1;
       if (nr >= TOTAL_ROUNDS) {
@@ -80,8 +51,8 @@ function CoinInner({ onComplete, level, onLevelChange, onQuestionChange }: {
         onComplete({ score, correct: nc, total: TOTAL_ROUNDS, stars });
       } else {
         setRound(nr); setCorrect(nc);
-        const np = generatePurse(level);
-        setCurrentPurse(np);
+        const np = purses[nr];
+        transition.release();
         const nt = np.reduce((s, { coin, count }) => s + coin.value * count, 0);
         setOptions(makeOptions(nt));
       }
@@ -146,6 +117,7 @@ export default function CoinCounter() {
   const [levelToast, setLevelToast] = useState<'up' | 'down' | null>(null);
   const [displayLevel, setDisplayLevel] = useState(level);
   const [currentQuestion, setCurrentQuestion] = useState('');
+  useEffect(() => { if (!loading) setDisplayLevel(level); }, [level, loading]);
 
   const handleLevelChange = async (stars: number) => {
     const prev = displayLevel;
@@ -177,7 +149,7 @@ export default function CoinCounter() {
             {levelToast && <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50">
               <LevelBadge level={displayLevel} showToast={levelToast} onToastDone={() => setLevelToast(null)} />
             </div>}
-            <CoinInner onComplete={onComplete} level={displayLevel} onLevelChange={handleLevelChange} onQuestionChange={setCurrentQuestion} />
+            <CoinInner key={level} onComplete={onComplete} level={Math.min(level, 5)} onLevelChange={handleLevelChange} onQuestionChange={setCurrentQuestion} />
           </div>
         )}
       </GameShell>

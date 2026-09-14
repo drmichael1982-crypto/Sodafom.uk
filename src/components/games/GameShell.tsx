@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, ArrowRight, Star, Trophy, RotateCcw, Home, Zap, LogIn, LogOut, User, X, Award, Gift } from 'lucide-react';
-import { useNavigate, Link } from "react-router";
+import { ArrowLeft, ArrowRight, Star, Trophy, RotateCcw, Zap, LogIn, LogOut, User, X, Award, Gift } from 'lucide-react';
+import { useNavigate, useLocation, Link } from "react-router";
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { useSession, signOut } from '@/lib/auth/auth-client';
 import PaywallGate from './PaywallGate';
@@ -17,6 +17,7 @@ export type { AgeGroup } from '@/hooks/useChildAge';
 import { getActiveChild } from '@/hooks/useChildAge';
 import { API_PREFIX } from '@/lib/config';
 import { games as gamesContent } from 'virtual:content';
+import { getGameReturnTo, gameReturnLabel, withGameReturnTo } from '@/lib/world/return-navigation';
 
 export interface GameResult {
   score: number; // 0–100
@@ -61,6 +62,11 @@ function calcStars(score: number): number {
 
 export default function GameShell({ title, emoji, subject, ageGroups, children, currentQuestion, currentOptions }: GameShellProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = getGameReturnTo(location.search);
+  const returnLabel = gameReturnLabel(returnTo);
+  const [signingOut, setSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState(false);
   const { session } = useSession();
   const { setGameContext, clearGameContext } = useArchieContext();
   const { recordGameCompletion } = useProgression();
@@ -72,6 +78,21 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   const [isDailyChallenge, setIsDailyChallenge] = useState(false);
   const [dailyClaimed, setDailyClaimed] = useState(false);
   const cfg = (Object.hasOwn(subjectColors, subject) ? subjectColors[subject as keyof typeof subjectColors] : undefined) ?? subjectColors['maths'];
+
+  const handleSignOut = async () => {
+    if (signingOut) return;
+    setSigningOut(true);
+    setSignOutError(false);
+    try {
+      const response = await signOut();
+      if (response.error) throw new Error('Sign out failed');
+      navigate('/hub/login');
+    } catch {
+      setSignOutError(true);
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   // Check if this game is today's daily challenge
   useEffect(() => {
@@ -183,9 +204,9 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
       {/* Header bar */}
       <div className={`${cfg.bg} ${cfg.text} px-2 sm:px-4 py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 shadow-md`}>
         <div className="flex items-center gap-1 sm:gap-2">
-          <button aria-label="Back to games" onClick={() => navigate('/games')} className="min-h-11 min-w-11 flex items-center justify-center gap-2 rounded-xl font-bold text-sm opacity-80 hover:opacity-100 transition-opacity">
+          <button aria-label={returnLabel} onClick={() => navigate(returnTo)} className="min-h-11 min-w-11 flex items-center justify-center gap-2 rounded-xl font-bold text-sm opacity-80 hover:opacity-100 transition-opacity">
             <ArrowLeft size={18} />
-            <span className="hidden sm:inline">Back to Games</span>
+            <span className="hidden sm:inline">{returnLabel}</span>
           </button>
           <button
             aria-label="Exit game and return home"
@@ -223,7 +244,9 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
                 <span className="hidden sm:inline">My Hub</span>
               </Link>
               <button
-                onClick={() => signOut().then(() => navigate('/hub/login'))}
+                onClick={handleSignOut}
+                disabled={signingOut}
+                aria-label="Log out"
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-xs font-black"
                 title="Log out"
               >
@@ -245,10 +268,16 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
       </div>
 
       {/* Game area */}
+      {signOutError && (
+        <div role="alert" className="flex flex-wrap items-center justify-center gap-3 bg-card p-4 text-sm font-bold text-destructive">
+          <span>Sign out could not be confirmed. Please try again.</span>
+          <button type="button" onClick={handleSignOut} disabled={signingOut} className="min-h-11 rounded-lg border px-3 disabled:opacity-50">Try sign out again</button>
+        </div>
+      )}
       <div className="flex-1 flex flex-col pb-32 sm:pb-28">
         <AnimatePresence mode="wait">
           {result
-            ? <ResultScreen key="result" result={result} onReplay={handleReplay} onHome={() => navigate('/')} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: `/games/${nextGame.slug}` } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
+            ? <ResultScreen key="result" result={result} onReplay={handleReplay} onReturn={() => navigate(returnTo)} returnLabel={returnLabel} nextGameList={withGameReturnTo(`/games?cat=${encodeURIComponent(subject)}`, location.search)} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: withGameReturnTo(`/games/${nextGame.slug}`, location.search) } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
             : <motion.div key={`game-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
                 {children(handleComplete)}
               </motion.div>
@@ -302,11 +331,13 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
 // ── Result Screen ──────────────────────────────────────────────────────────────
 
 function ResultScreen({
-  result, onReplay, onHome, gameTitle, subject, nextGame, isDailyChallenge = false, dailyClaimed = false, isLoggedIn = false, navigate,
+  result, onReplay, onReturn, returnLabel, nextGameList, gameTitle, subject, nextGame, isDailyChallenge = false, dailyClaimed = false, isLoggedIn = false, navigate,
 }: {
   result: GameResult;
   onReplay: () => void;
-  onHome: () => void;
+  onReturn: () => void;
+  returnLabel: string;
+  nextGameList: string;
   gameTitle: string;
   subject: string;
   nextGame: { title: string; route: string } | null;
@@ -640,10 +671,10 @@ function ResultScreen({
                 type="button"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
-                onClick={onHome}
+                onClick={onReturn}
                 className="relative z-20 flex-1 min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl font-bold bg-muted text-foreground border border-border"
               >
-                <Home size={16} /> Home
+                <ArrowLeft size={16} /> {returnLabel}
               </motion.button>
             </div>
 
@@ -656,7 +687,7 @@ function ResultScreen({
                   navigate(nextGame.route);
                   window.scrollTo({ top: 0, behavior: 'auto' });
                 } else {
-                  navigate(`/games?cat=${encodeURIComponent(subject)}`);
+                  navigate(nextGameList);
                 }
               }}
               className="relative z-20 mt-3 w-full flex min-h-14 touch-manipulation cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground font-black shadow-md"

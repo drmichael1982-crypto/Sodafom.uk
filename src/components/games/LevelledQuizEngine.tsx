@@ -22,7 +22,7 @@
  * If fewer than 5 banks are provided the last bank is reused for higher levels.
  */
 import { useState, useRef } from 'react';
-import QuizEngine, { type QuizQuestion } from './QuizEngine';
+import QuizEngine, { type QuizQuestion, type QuizResult } from './QuizEngine';
 import LevelBadge from './LevelBadge';
 import { useGameLevel } from '@/hooks/useGameLevel';
 import { useChildAge } from '@/hooks/useChildAge';
@@ -66,21 +66,21 @@ export default function LevelledQuizEngine({
 
   // Pick the question bank for the current level (clamp to available banks)
   const ageStartLevel = tier === 1 ? 1 : tier === 2 ? 2 : 3;
-  const effectiveLevel = Math.max(level, ageStartLevel);
+  const effectiveLevel = Math.min(Math.max(level, ageStartLevel), questionsByLevel.length);
   const bankIndex = Math.min(effectiveLevel - 1, questionsByLevel.length - 1);
   const baseQuestions = questionsByLevel[bankIndex] ?? questionsByLevel[questionsByLevel.length - 1] ?? [];
-  const questions = subject === 'maths'
+  const questions = subject === 'maths' && gameSlug !== 'ratio-recipe'
     ? [...baseQuestions, ...generateMathQuestions(gameSlug, tier, effectiveLevel)]
     : baseQuestions;
 
-  async function handleComplete(stars: number) {
+  async function handleComplete(stars: number, result: QuizResult) {
+    onComplete(result);
     const newLevel = await recordResult(stars);
     if (newLevel > prevLevel.current) setToast('up');
     else if (newLevel < prevLevel.current) setToast('down');
     prevLevel.current = newLevel;
 
-    const sc = stars === 3 ? 95 : stars === 2 ? 70 : stars === 1 ? 45 : 20;
-    onComplete({ score: sc, correct: Math.round(sc / 10), total: 10, stars });
+
   }
 
   return (

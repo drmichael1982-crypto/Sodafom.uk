@@ -1,9 +1,11 @@
+import { shuffle, roundResult } from '@/lib/games/ten-question-round';
+import { useAnswerTransition } from '@/lib/games/use-answer-transition';
 /**
  * QuizEngine — reusable multiple-choice quiz component used by all new games.
  * Accepts a question bank, renders one question at a time, tracks score,
  * and calls onComplete(stars) when all rounds are done.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CheckCircle, XCircle, Star } from 'lucide-react';
 import ArchieGameHelper from '@/components/games/ArchieGameHelper';
@@ -17,18 +19,16 @@ export interface QuizQuestion {
   hint?: string;
 }
 
+export interface QuizResult { score: number; correct: number; total: number; stars: number; }
+
 interface QuizEngineProps {
   title: string;
   emoji: string;
   questions: QuizQuestion[];
-  onComplete: (stars: number) => void;
+  onComplete: (stars: number, result: QuizResult) => void;
   accentClass?: string; // tailwind bg class for correct highlight
   onQuestionChange?: (question: string, options?: string[]) => void; // reports current question text upward
   sessionKey?: string;
-}
-
-function shuffle<T>(arr: T[]): T[] {
-  return [...arr].sort(() => Math.random() - 0.5);
 }
 
 export default function QuizEngine({
@@ -46,11 +46,8 @@ export default function QuizEngine({
     let seen = new Set<string>();
     try { seen = new Set(JSON.parse(localStorage.getItem(storageKey) ?? '[]') as string[]); } catch { /* ignore */ }
     let available = unique.filter(q => !seen.has(`${q.question}|${q.answer}`));
-    if (available.length < Math.min(10, unique.length)) {
-      seen = new Set();
-      available = unique;
-    }
-    const selectedQuestions = shuffle(available).slice(0, 10);
+    const selectedQuestions = [...shuffle(available), ...shuffle(unique.filter(q => seen.has(`${q.question}|${q.answer}`)))].slice(0, 10);
+    if (available.length === 0) seen.clear();
     selectedQuestions.forEach(q => seen.add(`${q.question}|${q.answer}`));
     try { localStorage.setItem(storageKey, JSON.stringify([...seen].slice(-300))); } catch { /* ignore */ }
     return selectedQuestions.map(q => ({ ...q, options: shuffle(q.options) }));
@@ -60,6 +57,8 @@ export default function QuizEngine({
   const [correct, setCorrect] = useState(0);
   const [done, setDone] = useState(false);
   const { speak } = useVoice();
+  const transition = useAnswerTransition();
+  const completed = useRef(false);
 
   const current = pool[idx];
 
@@ -76,8 +75,8 @@ export default function QuizEngine({
     return () => window.clearTimeout(timer);
   }, [current, done, idx, sessionKey, speak]);
 
-  const pick = useCallback((opt: string) => {
-    if (selected !== null) return;
+  const pick = (opt: string) => {
+    if (selected !== null || !current || !transition.claim()) return;
     setSelected(opt);
     const isCorrect = opt === current.answer;
     if (isCorrect) setCorrect(c => c + 1);
@@ -86,24 +85,27 @@ export default function QuizEngine({
       ? `You chose ${opt}. That's correct! Well done.`
       : `You chose ${opt}. That's not quite right. The correct answer is ${current.answer}.`;
     speak(`archie-answer:${current.question}:${opt}`, feedback);
-    setTimeout(() => {
+    transition.schedule(() => {
       if (idx + 1 >= pool.length) {
         setDone(true);
       } else {
         setIdx(i => i + 1);
+        transition.release();
         setSelected(null);
       }
     }, 900);
-  }, [selected, current, idx, pool.length, speak]);
+  };
 
   useEffect(() => {
-    if (done) {
+    if (done && !completed.current) {
       const pct = correct / pool.length;
       const stars = pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
-      const t = setTimeout(() => onComplete(stars), 1200);
+      const t = setTimeout(() => { completed.current = true; onComplete(stars, { ...roundResult(correct, pool.length), stars }); }, 1200);
       return () => clearTimeout(t);
     }
   }, [done, correct, pool.length, onComplete]);
+
+  if (!current) return <p role="status">No questions are available for this game yet.</p>;
 
   if (done) {
     const pct = correct / pool.length;
@@ -181,6 +183,7 @@ export default function QuizEngine({
               key={opt}
               whileHover={selected === null ? { scale: 1.03 } : {}}
               whileTap={selected === null ? { scale: 0.97 } : {}}
+              disabled={selected !== null}
               onClick={() => pick(opt)}
               className={`flex items-center justify-between gap-2 px-4 py-3 rounded-xl border-2 font-bold text-sm text-left transition-all ${cls}`}
             >

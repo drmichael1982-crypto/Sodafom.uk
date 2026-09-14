@@ -1,3 +1,6 @@
+import { ROUND_LENGTH, nextRound, shuffle } from '@/lib/games/ten-question-round';
+import { MONEY_QUESTIONS } from '@/lib/games/money-round-data';
+import { useAnswerTransition } from '@/lib/games/use-answer-transition';
 /**
  * /games/money-maths — UK coins and notes, making change, counting money
  * Ages 5–13 · Maths subject
@@ -5,51 +8,17 @@
 import { useState, useEffect } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
-import GameShell, { type GameResult } from '@/components/games/GameShell';
+import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
 import { CheckCircle2, XCircle, Star, PoundSterling } from 'lucide-react';
 import ArchieGameHelper from '@/components/games/ArchieGameHelper';
 
-interface MoneyQ {
-  question: string;
-  visual: string; // emoji representation of coins/notes
-  choices: string[];
-  answer: string;
-  explanation: string;
-  difficulty: 'easy' | 'medium' | 'hard';
-}
+const TOTAL = ROUND_LENGTH;
 
-const QUESTIONS: MoneyQ[] = [
-  // Easy — counting coins
-  { question: 'How much money is this?', visual: '1p + 1p + 1p + 1p + 1p', choices: ['5p', '4p', '6p', '3p'], answer: '5p', explanation: 'Five 1p coins = 5p', difficulty: 'easy' },
-  { question: 'How much money is this?', visual: '10p + 5p + 2p', choices: ['17p', '15p', '12p', '20p'], answer: '17p', explanation: '10p + 5p + 2p = 17p', difficulty: 'easy' },
-  { question: 'How much money is this?', visual: '50p + 20p + 10p', choices: ['80p', '70p', '90p', '75p'], answer: '80p', explanation: '50p + 20p + 10p = 80p', difficulty: 'easy' },
-  { question: 'How much money is this?', visual: '£1 + 50p', choices: ['£1.50', '£1.05', '£2.00', '£1.25'], answer: '£1.50', explanation: '£1 + 50p = £1.50', difficulty: 'easy' },
-  { question: 'How much money is this?', visual: '20p + 20p + 5p', choices: ['45p', '40p', '50p', '35p'], answer: '45p', explanation: '20p + 20p + 5p = 45p', difficulty: 'easy' },
-  // Medium — making change
-  { question: 'You buy a snack for 35p. You pay with 50p. How much change do you get?', visual: '50p → 35p', choices: ['15p', '25p', '10p', '20p'], answer: '15p', explanation: '50p − 35p = 15p change', difficulty: 'medium' },
-  { question: 'A book costs £1.20. You pay with £2. How much change do you get?', visual: '£2 → £1.20', choices: ['80p', '60p', '90p', '70p'], answer: '80p', explanation: '£2.00 − £1.20 = 80p change', difficulty: 'medium' },
-  { question: 'You buy a toy for £3.75. You pay with £5. How much change do you get?', visual: '£5 → £3.75', choices: ['£1.25', '£1.50', '£1.00', '£2.25'], answer: '£1.25', explanation: '£5.00 − £3.75 = £1.25 change', difficulty: 'medium' },
-  { question: 'A drink costs 65p. You pay with £1. How much change do you get?', visual: '£1 → 65p', choices: ['35p', '45p', '25p', '40p'], answer: '35p', explanation: '£1.00 − 65p = 35p change', difficulty: 'medium' },
-  { question: 'You have 3 × 20p coins. Can you buy something costing 55p?', visual: '20p + 20p + 20p = ?', choices: ['Yes, with 5p change', 'No, not enough', 'Yes, exact money', 'Yes, with 10p change'], answer: 'Yes, with 5p change', explanation: '3 × 20p = 60p. 60p − 55p = 5p change', difficulty: 'medium' },
-  // Hard — totals and comparison
-  { question: 'Which combination makes exactly £2.50?', visual: '£2.50 = ?', choices: ['£1 + £1 + 50p', '£1 + 50p + 50p', '£2 + 20p + 20p', '£1 + £1 + 20p + 20p'], answer: '£1 + £1 + 50p', explanation: '£1 + £1 + 50p = £2.50', difficulty: 'hard' },
-  { question: 'A pencil costs 45p and a rubber costs 30p. How much do they cost together?', visual: '✏️ 45p + 🧹 30p', choices: ['75p', '65p', '80p', '70p'], answer: '75p', explanation: '45p + 30p = 75p', difficulty: 'hard' },
-  { question: 'You have £5. You spend £2.60 on lunch and 85p on a drink. How much is left?', visual: '£5 − £2.60 − 85p', choices: ['£1.55', '£1.45', '£1.65', '£2.55'], answer: '£1.55', explanation: '£2.60 + 85p = £3.45. £5.00 − £3.45 = £1.55', difficulty: 'hard' },
-  { question: 'Three friends each have £1.50. How much do they have altogether?', visual: '£1.50 × 3', choices: ['£4.50', '£3.50', '£4.00', '£5.00'], answer: '£4.50', explanation: '£1.50 × 3 = £4.50', difficulty: 'hard' },
-  { question: 'A bag of crisps costs 60p. How many can you buy with £3?', visual: '£3 ÷ 60p', choices: ['5', '4', '6', '3'], answer: '5', explanation: '£3.00 ÷ 60p = 5 bags', difficulty: 'hard' },
-];
-
-
-
-const TOTAL = 10;
-
-function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string, opts?: string[]) => void }) {
-  const [questions] = useState<MoneyQ[]>(() => {
-    const easy = QUESTIONS.filter(q => q.difficulty === 'easy').sort(() => Math.random() - 0.5).slice(0, 3);
-    const medium = QUESTIONS.filter(q => q.difficulty === 'medium').sort(() => Math.random() - 0.5).slice(0, 4);
-    const hard = QUESTIONS.filter(q => q.difficulty === 'hard').sort(() => Math.random() - 0.5).slice(0, 3);
-    return [...easy, ...medium, ...hard].sort(() => Math.random() - 0.5);
-  });
+export function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string, opts?: string[]) => void }) {
+  const { tier } = useChildAge();
+  const difficulty = tier === 1 ? 'easy' : tier === 2 ? 'medium' : 'hard';
+  const [questions] = useState(() => nextRound(MONEY_QUESTIONS.filter(q => q.difficulty === difficulty), q => `${q.question}|${q.visual}`, `money-${difficulty}`).map(q => ({ ...q, choices: shuffle(q.choices) })));
+  const transition = useAnswerTransition();
   const [qIdx, setQIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
@@ -59,23 +28,24 @@ function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: Gam
 
   // Report to Archie
   useEffect(() => {
-    onQuestionChange?.(q.question, q.choices);
+    onQuestionChange?.(`${q.question} ${q.visual}`, q.choices);
   }, [qIdx, q, onQuestionChange]);
 
   const handleAnswer = (choice: string) => {
-    if (selected !== null) return;
+    if (!transition.claim()) return;
     setSelected(choice);
     const isRight = choice === q.answer;
     const newScore = isRight ? score + 10 : score;
     const newCorrect = isRight ? correct + 1 : correct;
     if (isRight) { setScore(newScore); setCorrect(newCorrect); }
 
-    setTimeout(() => {
+    transition.schedule(() => {
       const next = qIdx + 1;
       if (next >= TOTAL) {
         const stars = newCorrect >= 9 ? 3 : newCorrect >= 6 ? 2 : newCorrect >= 3 ? 1 : 0;
-        onComplete({ score: newScore, correct: newCorrect, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
+        onComplete({ score: newScore, correct: newCorrect, total: TOTAL, stars, maxScore: TOTAL * 10 });
       } else {
+        transition.release();
         setQIdx(next);
         setSelected(null);
       }

@@ -46,9 +46,10 @@ function timesTableQuestion(round: number, level: number): LearningArenaQuestion
 }
 
 function shopkeeperQuestion(round: number, level: number): LearningArenaQuestion {
-  const prices = level <= 2 ? [35, 42, 58, 65, 73, 84, 91, 47] : [125, 175, 230, 265, 340, 415, 550, 625];
-  const price = prices[round % prices.length];
-  const paid = level <= 2 ? 100 : Math.ceil(price / 500) * 500;
+  // Forty distinct prices in each supported money band; all amounts are pence.
+  const index = ((round % 40) + 40) % 40;
+  const price = level <= 1 ? 5 + index * 2 : level <= 2 ? 11 + index * 2 : level <= 3 ? 105 + index * 5 : level <= 4 ? 115 + index * 7 : 125 + index * 11;
+  const paid = level <= 2 ? 100 : level <= 4 ? 500 : 1000;
   const answer = paid - price;
   const money = (pence: number) => pence >= 100 ? `£${(pence / 100).toFixed(2)}` : `${pence}p`;
   const distractors = [answer, answer + 10, Math.max(5, answer - 10), answer + 20].map(money);

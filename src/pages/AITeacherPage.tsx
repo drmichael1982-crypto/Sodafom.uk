@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, Camera, PenLine, Send, Sparkles, Volume2, Clock3 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
 import { getActiveChild, setActiveChild, type AgeGroup } from '@/hooks/useChildAge';
-import { rememberOnlineAnswer } from '@/lib/archie-device-memory';
+import { prepareLearningPhoto } from '@/lib/learning-photo';
+import { readBrowserStorage, writeBrowserStorage } from '@/lib/auth/browser-storage';
 import { tryLocalArchieResponse } from '@/lib/archie-local';
 
 const CURRICULUM = [
@@ -33,16 +34,42 @@ const SUBJECTS = [
 export default function AITeacherPage() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  type TeacherRequest = { controller: AbortController; timer?: ReturnType<typeof setTimeout> };
+  const activeRequest = useRef<TeacherRequest | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      const request = activeRequest.current;
+      activeRequest.current = null;
+      if (request?.timer) clearTimeout(request.timer);
+      request?.controller.abort();
+    };
+  }, []);
+  const beginRequest = (): TeacherRequest | null => {
+    if (!mounted.current || activeRequest.current) return null;
+    const request = { controller: new AbortController() };
+    activeRequest.current = request;
+    return request;
+  };
+  const isCurrent = (request: TeacherRequest) => mounted.current && activeRequest.current === request;
+  const finishRequest = (request: TeacherRequest) => {
+    if (request.timer) clearTimeout(request.timer);
+    if (!isCurrent(request)) return;
+    activeRequest.current = null;
+    setBusy(false);
+  };
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [answerSource, setAnswerSource] = useState<'Local AI' | 'OpenAI' | null>(null);
+  const [answerSource, setAnswerSource] = useState<'Local Archie' | 'Online teacher' | 'Reading guidance' | null>(null);
   const [lessonMinutes, setLessonMinutes] = useState<15 | 20 | 30 | 60>(30);
   const [age, setAge] = useState(() => {
-    const stored = Number(localStorage.getItem('sodafom_ai_teacher_age'));
-    if (stored >= 5 && stored <= 13) return stored;
+    const stored = Number(readBrowserStorage('localStorage', 'sodafom_ai_teacher_age'));
+    if (Number.isInteger(stored) && stored >= 5 && stored <= 13) return stored;
     const group = getActiveChild()?.ageGroup;
     return group === '5-7' ? 6 : group === '11-13' ? 12 : 9;
   });
@@ -50,90 +77,82 @@ export default function AITeacherPage() {
 
   const selectAge = (nextAge: number) => {
     setAge(nextAge);
-    localStorage.setItem('sodafom_ai_teacher_age', String(nextAge));
+    writeBrowserStorage('localStorage', 'sodafom_ai_teacher_age', String(nextAge));
     const current = getActiveChild();
-    setActiveChild({
-      id: current?.id ?? 1,
-      name: current?.name ?? 'Learner',
-      avatarEmoji: current?.avatarEmoji ?? '⭐',
-      ageGroup: ageGroupFor(nextAge),
-    });
+    if (current) {
+      try { setActiveChild({ ...current, ageGroup: ageGroupFor(nextAge) }); }
+      catch { /* The current page can still use the selected age. */ }
+    }
   };
 
   const startLesson = (subject: string) => {
-    localStorage.setItem('sodafom_lesson_subject', subject);
-    localStorage.setItem('sodafom_lesson_minutes', String(lessonMinutes));
+    writeBrowserStorage('localStorage', 'sodafom_lesson_subject', subject);
+    writeBrowserStorage('localStorage', 'sodafom_lesson_minutes', String(lessonMinutes));
     navigate('/tutor');
   };
 
   const askTeacher = async () => {
-    if (!question.trim() || busy) return;
+    if (!question.trim()) return;
+    const request = beginRequest();
+    if (!request) return;
     setBusy(true); setError('');
-    const localAnswer = tryLocalArchieResponse(question);
-    if (localAnswer) {
-      setAnswer(localAnswer.text);
-      setAnswerSource('Local AI');
-      ttsSpeak(localAnswer.text);
-      setBusy(false);
-      return;
-    }
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
+      const localAnswer = tryLocalArchieResponse(question, { age });
+      if (localAnswer) {
+        setAnswer(localAnswer.text);
+        setAnswerSource('Local Archie');
+        ttsSpeak(localAnswer.text);
+        return;
+      }
+      request.timer = setTimeout(() => request.controller.abort(), 15000);
       const response = await fetch(`${API_PREFIX}/chat`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        signal: request.controller.signal,
         body: JSON.stringify({ messages: [{ role: 'user', content: question }], systemExtra: `Act as a patient teacher following the National Curriculum in England for a child aged ${age}, in ${curriculum.year} (${curriculum.stage}). Teach one clear step at a time, check understanding, use child-friendly language, and adapt examples to this level. Relevant learning includes ${curriculum.topics}.` }),
       });
-      clearTimeout(timeoutId);
       if (!response.ok) throw new Error('Online teacher is not connected yet.');
       const text = await response.text();
-      rememberOnlineAnswer(question, text);
-      setAnswer(text); setAnswerSource('OpenAI'); ttsSpeak(text);
-    } catch (_e) {
-      clearTimeout(timeoutId);
-      const fallbackText = `I am helping offline! For a child in ${curriculum.year} learning ${curriculum.topics}, regarding "${question}": Let's break it down into simple steps. Take your time, try a small example, and you'll get it!`;
-      setAnswer(fallbackText);
-      setAnswerSource('Local AI');
-      ttsSpeak(fallbackText);
-      setError('Online teacher is unavailable (offline mode active).');
+      if (!isCurrent(request)) return;
+      if (request.controller.signal.aborted || !text.trim()) throw new Error('No answer was returned.');
+      setAnswer(text); setAnswerSource('Online teacher'); ttsSpeak(text);
+    } catch {
+      if (!isCurrent(request)) return;
+      setAnswer('I do not have a local answer to that question yet. Try a calculation, a spelling question, or choose a lesson above.');
+      setAnswerSource(null);
+      setError('The online teacher is unavailable. Your question has not been answered.');
     }
-    finally { setBusy(false); }
+    finally { finishRequest(request); }
   };
 
   const readBookPage = async (file?: File) => {
-    if (!file || busy) return;
-    if (file.size > 6 * 1024 * 1024) { setError('Please choose a photograph smaller than 6 MB.'); return; }
-    setBusy(true); setError(''); setAnswer('');
-    setAnswerSource(null);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const image = String(reader.result || '');
+    if (!file) return;
+    const request = beginRequest();
+    if (!request) return;
+    setBusy(true); setError(''); setAnswer(''); setPreview(''); setAnswerSource(null);
+    request.timer = setTimeout(() => request.controller.abort(), 20000);
+    try {
+      const image = await prepareLearningPhoto(file);
+      if (!isCurrent(request)) return;
+      if (request.controller.signal.aborted) throw new Error('Photo preparation timed out.');
       setPreview(image);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 20000);
-      try {
-        const response = await fetch(`${API_PREFIX}/ai-teacher/read-page`, {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          signal: controller.signal,
-          body: JSON.stringify({ image, age }),
-        });
-        clearTimeout(timeoutId);
-        if (!response.ok) throw new Error(await response.text() || 'The page could not be read.');
-        const text = await response.text();
-        setAnswer(text); setAnswerSource('OpenAI'); ttsSpeak(text);
-      } catch (_e) {
-        clearTimeout(timeoutId);
-        const fallbackText = `I have looked at your book page photo! For year ${curriculum.year}, focus on reading each word clearly, sounding out tricky parts, and asking what happens next in the story.`;
-        setAnswer(fallbackText);
-        setAnswerSource('Local AI');
-        ttsSpeak(fallbackText);
-        setError('Online OCR is unavailable (offline reading guidance active).');
-      }
-      finally { setBusy(false); }
-    };
-    reader.onerror = () => { setBusy(false); setError('The photograph could not be opened.'); };
-    reader.readAsDataURL(file);
+      const response = await fetch(`${API_PREFIX}/ai-teacher/read-page`, {
+        method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' },
+        signal: request.controller.signal, body: JSON.stringify({ image, age }),
+      });
+      if (!response.ok) throw new Error('The page could not be read.');
+      const text = await response.text();
+      if (!isCurrent(request)) return;
+      if (request.controller.signal.aborted || !text.trim()) throw new Error('The page could not be read.');
+      setAnswer(text); setAnswerSource('Online teacher'); ttsSpeak(text);
+    } catch {
+      if (!isCurrent(request)) return;
+      setAnswer('I could not read the words in this photograph. You can type a short sentence or tricky word in the question box, or ask a grown-up to read the page with you.');
+      setAnswerSource('Reading guidance');
+      setError('Photo reading is unavailable, or the image could not be prepared. Try a clear photograph of a smaller section (under 6 MB).');
+    } finally {
+      if (isCurrent(request) && inputRef.current) inputRef.current.value = '';
+      finishRequest(request);
+    }
   };
 
   return (
@@ -195,7 +214,7 @@ export default function AITeacherPage() {
 
         <section className="mt-5 rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-800 p-5 text-white shadow-xl">
           <h2 className="flex items-center gap-2 text-xl font-black"><BookOpen/> Read a Book With Archie</h2>
-          <p className="mt-1 text-sm font-bold text-white/85">Photograph one page. Archie will read the visible text and explain difficult words.</p>
+          <p className="mt-1 text-sm font-bold text-white/85">Photograph a clear section of a page to try online reading help. If it is unavailable, you can type a word or sentence instead.</p>
           <input ref={inputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={e => void readBookPage(e.target.files?.[0])}/>
           <button onClick={() => inputRef.current?.click()} disabled={busy} className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-yellow-400 font-black text-indigo-950 disabled:opacity-60"><Camera/> {busy ? 'Reading the page…' : 'Photograph a Book Page'}</button>
           {preview && <img src={preview} alt="Photographed book page" className="mt-4 max-h-72 w-full rounded-2xl bg-white object-contain"/>}

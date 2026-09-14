@@ -1,3 +1,6 @@
+import { ROUND_LENGTH } from '@/lib/games/ten-question-round';
+import { numberBondRound } from '@/lib/games/maths-round-data';
+import { useAnswerTransition } from '@/lib/games/use-answer-transition';
 /**
  * /games/number-bonds — Visual snap-block number bonds to 10 and 20
  * Ages 5–10 · Maths subject
@@ -5,29 +8,8 @@
 import { useState } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
-import GameShell, { type GameResult } from '@/components/games/GameShell';
+import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
 import { CheckCircle2, XCircle, Star } from 'lucide-react';
-
-type Target = 10 | 20;
-
-interface Question {
-  target: Target;
-  given: number;
-  answer: number;
-  choices: number[];
-}
-
-function makeQuestion(target: Target): Question {
-  const given = Math.floor(Math.random() * (target - 1)) + 1;
-  const answer = target - given;
-  const wrongs = new Set<number>();
-  while (wrongs.size < 3) {
-    const w = Math.floor(Math.random() * (target + 1));
-    if (w !== answer) wrongs.add(w);
-  }
-  const choices = [answer, ...Array.from(wrongs)].sort(() => Math.random() - 0.5);
-  return { target, given, answer, choices };
-}
 
 // Visual snap-block bar
 function SnapBlocks({ filled, total, color }: { filled: number; total: number; color: string }) {
@@ -50,33 +32,35 @@ function SnapBlocks({ filled, total, color }: { filled: number; total: number; c
   );
 }
 
-const TOTAL = 12;
+const TOTAL = ROUND_LENGTH;
 
-function NumberBondsInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
+export function NumberBondsInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
   const [qIdx, setQIdx] = useState(0);
 
-  const [question, setQuestion] = useState<Question>(() => makeQuestion(Math.random() > 0.5 ? 20 : 10));
+  const { tier } = useChildAge();
+  const [questions] = useState(() => numberBondRound(tier === 1 ? 10 : 20));
+  const question = questions[qIdx];
+  const transition = useAnswerTransition();
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
 
   const handleAnswer = (choice: number) => {
-    if (selected !== null) return;
+    if (!transition.claim()) return;
     setSelected(choice);
     const isRight = choice === question.answer;
     const newScore = isRight ? score + 10 : score;
     const newCorrect = isRight ? correct + 1 : correct;
     if (isRight) { setScore(newScore); setCorrect(newCorrect); }
 
-    setTimeout(() => {
+    transition.schedule(() => {
       const next = qIdx + 1;
       if (next >= TOTAL) {
-        const stars = newCorrect >= 11 ? 3 : newCorrect >= 8 ? 2 : newCorrect >= 4 ? 1 : 0;
-        onComplete({ score: newScore, correct: newCorrect, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
+        const stars = newCorrect >= 9 ? 3 : newCorrect >= 8 ? 2 : newCorrect >= 4 ? 1 : 0;
+        onComplete({ score: newScore, correct: newCorrect, total: TOTAL, stars, maxScore: TOTAL * 10 });
       } else {
-        const newTarget: Target = Math.random() > 0.5 ? 20 : 10;
         setQIdx(next);
-        setQuestion(makeQuestion(newTarget));
+        transition.release();
         setSelected(null);
       }
     }, 1200);

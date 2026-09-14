@@ -11,7 +11,7 @@
  * fall back to their default difficulty picker.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 export type AgeGroup = '5-7' | '8-10' | '11-13';
 
@@ -38,6 +38,7 @@ export function normaliseAge(raw: string | null | undefined): AgeGroup | null {
 export function ageToDifficulty(age: AgeGroup | null): 1 | 2 | 3 {
   if (age === '5-7') return 1;
   if (age === '8-10') return 2;
+  if (age === '11-13') return 3;
   return 2; // sensible middle difficulty when no age has been selected
 }
 

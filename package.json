@@ -20,7 +20,7 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
     "clean": "rm -rf dist node_modules/.vite",
-    "reset": "npm run clean && npm install"
+    "reset": "pnpm run clean && pnpm install --frozen-lockfile"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.43",
@@ -99,6 +99,7 @@
     "sonner": "^2.0.7",
     "stripe": "^20.4.1",
     "tailwind-merge": "^2.6.1",
+    "three": "^0.186.0",
     "vaul": "^1.1.2",
     "web-push": "^3.6.7",
     "zod": "^3.25.76",
@@ -120,9 +121,11 @@
     "@types/node": "^22.10.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.186.0",
     "@typescript-eslint/eslint-plugin": "^8.18.2",
     "@typescript-eslint/parser": "^8.18.2",
     "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^4.1.11",
     "@vitest/ui": "^4.1.9",
     "autoprefixer": "^10.4.27",
     "baseline-browser-mapping": "^2.10.0",

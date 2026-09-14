@@ -7,6 +7,7 @@ import { API_PREFIX } from '@/lib/config';
 import { getActiveChild } from '@/hooks/useChildAge';
 import { ttsSpeak } from '@/lib/voice-context';
 import { ArchieCharacter } from '@/components/ArchieCharacter';
+import { prepareLearningPhoto } from '@/lib/learning-photo';
 
 function suggestedAge() {
   const group = getActiveChild()?.ageGroup;
@@ -15,6 +16,9 @@ function suggestedAge() {
 
 export default function HomeworkHelperPage() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  const imageRevision = useRef(0);
+  const mounted = useRef(true);
   const [age, setAge] = useState(suggestedAge);
   const [question, setQuestion] = useState('Please explain this homework one step at a time.');
   const [image, setImage] = useState('');
@@ -24,6 +28,12 @@ export default function HomeworkHelperPage() {
   const childName = getActiveChild()?.name || 'there';
 
   useEffect(() => {
+    mounted.current = true;
+    const revision = imageRevision;
+    return () => { mounted.current = false; revision.current++; requestRef.current?.abort(); };
+  }, []);
+
+  useEffect(() => {
     // A friendly spoken welcome; the character component provides the matching
     // lip/talking motion on screen.
     const greeting = `Hello ${childName}, I'm Archie. Can I help you do your homework?`;
@@ -31,49 +41,69 @@ export default function HomeworkHelperPage() {
     return () => window.clearTimeout(timer);
   }, [childName]);
 
-  const chooseImage = (file?: File) => {
+  const chooseImage = async (file?: File) => {
+    const revision = ++imageRevision.current;
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setBusy(false);
     setError('');
     setAnswer('');
+    setImage('');
     if (!file) return;
-    if (file.size > 6 * 1024 * 1024) {
-      setError('Please choose a clear photograph smaller than 6 MB.');
-      return;
+    if (inputRef.current) inputRef.current.value = '';
+    try {
+      const prepared = await prepareLearningPhoto(file);
+      if (mounted.current && revision === imageRevision.current) setImage(prepared);
+    } catch (failure) {
+      if (mounted.current && revision === imageRevision.current) {
+        setError(failure instanceof Error ? failure.message : 'That photograph could not be opened. Please try again.');
+      }
     }
-    const reader = new FileReader();
-    reader.onload = () => setImage(String(reader.result || ''));
-    reader.onerror = () => setError('That photograph could not be opened. Please try again.');
-    reader.readAsDataURL(file);
   };
 
   const askArchie = async () => {
-    if (!image || busy) return;
+    if (!image || busy || requestRef.current) return;
     setBusy(true);
     setError('');
     setAnswer('');
     const controller = new AbortController();
+    requestRef.current = controller;
+    const isCurrent = () => mounted.current && requestRef.current === controller;
     const timeoutId = window.setTimeout(() => controller.abort(), 45_000);
     try {
       const response = await fetch(`${API_PREFIX}/ai-teacher/read-page`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ image, age, mode: 'homework', question: question.trim() }),
         signal: controller.signal,
       });
       const text = await response.text();
-      if (!response.ok) throw new Error(text || 'Archie could not read that homework.');
-      setAnswer(text);
-      ttsSpeak(text);
+      if (!response.ok) {
+        const message = response.status === 503
+          ? 'The online photo helper is paused. You can still ask Archie a typed question in Learning.'
+          : response.status === 413
+            ? 'That photo is too large. Crop it to one question and try again.'
+            : 'Archie could not read that homework. Please try again.';
+        throw new Error(message);
+      }
+      if (!text.trim()) throw new Error('Archie could not read that homework. Please try again.');
+      if (isCurrent()) { setAnswer(text); ttsSpeak(text); }
     } catch (nextError) {
-      setError(nextError instanceof Error && nextError.name === 'AbortError'
+      if (isCurrent()) setError(nextError instanceof Error && nextError.name === 'AbortError'
         ? 'The homework helper took too long. Please try one clear question in the photograph.'
         : nextError instanceof Error ? nextError.message : 'The homework helper is unavailable just now.');
     } finally {
       window.clearTimeout(timeoutId);
-      setBusy(false);
+      if (isCurrent()) { requestRef.current = null; setBusy(false); }
     }
   };
 
   const clearImage = () => {
+    imageRevision.current++;
+    requestRef.current?.abort();
+    requestRef.current = null;
+    setBusy(false);
     setImage('');
     setAnswer('');
     setError('');

@@ -6,7 +6,11 @@ import FeaturePageShell from '@/components/FeaturePageShell';
 
 const FEATURES = [
   { title: "Archie's Lessons", description: 'Choose a subject and a 15, 20, 30 or 60-minute lesson.', emoji: '🎓', route: '/lessons', colour: 'from-blue-500 to-indigo-700' },
-  { title: 'Games', description: 'Maths, reading, spelling, science and more learning games.', emoji: '🎮', route: '/classic-home', colour: 'from-fuchsia-500 to-purple-700' },
+  { title: 'Games', description: 'Maths, reading, spelling, science and more learning games.', emoji: '🎮', route: '/games', colour: 'from-fuchsia-500 to-purple-700' },
+  { title: 'Victorian Learning Street', description: 'Explore five shops and practise maths with the objects inside.', emoji: '🏘️', route: '/world/victorian', colour: 'from-rose-800 to-amber-900' },
+  { title: 'Floating Learning Room', description: 'Visit floating planets, colouring books and a geography aircraft.', emoji: '🪐', route: '/world/floating', colour: 'from-indigo-700 to-violet-900' },
+  { title: 'Picture Cinema', description: 'Choose an illustrated Archie short, with moving pictures and words on screen.', emoji: '🎬', route: '/cinema', colour: 'from-rose-700 to-purple-900' },
+  { title: 'Animated Books', description: 'Open ten Archie stories and turn the pages at your own pace.', emoji: '📖', route: '/books/animated', colour: 'from-amber-600 to-orange-800' },
   { title: 'Reading', description: 'Reading practice, phonics, stories and comprehension.', emoji: '📚', route: '/reading', colour: 'from-emerald-500 to-green-700' },
   { title: 'Homework Helper', description: 'Photograph homework and ask Archie for a clear explanation.', emoji: '📸', route: '/homework-helper', colour: 'from-orange-500 to-amber-700' },
   { title: 'Ask Archie', description: 'Ask a learning question by typing or speaking.', emoji: '🗝️', route: '/ask-archie', colour: 'from-cyan-500 to-blue-700' },

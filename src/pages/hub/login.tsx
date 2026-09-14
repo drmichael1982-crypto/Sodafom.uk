@@ -4,6 +4,8 @@ import { Link, useNavigate, useLocation, useSearchParams } from "react-router";
 import { motion } from 'motion/react';
 import { signIn } from '@/lib/auth/auth-client';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
+import { toSafeInternalPath } from '@/lib/auth/safe-redirect';
+import { readBrowserStorage, writeBrowserStorage } from '@/lib/auth/browser-storage';
 import { API_PREFIX } from '@/lib/config';
 
 export default function LoginPage() {
@@ -16,7 +18,7 @@ export default function LoginPage() {
       pathname: string;
     };
   })?.from?.pathname ?? '/hub';
-  const [email, setEmail] = useState(() => localStorage.getItem('sodafom_remembered_login_email') || '');
+  const [email, setEmail] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -25,19 +27,20 @@ export default function LoginPage() {
   const [archiePrank, setArchiePrank] = useState(false);
 
   useEffect(() => {
+    setEmail(readBrowserStorage('localStorage', 'sodafom_remembered_login_email') || '');
     // A harmless one-time welcome joke. It never changes, clears or submits
     // login details; it only animates Archie past the Cancel link.
-    if (sessionStorage.getItem('sodafom_login_archie_prank')) return;
+    if (readBrowserStorage('sessionStorage', 'sodafom_login_archie_prank')) return;
     const timer = window.setTimeout(() => {
       setArchiePrank(true);
-      sessionStorage.setItem('sodafom_login_archie_prank', '1');
+      writeBrowserStorage('sessionStorage', 'sodafom_login_archie_prank', '1');
     }, 900);
     return () => window.clearTimeout(timer);
   }, []);
 
   const resetSavedLogin = () => {
-    localStorage.removeItem('sodafom_remembered_login_email');
-    localStorage.removeItem('sodafom_free_access');
+    writeBrowserStorage('localStorage', 'sodafom_remembered_login_email', null);
+    writeBrowserStorage('localStorage', 'sodafom_free_access', null);
     setEmail('');
     setPassword('');
     setError('Saved login details on this device have been cleared. Enter your details again.');
@@ -49,14 +52,12 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      console.log('Attempting sign in for:', email);
       const result = await signIn.email({
         email,
         password
       });
 
       if (result.error) {
-        console.error('Sign in result error:', result.error);
         const msg = result.error.message ?? '';
         if (msg.toLowerCase().includes('user not found') || msg.toLowerCase().includes('invalid') || result.error.status === 401 || result.error.status === 403) {
           setError('Incorrect email or password. Please check your details and try again.');
@@ -66,9 +67,8 @@ export default function LoginPage() {
         return;
       }
 
-      console.log('Sign in successful, navigating to:', from);
-      if (rememberMe) localStorage.setItem('sodafom_remembered_login_email', email.trim().toLowerCase());
-      else localStorage.removeItem('sodafom_remembered_login_email');
+      if (rememberMe) writeBrowserStorage('localStorage', 'sodafom_remembered_login_email', email.trim().toLowerCase());
+      else writeBrowserStorage('localStorage', 'sodafom_remembered_login_email', null);
 
       // Auto-redeem promo code if one was passed in the URL
       if (promoFromUrl) {
@@ -100,13 +100,12 @@ export default function LoginPage() {
       }
 
       // Ensure 'from' is a valid internal path and not a loop back to login
-      const target = (from === '/hub/login' || from === '/login') ? '/hub' : from;
+      const target = (from === '/hub/login' || from === '/login') ? '/hub' : (toSafeInternalPath(from) || '/hub');
       navigate(target, {
         replace: true
       });
     } catch (err) {
-      console.error('Unexpected sign in catch:', err);
-      setError(String(err));
+      setError('Sign in is unavailable. Please try again.');
     } finally {
       setLoading(false);
     }

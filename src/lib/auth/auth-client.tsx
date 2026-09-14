@@ -8,8 +8,7 @@
 import { createAuthClient } from 'better-auth/react';
 import { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useLocation } from "react-router";
-import { claimSessionRecovery, clearSessionRecovery, getSessionRecoveryStorage } from './session-recovery';
-import { resolveAuthBaseURL, resolveSessionRecoveryURL } from './endpoint-config';
+import { resolveAuthBaseURL } from './endpoint-config';
 import { clearLegacyFreeAccess } from './logout-cleanup';
 import { API_BASE_URL, API_PREFIX } from '../config';
 
@@ -18,66 +17,20 @@ const _authClient = createAuthClient({
   baseURL: resolveAuthBaseURL(API_PREFIX, API_BASE_URL, typeof window !== 'undefined' ? window.location.origin : undefined)
 });
 
-// How long an unsettled session may stay pending before we treat it as a stuck
-// stale-cookie state and attempt recovery. Generous enough to clear a slow but
-// healthy first load; short enough that a blank preview self-heals quickly.
-const SESSION_RECOVERY_PENDING_TIMEOUT_MS = 8000;
+export const { signIn, signUp } = _authClient;
 
-/**
- * Clear the stale HttpOnly session cookie server-side, then reload into a clean
- * unauthenticated state. One-shot per tab (see `claimSessionRecovery`) so an
- * unfixable session can't reload-loop.
- */
-function recoverFromStaleSession(): void {
-  if (typeof window === 'undefined') return;
-  const storage = getSessionRecoveryStorage(window);
-  if (!storage || !claimSessionRecovery(storage)) return;
-
-  const recoveryUrl = resolveSessionRecoveryURL(API_PREFIX);
-
-  void fetch(recoveryUrl, {
-    cache: 'no-store',
-    credentials: 'include'
-  }).catch(() => undefined).finally(() => {
-    // Logged so a future "preview keeps reloading" report is diagnosable —
-    // more than one of these per tab points at a clear that isn't sticking.
-    console.info(JSON.stringify({
-      event: 'auth.session.recovery.reloading'
-    }));
-    window.location.reload();
-  });
+/** Better Auth returns failures as values; callers must not navigate on failure. */
+export async function signOut(...args: Parameters<typeof _authClient.signOut>) {
+  const result = await _authClient.signOut(...args);
+  if (result.error) throw new Error('Sign out failed. Please try again.');
+  return result;
 }
-
-/**
- * Self-heal a stale-cookie session. A failed session lookup is a returned
- * `error`, not a thrown one, so no error boundary fires and the app would sit
- * blank. Recover on an explicit error, or when the session never settles within
- * the pending timeout. A healthy session resets the guard so a later genuine
- * failure can recover again in the same tab.
- */
-function useStaleSessionRecovery(error: unknown, isPending: boolean, isAuthenticated: boolean): void {
-  useEffect(function staleSessionRecovery() {
-    if (typeof window === 'undefined') return;
-    if (error) {
-      recoverFromStaleSession();
-      return;
-    }
-    if (isAuthenticated) {
-      const storage = getSessionRecoveryStorage(window);
-      if (storage) clearSessionRecovery(storage);
-      return;
-    }
-    if (!isPending) return;
-    const timer = setTimeout(recoverFromStaleSession, SESSION_RECOVERY_PENDING_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [error, isPending, isAuthenticated]);
-}
-export const authClient = _authClient;
-export const {
-  signIn,
-  signUp,
-  signOut
-} = _authClient;
+// Better Auth exposes its methods dynamically; preserve its proxy behavior.
+export const authClient = new Proxy(_authClient, {
+  get(target, property, receiver) {
+    return property === 'signOut' ? signOut : Reflect.get(target, property, receiver);
+  },
+});
 
 /**
  * useSession — null-safe session hook.
@@ -96,15 +49,7 @@ export function useSession() {
     error
   } = _authClient.useSession();
 
-  // Log for debugging blank screen on Android
-  useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).Capacitor) {
-      console.log('useSession state:', { isPending, hasSession: !!session, hasUser: !!session?.user, error });
-    }
-  }, [session, isPending, error]);
-
   const isAuthenticated = !isPending && !!session?.user;
-  useStaleSessionRecovery(error, isPending, isAuthenticated);
   type SodafomSessionUser = NonNullable<typeof session>['user'] & { isAdmin?: boolean };
 
   return {
@@ -153,15 +98,13 @@ export function ProtectedRoute({
   const {
     isAuthenticated,
     isPending,
-    session,
     error
   } = useSession();
   const location = useLocation();
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
-    if (!isPending) return;
-    console.log('ProtectedRoute: session pending...', { pathname: location.pathname });
+    if (!isPending) { setTimedOut(false); return; }
     const timeout = setTimeout(() => {
       console.warn('ProtectedRoute: session check timed out');
       setTimedOut(true);
@@ -169,9 +112,9 @@ export function ProtectedRoute({
     return () => clearTimeout(timeout);
   }, [isPending, location.pathname]);
 
-  if (timedOut) {
+  if (timedOut || error) {
     return <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-600">Session check timed out. Please try again.</p>
+        <p className="text-gray-600">We could not check your session. Please try again.</p>
         <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
           Retry
         </button>
@@ -204,18 +147,20 @@ export function LogoutButton({
   children?: ReactNode;
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
   async function handleLogout() {
     setIsLoading(true);
+    setLogoutError('');
     try {
       clearLegacyFreeAccess(typeof window !== 'undefined' ? window : undefined);
       await signOut();
       window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout failed:', error);
+    } catch {
+      setLogoutError('Sign out failed. Please try again.');
       setIsLoading(false);
     }
   }
-  return <button onClick={handleLogout} disabled={isLoading} className={className || 'px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50'}>
+  return <><button onClick={handleLogout} disabled={isLoading} className={className || 'px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50'}>
       {isLoading ? 'Logging out...' : children}
-    </button>;
+    </button>{logoutError && <p role="alert">{logoutError}</p>}</>;
 }
