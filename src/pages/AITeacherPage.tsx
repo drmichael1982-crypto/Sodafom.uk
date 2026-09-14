@@ -1,9 +1,10 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, Camera, PenLine, Send, Sparkles, Volume2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
 import { getActiveChild, setActiveChild, type AgeGroup } from '@/hooks/useChildAge';
+import { askArchie, describeArchieReply, friendlyArchieError, type ArchieReply } from '@/lib/archie-routing';
 
 const CURRICULUM = [
   { age: 5, year: 'Year 1', stage: 'Key Stage 1', topics: 'phonics, number bonds, addition and subtraction, shapes, plants and animals' },
@@ -31,8 +32,11 @@ const SUBJECTS = [
 export default function AITeacherPage() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const requestInFlightRef = useRef(false);
+  const requestAbortRef = useRef<AbortController | null>(null);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
+  const [answerProvenance, setAnswerProvenance] = useState<ArchieReply | null>(null);
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -43,6 +47,8 @@ export default function AITeacherPage() {
     return group === '5-7' ? 6 : group === '11-13' ? 12 : 9;
   });
   const curriculum = useMemo(() => CURRICULUM.find(item => item.age === age) ?? CURRICULUM[4], [age]);
+
+  useEffect(() => () => requestAbortRef.current?.abort(), []);
 
   const selectAge = (nextAge: number) => {
     setAge(nextAge);
@@ -57,34 +63,42 @@ export default function AITeacherPage() {
   };
 
   const askTeacher = async () => {
-    if (!question.trim() || busy) return;
-    setBusy(true); setError('');
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion || busy || requestInFlightRef.current) return;
+
+    requestInFlightRef.current = true;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    requestAbortRef.current = controller;
+    setBusy(true); setError(''); setAnswer(''); setAnswerProvenance(null);
     try {
-      const response = await fetch(`${API_PREFIX}/chat`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      const reply = await askArchie({
+        messages: [{ role: 'user', content: trimmedQuestion }],
+        systemExtra: `Act as a patient teacher following the National Curriculum in England for a child aged ${age}, in ${curriculum.year} (${curriculum.stage}). Teach one clear step at a time, check understanding, use child-friendly language, and adapt examples to this level. Relevant learning includes ${curriculum.topics}.`,
+        cacheScope: `ai-teacher-age-${age}`,
         signal: controller.signal,
-        body: JSON.stringify({ messages: [{ role: 'user', content: question }], systemExtra: `Act as a patient teacher following the National Curriculum in England for a child aged ${age}, in ${curriculum.year} (${curriculum.stage}). Teach one clear step at a time, check understanding, use child-friendly language, and adapt examples to this level. Relevant learning includes ${curriculum.topics}.` }),
       });
-      clearTimeout(timeoutId);
-      if (!response.ok) throw new Error('Online teacher is not connected yet.');
-      const text = await response.text();
-      setAnswer(text); ttsSpeak(text);
-    } catch (e) {
-      clearTimeout(timeoutId);
-      const fallbackText = `I am helping offline! For a child in ${curriculum.year} learning ${curriculum.topics}, regarding "${question}": Let's break it down into simple steps. Take your time, try a small example, and you'll get it!`;
-      setAnswer(fallbackText);
-      ttsSpeak(fallbackText);
-      setError('Online teacher is unavailable (offline mode active).');
+      if (controller.signal.aborted) return;
+      setAnswer(reply.text);
+      setAnswerProvenance(reply);
+      ttsSpeak(reply.text);
+    } catch (requestError) {
+      if (controller.signal.aborted) return;
+      // Do not label a service failure as a locally answered lesson.
+      const message = friendlyArchieError(requestError);
+      setError(message);
+      ttsSpeak(message);
     }
-    finally { setBusy(false); }
+    finally {
+      requestInFlightRef.current = false;
+      requestAbortRef.current = null;
+      setBusy(false);
+    }
   };
 
   const readBookPage = async (file?: File) => {
     if (!file || busy) return;
     if (file.size > 6 * 1024 * 1024) { setError('Please choose a photograph smaller than 6 MB.'); return; }
-    setBusy(true); setError(''); setAnswer('');
+    setBusy(true); setError(''); setAnswer(''); setAnswerProvenance(null);
     const reader = new FileReader();
     reader.onload = async () => {
       const image = String(reader.result || '');
@@ -151,7 +165,7 @@ export default function AITeacherPage() {
           {preview && <img src={preview} alt="Photographed book page" className="mt-4 max-h-72 w-full rounded-2xl bg-white object-contain"/>}
         </section>
 
-        {answer && <section className="mt-5 rounded-3xl border-2 border-green-200 bg-white p-5 shadow"><h2 className="flex items-center gap-2 font-black text-green-800"><PenLine/> Archie’s lesson</h2><p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{answer}</p><button onClick={() => ttsSpeak(answer)} className="mt-3 flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 font-black text-white"><Volume2/> Read aloud</button></section>}
+        {answer && <section className="mt-5 rounded-3xl border-2 border-green-200 bg-white p-5 shadow"><div className="flex flex-wrap items-center justify-between gap-2"><h2 className="flex items-center gap-2 font-black text-green-800"><PenLine/> Archie’s lesson</h2>{answerProvenance && <span aria-label="Answer source and API cost" className={`rounded-full px-3 py-1 text-xs font-black ${answerProvenance.source === 'local' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}`}>{describeArchieReply(answerProvenance)}</span>}</div><p className="mt-2 whitespace-pre-wrap text-base leading-relaxed">{answer}</p><button onClick={() => ttsSpeak(answer)} className="mt-3 flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 font-black text-white"><Volume2/> Read aloud</button></section>}
         {error && <p role="alert" className="mt-4 rounded-2xl bg-red-50 p-4 font-bold text-red-700">{error}</p>}
       </div>
     </main>

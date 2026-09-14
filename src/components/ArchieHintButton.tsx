@@ -1,15 +1,15 @@
 /**
  * ArchieHintButton — floating help button that appears during games.
- * Calls the /api/chat endpoint with a curriculum-aligned hint prompt.
+ * Gives curriculum-aligned local guidance and never spends AI credit for a hint.
  * Renders as a small Archie avatar button; expands into a hint bubble.
  * Also reads the current question aloud via speechSynthesis when tapped.
  */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Loader2, Volume2 } from 'lucide-react';
-import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
 import { ArchieCharacter } from './ArchieCharacter';
+import { describeArchieReply, localArchieReply } from '@/lib/archie-routing';
 
 interface ArchieHintButtonProps {
   gameTitle: string;
@@ -47,7 +47,6 @@ export default function ArchieHintButton({ gameTitle, subject, currentQuestion }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [speaking, setSpeaking] = useState(false);
-  const abortRef = useRef<AbortController | null>(null);
   const prevQuestion = useRef('');
 
   // Reset cached hint when question changes
@@ -60,7 +59,6 @@ export default function ArchieHintButton({ gameTitle, subject, currentQuestion }
 
   // Stop speech on unmount
   useEffect(() => () => {
-    abortRef.current?.abort();
     window.speechSynthesis?.cancel();
   }, []);
 
@@ -70,38 +68,19 @@ export default function ArchieHintButton({ gameTitle, subject, currentQuestion }
     ttsSpeak(`Here is your question: ${currentQuestion}`, () => setSpeaking(false));
   }, [currentQuestion]);
 
-  async function fetchHint() {
-    if (hint) { setOpen(true); return; }
+  async function fetchHint(forceNew = false) {
+    if (hint && !forceNew) { setOpen(true); return; }
     setOpen(true);
     setLoading(true);
     setError('');
-    abortRef.current = new AbortController();
-
-    const prompt = currentQuestion
-      ? `You are Archie, a friendly and encouraging learning assistant for children aged 5–13. The child is playing "${gameTitle}" (${subject}). The current question is: "${currentQuestion}". Give a short, friendly hint (2–3 sentences max) that helps them think through it without giving the answer away. Use simple language suitable for a child.`
-      : `You are Archie, a friendly learning assistant for children aged 5–13. The child is playing "${gameTitle}" (${subject}). Give them a short, encouraging tip (2–3 sentences) about how to do well at this type of game. Use simple, fun language.`;
-
     try {
-      const res = await fetch(`${API_PREFIX}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }],
-          stream: false,
-        }),
-        signal: abortRef.current.signal,
-      });
-
-      if (!res.ok) throw new Error('Could not get hint');
-      const data = await res.json() as { message?: string; content?: string; text?: string };
-      const hintText = data.message ?? data.content ?? data.text ?? 'Keep trying — you can do it! 🌟';
+      const hintText = currentQuestion
+        ? 'Let’s work it out together. Read this carefully: ' + currentQuestion + '. Look for the important words, take one small step, and rule out choices that cannot be right.'
+        : 'You are playing ' + gameTitle + '. Read the instructions carefully, take your time, and try one step at a time. I’m right here if you need me.';
       setHint(hintText);
-      // Auto-read the hint aloud
       ttsSpeak(hintText);
-    } catch (e) {
-      if ((e as Error).name !== 'AbortError') {
-        setError('Archie is thinking… try again in a moment!');
-      }
+    } catch {
+      setError('Archie is thinking… try again in a moment!');
     } finally {
       setLoading(false);
     }
@@ -170,6 +149,9 @@ export default function ArchieHintButton({ gameTitle, subject, currentQuestion }
             {hint && !loading && (
               <>
                 <p className="text-foreground text-sm leading-relaxed">{hint}</p>
+                <span aria-label="Answer source and API cost" className="mt-2 inline-flex rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-black text-emerald-800">
+                  {describeArchieReply(localArchieReply(hint))}
+                </span>
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={() => ttsSpeak(hint)}
@@ -178,7 +160,7 @@ export default function ArchieHintButton({ gameTitle, subject, currentQuestion }
                     <Volume2 size={12} /> Read hint
                   </button>
                   <button
-                    onClick={() => { setHint(''); fetchHint(); }}
+                    onClick={() => void fetchHint(true)}
                     className="text-xs text-muted-foreground font-bold hover:underline ml-auto"
                   >
                     Another hint
@@ -192,7 +174,7 @@ export default function ArchieHintButton({ gameTitle, subject, currentQuestion }
 
       {/* Archie button */}
       <motion.button
-        onClick={fetchHint}
+        onClick={() => void fetchHint()}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         className="w-14 h-14 rounded-2xl bg-white shadow-xl flex items-center justify-center text-2xl border-4 border-amber-400 hover:bg-amber-50 transition-colors overflow-hidden"

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { useNavigate } from 'react-router';
 import ArchieCharacter from '@/components/ArchieCharacter';
+import { askArchie, describeArchieReply, friendlyArchieError, type ArchieReply } from '@/lib/archie-routing';
 
 type Screen = 'home' | 'stories' | 'lessons' | 'ask' | 'games' | 'homework' | 'museum' | 'theatre' | 'parents' | 'teacher' | 'shop' | 'stickers' | 'settings';
 
@@ -106,7 +107,10 @@ export default function SodafomAdventurePage() {
   const [duration,setDuration] = useState(30);
   const [selectedTeacher,setSelectedTeacher] = useState<string | null>(null);
   const [askText,setAskText] = useState('');
-  const [askReply,setAskReply] = useState('Local AI ready — ask Archie anything!');
+  const [askReply,setAskReply] = useState('Hi! I’m Archie. Ask me anything about learning.');
+  const [askMeta,setAskMeta] = useState<ArchieReply | null>(null);
+  const [askBusy,setAskBusy] = useState(false);
+  const [askError,setAskError] = useState('');
   const [listening,setListening] = useState(false);
   const [homeworkImage,setHomeworkImage] = useState<string | null>(null);
   const [homeworkText,setHomeworkText] = useState('');
@@ -124,6 +128,8 @@ export default function SodafomAdventurePage() {
   const [museumMessage,setMuseumMessage] = useState('What museum would you like to see today? You can choose a gallery below, type one, or tell Archie.');
   const [museumArtefact,setMuseumArtefact] = useState<number | null>(null);
   const recognitionRef = useRef<any>(null);
+  const askRequestRef = useRef(false);
+  const askAbortRef = useRef<AbortController | null>(null);
 
   const speak = (text:string) => {
     if (!window.speechSynthesis) return;
@@ -139,10 +145,45 @@ export default function SodafomAdventurePage() {
     window.speechSynthesis?.cancel();
     const r = new SR();
     r.lang='en-GB'; r.interimResults=false; r.continuous=false;
-    r.onresult=(e:any)=>{ const t=e.results?.[0]?.[0]?.transcript || ''; setAskText(t); setAskReply(`Local AI heard: “${t}”`); setListening(false); };
+    r.onresult=(e:any)=>{ const t=e.results?.[0]?.[0]?.transcript || ''; setAskText(t); setListening(false); if (t.trim()) void askHomeArchie(t); };
     r.onerror=()=>setListening(false); r.onend=()=>setListening(false);
     recognitionRef.current=r; r.start(); setListening(true);
   };
+
+  async function askHomeArchie(value = askText) {
+    const question = value.trim();
+    if (!question || askRequestRef.current) return;
+    askRequestRef.current = true;
+    const controller = new AbortController();
+    askAbortRef.current = controller;
+    setAskBusy(true);
+    setAskError('');
+    setAskMeta(null);
+    setAskReply('Archie is thinking…');
+    try {
+      const reply = await askArchie({
+        messages: [{ role: 'user', content: question }],
+        cacheScope: 'home-ask-archie',
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
+      setAskReply(reply.text);
+      setAskMeta(reply);
+      speak(reply.text);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      const message = friendlyArchieError(error);
+      setAskReply(message);
+      setAskError(message);
+      speak(message);
+    } finally {
+      askRequestRef.current = false;
+      askAbortRef.current = null;
+      setAskBusy(false);
+    }
+  }
+
+  useEffect(() => () => askAbortRef.current?.abort(), []);
 
   useEffect(() => {
     fetch('/api/homework-scan', { credentials: 'include' })
@@ -181,7 +222,7 @@ export default function SodafomAdventurePage() {
   const top = (title:string, subtitle:string) => (
     <div className="mx-auto max-w-6xl px-4 pt-5">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <button onClick={()=>setScreen('home')} className={`${button} bg-blue-700 text-white`}>← Home</button>
+        <button onClick={()=>{askAbortRef.current?.abort();setScreen('home')}} className={`${button} bg-blue-700 text-white`}>← Home</button>
         <div className="text-right"><h1 className="text-3xl font-black text-blue-950 sm:text-5xl">{title}</h1><p className="font-bold text-blue-800">{subtitle}</p></div>
       </div>
     </div>
@@ -216,10 +257,10 @@ export default function SodafomAdventurePage() {
     </div></div></main>;
 
   const Ask = () => <main className={shell}>{top('Ask Archie','Talk, type, show a photo, ask for ideas or just chat')}
-    <div className="mx-auto max-w-4xl px-4 pb-8"><div className={`${panel} overflow-hidden p-6 text-center`}><div className="mx-auto flex justify-center"><ArchieCharacter size={180}/></div><div className="mx-auto mt-2 max-w-xl rounded-3xl bg-blue-50 p-4 font-black text-blue-950">{askReply}<div className="mt-2 text-xs text-emerald-700">Source: Local AI</div></div>
-      <div className="mt-4 flex gap-2"><input value={askText} onChange={e=>setAskText(e.target.value)} placeholder="Ask Archie anything…" className="min-w-0 flex-1 rounded-2xl border-2 border-blue-300 px-4 py-3 text-base"/><button onClick={()=>{const q=askText.trim(); setAskReply(q?`Local AI is ready to answer: “${q}”`:'Type or say a question first.'); if(q) speak('I heard your question. Let me help you.')}} className={`${button} bg-blue-700 text-white`}>Ask</button></div>
-      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">{[['🎤','Talk to Archie'],['⌨️','Type a Question'],['📷','Show Archie'],['📚','Explain This'],['💡','Give Me Ideas'],['💬','Let’s Just Chat']].map(([i,l])=><button key={l} onClick={()=>l==='Talk to Archie'?startListening():setAskReply(`${l} mode selected.`)} className={`${button} bg-gradient-to-r from-purple-600 to-blue-600 text-white`}>{i} {l}</button>)}</div>
-      <div className="mt-4 text-sm font-bold text-slate-600">{listening?'🎤 Listening to the child…':'Microphone ready. Archie’s own speech is cancelled before listening.'}</div>
+    <div className="mx-auto max-w-4xl px-4 pb-8"><div className={panel + ' overflow-hidden p-6 text-center'}><div className="mx-auto flex justify-center"><ArchieCharacter size={180}/></div><div aria-live="polite" className="mx-auto mt-2 max-w-xl rounded-3xl bg-blue-50 p-4 font-black text-blue-950">{askReply}{askMeta && <div className="mt-2 flex flex-wrap justify-center gap-2 text-xs"><span aria-label="Answer source and API cost" className={'rounded-full px-3 py-1 ' + (askMeta.source === 'local' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800')}>{describeArchieReply(askMeta)}</span></div>}</div>
+      <div className="mt-4 flex gap-2"><input value={askText} onChange={e=>setAskText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter') void askHomeArchie()}} placeholder="Ask Archie anything…" aria-label="Ask Archie a question" className="min-w-0 flex-1 rounded-2xl border-2 border-blue-300 px-4 py-3 text-base"/><button onClick={()=>void askHomeArchie()} disabled={askBusy || !askText.trim()} className={button + ' bg-blue-700 text-white disabled:cursor-not-allowed disabled:opacity-60'}>{askBusy ? 'Thinking…' : 'Ask'}</button></div>
+      <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">{[['🎤','Talk to Archie'],['⌨️','Type a Question'],['📷','Show Archie'],['📚','Explain This'],['💡','Give Me Ideas'],['💬','Let’s Just Chat']].map(([i,l])=><button key={l} onClick={()=>l==='Talk to Archie'?startListening():setAskReply(l + ' mode selected.')} className={button + ' bg-gradient-to-r from-purple-600 to-blue-600 text-white'}>{i} {l}</button>)}</div>
+      <div className="mt-4 text-sm font-bold text-slate-600">{listening?'🎤 Listening to the child…':'Microphone ready. Archie’s own speech is cancelled before listening.'}</div>{askError && <p role="alert" className="mt-3 text-sm font-bold text-rose-700">{askError}</p>}
     </div></div></main>;
 
   const Games = () => <main className={shell}>{top('Sodafom Game Islands','Choose an island to open that subject’s games')}
@@ -273,7 +314,7 @@ export default function SodafomAdventurePage() {
   const Settings = () => <main className="min-h-screen bg-gradient-to-b from-amber-100 via-white to-emerald-100 text-slate-900">{top('Sodafom Settings','The windmill workshop')}
     <div className="mx-auto max-w-5xl px-4 pb-8"><div className={`${panel} overflow-hidden bg-gradient-to-b from-amber-100 to-amber-50 p-6`}><div className="text-center"><div className="animate-spin text-8xl [animation-duration:12s]">🌬️</div><h2 className="mt-2 text-3xl font-black text-amber-900">Windmill Settings</h2></div><div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">{[['🔊','Audio & Voice'],['👤','Child Profile'],['🖥️','Display'],['🌐','Language'],['🛡️','Privacy & Safety'],['📚','Learning Preferences'],['👨‍👩‍👧','Account'],['🔒','Admin Access']].map(([icon,label],i)=><button key={label} onClick={()=>label==='Admin Access'?navigate('/admin-panel'):label==='Account'?navigate('/hub/subscription'):undefined} className={`relative aspect-square rounded-full border-8 border-amber-700 bg-amber-300 p-4 font-black text-amber-950 shadow-xl transition hover:rotate-6 active:scale-95 ${i%2?'animate-[spin_18s_linear_infinite_reverse]':''}`}><div className="text-4xl">{icon}</div><div className="mt-2 text-sm">{label}</div></button>)}</div><div className="mt-5 rounded-3xl bg-white p-4 text-center font-bold text-blue-950">Subscription management and cancellation are inside Account. Admin is separately protected.</div></div></div></main>;
 
-  const current = useMemo(()=>({home:<Home/>,stories:<Stories/>,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,museum:<Museum/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,listening,homeworkImage,homeworkText,homeworkHelp,homeworkListening,homeworkSyncing,homeworkCloudStatus,episode,parentPin,parentOpen,classCode,stickerTab,museumChoice,museumQuestion,museumMessage,museumArtefact]);
+  const current = useMemo(()=>({home:<Home/>,stories:<Stories/>,lessons:<Lessons/>,ask:<Ask/>,games:<Games/>,homework:<Homework/>,museum:<Museum/>,theatre:<Theatre/>,parents:<Parents/>,teacher:<Teacher/>,shop:<Shop/>,stickers:<Stickers/>,settings:<Settings/>}[screen]),[screen,duration,selectedTeacher,askText,askReply,askMeta,askBusy,askError,listening,homeworkImage,homeworkText,homeworkHelp,homeworkListening,homeworkSyncing,homeworkCloudStatus,episode,parentPin,parentOpen,classCode,stickerTab,museumChoice,museumQuestion,museumMessage,museumArtefact]);
 
   return <><Helmet><title>Sodafom — Archie Learning</title></Helmet>{current}</>;
 }

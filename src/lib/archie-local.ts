@@ -432,3 +432,16 @@ export function tryLocalArchieResponse(input: string): LocalArchieResult | null 
     ?? tryLocalReading(input)
     ?? tryLocalAppHelp(input);
 }
+
+
+/**
+ * Server-safe local replies. The browser tutor has a per-child pending-question
+ * state, so it must never be shared by an Express process between pupils.
+ */
+export function tryStatelessLocalArchieResponse(input: string): LocalArchieResult | null {
+  return tryLocalMaths(input)
+    ?? tryLocalSpelling(input)
+    ?? tryLocalScience(input)
+    ?? tryLocalReading(input)
+    ?? tryLocalAppHelp(input);
+}

@@ -1,6 +1,6 @@
 /**
  * Archie Chat Page — Sodafom's AI learning buddy
- * Kid-friendly chat interface powered by OpenAI via /api/chat
+ * Kid-friendly chat interface using the shared local-first Archie router.
  */
 
 import React, { useState, useRef, useEffect, type FormEvent } from 'react';
@@ -10,10 +10,9 @@ import { Send, Sparkles, RotateCcw, BookOpen, Calculator, FlaskConical, Pencil, 
 import { useNavigate } from 'react-router';
 import { archie_chat } from 'virtual:content';
 import { ArchieCharacter } from '../../components/ArchieCharacter';
-import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak, stopTts } from '@/lib/voice-context';
-import { tryLocalArchieResponse } from '@/lib/archie-local';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
+import { askArchie, describeArchieReply, friendlyArchieError, type ArchieReply } from '@/lib/archie-routing';
 
 // ── Parse [PLAY:slug|label] markers out of Archie's message ──────────────────
 interface PlayButton { slug: string; label: string; }
@@ -41,6 +40,9 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   source?: 'local' | 'openai' | 'limit';
+  modelUsed?: string;
+  reused?: boolean;
+  provenance?: ArchieReply;
 }
 
 const HISTORY_KEY = 'sodafom_archie_history';
@@ -151,6 +153,7 @@ export default function ChatbotPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
+  const requestAbortRef = useRef<AbortController | null>(null);
   const conversationModeRef = useRef(false);
   const processingRef = useRef(false);
   const speakingRef = useRef(false);
@@ -178,6 +181,8 @@ export default function ChatbotPage() {
       conversationModeRef.current = false;
       if (restartTimerRef.current !== null) window.clearTimeout(restartTimerRef.current);
       try { recognitionRef.current?.abort?.(); } catch { /* ignore */ }
+      requestAbortRef.current?.abort();
+      requestAbortRef.current = null;
       recognitionRef.current = null;
       stopTts();
     };
@@ -249,149 +254,63 @@ export default function ChatbotPage() {
       navigate('/');
       return;
     }
+
     processingRef.current = true;
+    const controller = new AbortController();
+    requestAbortRef.current = controller;
+    const userMessage: Message = { id: 'user-' + Date.now(), role: 'user', content: trimmed };
+    const assistantId = 'assistant-' + Date.now();
+    const cloudAllowed = !OPEN_TESTING_MODE || getAiUsageToday() < AI_DAILY_LIMIT;
 
-    const userMessage: Message = { id: `user-${Date.now()}`, role: 'user', content: trimmed };
-    const assistantId = `assistant-${Date.now()}`;
-
-    setMessages((prev) => [
-      ...prev,
-      userMessage,
-      { id: assistantId, role: 'assistant', content: '' },
-    ]);
+    setMessages((prev) => [...prev, userMessage, { id: assistantId, role: 'assistant', content: '' }]);
     setInput('');
     setIsLoading(true);
     setError(null);
 
-    const local = tryLocalArchieResponse(trimmed);
-    if (local) {
-      console.info('ARCHIE_RESPONSE_SOURCE_LOCAL', local.intent);
-      setMessages((prev) =>
-        prev.map((m) => (m.id === assistantId ? { ...m, content: local.text, source: 'local' } : m))
-      );
-      speakArchie(local.text);
-      setIsLoading(false);
-      processingRef.current = false;
-      return;
-    }
-
-    if (OPEN_TESTING_MODE && getAiUsageToday() >= AI_DAILY_LIMIT) {
-      const limitMessage = "Archie's AI questions are finished for today, but I can still help with lots of free learning activities. Try maths, spelling, reading, app help or your learning games!";
-      setMessages((prev) => prev.map((m) => (m.id === assistantId ? { ...m, content: limitMessage, source: 'limit' } : m)));
-      speakArchie(limitMessage);
-      setIsLoading(false);
-      processingRef.current = false;
-      return;
-    }
-
     try {
-      console.log(`[Chatbot] START sendMessage: "${trimmed}"`);
-      // Filter out empty messages from history
       const history = [...messages, userMessage]
-        .filter(m => m.content && m.content.trim().length > 0)
-        .map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
-      console.log(`[Chatbot] Sanitized history length: ${history.length}`);
+        .filter((message) => message.content.trim())
+        .map((message) => ({ role: message.role, content: message.content }));
+      const reply: ArchieReply = await askArchie({
+        messages: history,
+        cacheScope: 'ask-archie-chat',
+        allowCloudFallback: cloudAllowed,
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted) return;
 
-      const fetchUrl = `${API_PREFIX}/chat`;
-      console.log(`[Chatbot] Fetching URL: ${fetchUrl}`);
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        console.warn('[Chatbot] Request TIMEOUT triggered (45s)');
-        controller.abort();
-      }, 45000);
-
-      if (OPEN_TESTING_MODE) {
+      if (OPEN_TESTING_MODE && reply.source === 'openai') {
         const used = incrementAiUsageToday();
         console.info('ARCHIE_AI_TEST_USAGE', { used, limit: AI_DAILY_LIMIT });
       }
-      console.log('[Chatbot] Calling fetch...');
-      const response = await fetch(fetchUrl, {
-        method: 'POST',
-        mode: 'cors',
-        credentials: 'include',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/plain, */*'
-        },
-        body: JSON.stringify({ messages: history }),
-      }).catch(e => {
-        clearTimeout(timeoutId);
-        console.error(`[Chatbot] Fetch CATCH block:`, e);
-        if (e.name === 'AbortError') throw new Error('Request timed out. Please try again!');
-        throw new Error(`Connection failed: ${e.message || 'Check internet'}.`);
-      });
 
-      clearTimeout(timeoutId);
-      console.log(`[Chatbot] Fetch COMPLETED. Status: ${response.status} ${response.statusText}`);
-
-      if (!response.ok) {
-        const errText = await response.text().catch(() => 'no body');
-        console.error(`[Chatbot] Response NOT OK. Status: ${response.status}. Body: ${errText}`);
-        throw new Error(`Server error: HTTP ${response.status}. ${errText.slice(0, 100)}`);
-      }
-
-      let fullContent = '';
-      const contentType = response.headers.get('content-type');
-      console.log(`[Chatbot] Content-Type: ${contentType}`);
-
-      // Only treat as stream if explicitly told so by the server
-      const isStream = contentType?.includes('text/event-stream');
-      console.log(`[Chatbot] isStream: ${isStream}`);
-
-      if (isStream && response.body && typeof (response.body as any).getReader === 'function') {
-        console.log('[Chatbot] Starting STREAM processing...');
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        let chunkCount = 0;
-        for (let result = await reader.read(); !result.done; result = await reader.read()) {
-          const chunk = decoder.decode(result.value, { stream: true });
-          chunkCount++;
-          console.log(`[Chatbot] Received chunk #${chunkCount} (${chunk.length} chars)`);
-          // Buffer stream chunks and update the message once at the end. Re-rendering
-          // the whole chat on every tiny chunk caused visible flashing in Android WebView.
-          fullContent += chunk;
-        }
-        setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, content: fullContent, source: 'openai' } : m))
-        );
-        console.log(`[Chatbot] STREAM finished. Total length: ${fullContent.length}`);
-      } else {
-        console.log('[Chatbot] Starting BUFFERED processing (text)...');
-        fullContent = await response.text();
-        console.log(`[Chatbot] BUFFERED finished. Length: ${fullContent?.length}`);
-        if (!fullContent) {
-           console.warn('[Chatbot] Received EMPTY content from server');
-           throw new Error('Received empty response from Archie.');
-        }
-
-        setMessages((prev) =>
-          prev.map((m) => (m.id === assistantId ? { ...m, content: fullContent, source: 'openai' } : m))
-        );
-      }
-
-      console.info('ARCHIE_RESPONSE_SOURCE_OPENAI');
-      console.log(`[Chatbot] Parsing Archie message...`);
-      const { text } = parseArchieMessage(fullContent);
-      console.log(`[Chatbot] Final parsed text length: ${text?.length}`);
-      if (text) {
-        console.log(`[Chatbot] Triggering TTS speak...`);
-        speakArchie(text);
-      } else {
-        console.warn('[Chatbot] No text to speak after parsing.');
-      }
-    } catch (err) {
-      console.error('Chatbot API Error:', err);
-      const msg = err instanceof Error ? err.message : 'Unknown error';
-      setError(msg);
-      setMessages((prev) => prev.filter((m) => m.id !== assistantId));
-      speakArchie("Oops! I'm having a little trouble connecting right now. Please check your internet and try again! 😊");
+      setMessages((prev) => prev.map((message) => (
+        message.id === assistantId
+          ? {
+              ...message,
+              content: reply.text,
+              source: reply.source,
+              modelUsed: reply.modelUsed,
+              reused: reply.reused,
+              provenance: reply,
+            }
+          : message
+      )));
+      const { text: responseText } = parseArchieMessage(reply.text);
+      if (responseText) speakArchie(responseText);
+    } catch (requestError) {
+      if (controller.signal.aborted) return;
+      const limitReached = !cloudAllowed;
+      const message = limitReached
+        ? "Archie's AI questions are finished for today, but I can still help with lots of free learning activities. Try maths, spelling, reading, app help or your learning games!"
+        : friendlyArchieError(requestError);
+      setError(message);
+      setMessages((prev) => prev.map((item) => (
+        item.id === assistantId ? { ...item, content: message, source: limitReached ? 'limit' : undefined } : item
+      )));
+      speakArchie(message);
     } finally {
+      if (requestAbortRef.current === controller) requestAbortRef.current = null;
       setIsLoading(false);
       processingRef.current = false;
       // Focusing the text box after a voice response makes the Android keyboard
@@ -876,6 +795,12 @@ function MessageBubble({ message }: { message: Message }) {
   const isUser = message.role === 'user';
   if (!message.content) return null;
 
+  const provenance = message.source === 'local'
+    ? 'Local AI' + (message.reused ? ' · saved answer' : '') + ' · £0 API cost'
+    : message.source === 'openai'
+      ? 'OpenAI · ' + (message.modelUsed ?? 'model not reported') + ' · Cost pending verified billing'
+      : 'AI limit reached';
+
   const { text, buttons } = isUser
     ? { text: message.content, buttons: [] }
     : parseArchieMessage(message.content);
@@ -894,9 +819,14 @@ function MessageBubble({ message }: { message: Message }) {
       )}
 
       <div className={`max-w-[78%] flex flex-col gap-2 ${isUser ? 'items-end' : 'items-start'}`}>
-        {!isUser && message.source && (
-          <span className={`rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ${message.source === 'local' ? 'bg-green-100 text-green-700 border border-green-200' : message.source === 'limit' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-blue-100 text-blue-700 border border-blue-200'}`}>
-            {message.source === 'local' ? 'LOCAL / FREE' : message.source === 'limit' ? 'AI LIMIT REACHED' : 'OPENAI'}
+        {!isUser && message.provenance && (
+          <span aria-label="Answer source and API cost" className={'rounded-full px-2.5 py-1 text-[10px] font-black ' + (message.provenance.source === 'local' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-blue-100 text-blue-700 border border-blue-200')}>
+            {describeArchieReply(message.provenance)}
+          </span>
+        )}
+        {!isUser && !message.provenance && message.source && (
+          <span className={'rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wide ' + (message.source === 'local' ? 'bg-green-100 text-green-700 border border-green-200' : message.source === 'limit' ? 'bg-amber-100 text-amber-700 border border-amber-200' : 'bg-blue-100 text-blue-700 border border-blue-200')}>
+            {provenance}
           </span>
         )}
         <div
