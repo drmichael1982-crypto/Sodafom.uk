@@ -199,6 +199,7 @@ export function getAuth() {
 
     emailAndPassword: {
       enabled: true,
+      revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user: resetUser, url }) => {
         await sendEmail({
           fromName: 'Sodafom',

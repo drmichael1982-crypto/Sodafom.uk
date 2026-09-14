@@ -8,6 +8,18 @@ jobs:
   account-checks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: agent18_auth_test
+          MYSQL_USER: agent18_test
+          MYSQL_PASSWORD: agent18-disposable-test-only
+          MYSQL_ROOT_PASSWORD: agent18-disposable-root-only
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -pagent18-disposable-root-only"
+          --health-interval=10s --health-timeout=5s --health-retries=10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -16,8 +28,10 @@ jobs:
           cache: npm
       - name: Install test dependencies without changing committed locks
         run: npm install --no-save --no-audit --no-fund
-      - name: Run account-flow regression tests
-        run: npx vitest run src/lib/auth/safe-redirect.test.ts src/lib/auth/auth-client.test.ts
+      - name: Run account-flow regression and disposable database integration
+        env:
+          AGENT18_TEST_DB: '1'
+        run: npx vitest run --config agent18.vitest.config.ts
       - name: Run TypeScript check
         run: npm run type-check
       - name: Build production bundle without deploying
