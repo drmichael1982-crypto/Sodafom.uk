@@ -5,17 +5,19 @@ import { motion } from 'motion/react';
 import { signIn } from '@/lib/auth/auth-client';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import { API_PREFIX } from '@/lib/config';
+import { toSafeInternalPath } from '@/lib/auth/safe-redirect';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const promoFromUrl = searchParams.get('promo')?.toUpperCase() ?? '';
-  const from = (location.state as {
-    from?: {
-      pathname: string;
-    };
-  })?.from?.pathname ?? '/hub';
+  const requestedFrom = (location.state as {
+    from?: { pathname?: string; search?: string; hash?: string };
+  })?.from;
+  const from = toSafeInternalPath(
+    (requestedFrom?.pathname ?? '') + (requestedFrom?.search ?? '') + (requestedFrom?.hash ?? '')
+  ) ?? '/hub';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -26,23 +28,15 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
-    // MASTER ACCESS CODE BYPASS
-    if (password === '1182') {
-      // Set a flag in localStorage for "free access"
-      localStorage.setItem('sodafom_free_access', 'true');
-      navigate(from, { replace: true });
-      return;
-    }
 
     try {
-      console.log('Attempting sign in for:', email);
+      const normalizedEmail = email.trim().toLowerCase();
       const result = await signIn.email({
-        email,
+        email: normalizedEmail,
         password
       });
 
       if (result.error) {
-        console.error('Sign in result error:', result.error);
         const msg = result.error.message ?? '';
         if (msg.toLowerCase().includes('user not found') || msg.toLowerCase().includes('invalid') || result.error.status === 401 || result.error.status === 403) {
           setError('Incorrect email or password. Please check your details and try again.');
@@ -52,7 +46,6 @@ export default function LoginPage() {
         return;
       }
 
-      console.log('Sign in successful, navigating to:', from);
 
       // Auto-redeem promo code if one was passed in the URL
       if (promoFromUrl) {
@@ -88,9 +81,8 @@ export default function LoginPage() {
       navigate(target, {
         replace: true
       });
-    } catch (err) {
-      console.error('Unexpected sign in catch:', err);
-      setError(String(err));
+    } catch {
+      setError('We could not sign you in right now. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

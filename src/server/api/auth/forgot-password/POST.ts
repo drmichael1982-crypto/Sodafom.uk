@@ -6,28 +6,47 @@
 import type { Request, Response } from 'express';
 import { getAuth } from '@/lib/auth/auth';
 
-export default async function handler(req: Request, res: Response) {
-  try {
-    const { email } = req.body ?? {};
-    if (!email || typeof email !== 'string') {
-      return res.status(400).json({ error: 'Email required' });
+function resetAppOrigin(req: Request): string {
+  const origin = req.get('origin');
+  if (origin) {
+    try {
+      const parsed = new URL(origin);
+      const host = parsed.hostname.toLowerCase();
+      if (parsed.protocol === 'https:' && (host === 'sodafom.uk' || host.endsWith('.sodafom.uk'))) {
+        return parsed.origin;
+      }
+      if (process.env.NODE_ENV !== 'production' && (host === 'localhost' || host === '127.0.0.1')) {
+        return parsed.origin;
+      }
+    } catch {
+      // Fall back to the canonical Sodafom origin.
     }
+  }
+  return process.env.NODE_ENV === 'production' ? 'https://sodafom.uk' : 'http://localhost:5173';
+}
 
-    const auth = getAuth();
+export default async function handler(req: Request, res: Response) {
+  const { email } = req.body ?? {};
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Email required' });
+  }
 
-    // BetterAuth's requestPasswordReset sends a reset link to the email
-    await auth.api.requestPasswordReset({
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail || normalizedEmail.length > 254) {
+    return res.status(400).json({ error: 'Enter a valid email address' });
+  }
+
+  try {
+    await getAuth().api.requestPasswordReset({
       body: {
-        email: email.trim().toLowerCase(),
-        redirectTo: `${req.protocol}://${req.hostname}/hub/reset-password`,
+        email: normalizedEmail,
+        redirectTo: resetAppOrigin(req) + '/hub/reset-password',
       },
     });
-
-    // Always return success to prevent email enumeration
-    res.json({ ok: true });
-  } catch (err) {
-    console.error('[forgot-password]', err);
-    // Still return ok to prevent email enumeration
-    res.json({ ok: true });
+  } catch {
+    // The response remains deliberately generic to prevent account enumeration.
+    console.error('[forgot-password] request could not be completed');
   }
+
+  return res.json({ ok: true });
 }

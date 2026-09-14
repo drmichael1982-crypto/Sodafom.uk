@@ -17,14 +17,17 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) { setError('Please enter your email address.'); return; }
     setLoading(true);
     try {
-      await fetch(`${API_PREFIX}/auth/forgot-password`, {
+      const response = await fetch(`${API_PREFIX}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        body: JSON.stringify({ email: normalizedEmail }),
       });
+      if (!response.ok) throw new Error('reset request failed');
       setSent(true);
     } catch {
       setError('Something went wrong. Please try again.');

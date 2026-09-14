@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from "react-router";
 import { Helmet } from '@dr.pogodin/react-helmet';
+import { toSafeInternalPath } from '@/lib/auth/safe-redirect';
 
 /**
  * /login — thin redirect shim.
@@ -16,12 +17,11 @@ export default function LoginRedirectPage() {
     const hubLoginParams = new URLSearchParams();
     if (promo) hubLoginParams.set('promo', promo);
     const hubLoginPath = `/hub/login${hubLoginParams.toString() ? `?${hubLoginParams}` : ''}`;
+    const safeRedirect = toSafeInternalPath(redirect);
     navigate(hubLoginPath, {
       replace: true,
-      state: redirect ? {
-        from: {
-          pathname: redirect
-        }
+      state: safeRedirect ? {
+        from: { pathname: safeRedirect }
       } : undefined
     });
   }, []);

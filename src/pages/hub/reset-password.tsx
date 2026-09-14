@@ -34,8 +34,10 @@ export default function ResetPasswordPage() {
         return;
       }
       setDone(true);
-    } catch (err) {
-      setError(String(err));
+      // Do not leave a used reset token in browser history or screenshots.
+      window.history.replaceState(null, '', window.location.pathname);
+    } catch {
+      setError('We could not update your password. The link may have expired; please request a new one.');
     } finally {
       setLoading(false);
     }

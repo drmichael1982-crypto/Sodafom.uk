@@ -12,6 +12,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { signUp } from '@/lib/auth/auth-client.tsx';
 import { API_PREFIX } from '@/lib/config';
+import { toSafeInternalPath } from '@/lib/auth/safe-redirect';
 import {
   Eye, EyeOff, KeyRound, CheckCircle, ArrowRight,
   CreditCard, Calendar, School, Sparkles, Shield, Lock,
@@ -113,7 +114,7 @@ export default function SignupPage() {
   const [searchParams] = useSearchParams();
   const promoFromUrl = searchParams.get('promo')?.toUpperCase() ?? '';
   const refCode     = searchParams.get('ref') ?? '';
-  const redirectTo   = searchParams.get('redirect') ?? '';
+  const redirectTo   = toSafeInternalPath(searchParams.get('redirect')) ?? '';
 
   // Step 1 fields
   const [name, setName]         = useState('');
@@ -134,20 +135,25 @@ export default function SignupPage() {
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    const normalizedName = name.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = phone.trim();
+    if (!normalizedName) { setError('Please enter your name'); return; }
+    if (!normalizedEmail) { setError('Please enter a valid email address'); return; }
     if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     setLoading(true);
     try {
       const result = await signUp.email({
-        name,
-        email,
+        name: normalizedName,
+        email: normalizedEmail,
         password,
         // @ts-ignore - custom field
-        phoneNumber: phone,
+        phoneNumber: normalizedPhone || undefined,
       });
 
       if (result.error) {
         const msg = result.error.message ?? '';
-        console.error('Sign up error:', result.error);
+        console.warn('Sign up rejected', { status: result.error.status });
 
         if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists') || result.error.status === 422 || result.error.status === 409) {
           setError('An account with this email already exists. Please sign in instead.');
@@ -193,8 +199,8 @@ export default function SignupPage() {
       navigate('/hub', { replace: true });
       // Move to plan selection (DISABLED FOR TESTING)
       // setStep(2);
-    } catch (err) {
-      setError(String(err));
+    } catch {
+      setError('We could not create your account right now. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

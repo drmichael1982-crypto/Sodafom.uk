@@ -19,7 +19,14 @@ const _authClient = createAuthClient({
 // How long an unsettled session may stay pending before we treat it as a stuck
 // stale-cookie state and attempt recovery. Generous enough to clear a slow but
 // healthy first load; short enough that a blank preview self-heals quickly.
-const SESSION_RECOVERY_PENDING_TIMEOUT_MS = 8000;
+export function shouldRecoverStaleSession(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const candidate = error as { status?: unknown; message?: unknown; code?: unknown };
+  const status = typeof candidate.status === 'number' ? candidate.status : 0;
+  if (status === 401 || status === 403) return true;
+  const text = [candidate.code, candidate.message].filter((value) => typeof value === 'string').join(' ').toLowerCase();
+  return /(?:invalid|expired|revoked).*session|session.*(?:invalid|expired|revoked)/.test(text);
+}
 
 /**
  * Clear the stale HttpOnly session cookie server-side, then reload into a clean
@@ -37,14 +44,13 @@ function recoverFromStaleSession(): void {
   void fetch(recoveryUrl, {
     cache: 'no-store',
     credentials: 'include'
-  }).catch(() => undefined).finally(() => {
-    // Logged so a future "preview keeps reloading" report is diagnosable —
-    // more than one of these per tab points at a clear that isn't sticking.
-    console.info(JSON.stringify({
-      event: 'auth.session.recovery.reloading'
-    }));
-    window.location.reload();
-  });
+  }).then(async (response) => {
+    if (!response.ok) return false;
+    const payload = await response.json().catch(() => null) as { cleared?: unknown } | null;
+    return payload?.cleared === true;
+  }).then((cleared) => {
+    if (cleared) window.location.reload();
+  }).catch(() => undefined);
 }
 
 /**
@@ -54,21 +60,17 @@ function recoverFromStaleSession(): void {
  * the pending timeout. A healthy session resets the guard so a later genuine
  * failure can recover again in the same tab.
  */
-function useStaleSessionRecovery(error: unknown, isPending: boolean, isAuthenticated: boolean): void {
+function useStaleSessionRecovery(error: unknown, isAuthenticated: boolean): void {
   useEffect(function staleSessionRecovery() {
     if (typeof window === 'undefined') return;
-    if (error) {
-      recoverFromStaleSession();
-      return;
-    }
     if (isAuthenticated) {
       clearSessionRecovery(window.sessionStorage);
       return;
     }
-    if (!isPending) return;
-    const timer = setTimeout(recoverFromStaleSession, SESSION_RECOVERY_PENDING_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [error, isPending, isAuthenticated]);
+    // Do not erase a healthy persistent session for an offline/server blip.
+    // Only clear a token when BetterAuth explicitly identifies it as stale.
+    if (shouldRecoverStaleSession(error)) recoverFromStaleSession();
+  }, [error, isAuthenticated]);
 }
 export const authClient = _authClient;
 export const {
@@ -97,24 +99,12 @@ export function useSession() {
   // Log for debugging blank screen on Android
   useEffect(() => {
     if (typeof window !== 'undefined' && (window as any).Capacitor) {
-      console.log('useSession state:', { isPending, hasSession: !!session, hasUser: !!session?.user, error });
+      console.log('useSession state:', { isPending, hasSession: !!session, hasUser: !!session?.user, hasError: !!error });
     }
   }, [session, isPending, error]);
 
   const isAuthenticated = !isPending && !!session?.user;
-  useStaleSessionRecovery(error, isPending, isAuthenticated);
-
-  // MOCK SESSION FOR FREE ACCESS (1182 code)
-  const hasFreeAccess = typeof window !== 'undefined' && localStorage.getItem('sodafom_free_access') === 'true';
-  if (hasFreeAccess) {
-    return {
-      session: { user: { id: 'free-user', name: 'Archie Friend', email: '1182@sodafom.uk', isAdmin: true } } as any,
-      user: { id: 'free-user', name: 'Archie Friend', email: '1182@sodafom.uk', isAdmin: true } as any,
-      isPending: false,
-      error: null,
-      isAuthenticated: true
-    };
-  }
+  useStaleSessionRecovery(error, isAuthenticated);
 
   return {
     session,
@@ -213,18 +203,30 @@ export function LogoutButton({
   children?: ReactNode;
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
+
   async function handleLogout() {
     setIsLoading(true);
+    setLogoutError('');
     try {
-      localStorage.removeItem('sodafom_free_access');
-      await signOut();
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout failed:', error);
+      const result = await signOut();
+      if (result?.error) {
+        setLogoutError('We could not sign you out. Please try again.');
+        return;
+      }
+      try { localStorage.removeItem('sodafom_free_access'); } catch { /* storage may be unavailable */ }
+      window.location.href = '/hub/login';
+    } catch {
+      setLogoutError('We could not sign you out. Please check your connection and try again.');
+    } finally {
       setIsLoading(false);
     }
   }
-  return <button onClick={handleLogout} disabled={isLoading} className={className || 'px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50'}>
+
+  return <>
+    <button onClick={handleLogout} disabled={isLoading} className={className || 'px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50'}>
       {isLoading ? 'Logging out...' : children}
-    </button>;
+    </button>
+    {logoutError && <p role="alert" className="mt-2 text-sm text-destructive">{logoutError}</p>}
+  </>;
 }

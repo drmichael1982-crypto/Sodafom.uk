@@ -1,0 +1,24 @@
+name: Agent18 account flows (no deployment)
+on:
+  push:
+    branches: ['agent18/S-O-D-sign-in-accounts-18']
+permissions:
+  contents: read
+jobs:
+  account-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install test dependencies without changing committed locks
+        run: npm install --no-save --no-audit --no-fund
+      - name: Run account-flow regression tests
+        run: npx vitest run src/lib/auth/safe-redirect.test.ts src/lib/auth/auth-client.test.ts
+      - name: Run TypeScript check
+        run: npm run type-check
+      - name: Build production bundle without deploying
+        run: npm run build
