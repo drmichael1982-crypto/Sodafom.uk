@@ -37,9 +37,8 @@
 
 ## Tests actually run
 
-- TypeScript type-check: passed in the local checkout before the transient local execution service stopped accepting new commands.
-- Targeted Vitest run: passed — 2 files, 6 tests.
-- Production Vite client and SSR build: passed.
+- Local implementation checks: TypeScript type-check passed; targeted Vitest run passed (2 files, 6 tests); production Vite client and SSR build passed.
+- Important qualification: after the local execution service stopped accepting new commands, the final isolated branch was reconstructed and committed through the GitHub connector. The exact remote branch tip could not be rerun locally, so the earlier local checks are evidence for the implementation but are **not claimed as a final-branch rerun**.
 - Script-duration calculation: 22 scenes, 876 narrated words, estimated 419 seconds (6m 59s).
 - Browser attempt: a Vite server was started and a Cloud Browser test page was opened, but the Cloud Browser could not reach the local server and the call stalled. Therefore:
   - full real-time 5–7 minute playback: **not claimed as run**;
@@ -50,7 +49,7 @@
 
 ## Test limitations and follow-up
 
-Run this branch in a browser-connected or local development session to complete the four visual-device checks and the real-time narration/audio run. The functional controls and script logic are covered by automated tests; the remaining limitation is live visual/device verification only.
+Run this branch in a browser-connected local development session to complete a final-branch type-check, targeted test run, production build, four visual-device checks and the real-time narration/audio run. The current branch contains automated coverage, but those checks need rerunning on this exact branch tip.
 
 ## Files changed
 
