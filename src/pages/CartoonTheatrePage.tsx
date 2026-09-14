@@ -94,6 +94,10 @@ export default function CartoonTheatrePage() {
           ) : (
             <motion.section key="episodes" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <p className="mb-5 text-center text-lg font-bold">Choose a colourful learning cartoon with Archie.</p>
+              <button type="button" onClick={() => navigate('/cartoons/word-adventure')} className="mb-5 grid w-full overflow-hidden rounded-[2rem] border-4 border-yellow-300 bg-white text-left text-blue-950 shadow-2xl transition hover:-translate-y-1 active:scale-[.99] sm:grid-cols-[1.1fr_1fr]">
+                <img src="/assets/cartoon/worlds/spelling.png" alt="Archie’s Word Adventure" className="h-52 w-full object-cover sm:h-full" />
+                <div className="bg-gradient-to-br from-violet-700 via-fuchsia-700 to-sky-700 p-6 text-white"><span className="inline-flex rounded-full bg-yellow-300 px-3 py-1 text-xs font-black text-violet-950">NEW · 5 min 36 sec</span><h2 className="mt-3 text-2xl font-black sm:text-3xl">Archie’s Word Adventure</h2><p className="mt-2 font-bold text-white/90">Join Archie, Bella and Soda Bot for sounds, spelling, rhymes, sentences, grammar, meanings, reading clues and a story challenge.</p><span className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-black text-violet-950"><Play size={17} /> Play with subtitles</span></div>
+              </button>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 {EPISODES.map(item => (
                   <button key={item.title} onClick={() => play(item)} className="overflow-hidden rounded-3xl border-4 border-white/80 bg-white text-blue-950 shadow-xl active:scale-95">

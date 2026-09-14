@@ -4,6 +4,7 @@ import SodafomAdventurePage from './pages/SodafomAdventurePage';
 import MuseumExplorerPage from './pages/MuseumExplorerPage';
 import ApprovedArtworkPage from './pages/ApprovedArtworkPage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
+import WordAdventurePage from './pages/WordAdventurePage';
 import AITeacherPage from './pages/AITeacherPage';
 import TeacherModePage from './pages/tutor/TeacherModePage';
 import SubjectsPage from './pages/subjects';
@@ -881,6 +882,9 @@ export const routes: RouteObject[] = [{
   // a second, conflicting set of World labels and activity routes, which could
   // make the selected subject disagree with the page that opened.
   element: <SodafomAdventurePage />
+}, {
+  path: '/cartoons/word-adventure',
+  element: <WordAdventurePage />
 }, {
   path: '/cartoons',
   element: <CartoonTheatrePage />
