@@ -39,13 +39,13 @@ Tyrannosaurus rex; Triceratops; Stegosaurus; long-necked sauropods; herbivores v
 - Focused Vitest run: 2 files, 5 tests passed.
 - TypeScript check: `tsc --noEmit` passed.
 - Production build: `vite build && vite build --ssr src/server/entry.ts` passed.
-- The episode duration, coverage, valid questions, renderer contract, captions, Continue control, correct-answer feedback and subtitle toggle are covered by the focused tests.
+- The focused tests cover the 360-second duration, dinosaur-topic coverage, valid question answers, the Agent 22 contract, captions, Continue, correct-answer feedback and subtitle toggle.
 
 ## Device and runtime limits
 
 - A local Vite preview started successfully on 127.0.0.1.
-- The cloud browser could not reach that local preview and stalled. Therefore a real mobile, tablet, desktop and reduced-motion browser run could not be completed in this environment and is **not marked passed**. The code has responsive Tailwind breakpoints and reduced-motion logic, but it still needs a real browser/device pass after the branch is checked out.
-- The full six-minute real-time playback was not observed end-to-end in a browser before the execution service became unavailable. The 360-second scene sequence and all episode controls were tested through the focused component/data tests, but a real-time playback check remains open.
+- The cloud browser could not reach that local preview and stalled. Therefore real mobile, tablet, desktop and reduced-motion browser runs were **not completed and are not marked passed**.
+- Animation, device audio/music and the full six-minute real-time playback were not observed end-to-end in a browser before the execution service became unavailable. They remain a required real-device follow-up. The responsive Tailwind breakpoints and reduced-motion logic are present in code, but have not been represented as device-test results.
 
 ## Possible conflicts / follow-up
 
