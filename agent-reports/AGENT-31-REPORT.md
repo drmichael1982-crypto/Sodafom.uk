@@ -6,7 +6,8 @@
 | Serial | `S-O-D-cartoon-English-31` |
 | Branch | `S-O-D-cartoon-English-31` |
 | Base | `master` at `058097f78077015980460c0b359903fda5aa83a6` |
-| Implementation commit | `b62e79571e1fb93e7c9500476035bf4f99008a0b` |
+| Local implementation commit | `b62e79571e1fb93e7c9500476035bf4f99008a0b` |
+| Remote handoff commit | `dca39abe6fa46d2b7cf48002f995b393ab74bc78` |
 | Pushed | Yes — branch-only handoff |
 | Merge to `master` / `main` | No |
 | Deployment | No |
