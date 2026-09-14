@@ -4,6 +4,7 @@ import { Navigate } from 'react-router';
 import HomePage from './pages/index';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
+import ArchiesDinosaurAdventurePage from './pages/cartoons/ArchiesDinosaurAdventurePage';
 import AITeacherPage from './pages/AITeacherPage';
 import TeacherModePage from './pages/tutor/TeacherModePage';
 import SubjectsPage from './pages/subjects';
@@ -769,6 +770,9 @@ export const routes: RouteObject[] = [{
   // a second, conflicting set of World labels and activity routes, which could
   // make the selected subject disagree with the page that opened.
   element: <SodafomAdventurePage />
+}, {
+  path: '/cartoons/dinosaur-adventure',
+  element: <ArchiesDinosaurAdventurePage />
 }, {
   path: '/cartoons',
   element: <CartoonTheatrePage />

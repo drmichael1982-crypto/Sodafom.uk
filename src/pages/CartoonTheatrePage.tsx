@@ -94,6 +94,15 @@ export default function CartoonTheatrePage() {
           ) : (
             <motion.section key="episodes" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <p className="mb-5 text-center text-lg font-bold">Choose a colourful learning cartoon with Archie.</p>
+              <button onClick={() => navigate('/cartoons/dinosaur-adventure')} className="group mb-5 grid w-full overflow-hidden rounded-[2rem] border-4 border-yellow-300 bg-gradient-to-r from-emerald-600 via-teal-600 to-sky-700 text-left shadow-2xl transition hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-white sm:grid-cols-[180px_1fr]">
+                <img src="/assets/cartoon/worlds/science.png" alt="Archie’s Dinosaur Adventure" className="h-40 w-full object-cover sm:h-full" />
+                <div className="p-5 text-white sm:p-7">
+                  <span className="inline-flex rounded-full bg-yellow-300 px-3 py-1 text-xs font-black text-blue-950">NEW • 6 MINUTES • SUBTITLES ON</span>
+                  <h2 className="mt-3 text-2xl font-black sm:text-3xl">🦖 Archie’s Dinosaur Adventure</h2>
+                  <p className="mt-2 max-w-2xl font-bold text-cyan-50">Travel back in time with Archie, Bella and Soda Bot. Meet T. rex, Triceratops, Stegosaurus and long-necked sauropods, then discover fossils and extinction.</p>
+                  <span className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 font-black text-teal-900 group-hover:bg-yellow-100"><Play size={17} fill="currentColor" /> Start the adventure</span>
+                </div>
+              </button>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 {EPISODES.map(item => (
                   <button key={item.title} onClick={() => play(item)} className="overflow-hidden rounded-3xl border-4 border-white/80 bg-white text-blue-950 shadow-xl active:scale-95">
