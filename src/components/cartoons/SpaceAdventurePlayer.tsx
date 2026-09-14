@@ -199,7 +199,7 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
   const [finished, setFinished] = useState(false);
   const [soundOn, setSoundOn] = useState(true);
   const tokenRef = useRef(0);
-  const sound = useSpaceSound();
+  const { start: startSound, stop: stopSound, correct: playCorrect, tryAgain: playTryAgain } = useSpaceSound();
   const scene = episode.scenes[sceneIndex];
 
   const cancelNarration = useCallback(() => {
@@ -209,9 +209,9 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
 
   const stopEpisode = useCallback(() => {
     cancelNarration();
-    sound.stop();
+    stopSound();
     setPlaying(false);
-  }, [cancelNarration, sound]);
+  }, [cancelNarration, stopSound]);
 
   const advance = useCallback(() => {
     if (sceneIndex >= episode.scenes.length - 1) {
@@ -233,7 +233,7 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
       if (scene.question) {
         setPlaying(false);
         setAwaitingAnswer(true);
-        sound.stop();
+        stopSound();
       } else {
         advance();
       }
@@ -244,12 +244,12 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
         stopTts();
       }
     };
-  }, [advance, awaitingAnswer, playing, scene, sound]);
+  }, [advance, awaitingAnswer, playing, scene, stopSound]);
 
   useEffect(() => () => {
     cancelNarration();
-    sound.stop();
-  }, [cancelNarration, sound]);
+    stopSound();
+  }, [cancelNarration, stopSound]);
 
   const begin = () => {
     const restarting = finished;
@@ -257,7 +257,7 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
     setFinished(false);
     setAwaitingAnswer(false);
     setFeedback(null);
-    if (soundOn) sound.start();
+    if (soundOn) startSound();
     setPlaying(true);
   };
 
@@ -268,10 +268,10 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
     setFeedback(null);
     setFinished(false);
     if (resume) {
-      if (soundOn) sound.start();
+      if (soundOn) startSound();
       setPlaying(true);
     } else {
-      sound.stop();
+      stopSound();
       setPlaying(false);
     }
   };
@@ -291,12 +291,12 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
     if (nextScene.question) {
       setAwaitingAnswer(true);
       setPlaying(false);
-      sound.stop();
+      stopSound();
       ttsSpeak(nextScene.speaker + '. ' + nextScene.narration);
       return;
     }
     setAwaitingAnswer(false);
-    if (soundOn) sound.start();
+    if (soundOn) startSound();
     setPlaying(true);
   };
 
@@ -306,7 +306,7 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
     const correct = index === scene.question.answerIndex;
     const reply = correct ? scene.question.correctReply : scene.question.tryAgainReply;
     setFeedback(reply);
-    if (correct) sound.correct(); else sound.tryAgain();
+    if (correct) playCorrect(); else playTryAgain();
     const token = tokenRef.current + 1;
     tokenRef.current = token;
     ttsSpeak(reply, () => {
@@ -317,7 +317,7 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
         setFinished(true);
         setPlaying(false);
       } else {
-        if (soundOn) sound.start();
+        if (soundOn) startSound();
         setSceneIndex(value => value + 1);
         setPlaying(true);
       }
@@ -355,7 +355,7 @@ export default function SpaceAdventurePlayer({ onExit }: SpaceAdventurePlayerPro
           <button aria-label={playing ? 'Pause cartoon' : 'Play cartoon'} onClick={() => playing ? stopEpisode() : begin()} disabled={awaitingAnswer} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-yellow-300 px-5 font-black text-indigo-950 shadow-lg disabled:cursor-not-allowed disabled:opacity-50">{playing ? <Pause size={19} /> : <Play size={19} />} {playing ? 'Pause' : finished ? 'Play again' : 'Play'}</button>
           <button aria-label="Skip or continue to next scene" onClick={skip} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-white/15 px-4 font-black"><SkipForward size={19} /> Skip / continue</button>
           <button aria-label="Restart Space Adventure" onClick={() => moveTo(0, false)} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-white/15 px-4 font-black"><RotateCcw size={19} /> Restart</button>
-          <button aria-label={soundOn ? 'Turn music and sound off' : 'Turn music and sound on'} aria-pressed={soundOn} onClick={() => setSoundOn(value => { const next = !value; if (!next) sound.stop(); else if (playing) sound.start(); return next; })} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-cyan-500/20 px-4 font-black text-cyan-100">{soundOn ? <Volume2 size={19} /> : <VolumeX size={19} />} Sound</button>
+          <button aria-label={soundOn ? 'Turn music and sound off' : 'Turn music and sound on'} aria-pressed={soundOn} onClick={() => setSoundOn(value => { const next = !value; if (!next) stopSound(); else if (playing) startSound(); return next; })} className="flex min-h-12 items-center justify-center gap-2 rounded-full bg-cyan-500/20 px-4 font-black text-cyan-100">{soundOn ? <Volume2 size={19} /> : <VolumeX size={19} />} Sound</button>
         </div>
         <button onClick={() => { stopEpisode(); onExit(); }} className="mx-auto mt-4 flex min-h-11 items-center gap-2 text-sm font-black text-cyan-200 underline decoration-cyan-400 underline-offset-4"><ChevronLeft size={17} /> Back to the cartoon theatre</button>
       </div>
