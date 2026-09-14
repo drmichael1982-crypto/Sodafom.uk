@@ -11,7 +11,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['tests/agent18/*.test.ts'],
+    include: ['tests/agent18/*.test.ts', 'src/lib/auth/safe-redirect.test.ts', 'src/lib/auth/auth-client.test.ts'],
     environment: 'node',
     fileParallelism: false,
     testTimeout: 30_000,
