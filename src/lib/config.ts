@@ -21,8 +21,13 @@ function detectCapacitor() {
       userAgent: navigator.userAgent
     };
     (window as any)._SODAFOM_DIAG = diag;
-    if (result && !localStorage.getItem('sodafom_diag_shown')) {
-       localStorage.setItem('sodafom_diag_shown', '1');
+    // Diagnostics must never prevent startup when browser storage is blocked.
+    try {
+      if (result && !window.localStorage.getItem('sodafom_diag_shown')) {
+        window.localStorage.setItem('sodafom_diag_shown', '1');
+      }
+    } catch {
+      // Diagnostic persistence is optional; keep the app usable without it.
     }
   }
 

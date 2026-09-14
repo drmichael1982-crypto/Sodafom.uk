@@ -8,12 +8,14 @@
 import { createAuthClient } from 'better-auth/react';
 import { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useLocation } from "react-router";
-import { SESSION_RECOVERY_URL, claimSessionRecovery, clearSessionRecovery } from './session-recovery';
+import { claimSessionRecovery, clearSessionRecovery, getSessionRecoveryStorage } from './session-recovery';
+import { resolveAuthBaseURL, resolveSessionRecoveryURL } from './endpoint-config';
+import { clearLegacyFreeAccess } from './logout-cleanup';
 import { API_BASE_URL, API_PREFIX } from '../config';
 
 // Auth client - baseURL must be the full origin for BetterAuth's URL construction.
 const _authClient = createAuthClient({
-  baseURL: API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '')
+  baseURL: resolveAuthBaseURL(API_PREFIX, API_BASE_URL, typeof window !== 'undefined' ? window.location.origin : undefined)
 });
 
 // How long an unsettled session may stay pending before we treat it as a stuck
@@ -28,11 +30,10 @@ const SESSION_RECOVERY_PENDING_TIMEOUT_MS = 8000;
  */
 function recoverFromStaleSession(): void {
   if (typeof window === 'undefined') return;
-  if (!claimSessionRecovery(window.sessionStorage)) return;
+  const storage = getSessionRecoveryStorage(window);
+  if (!storage || !claimSessionRecovery(storage)) return;
 
-  const recoveryUrl = SESSION_RECOVERY_URL.startsWith('http')
-    ? SESSION_RECOVERY_URL
-    : `${API_PREFIX}${SESSION_RECOVERY_URL}`;
+  const recoveryUrl = resolveSessionRecoveryURL(API_PREFIX);
 
   void fetch(recoveryUrl, {
     cache: 'no-store',
@@ -62,7 +63,8 @@ function useStaleSessionRecovery(error: unknown, isPending: boolean, isAuthentic
       return;
     }
     if (isAuthenticated) {
-      clearSessionRecovery(window.sessionStorage);
+      const storage = getSessionRecoveryStorage(window);
+      if (storage) clearSessionRecovery(storage);
       return;
     }
     if (!isPending) return;
@@ -205,7 +207,7 @@ export function LogoutButton({
   async function handleLogout() {
     setIsLoading(true);
     try {
-      localStorage.removeItem('sodafom_free_access');
+      clearLegacyFreeAccess(typeof window !== 'undefined' ? window : undefined);
       await signOut();
       window.location.href = '/login';
     } catch (error) {

@@ -28,14 +28,18 @@ export default async function handler(req: Request, res: Response) {
     const session = await getAuth().api.getSession({ headers: req.headers as Record<string, string> });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
 
-    const childId = req.query['childId'] as string | undefined;
-    if (!childId) return res.status(400).json({ error: 'childId required' });
+    const rawChildId = req.query['childId'];
+    const childId = typeof rawChildId === 'string' && /^[1-9]\d*$/.test(rawChildId)
+      ? Number(rawChildId)
+      : NaN;
+    if (!Number.isSafeInteger(childId)) return res.status(400).json({ error: 'Valid childId required' });
 
-    // Verify child belongs to this user
+    // Match children.parentId (parent_id), not the user_id column of other tables.
+    // Check ownership before reading any of the child's progress or badges.
     const childRows = await db.execute(sql`
-      SELECT id FROM children WHERE id = ${childId} AND user_id = ${session.user.id} LIMIT 1
+      SELECT id FROM children WHERE id = ${childId} AND parent_id = ${session.user.id} LIMIT 1
     `);
-    if (!(childRows[0] as unknown as { id: string }[]).length) {
+    if (!(childRows[0] as unknown as { id: number }[]).length) {
       return res.status(404).json({ error: 'Child not found' });
     }
 

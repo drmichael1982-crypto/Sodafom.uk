@@ -22,6 +22,15 @@ export interface RecoveryStorage {
   removeItem(key: string): void;
 }
 
+/** Accessing sessionStorage itself can throw in blocked-storage/iframe contexts. */
+export function getSessionRecoveryStorage(host: { readonly sessionStorage: RecoveryStorage } | undefined): RecoveryStorage | null {
+  try {
+    return host?.sessionStorage ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Returns `true` at most once per storage scope. The caller should only clear
  * cookies + reload when this returns `true`, so an unfixable session can't
