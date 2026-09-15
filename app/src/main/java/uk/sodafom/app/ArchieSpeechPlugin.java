@@ -1,245 +1,161 @@
 package uk.sodafom.app;
 
-import android.os.Bundle;
 import android.media.AudioAttributes;
-import android.media.AudioManager;
+import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
-
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
-
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.UUID;
 
+/** Local Android speech. Never changes system volume or logs children's spoken text. */
 @CapacitorPlugin(name = "ArchieSpeech")
 public class ArchieSpeechPlugin extends Plugin implements TextToSpeech.OnInitListener {
     private TextToSpeech tts;
-    private final AtomicBoolean ready = new AtomicBoolean(false);
+    private boolean ready;
+    private boolean destroyed;
     private PluginCall pendingCall;
     private String pendingText;
-    private static final String UTTERANCE_ID = "archie-response";
+    private String activeId;
+    private final Map<String, String> pinnedVoices = new HashMap<>();
 
-    @Override
-    public void load() {
+    @Override public void load() {
         super.load();
+        getActivity().runOnUiThread(() -> { if (!destroyed) tts = new TextToSpeech(getContext(), this); });
+    }
+    @Override public void onInit(int status) {
         getActivity().runOnUiThread(() -> {
-            android.util.Log.i("ArchieSpeech", "Creating TextToSpeech...");
-            tts = new TextToSpeech(getContext(), this);
+            if (destroyed) return;
+            if (status != TextToSpeech.SUCCESS || tts == null) {
+                ready = false; rejectCurrent("Android Text-to-Speech could not initialise"); return;
+            }
+            tts.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build());
+            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override public void onStart(String id) { }
+                @Override public void onDone(String id) { finishExpected(id, "finished", false); }
+                @Override public void onError(String id) { finishExpected(id, "Android speech playback failed", true); }
+                @Override public void onError(String id, int error) { finishExpected(id, "Android speech playback failed", true); }
+                @Override public void onStop(String id, boolean interrupted) { finishExpected(id, "stopped", false); }
+            });
+            ready = true;
+            if (pendingCall != null && pendingText != null) doSpeak();
         });
     }
-
-    @Override
-    public void onInit(int status) {
-        android.util.Log.i("ArchieSpeech", "onInit status: " + status);
-        if (status != TextToSpeech.SUCCESS || tts == null) {
-            ready.set(false);
-            android.util.Log.e("ArchieSpeech", "TTS Init Failed");
-            if (pendingCall != null) {
-                pendingCall.reject("Android Text-to-Speech failed to initialise");
-                pendingCall = null;
-            }
-            return;
+    @PluginMethod public void speak(PluginCall call) {
+        final String text = call.getString("text", "").trim();
+        final String character = call.getString("characterId", "archie").toLowerCase(Locale.ROOT);
+        final String role = call.getString("role", "child-boy");
+        if (role.equals("dog") || character.equals("jessica") || character.equals("sally") || character.equals("daisy")) {
+            call.reject("Dogs use sound effects, not human speech", "DOG_REACTION_ONLY"); return;
         }
-
-        String engine = tts.getDefaultEngine();
-        android.util.Log.i("ArchieSpeech", "TTS Engine: " + engine);
-
-        int languageResult = tts.setLanguage(Locale.UK);
-        android.util.Log.i("ArchieSpeech", "setLanguage(UK) result: " + languageResult);
-        if (languageResult == TextToSpeech.LANG_MISSING_DATA || languageResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-            android.util.Log.w("ArchieSpeech", "UK English not supported, falling back to US");
-            tts.setLanguage(Locale.US);
-        }
-        // Prefer a youthful, warm UK English voice when the installed engine exposes one.
-        // Android voice names vary by manufacturer, so this is best-effort and safely falls back.
-        try {
-            Set<Voice> voices = tts.getVoices();
-            Voice best = null;
-            if (voices != null) {
-                android.util.Log.i("ArchieSpeech", "Found " + voices.size() + " voices");
-                for (Voice voice : voices) {
-                    if (voice == null || voice.getLocale() == null) continue;
-                    String lang = voice.getLocale().toLanguageTag().toLowerCase(Locale.ROOT);
-                    String name = voice.getName() == null ? "" : voice.getName().toLowerCase(Locale.ROOT);
-
-                    // Only use an installed local voice. Selecting a network-only
-                    // voice on some HONOR devices reports success but produces silence.
-                    boolean isLocal = !voice.isNetworkConnectionRequired();
-
-                    if (!lang.startsWith("en") || !isLocal) continue;
-
-                    if (best == null) best = voice;
-
-                    // Favor local UK English
-                    if (lang.startsWith("en-gb")) {
-                        if (name.contains("male") || name.contains("young") || name.contains("boy")) {
-                            best = voice;
-                            break;
-                        }
-                        if (!best.getLocale().toLanguageTag().toLowerCase().startsWith("en-gb")) {
-                            best = voice;
-                        }
-                    }
-                }
-            }
-            if (best != null) {
-                android.util.Log.i("ArchieSpeech", "Selected voice: " + best.getName() + " (" + best.getLocale() + ") Local: " + !best.isNetworkConnectionRequired());
-                tts.setVoice(best);
-            } else {
-                android.util.Log.i("ArchieSpeech", "No installed local English voice found; retaining the engine default");
-            }
-        } catch (Exception e) {
-            android.util.Log.e("ArchieSpeech", "Error selecting voice", e);
-        }
-
-        // Gentle, clear, slightly youthful settings suitable for a learning buddy.
-        tts.setSpeechRate(0.94f);
-        // Slightly higher pitch gives Archie a younger sound while remaining clear.
-        tts.setPitch(1.24f);
-        tts.setAudioAttributes(new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .build());
-
-        tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
-            @Override public void onStart(String utteranceId) {
-                android.util.Log.i("ArchieSpeech", "onStart: " + utteranceId);
-            }
-
-            @Override public void onDone(String utteranceId) {
-                android.util.Log.i("ArchieSpeech", "onDone: " + utteranceId);
-                resolvePending("finished");
-            }
-
-            @Override public void onError(String utteranceId) {
-                android.util.Log.e("ArchieSpeech", "onError: " + utteranceId);
-                rejectPending("Android Text-to-Speech playback failed");
-            }
-
-            @Override public void onError(String utteranceId, int errorCode) {
-                android.util.Log.e("ArchieSpeech", "onError: " + utteranceId + " code: " + errorCode);
-                rejectPending("Android Text-to-Speech playback failed: " + errorCode);
-            }
-        });
-
-        ready.set(true);
-        if (pendingText != null && pendingCall != null) {
-            final String text = pendingText;
-            pendingText = null;
-            doSpeak(text);
-        }
-    }
-
-    @PluginMethod
-    public void speak(PluginCall call) {
-        String text = call.getString("text", "").trim();
-        android.util.Log.i("ArchieSpeech", "speak called with text: " + text);
-        if (text.isEmpty()) {
-            call.resolve();
-            return;
-        }
-
         getActivity().runOnUiThread(() -> {
-            if (pendingCall != null && pendingCall != call) {
-                pendingCall.reject("Speech replaced by a newer response");
-            }
-            pendingCall = call;
-
-            if (!ready.get() || tts == null) {
-                android.util.Log.i("ArchieSpeech", "TTS not ready, deferring speak");
-                pendingText = text;
-                if (tts == null) tts = new TextToSpeech(getContext(), this);
-                return;
-            }
-            doSpeak(text);
-        });
-    }
-
-    private void doSpeak(String text) {
-        android.util.Log.i("ArchieSpeech", "doSpeak: " + text);
-        if (tts == null) {
-            android.util.Log.e("ArchieSpeech", "doSpeak failed: tts is null");
-            rejectPending("Android Text-to-Speech is unavailable");
-            return;
-        }
-
-        // Ensure volume is up for the test
-        try {
-            android.media.AudioManager audioManager = (android.media.AudioManager) getContext().getSystemService(android.content.Context.AUDIO_SERVICE);
-            if (audioManager != null) {
-                int maxVolume = audioManager.getStreamMaxVolume(android.media.AudioManager.STREAM_MUSIC);
-                int currentVolume = audioManager.getStreamVolume(android.media.AudioManager.STREAM_MUSIC);
-                android.util.Log.i("ArchieSpeech", "Current volume: " + currentVolume + "/" + maxVolume);
-                if (currentVolume < maxVolume / 2) {
-                    audioManager.setStreamVolume(android.media.AudioManager.STREAM_MUSIC, maxVolume / 2, 0);
-                    android.util.Log.i("ArchieSpeech", "Boosted volume to: " + (maxVolume / 2));
-                }
-            }
-        } catch (Exception e) {
-            android.util.Log.w("ArchieSpeech", "Could not check/set volume", e);
-        }
-
-        tts.stop();
-
-        Bundle params = new Bundle();
-        params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, UTTERANCE_ID);
-
-        // Ensure we are using the music stream for audible output
-        params.putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, android.media.AudioManager.STREAM_MUSIC);
-
-        int result = tts.speak(text, TextToSpeech.QUEUE_FLUSH, params, UTTERANCE_ID);
-        android.util.Log.i("ArchieSpeech", "tts.speak result: " + result);
-        if (result == TextToSpeech.ERROR) {
-            rejectPending("Android Text-to-Speech could not start");
-        }
-    }
-
-    @PluginMethod
-    public void stop(PluginCall call) {
-        getActivity().runOnUiThread(() -> {
+            if (destroyed) { call.reject("Android speech is unavailable"); return; }
+            settleCurrent("replaced");
             if (tts != null) tts.stop();
-            resolvePending("stopped");
+            if (text.isEmpty()) { JSObject result = new JSObject(); result.put("status", "finished"); call.resolve(result); return; }
+            pendingCall = call;
+            pendingText = text;
+            // Old onDone/onStop events cannot finish a newer utterance.
+            activeId = UUID.randomUUID().toString();
+            if (ready && tts != null) doSpeak();
+            else if (tts == null) tts = new TextToSpeech(getContext(), this);
+        });
+    }
+    private boolean matchesRole(String name, String role) {
+        String lower = name.toLowerCase(Locale.ROOT);
+        // Boundaries prevent the previous "female contains male" bug.
+        if (role.equals("child-boy")) return lower.matches(".*\\b(boy|child|young)\\b.*") && !lower.matches(".*\\b(female|girl|woman)\\b.*");
+        if (role.equals("child-girl")) return lower.matches(".*\\b(girl|child|young)\\b.*") && !lower.matches(".*\\b(male|boy|man)\\b.*");
+        if (role.equals("adult-woman")) return lower.matches(".*\\b(female|woman)\\b.*") && !lower.matches(".*\\b(child|girl|young)\\b.*");
+        if (role.equals("adult-man")) return lower.matches(".*\\b(male|man)\\b.*") && !lower.matches(".*\\b(child|boy|young)\\b.*");
+        return false;
+    }
+    private Voice chooseVoice(String character, String role, String explicitName) {
+        Set<Voice> installed = tts.getVoices();
+        List<Voice> local = new ArrayList<>();
+        if (installed != null) for (Voice voice : installed) {
+            if (voice != null && voice.getLocale() != null && voice.getName() != null
+                    && voice.getLocale().getLanguage().equals("en") && !voice.isNetworkConnectionRequired()) local.add(voice);
+        }
+        String pinned = explicitName != null ? explicitName : pinnedVoices.get(character);
+        if (pinned != null) {
+            for (Voice voice : local) if (voice.getName().equals(pinned)) return voice;
+            return null; // Never silently replace an unavailable pinned voice.
+        }
+        local.sort(Comparator.<Voice>comparingInt(voice -> matchesRole(voice.getName(), role) ? 0 : 1)
+                .thenComparingInt(voice -> voice.getLocale().getCountry().equals("GB") ? 0 : 1)
+                .thenComparing(Voice::getName));
+        if (local.isEmpty()) return null;
+        Voice chosen = local.get(0);
+        pinnedVoices.put(character, chosen.getName());
+        return chosen;
+    }
+    private float bounded(Double value, float fallback, float min, float max) {
+        if (value == null || Double.isNaN(value) || Double.isInfinite(value)) return fallback;
+        return Math.max(min, Math.min(max, value.floatValue()));
+    }
+    private void doSpeak() {
+        if (tts == null || pendingCall == null || pendingText == null || activeId == null) return;
+        try {
+            String character = pendingCall.getString("characterId", "archie");
+            String role = pendingCall.getString("role", "child-boy");
+            Voice selected = chooseVoice(character, role, pendingCall.getString("voiceName"));
+            if (selected == null || tts.setVoice(selected) == TextToSpeech.ERROR) {
+                rejectCurrent("An installed local character voice is unavailable"); return;
+            }
+            tts.setSpeechRate(bounded(pendingCall.getDouble("rate"), 0.94f, 0.7f, 1.2f));
+            tts.setPitch(bounded(pendingCall.getDouble("pitch"), 1.24f, 0.7f, 1.5f));
+            Bundle parameters = new Bundle();
+            parameters.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, bounded(pendingCall.getDouble("volume"), 0.85f, 0f, 1f));
+            // Respect hardware mute/volume. Never call AudioManager.setStreamVolume.
+            if (tts.speak(pendingText, TextToSpeech.QUEUE_FLUSH, parameters, activeId) == TextToSpeech.ERROR) {
+                rejectCurrent("Android Text-to-Speech could not start");
+            }
+        } catch (Exception error) { rejectCurrent("Android Text-to-Speech could not start"); }
+    }
+    private void finishExpected(String id, String message, boolean error) {
+        if (getActivity() == null) return;
+        getActivity().runOnUiThread(() -> {
+            if (id == null || !id.equals(activeId)) return;
+            if (error) rejectCurrent(message); else settleCurrent(message);
+        });
+    }
+    private void settleCurrent(String status) {
+        PluginCall call = pendingCall;
+        pendingCall = null; pendingText = null; activeId = null;
+        if (call != null) { JSObject result = new JSObject(); result.put("status", status); call.resolve(result); }
+    }
+    private void rejectCurrent(String message) {
+        PluginCall call = pendingCall;
+        pendingCall = null; pendingText = null; activeId = null;
+        if (call != null) call.reject(message);
+    }
+    @PluginMethod public void stop(PluginCall call) {
+        getActivity().runOnUiThread(() -> {
+            settleCurrent("stopped");
+            if (tts != null) tts.stop();
             call.resolve();
         });
     }
-
-    @PluginMethod
-    public void isAvailable(PluginCall call) {
-        JSObject result = new JSObject();
-        result.put("available", ready.get());
-        call.resolve(result);
+    @PluginMethod public void isAvailable(PluginCall call) {
+        JSObject result = new JSObject(); result.put("available", ready && !destroyed); call.resolve(result);
     }
-
-    private synchronized void resolvePending(String status) {
-        if (pendingCall != null) {
-            JSObject result = new JSObject();
-            result.put("status", status);
-            pendingCall.resolve(result);
-            pendingCall = null;
-        }
-    }
-
-    private synchronized void rejectPending(String message) {
-        if (pendingCall != null) {
-            pendingCall.reject(message);
-            pendingCall = null;
-        }
-    }
-
-    @Override
-    protected void handleOnDestroy() {
-        if (tts != null) {
-            tts.stop();
-            tts.shutdown();
-            tts = null;
-        }
-        ready.set(false);
-        super.handleOnDestroy();
+    @Override protected void handleOnDestroy() {
+        destroyed = true; ready = false; settleCurrent("stopped");
+        if (tts != null) { tts.stop(); tts.shutdown(); tts = null; }
+        pinnedVoices.clear(); super.handleOnDestroy();
     }
 }
