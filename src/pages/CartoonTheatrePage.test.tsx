@@ -58,4 +58,32 @@ describe('CartoonTheatrePage', () => {
     expect(voice.ttsSpeak).toHaveBeenCalledTimes(2);
     expect(voice.ttsSpeak).toHaveBeenLastCalledWith('Archie arrives at Number Island.');
   });
+
+  it('mutes narration without stopping visual playback and can restore sound', () => {
+    render(<CartoonTheatrePage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /The Number Island/i }));
+    voice.ttsSpeak.mockClear();
+
+    fireEvent.click(screen.getByRole('button', { name: /Mute narration/i }));
+    expect(screen.getByTestId('archie')).toHaveAttribute('data-speaking', 'no');
+    expect(voice.ttsSpeak).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('button', { name: /Turn sound on/i }));
+    expect(voice.ttsSpeak).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('archie')).toHaveAttribute('data-speaking', 'yes');
+  });
+
+  it('lets the child turn subtitles off and back on', () => {
+    render(<CartoonTheatrePage />);
+
+    fireEvent.click(screen.getByRole('button', { name: /The Number Island/i }));
+    expect(screen.getByText('Archie arrives at Number Island.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Turn subtitles off/i }));
+    expect(screen.queryByText('Archie arrives at Number Island.')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Turn subtitles on/i }));
+    expect(screen.getByText('Archie arrives at Number Island.')).toBeInTheDocument();
+  });
 });
