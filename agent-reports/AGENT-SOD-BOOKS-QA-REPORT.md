@@ -4,7 +4,8 @@ Date: 15 September 2026.
 Task: walk through the app, prioritise books/cartoons/films, assess character step-out fun and readiness, fix necessary faults without overwriting other agents.
 Branch: `codex/sod-books-playback-qa-20260915`.
 Base: Agent 9's `agent9/books-library-2026-09-13`, commit `8cc3b7f` (full base is the parent of this branch's first commit).
-Implementation commit: see GitHub branch history; the report commit cannot contain its own hash.
+Implementation commit: `820f230318bcec5b2d09aff5ab81bed6a7d37fc5`.
+Pushed: Yes, via the connected GitHub API. The uploaded tree exactly matches locally tested tree `6cc87c06c6822ed528b083b440da554b499b1d3f`. This follow-up changes report metadata only; its own hash is available in branch history.
 
 ## Key distinction
 
