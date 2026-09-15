@@ -10,6 +10,9 @@ Production branch remains untouched by this integration pass. No Railway deploy 
 3. Agent 12 — homework/reading scanner capture/workspace/speech flow and server read-page hardening.
 4. Agent 31 — Local-AI-first Ask Archie routing, one guarded paid fallback, duplicate suppression, provenance/model reporting, and preserved paid-AI billing guard.
 5. Agent 28 — child progress/game-level persistence hardening, transactional writes, scoped caches and sync state.
+6. Agent 18 — shared voice/microphone/audio framework, accessibility audio controls, deterministic character-voice routing and Android speech hardening.
+7. Agent 10 — classroom/lesson system, age-aware 15/20/30/60 minute lesson stages, classroom/PE environments, cloud lesson reader and progress integration.
+8. Agent 9 — Books/library shelf experience, preservation of existing books/illustrations, removal of unwanted floating symbols, and selected-book character step-out animation.
 
 ## Held for manual conflict review
 
@@ -26,14 +29,17 @@ Production branch remains untouched by this integration pass. No Railway deploy 
 
 - Agent 31: 61 routing tests passed; full app/device/browser acceptance still outstanding.
 - Agent 28: 75 persistence tests passed; browser run was blocked by environment; real MySQL/device acceptance still outstanding.
+- Agent 18: 46 isolated audio tests + 26 offline browser-harness tests passed; physical microphone/native device checks still outstanding.
+- Agent 10: branch GitHub Actions passed install, lesson tests, type-check and production build.
+- Agent 9: static Books QA, TSX syntax/type-shape, remote blob and route integration checks passed; rendered browser/device pass still outstanding.
 - Agent 29: 70 policy/storage/cookie/redirect tests and 29 source-handler/configuration tests passed on its branch; not yet integrated because of conflicts.
 - Agent 27 and Agent 26 include dedicated QA/navigation test harnesses; combined integration branch still requires a fresh complete build/test run after all merges.
 
 ## Next big jobs
 
 1. Reconcile Agent 29 auth/session changes against the integrated QA/config changes without weakening founder/Admin security.
-2. Review and integrate voice/microphone work.
-3. Review lesson/classroom and books/game branches for overlaps.
+2. Review and integrate game/reward branches and parent/teacher report branches.
+3. Review device/performance branches carefully because they touch shared route/layout/animation files.
 4. Run a complete dependency install/build/type-check/test suite on the combined integration branch using the supported Node runtime.
 5. Run browser/device journeys: sign-up/sign-in -> child profile -> Ask Archie -> lesson -> game -> reading/homework -> save/reload -> parent report.
 6. Only after the combined test branch passes should a Railway test deployment be considered.
