@@ -3,8 +3,9 @@
 - **Agent number:** Root
 - **Original task:** Child-facing app button walkthrough and only clearly isolated repairs.
 - **Branch:** `agent-root-live-game-links-20260915`
-- **Latest work commit:** Recorded in the final handoff after this report is committed.
-- **Pushed:** Yes (after the final report commit).
+- **Latest app-change commit:** `2a2d98d41d74f71b668cd116df5adae842ed5495`
+- **Report commit:** `c471c4f750cd4942443f1815178a248e4614a135`
+- **Pushed:** Yes.
 
 ## Completed
 
