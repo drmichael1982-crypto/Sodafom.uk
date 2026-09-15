@@ -13,6 +13,7 @@ import AccessibilityBar from '@/components/AccessibilityBar';
 import ArchieHelper from '@/components/ArchieHelper';
 import MobileTrialBar from '@/components/MobileTrialBar';
 import { usePageView } from '@/hooks/usePageView';
+import { AccountAccessBoundary } from '@/lib/auth/auth-client';
 
 interface RootLayoutProps {
   children: ReactElement;
@@ -88,7 +89,7 @@ export default function RootLayout({
                 <ScrollRestoration />
                 {!immersiveApp && <Header />}
                 <div className={immersiveApp ? 'sodafom-immersive-route' : undefined}>
-                  {children}
+                  <AccountAccessBoundary>{children}</AccountAccessBoundary>
                 </div>
                 {!immersiveApp && <Footer />}
                 {/* Floating UI — accessibility toolbar + unified Archie helper + mobile CTA */}

@@ -26,7 +26,7 @@ const OWNER_EMAIL = 'sodafom.uk@gmail.com';
 async function notifyOwnerOfSignup(newUser: { name?: string | null; email: string; phoneNumber?: string | null }) {
   // Skip email notification in local development to avoid hangs/timeouts
   if (process.env.NODE_ENV !== 'production') {
-    console.log(`[auth] skipping signup notification for ${newUser.email} (local dev)`);
+    // Local tests never send signup emails.
     return;
   }
   try {
@@ -54,10 +54,10 @@ async function notifyOwnerOfSignup(newUser: { name?: string | null; email: strin
       `,
       text: `New Sodafom Signup\n\nName: ${newUser.name || 'N/A'}\nEmail: ${newUser.email}\nPhone: ${newUser.phoneNumber || 'N/A'}\nDate: ${date}`,
     });
-    console.log(`[auth] signup notification sent for ${newUser.email}`);
+    console.info('[auth] signup notification processed');
   } catch (err) {
     // Non-fatal — don't block signup if email fails
-    console.error('[auth] failed to send signup notification:', err);
+    console.error('[auth] signup notification unavailable');
   }
 }
 
@@ -199,6 +199,7 @@ export function getAuth() {
 
     emailAndPassword: {
       enabled: true,
+      revokeSessionsOnPasswordReset: true,
       sendResetPassword: async ({ user: resetUser, url }) => {
         await sendEmail({
           fromName: 'Sodafom',
@@ -242,7 +243,8 @@ export function getAuth() {
       user: {
         create: {
           after: async (newUser) => {
-            await notifyOwnerOfSignup({
+            // An optional owner email must not hold up an already-created account.
+            void notifyOwnerOfSignup({
               name: newUser.name,
               email: newUser.email,
               // @ts-ignore - custom field in database

@@ -2,21 +2,19 @@ import { useEffect, useState } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router";
 import { motion } from 'motion/react';
-import { signIn } from '@/lib/auth/auth-client';
+import { authClient, signIn } from '@/lib/auth/auth-client';
 import { Eye, EyeOff, KeyRound } from 'lucide-react';
 import { API_PREFIX } from '@/lib/config';
+import { browserStorage, isCurrentSession, postLoginPath, readLoginEmail, rememberLoginEmail } from '@/lib/auth/account-reliability';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const promoFromUrl = searchParams.get('promo')?.toUpperCase() ?? '';
-  const from = (location.state as {
-    from?: {
-      pathname: string;
-    };
-  })?.from?.pathname ?? '/hub';
-  const [email, setEmail] = useState(() => localStorage.getItem('sodafom_remembered_login_email') || '');
+  const previous = (location.state as { from?: { pathname?: string; search?: string; hash?: string } })?.from;
+  const from = searchParams.get('from') ?? (previous?.pathname ? `${previous.pathname}${previous.search || ''}${previous.hash || ''}` : undefined);
+  const [email, setEmail] = useState(readLoginEmail);
   const [rememberMe, setRememberMe] = useState(true);
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -27,17 +25,18 @@ export default function LoginPage() {
   useEffect(() => {
     // A harmless one-time welcome joke. It never changes, clears or submits
     // login details; it only animates Archie past the Cancel link.
-    if (sessionStorage.getItem('sodafom_login_archie_prank')) return;
+    const storage = browserStorage('sessionStorage');
+    try { if (storage?.getItem('sodafom_login_archie_prank')) return; } catch { return; }
     const timer = window.setTimeout(() => {
       setArchiePrank(true);
-      sessionStorage.setItem('sodafom_login_archie_prank', '1');
+      try { storage?.setItem('sodafom_login_archie_prank', '1'); } catch { /* Optional animation preference. */ }
     }, 900);
     return () => window.clearTimeout(timer);
   }, []);
 
   const resetSavedLogin = () => {
-    localStorage.removeItem('sodafom_remembered_login_email');
-    localStorage.removeItem('sodafom_free_access');
+    rememberLoginEmail('', false);
+    try { browserStorage('localStorage')?.removeItem('sodafom_free_access'); } catch { /* Optional device hint. */ }
     setEmail('');
     setPassword('');
     setError('Saved login details on this device have been cleared. Enter your details again.');
@@ -49,26 +48,27 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      console.log('Attempting sign in for:', email);
       const result = await signIn.email({
-        email,
+        email: email.trim().toLowerCase(),
         password
       });
 
       if (result.error) {
-        console.error('Sign in result error:', result.error);
         const msg = result.error.message ?? '';
         if (msg.toLowerCase().includes('user not found') || msg.toLowerCase().includes('invalid') || result.error.status === 401 || result.error.status === 403) {
           setError('Incorrect email or password. Please check your details and try again.');
         } else {
-          setError(msg || 'Sign in failed. Please try again.');
+          setError('Sign in is unavailable. Check your connection and try again.');
         }
         return;
       }
 
-      console.log('Sign in successful, navigating to:', from);
-      if (rememberMe) localStorage.setItem('sodafom_remembered_login_email', email.trim().toLowerCase());
-      else localStorage.removeItem('sodafom_remembered_login_email');
+      const confirmed = await authClient.getSession({ query: { disableCookieCache: true } });
+      if (!isCurrentSession(confirmed.data, confirmed.error, false)) {
+        setError('Your sign-in session could not be confirmed. Check your connection and allow cookies, then try again.');
+        return;
+      }
+      rememberLoginEmail(email, rememberMe);
 
       // Auto-redeem promo code if one was passed in the URL
       if (promoFromUrl) {
@@ -100,13 +100,12 @@ export default function LoginPage() {
       }
 
       // Ensure 'from' is a valid internal path and not a loop back to login
-      const target = (from === '/hub/login' || from === '/login') ? '/hub' : from;
+      const target = postLoginPath(from, confirmed.data?.user);
       navigate(target, {
         replace: true
       });
-    } catch (err) {
-      console.error('Unexpected sign in catch:', err);
-      setError(String(err));
+    } catch {
+      setError('Sign in could not be completed. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -186,7 +185,7 @@ export default function LoginPage() {
                 Reset saved login on this device
               </button>
               <p className="text-[11px] text-muted-foreground">For security, Sodafom remembers your email and signed-in session, not your raw password.</p>
-              {error && <p className="text-destructive text-sm font-bold">{error}</p>}
+              {error && <p role="alert" className="text-destructive text-sm font-bold">{error}</p>}
               <button type="submit" disabled={loading} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity disabled:opacity-60">
                 {loading ? 'Signing in…' : 'Sign in'}
               </button>

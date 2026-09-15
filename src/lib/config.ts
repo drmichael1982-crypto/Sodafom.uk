@@ -25,9 +25,7 @@ function detectCapacitor() {
       if (result && !localStorage.getItem('sodafom_diag_shown')) {
         localStorage.setItem('sodafom_diag_shown', '1');
       }
-    } catch {
-      // Optional diagnostics must not prevent startup when storage is blocked or full.
-    }
+    } catch { /* Optional diagnostics must not break login when browser storage is blocked. */ }
   }
 
   return result;
