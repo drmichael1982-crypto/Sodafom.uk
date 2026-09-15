@@ -13,9 +13,10 @@ interface Recognition {
   start(): void;
   abort(): void;
 }
-type SpeechWindow = Window & {
-  SpeechRecognition?: new () => Recognition;
-  webkitSpeechRecognition?: new () => Recognition;
+type RecognitionConstructor = new () => Recognition;
+type SpeechWindow = {
+  SpeechRecognition?: RecognitionConstructor;
+  webkitSpeechRecognition?: RecognitionConstructor;
 };
 
 /** Push-to-talk only; typed input stays available on unsupported devices. */
@@ -86,10 +87,12 @@ export function useScannerSpeech(onTranscript: (text: string) => void) {
   const listen = useCallback(() => {
     if (recognition.current) { stopListening(); return; }
     stopSpeech(); setMessage('');
-    const speechWindow = window as SpeechWindow;
+    // Cast through unknown so DOM typings from newer TypeScript versions do not
+    // intersect with this deliberately small, cross-browser recognition shape.
+    const speechWindow = window as unknown as SpeechWindow;
     const Constructor = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
     if (!Constructor) { setMessage('This device does not support voice questions here. Please type your question below.'); return; }
-    const active = new Constructor();
+    const active: Recognition = new Constructor();
     recognition.current = active;
     active.lang = 'en-GB'; active.interimResults = false; active.continuous = false;
     active.onresult = event => {

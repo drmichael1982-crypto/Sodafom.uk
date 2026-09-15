@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { sql } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
+import { canUseParentArea } from '@/lib/auth/account-reliability';
 import { games } from 'virtual:content';
 import { buildChildReport, knownGameIds, parseChildId, parseReportDays, REPORT_LIMIT,
   type ParentChild, type SavedActivity } from '@/lib/parent-reports';
@@ -14,6 +15,7 @@ export default async function handler(req: Request, res: Response) {
   try {
     const session = await getAuth().api.getSession({ headers: new Headers(req.headers as Record<string, string>) });
     if (!session?.user?.id) return res.status(401).json({ error: 'Sign in to view parent reports.' });
+    if (!canUseParentArea(session.user)) return res.status(403).json({ error: 'Parent access required.' });
     const childId = parseChildId(req.query.childId);
     const days = parseReportDays(req.query.days);
     if (childId === null || days === null) return res.status(400).json({ error: 'A valid child and reporting period are required.' });

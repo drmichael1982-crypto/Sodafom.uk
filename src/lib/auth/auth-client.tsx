@@ -1,219 +1,160 @@
-/**
- * BetterAuth Client + Components
- *
- * BetterAuth handles session context internally via cookies and the useSession hook.
- * No explicit React context provider is needed - the authClient manages session state.
- */
-
+/** BetterAuth remains the only account session store. Device hints are never credentials. */
 import { createAuthClient } from 'better-auth/react';
-import { ReactNode, useEffect, useState } from 'react';
-import { Navigate, useLocation } from "react-router";
-import { SESSION_RECOVERY_URL, claimSessionRecovery, clearSessionRecovery } from './session-recovery';
-import { API_BASE_URL, API_PREFIX } from '../config';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router';
+import { API_PREFIX } from '../config';
+import {
+  type AccountIdentity, browserStorage, canUseAdminArea, canUseParentArea,
+  clearClientAuthHints, completeSignOut, isChildAccount, isCurrentSession, requestSessionRecovery,
+  resolveAuthBaseURL, restrictedAccountArea, safeSignupLocation, sessionExpiresAt,
+} from './account-reliability';
+import { clearSessionRecovery } from './session-recovery';
 
-// Auth client - baseURL must be the full origin for BetterAuth's URL construction.
 const _authClient = createAuthClient({
-  baseURL: API_BASE_URL || (typeof window !== 'undefined' ? window.location.origin : '')
+  baseURL: resolveAuthBaseURL(API_PREFIX, typeof window === 'undefined' ? undefined : window.location.origin),
+  fetchOptions: { credentials: 'include', timeout: 15_000 },
 });
 
-// How long an unsettled session may stay pending before we treat it as a stuck
-// stale-cookie state and attempt recovery. Generous enough to clear a slow but
-// healthy first load; short enough that a blank preview self-heals quickly.
-const SESSION_RECOVERY_PENDING_TIMEOUT_MS = 8000;
-
-/**
- * Clear the stale HttpOnly session cookie server-side, then reload into a clean
- * unauthenticated state. One-shot per tab (see `claimSessionRecovery`) so an
- * unfixable session can't reload-loop.
- */
-function recoverFromStaleSession(): void {
-  if (typeof window === 'undefined') return;
-  if (!claimSessionRecovery(window.sessionStorage)) return;
-
-  const recoveryUrl = SESSION_RECOVERY_URL.startsWith('http')
-    ? SESSION_RECOVERY_URL
-    : `${API_PREFIX}${SESSION_RECOVERY_URL}`;
-
-  void fetch(recoveryUrl, {
-    cache: 'no-store',
-    credentials: 'include'
-  }).catch(() => undefined).finally(() => {
-    // Logged so a future "preview keeps reloading" report is diagnosable —
-    // more than one of these per tab points at a clear that isn't sticking.
-    console.info(JSON.stringify({
-      event: 'auth.session.recovery.reloading'
-    }));
-    window.location.reload();
-  });
-}
-
-/**
- * Self-heal a stale-cookie session. A failed session lookup is a returned
- * `error`, not a thrown one, so no error boundary fires and the app would sit
- * blank. Recover on an explicit error, or when the session never settles within
- * the pending timeout. A healthy session resets the guard so a later genuine
- * failure can recover again in the same tab.
- */
-function useStaleSessionRecovery(error: unknown, isPending: boolean, isAuthenticated: boolean): void {
-  useEffect(function staleSessionRecovery() {
-    if (typeof window === 'undefined') return;
-    if (error) {
-      recoverFromStaleSession();
-      return;
-    }
-    if (isAuthenticated) {
-      clearSessionRecovery(window.sessionStorage);
-      return;
-    }
-    if (!isPending) return;
-    const timer = setTimeout(recoverFromStaleSession, SESSION_RECOVERY_PENDING_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [error, isPending, isAuthenticated]);
-}
 export const authClient = _authClient;
-export const {
-  signIn,
-  signUp,
-  signOut
-} = _authClient;
+export const { signIn, signUp } = _authClient;
 
-/**
- * useSession — null-safe session hook.
- *
- * Returns `user` as a top-level nullable field and `isAuthenticated` as a
- * boolean so components naturally handle the unauthenticated state:
- *
- *   const { user, isAuthenticated, isPending } = useSession();
- *   if (isPending) return <Spinner />;
- *   return isAuthenticated ? <span>{user.name}</span> : <a href="/login">Sign In</a>;
- */
+/** A returned BetterAuth error is not a successful logout. Never redirect past it. */
+export async function signOut(...args: Parameters<typeof _authClient.signOut>) {
+  return completeSignOut(() => _authClient.signOut(...args));
+}
+
 export function useSession() {
-  const {
-    data: session,
-    isPending,
-    error
-  } = _authClient.useSession();
+  const { data, isPending, error, refetch } = _authClient.useSession();
+  const [, updateClock] = useState(0);
+  const latestRefetch = useRef(refetch);
+  latestRefetch.current = refetch;
+  const expiresAt = sessionExpiresAt(data);
 
-  // Log for debugging blank screen on Android
   useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).Capacitor) {
-      console.log('useSession state:', { isPending, hasSession: !!session, hasUser: !!session?.user, error });
-    }
-  }, [session, isPending, error]);
+    if (!Number.isFinite(expiresAt)) return;
+    const remaining = expiresAt - Date.now();
+    if (remaining <= 0) return;
+    const timer = setTimeout(() => {
+      updateClock(value => value + 1);
+      void Promise.resolve().then(() => latestRefetch.current()).catch(() => undefined);
+    }, Math.min(remaining + 1, 2_147_000_000));
+    return () => clearTimeout(timer);
+  }, [expiresAt]);
 
-  const isAuthenticated = !isPending && !!session?.user;
-  useStaleSessionRecovery(error, isPending, isAuthenticated);
-  type SodafomSessionUser = NonNullable<typeof session>['user'] & { isAdmin?: boolean };
+  const isAuthenticated = isCurrentSession(data, error, isPending);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const storage = browserStorage('sessionStorage');
+    if (storage) clearSessionRecovery(storage);
+  }, [isAuthenticated]);
 
+  type SessionUser = NonNullable<typeof data>['user'] & AccountIdentity;
   return {
-    session,
-    user: (session?.user as SodafomSessionUser | undefined) ?? null,
-    isPending,
-    error,
-    isAuthenticated
+    session: isAuthenticated ? data : null,
+    user: isAuthenticated ? data!.user as SessionUser : null,
+    isPending, error, isAuthenticated, refetch,
   };
 }
 
-// Alias for useSession (common naming convention)
 export const useAuth = useSession;
-
-/**
- * SessionProvider - Wrapper for compatibility with common auth patterns.
- *
- * BetterAuth manages session state internally through cookies and the useSession hook,
- * so no React context is needed. This component is provided for API compatibility
- * with apps that expect a provider wrapper pattern (e.g., migrating from NextAuth).
- *
- * You can safely wrap your app with this, but it's optional.
- */
-export function SessionProvider({
-  children
-}: {
-  children: ReactNode;
-}) {
-  return <>{children}</>;
-}
-
-// Alias for SessionProvider (common naming convention in auth libraries)
+export function SessionProvider({ children }: { children: ReactNode }) { return <>{children}</>; }
 export const AuthProvider = SessionProvider;
 
-// Session timeout for loading state (30 seconds)
-const SESSION_TIMEOUT_MS = 30000;
+function SessionProblem({ retry }: { retry: () => unknown }) {
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('We could not check your session. Your saved learning has not been removed.');
+  async function resetSession() {
+    setBusy(true);
+    try {
+      await requestSessionRecovery(API_PREFIX);
+      clearClientAuthHints();
+      // Reload is unnecessary: invalidate BetterAuth's state, then use the active web/hash router.
+      await Promise.resolve(retry());
+      navigate('/hub/login', { replace: true });
+    } catch {
+      setMessage('The session reset could not be confirmed. Check your connection and try again.');
+    } finally { setBusy(false); }
+  }
+  return <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
+    <p role="alert" className="text-gray-600">{message}</p>
+    <button disabled={busy} onClick={() => { void Promise.resolve().then(retry).catch(() => undefined); }} className="px-4 py-2 bg-blue-600 text-white rounded-md">Retry session check</button>
+    <button disabled={busy} onClick={resetSession} className="px-4 py-2 border rounded-md">{busy ? 'Resetting session…' : 'Reset this session and sign in'}</button>
+    <Link to="/hub/login">Go to sign in</Link><Link to="/">Back to learning</Link>
+  </div>;
+}
 
-// ProtectedRoute component with timeout handling
-export function ProtectedRoute({
-  children,
-  redirectTo = '/hub/login'
-}: {
-  children: ReactNode;
-  redirectTo?: string;
+export function ProtectedRoute({ children, redirectTo = '/hub/login', requiredRole }: {
+  children: ReactNode; redirectTo?: string; requiredRole?: 'parent' | 'admin';
 }) {
-  const {
-    isAuthenticated,
-    isPending,
-    session,
-    error
-  } = useSession();
+  const { isAuthenticated, isPending, user, error, refetch } = useSession();
   const location = useLocation();
   const [timedOut, setTimedOut] = useState(false);
-
   useEffect(() => {
+    setTimedOut(false);
     if (!isPending) return;
-    console.log('ProtectedRoute: session pending...', { pathname: location.pathname });
-    const timeout = setTimeout(() => {
-      console.warn('ProtectedRoute: session check timed out');
-      setTimedOut(true);
-    }, SESSION_TIMEOUT_MS);
-    return () => clearTimeout(timeout);
+    const timer = setTimeout(() => setTimedOut(true), 30_000);
+    return () => clearTimeout(timer);
   }, [isPending, location.pathname]);
 
-  if (timedOut) {
-    return <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-600">Session check timed out. Please try again.</p>
-        <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          Retry
-        </button>
-      </div>;
-  }
-  if (isPending) {
-    return <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-      </div>;
-  }
-  if (!isAuthenticated) {
-    return <Navigate to={redirectTo} state={{
-      from: location
-    }} replace />;
+  // A timeout is relevant only while pending. A later healthy result always recovers.
+  if (error || (isPending && timedOut)) return <SessionProblem retry={refetch} />;
+  if (isPending) return <div className="min-h-screen flex items-center justify-center" role="status" aria-label="Checking your session">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+  </div>;
+  if (!isAuthenticated) return <Navigate to={redirectTo} state={{ from: location }} replace />;
+
+  const role = requiredRole ?? (restrictedAccountArea(location.pathname) === 'parent' ? 'parent' : undefined);
+  if ((role === 'parent' && !canUseParentArea(user)) || (role === 'admin' && !canUseAdminArea(user))) {
+    return <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-4">
+      <p role="alert">This area is for an authorised adult account.</p>
+      <Link to="/">Back to learning</Link><LogoutButton>Sign out to switch accounts</LogoutButton>
+    </div>;
   }
   return <>{children}</>;
 }
 
-/**
- * LogoutButton - Button to sign out the user
- *
- * Handles the sign-out process and redirects to login page.
- * Can be customized with className prop.
- */
-export function LogoutButton({
-  className = '',
-  children = 'Logout'
-}: {
-  className?: string;
-  children?: ReactNode;
-}) {
+/** Parent pages have several aliases; guard the shared layout, not just menu links. */
+export function AccountAccessBoundary({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const signupLocation = safeSignupLocation(location.pathname, location.search);
+  if (signupLocation) return <Navigate to={signupLocation} replace />;
+  const area = restrictedAccountArea(location.pathname);
+  if (area === 'parent') return <ProtectedRoute requiredRole="parent">{children}</ProtectedRoute>;
+  if (area === 'admin' || area === 'teacher') return <ChildAccountBoundary>{children}</ChildAccountBoundary>;
+  return <>{children}</>;
+}
+
+/** Retain the existing founder-code and separate teacher-login flows, but block child accounts. */
+function ChildAccountBoundary({ children }: { children: ReactNode }) {
+  const { user, isPending, error, refetch } = useSession();
+  const [timedOut, setTimedOut] = useState(false);
+  useEffect(() => {
+    setTimedOut(false);
+    if (!isPending) return;
+    const timer = setTimeout(() => setTimedOut(true), 30_000);
+    return () => clearTimeout(timer);
+  }, [isPending]);
+  if (error || (isPending && timedOut)) return <SessionProblem retry={refetch} />;
+  if (isPending) return <p role="status">Checking account access…</p>;
+  if (isChildAccount(user)) return <div role="alert">This area is for adults. <Link to="/">Back to learning</Link></div>;
+  return <>{children}</>;
+}
+
+export function LogoutButton({ className = '', children = 'Logout' }: { className?: string; children?: ReactNode }) {
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   async function handleLogout() {
-    setIsLoading(true);
+    setIsLoading(true); setError('');
     try {
-      localStorage.removeItem('sodafom_free_access');
       await signOut();
-      window.location.href = '/login';
-    } catch (error) {
-      console.error('Logout failed:', error);
-      setIsLoading(false);
-    }
+      navigate('/hub/login', { replace: true });
+    } catch { setError('Could not sign out. Check your connection and try again.'); }
+    finally { setIsLoading(false); }
   }
-  return <button onClick={handleLogout} disabled={isLoading} className={className || 'px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50'}>
-      {isLoading ? 'Logging out...' : children}
-    </button>;
+  return <>
+    <button onClick={handleLogout} disabled={isLoading} className={className || 'px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md disabled:opacity-50'}>{isLoading ? 'Logging out...' : children}</button>
+    {error && <p role="alert">{error}</p>}
+  </>;
 }

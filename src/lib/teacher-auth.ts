@@ -1,7 +1,5 @@
-/**
- * Teacher Hub auth helpers — token stored in localStorage.
- */
-
+/** Teacher Hub's existing bearer-session storage. Stored profiles are display hints only. */
+import { browserStorage } from './auth/account-reliability';
 const TOKEN_KEY = 'sodafom_teacher_token';
 const TEACHER_KEY = 'sodafom_teacher_profile';
 
@@ -13,27 +11,37 @@ export interface TeacherProfile {
 }
 
 export function getTeacherToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return localStorage.getItem(TOKEN_KEY);
+  try { return browserStorage('localStorage')?.getItem(TOKEN_KEY) || null; }
+  catch { return null; }
 }
-
 export function getTeacherProfile(): TeacherProfile | null {
-  if (typeof window === 'undefined') return null;
-  const raw = localStorage.getItem(TEACHER_KEY);
-  if (!raw) return null;
-  try { return JSON.parse(raw) as TeacherProfile; } catch { return null; }
+  try {
+    const raw = browserStorage('localStorage')?.getItem(TEACHER_KEY);
+    if (!raw) return null;
+    const profile: unknown = JSON.parse(raw);
+    if (!profile || typeof profile !== 'object') return null;
+    const p = profile as Record<string, unknown>;
+    if (!Number.isSafeInteger(p.id) || Number(p.id) <= 0 || typeof p.name !== 'string' || typeof p.email !== 'string' || typeof p.className !== 'string') return null;
+    return p as unknown as TeacherProfile;
+  } catch { return null; }
 }
-
 export function saveTeacherSession(token: string, teacher: TeacherProfile): void {
-  localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(TEACHER_KEY, JSON.stringify(teacher));
+  const storage = browserStorage('localStorage');
+  if (!storage || !token) throw new Error('The teacher session could not be saved. Allow browser storage and try again.');
+  try {
+    storage.setItem(TEACHER_KEY, JSON.stringify(teacher));
+    storage.setItem(TOKEN_KEY, token);
+  } catch {
+    clearTeacherSession();
+    throw new Error('The teacher session could not be saved. Allow browser storage and try again.');
+  }
 }
-
 export function clearTeacherSession(): void {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(TEACHER_KEY);
+  const storage = browserStorage('localStorage');
+  for (const key of [TOKEN_KEY, TEACHER_KEY]) {
+    try { storage?.removeItem(key); } catch { /* Best effort, including disabled private storage. */ }
+  }
 }
-
 export function teacherAuthHeaders(): Record<string, string> {
   const token = getTeacherToken();
   return token ? { Authorization: `Bearer ${token}` } : {};

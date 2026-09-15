@@ -51,7 +51,7 @@ describe("Archie's new feature menu", () => {
   });
 
   it.each([
-    ['Homework Helper', <HomeworkHelperPage />],
+    ['Scan Homework', <HomeworkHelperPage />],
     ['Pocket Money & Chores', <PocketMoneyPage />],
     ['Birthday Countdown', <BirthdayPage />],
     ["Design Archie's Outfit", <ArchieOutfitPage />],

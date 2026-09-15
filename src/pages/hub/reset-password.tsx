@@ -7,10 +7,12 @@ import { Link, useSearchParams } from 'react-router';
 import { motion } from 'motion/react';
 import { Eye, EyeOff, Lock, CheckCircle2 } from 'lucide-react';
 import { authClient } from '@/lib/auth/auth-client';
+import { validResetLink } from '@/lib/auth/account-reliability';
 
 export default function ResetPasswordPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const token = searchParams.get('token') ?? '';
+  const linkValid = validResetLink(token, searchParams.get('error'));
 
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -24,18 +26,23 @@ export default function ResetPasswordPage() {
     setError('');
     if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     if (password !== confirm) { setError('Passwords do not match'); return; }
-    if (!token) { setError('Invalid or expired reset link. Please request a new one.'); return; }
+    if (!linkValid) { setError('Invalid or expired reset link. Please request a new one.'); return; }
 
     setLoading(true);
     try {
       const result = await authClient.resetPassword({ newPassword: password, token });
       if (result.error) {
-        setError(result.error.message ?? 'Reset failed. The link may have expired.');
+        setError('Password reset was not completed. The link may have expired or already been used. Request a new link or try again.');
         return;
       }
       setDone(true);
-    } catch (err) {
-      setError(String(err));
+      setPassword(''); setConfirm('');
+      const cleanParams = new URLSearchParams(searchParams);
+      cleanParams.delete('token'); cleanParams.delete('error');
+      setSearchParams(cleanParams, { replace: true });
+      void authClient.getSession({ query: { disableCookieCache: true } }).catch(() => undefined);
+    } catch {
+      setError('Password reset is unavailable. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -48,6 +55,7 @@ export default function ResetPasswordPage() {
         <meta name="description" content="Set a new password for your Sodafom account." />
         <link rel="canonical" href="https://sodafom.uk/hub/reset-password" />
         <meta name="robots" content="noindex" />
+        <meta name="referrer" content="no-referrer" />
       </Helmet>
 
       <main className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -91,6 +99,8 @@ export default function ResetPasswordPage() {
               </div>
 
               <div className="bg-card rounded-3xl border-2 border-border p-8 shadow-sm">
+                {!linkValid && <p role="alert" className="text-destructive text-sm font-bold mb-4">This reset link is missing, invalid or expired. Please request a new one.</p>}
+                <Link to="/hub/forgot-password" className="block text-primary font-bold mb-4">Request a new reset link</Link>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-5">
                   <div>
                     <label className="block text-sm font-bold text-foreground mb-1.5 flex items-center gap-1.5">
@@ -139,7 +149,7 @@ export default function ResetPasswordPage() {
 
                   <button
                     type="submit"
-                    disabled={loading || !token}
+                    disabled={loading || !linkValid}
                     className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity disabled:opacity-60"
                   >
                     {loading ? 'Updating…' : 'Update password'}
