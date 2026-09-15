@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Pause, Play, RotateCcw, SkipForward, Volume2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
 import ArchieCharacter from '@/components/ArchieCharacter';
 import { stopTts, ttsSpeak } from '@/lib/voice-context';
+
+const SCENE_DURATION_MS = 6500;
 
 const EPISODES = [
   { title: 'The Number Island', image: '/assets/cartoon/worlds/maths.png', colour: 'from-blue-500 to-indigo-700', scenes: ['Archie arrives at Number Island.', 'The number bridge needs ten correct answers.', 'Archie and Soda Bot solve the puzzle and earn a golden star!'] },
@@ -24,22 +26,56 @@ export default function CartoonTheatrePage() {
 
   useEffect(() => {
     if (!episode || !playing) return;
+
+    // Keep one source of truth for narration. This prevents resume from starting
+    // a second copy of the same line while the playback effect is also speaking.
+    stopTts();
     ttsSpeak(`${scene === 0 ? `${episode.title}. ` : ''}${episode.scenes[scene]}`);
+
     const timer = window.setTimeout(() => {
       if (scene + 1 < episode.scenes.length) {
         setScene(value => value + 1);
       } else {
         setPlaying(false);
+        stopTts();
         ttsSpeak('The end. Brilliant watching!');
       }
-    }, 6500);
+    }, SCENE_DURATION_MS);
+
     return () => window.clearTimeout(timer);
   }, [episode, playing, scene]);
 
+  const actorMotion = useMemo(() => {
+    const paths = [
+      { x: [0, 16, 0], y: [0, -8, 0], rotate: [0, -2, 2, 0] },
+      { x: [0, 30, 8, 0], y: [0, -4, -10, 0], rotate: [0, 2, -2, 0] },
+      { x: [0, 8, 24, 0], y: [0, -10, -4, 0], rotate: [0, -1, 2, 0] },
+    ];
+    return paths[scene % paths.length];
+  }, [scene]);
+
   const play = (item: (typeof EPISODES)[number]) => {
+    stopTts();
     setEpisode(item);
     setScene(0);
     setPlaying(true);
+  };
+
+  const togglePlayback = () => {
+    if (!episode) return;
+    if (playing) {
+      stopTts();
+      setPlaying(false);
+      return;
+    }
+    setPlaying(true);
+  };
+
+  const readScene = () => {
+    if (!episode) return;
+    stopTts();
+    setPlaying(false);
+    ttsSpeak(episode.scenes[scene]);
   };
 
   const next = () => {
@@ -49,11 +85,29 @@ export default function CartoonTheatrePage() {
     setPlaying(true);
   };
 
+  const restart = () => {
+    if (!episode) return;
+    stopTts();
+    setScene(0);
+    setPlaying(true);
+  };
+
+  const leaveTheatre = () => {
+    stopTts();
+    setPlaying(false);
+    if (episode) {
+      setEpisode(null);
+      setScene(0);
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-500 via-blue-700 to-indigo-950 px-4 py-5 text-white">
       <div className="mx-auto max-w-4xl">
         <div className="mb-5 flex items-center justify-between gap-3">
-          <button onClick={() => { stopTts(); setPlaying(false); episode ? setEpisode(null) : navigate('/'); }} className="flex min-h-12 items-center gap-2 rounded-full border-2 border-white bg-white/95 px-4 font-black text-blue-900 shadow-xl">
+          <button onClick={leaveTheatre} className="flex min-h-12 items-center gap-2 rounded-full border-2 border-white bg-white/95 px-4 font-black text-blue-900 shadow-xl">
             <ArrowLeft size={20} /> {episode ? 'Episodes' : 'Home'}
           </button>
           <h1 className="text-center text-2xl font-black text-yellow-300 sm:text-4xl">🎬 CARTOON THEATRE</h1>
@@ -63,7 +117,7 @@ export default function CartoonTheatrePage() {
         <AnimatePresence mode="wait">
           {episode ? (
             <motion.section key={episode.title} initial={{ opacity: 0, scale: .96 }} animate={{ opacity: 1, scale: 1 }} className="mx-auto max-w-2xl overflow-hidden rounded-[2.5rem] border-8 border-yellow-300 bg-white text-blue-950 shadow-2xl">
-              <div className="relative aspect-video min-h-64 overflow-hidden bg-sky-300">
+              <div className="relative aspect-video min-h-64 overflow-hidden bg-sky-300" aria-label={`${episode.title}, scene ${scene + 1}`}>
                 <motion.img
                   key={`${episode.title}-${scene}`}
                   initial={{ scale: 1.2, x: scene % 2 ? '-6%' : '6%', opacity: .35 }}
@@ -74,20 +128,47 @@ export default function CartoonTheatrePage() {
                   className="absolute inset-0 h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-blue-950/45 via-transparent to-white/10" />
-                {[0, 1, 2, 3, 4].map(dot => <motion.span key={dot} className="absolute h-3 w-3 rounded-full bg-yellow-200 shadow" initial={{ left: `${12 + dot * 18}%`, top: '85%', opacity: 0 }} animate={{ top: '8%', opacity: [0, 1, 0] }} transition={{ duration: 3.2 + dot / 2, repeat: Infinity, delay: dot * .45 }} />)}
-                <motion.div className="absolute bottom-1 left-2" animate={{ x: scene % 2 ? [0, 35, 0] : [0, 12, 0], y: [0, -7, 0] }} transition={{ duration: 2.4, repeat: Infinity }}><ArchieCharacter size={115} speaking={playing} /></motion.div>
-                <motion.img src="/assets/cartoon/friends/soda-bot.png" alt="Soda Bot" className="absolute bottom-3 right-4 h-20 w-20 object-contain drop-shadow-xl sm:h-28 sm:w-28" animate={{ y: [0, -14, 0], rotate: [-3, 3, -3] }} transition={{ duration: 2, repeat: Infinity }} />
+
+                {[0, 1, 2, 3, 4].map(dot => (
+                  <motion.span
+                    key={dot}
+                    className="absolute h-3 w-3 rounded-full bg-yellow-200 shadow"
+                    initial={{ left: `${12 + dot * 18}%`, top: '85%', opacity: 0 }}
+                    animate={{ top: '8%', opacity: [0, 1, 0] }}
+                    transition={{ duration: 3.2 + dot / 2, repeat: Infinity, delay: dot * .45 }}
+                  />
+                ))}
+
+                <motion.div
+                  className="absolute bottom-1 left-2"
+                  animate={actorMotion}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: 'easeInOut' }}
+                >
+                  <ArchieCharacter size={115} speaking={playing} />
+                </motion.div>
+
+                <motion.img
+                  src="/assets/cartoon/friends/soda-bot.png"
+                  alt="Soda Bot"
+                  className="absolute bottom-3 right-4 h-20 w-20 object-contain drop-shadow-xl sm:h-28 sm:w-28"
+                  animate={{ y: [0, -14, 0], x: [0, -8, 0], rotate: [-3, 3, -3], scale: playing ? [1, 1.04, 1] : 1 }}
+                  transition={{ duration: playing ? 1.8 : 2.6, repeat: Infinity, ease: 'easeInOut' }}
+                />
+
                 <div className="absolute left-3 top-3 rounded-full bg-black/55 px-3 py-1 text-xs font-black text-white">Scene {scene + 1} of {episode.scenes.length}</div>
-                <div className="absolute inset-x-3 bottom-3 rounded-2xl bg-black/70 px-4 py-3 text-center text-base font-black text-white shadow-xl">{episode.scenes[scene]}</div>
+                <div aria-live="polite" className="absolute inset-x-3 bottom-3 rounded-2xl bg-black/70 px-4 py-3 text-center text-base font-black text-white shadow-xl">{episode.scenes[scene]}</div>
               </div>
+
               <div className={`bg-gradient-to-r ${episode.colour} p-5 text-center text-white`}>
                 <h2 className="text-2xl font-black">{episode.title}</h2>
-                <div className="mx-auto mt-3 h-2 max-w-sm overflow-hidden rounded-full bg-white/25"><motion.div className="h-full bg-yellow-300" animate={{ width: `${((scene + 1) / episode.scenes.length) * 100}%` }} /></div>
+                <div className="mx-auto mt-3 h-2 max-w-sm overflow-hidden rounded-full bg-white/25" aria-label={`Scene ${scene + 1} of ${episode.scenes.length}`}>
+                  <motion.div className="h-full bg-yellow-300" animate={{ width: `${((scene + 1) / episode.scenes.length) * 100}%` }} />
+                </div>
                 <div className="mt-4 flex flex-wrap justify-center gap-3">
-                  <button onClick={() => ttsSpeak(episode.scenes[scene])} aria-label="Read this scene" className="flex min-h-12 items-center gap-2 rounded-full bg-white/20 px-4 font-black"><Volume2 /> Read</button>
-                  <button onClick={() => { playing ? stopTts() : ttsSpeak(episode.scenes[scene]); setPlaying(value => !value); }} className="flex min-h-12 items-center gap-2 rounded-full bg-yellow-400 px-6 font-black text-blue-950 shadow-lg">{playing ? <Pause size={18} /> : <Play size={18} />} {playing ? 'Pause' : 'Play'}</button>
+                  <button onClick={readScene} aria-label="Read this scene" className="flex min-h-12 items-center gap-2 rounded-full bg-white/20 px-4 font-black"><Volume2 /> Read</button>
+                  <button onClick={togglePlayback} aria-pressed={playing} className="flex min-h-12 items-center gap-2 rounded-full bg-yellow-400 px-6 font-black text-blue-950 shadow-lg">{playing ? <Pause size={18} /> : <Play size={18} />} {playing ? 'Pause' : 'Play'}</button>
                   <button onClick={next} className="flex min-h-12 items-center gap-2 rounded-full bg-white/20 px-4 font-black"><SkipForward size={18} /> Next scene</button>
-                  <button onClick={() => { stopTts(); setScene(0); setPlaying(true); }} className="flex min-h-12 items-center gap-2 rounded-full bg-white/20 px-4 font-black"><RotateCcw size={18} /> Restart</button>
+                  <button onClick={restart} className="flex min-h-12 items-center gap-2 rounded-full bg-white/20 px-4 font-black"><RotateCcw size={18} /> Restart</button>
                 </div>
               </div>
             </motion.section>
@@ -96,13 +177,12 @@ export default function CartoonTheatrePage() {
               <p className="mb-5 text-center text-lg font-bold">Choose a colourful learning cartoon with Archie.</p>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                 {EPISODES.map(item => (
-                  <button key={item.title} onClick={() => play(item)} className="overflow-hidden rounded-3xl border-4 border-white/80 bg-white text-blue-950 shadow-xl active:scale-95">
+                  <button key={item.title} onClick={() => play(item)} className="overflow-hidden rounded-3xl border-4 border-white/80 bg-white text-blue-950 shadow-xl transition-transform active:scale-95">
                     <img src={item.image} alt="" className="aspect-square w-full object-cover" />
                     <div className={`bg-gradient-to-r ${item.colour} p-3 text-white`}><p className="font-black">{item.title}</p><span className="mt-1 inline-flex items-center gap-1 text-xs font-bold"><Play size={13} /> Play cartoon</span></div>
                   </button>
                 ))}
               </div>
-              <button onClick={() => setScene(0)} className="sr-only"><RotateCcw /> Restart</button>
             </motion.section>
           )}
         </AnimatePresence>
