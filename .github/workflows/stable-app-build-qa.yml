@@ -36,7 +36,9 @@ jobs:
         run: node --experimental-strip-types --test scripts/agent29-account-reliability.test.mjs
 
       - name: Account server source checks
-        run: node --experimental-strip-types --test scripts/agent29-server-reliability.test.mjs
+        run: |
+          node --experimental-strip-types --test --test-name-pattern='^(?!parent API).*' scripts/agent29-server-reliability.test.mjs
+          node --experimental-strip-types --test scripts/stable-parent-dashboard-auth.test.mjs
 
       - name: Account UI regression checks
         run: pnpm exec vitest run --config agent29.vitest.config.ts
