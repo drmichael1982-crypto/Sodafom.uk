@@ -55,7 +55,27 @@ export default function ArchieStoryCollectionPage() {
   const recognitionRef = useRef<any>(null);
   const story = storyIndex === null ? null : STORIES[storyIndex];
 
-  useEffect(() => () => stopTts(), []);
+  const timersRef = useRef<Set<number>>(new Set());
+  const stopReading = () => {
+    const recognition = recognitionRef.current;
+    recognitionRef.current = null;
+    if (recognition) {
+      recognition.onresult = null;
+      recognition.onend = null;
+      recognition.onerror = null;
+      recognition.stop?.();
+    }
+    for (const timer of timersRef.current) window.clearTimeout(timer);
+    timersRef.current.clear();
+  };
+  const later = (callback: () => void, delay: number) => {
+    const timer = window.setTimeout(() => {
+      timersRef.current.delete(timer);
+      callback();
+    }, delay);
+    timersRef.current.add(timer);
+  };
+  useEffect(() => () => { stopReading(); stopTts(); }, []);
 
   const words = story ? story.pages[page].split(/\s+/) : [];
   const clean = (word: string) => word.toLowerCase().replace(/[^a-z0-9']/g, '');
@@ -65,7 +85,8 @@ export default function ArchieStoryCollectionPage() {
   };
 
   const resetReadAlong = () => {
-    recognitionRef.current?.stop?.();
+    stopReading();
+    stopTts();
     setListening(false);
     setWordStates(words.map(() => 'pending'));
     setWordIndex(0);
@@ -84,6 +105,7 @@ export default function ArchieStoryCollectionPage() {
     resetReadAlong();
     stopTts();
     setWelcome(false);
+    setTurning(false);
     setStoryIndex(null);
   };
 
@@ -93,7 +115,7 @@ export default function ArchieStoryCollectionPage() {
     if (safe === page) return;
     resetReadAlong();
     setTurning(true);
-    window.setTimeout(() => {
+    later(() => {
       setPage(safe);
       setWordStates(story.pages[safe].split(/\s+/).map(() => 'pending'));
       setWordIndex(0);
@@ -109,20 +131,22 @@ export default function ArchieStoryCollectionPage() {
       return;
     }
 
+    stopTts();
     const recognition = new SpeechRecognition();
+    let position = wordIndex;
+    const nextStates = [...(wordStates.length ? wordStates : words.map(() => 'pending' as const))];
     recognition.lang = 'en-GB';
     recognition.continuous = true;
     recognition.interimResults = false;
     recognition.onresult = (event: any) => {
       const heard = String(event.results[event.results.length - 1][0].transcript).split(/\s+/).map(clean).filter(Boolean);
-      let position = wordIndex;
-      const nextStates = [...(wordStates.length ? wordStates : words.map(() => 'pending' as const))];
+      if (recognitionRef.current !== recognition) return;
       for (const spoken of heard) {
         if (position >= words.length) break;
         const expected = clean(words[position]);
         const previous = position > 0 ? clean(words[position - 1]) : '';
-        if (spoken === previous || spoken.length < 2) continue;
-        if (spoken === expected || expected.startsWith(spoken) || spoken.startsWith(expected)) {
+        if (spoken === previous && spoken !== expected) continue;
+        if (spoken === expected) {
           nextStates[position] = 'correct';
           position += 1;
         } else if (heard.includes(expected)) {
@@ -133,18 +157,26 @@ export default function ArchieStoryCollectionPage() {
           break;
         }
       }
-      setWordStates(nextStates);
+      setWordStates([...nextStates]);
       setWordIndex(position);
-      if (position >= words.length) recognition.stop();
+      if (position >= words.length) {
+        recognition.onresult = null;
+        recognition.stop();
+        setListening(false);
+      }
       if (position >= words.length && page < story.pages.length - 1) {
-        window.setTimeout(() => changePage(page + 1), 1100);
+        later(() => changePage(page + 1), 1100);
       }
     };
     recognition.onerror = () => setListening(false);
     recognition.onend = () => setListening(false);
     recognitionRef.current = recognition;
     setListening(true);
-    recognition.start();
+    try { recognition.start(); } catch {
+      stopReading();
+      setListening(false);
+      ttsSpeak("The microphone could not start. You can still use Read to me.");
+    }
   };
 
   if (story && welcome) {
