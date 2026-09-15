@@ -1,0 +1,54 @@
+name: Stable app build QA
+
+on:
+  push:
+    branches:
+      - codex/stable-app-build-20260915
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out stable branch
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.23.0
+          run_install: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: pnpm
+
+      - name: Frozen dependency install
+        run: pnpm install --frozen-lockfile
+
+      - name: Account reliability policy checks
+        run: node --experimental-strip-types --test scripts/agent29-account-reliability.test.mjs
+
+      - name: Account server source checks
+        run: node --experimental-strip-types --test scripts/agent29-server-reliability.test.mjs
+
+      - name: Account UI regression checks
+        run: pnpm exec vitest run --config agent29.vitest.config.ts
+
+      - name: Books playback regression checks
+        run: pnpm exec vitest run src/pages/__tests__/BooksPlaybackQA.test.tsx
+
+      - name: TypeScript check
+        run: pnpm run type-check
+
+      - name: Full test suite
+        run: pnpm exec vitest run
+
+      - name: Production client and SSR build
+        run: pnpm run build
