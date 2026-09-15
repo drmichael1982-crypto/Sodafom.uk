@@ -1,0 +1,205 @@
+{
+  "observedOn": "2026-09-15",
+  "stableCommit": "442656b4e2ec76167b4d0b5fb7b804cf742904a5",
+  "branches": [
+    {
+      "ahead": 2,
+      "behind": 57,
+      "branch": "S-O-D-cartoon-English-31",
+      "files": [
+        "agent-reports/AGENT-31-REPORT.md",
+        "src/components/cartoons/WordAdventurePlayer.test.tsx",
+        "src/components/cartoons/WordAdventurePlayer.tsx",
+        "src/lib/cartoons/word-adventure.test.ts",
+        "src/lib/cartoons/word-adventure.ts",
+        "src/pages/CartoonTheatrePage.tsx",
+        "src/routes.tsx"
+      ],
+      "head": "3ab8011c6bfa43660a4d8e9e09771cd4bfc68bdf",
+      "status": "diverged"
+    },
+    {
+      "ahead": 26,
+      "behind": 143,
+      "branch": "S-O-D-cartoon-dinosaurs-26",
+      "files": [
+        "agent-reports/AGENT-26-REPORT.md",
+        "src/components/cartoons/CartoonEpisodePlayer.test.tsx",
+        "src/components/cartoons/CartoonEpisodePlayer.tsx",
+        "src/lib/cartoons/dinosaur-adventure.test.ts",
+        "src/lib/cartoons/dinosaur-adventure.ts",
+        "src/lib/cartoons/episode-contract.ts",
+        "src/pages/CartoonTheatrePage.tsx",
+        "src/pages/cartoons/ArchiesDinosaurAdventurePage.tsx",
+        "src/routes.tsx"
+      ],
+      "head": "9df7debf7c3a07c27a84f2d0c7c20183ee5d15e4",
+      "status": "diverged"
+    },
+    {
+      "ahead": 28,
+      "behind": 143,
+      "branch": "S-O-D-cartoon-health-32",
+      "files": [
+        "agent-reports/agent-32-report.md",
+        "src/features/cartoons/healthBodyEpisode.ts",
+        "src/pages/cartoons/HealthyBodyAdventurePage.test.tsx",
+        "src/pages/cartoons/HealthyBodyAdventurePage.tsx",
+        "src/routes.tsx"
+      ],
+      "head": "3bba110fbeea7dd255153f962564a2d136790224",
+      "status": "diverged"
+    },
+    {
+      "ahead": 25,
+      "behind": 143,
+      "branch": "S-O-D-cartoon-science-29",
+      "files": [
+        "agent-reports/AGENT-29-REPORT.md",
+        "src/components/cartoon/CartoonEpisodePlayer.test.tsx",
+        "src/components/cartoon/CartoonEpisodePlayer.tsx",
+        "src/lib/cartoons/archies-amazing-science-adventure.test.ts",
+        "src/lib/cartoons/archies-amazing-science-adventure.ts",
+        "src/pages/CartoonTheatrePage.tsx"
+      ],
+      "head": "5bba542eaf80ba1257f6300b1835deb03e5754d4",
+      "status": "diverged"
+    },
+    {
+      "ahead": 32,
+      "behind": 143,
+      "branch": "S-O-D-cartoon-space-25",
+      "files": [
+        "agent-reports/AGENT-25-REPORT.md",
+        "src/components/cartoons/SpaceAdventurePlayer.test.tsx",
+        "src/components/cartoons/SpaceAdventurePlayer.tsx",
+        "src/lib/cartoons/archies-space-adventure.test.ts",
+        "src/lib/cartoons/archies-space-adventure.ts",
+        "src/pages/CartoonTheatrePage.tsx"
+      ],
+      "head": "7981561018b731906b593cb172f687b94eeaccd5",
+      "status": "diverged"
+    },
+    {
+      "ahead": 0,
+      "behind": 57,
+      "branch": "S-O-D-cartoon-sweetshop-23",
+      "files": [],
+      "head": "058097f78077015980460c0b359903fda5aa83a6",
+      "status": "behind"
+    },
+    {
+      "ahead": 27,
+      "behind": 143,
+      "branch": "S-O-D-mischief-characters-33",
+      "files": [
+        "agent-reports/agent-33-report.md",
+        "src/layouts/RootLayout.tsx"
+      ],
+      "head": "d1b32fcd3ef3d79b290bf8617549af678c0fd0a2",
+      "status": "diverged"
+    },
+    {
+      "ahead": 3,
+      "behind": 57,
+      "branch": "agent5-characters-outfits",
+      "files": [
+        "src/lib/character-outfits.test.ts",
+        "src/lib/character-outfits.ts",
+        "src/pages/ArchieOutfitPage.tsx"
+      ],
+      "head": "272abe423ee68becf6230656a869b73f7d6fc967",
+      "status": "diverged"
+    },
+    {
+      "ahead": 30,
+      "behind": 143,
+      "branch": "recovery/agent5-current-main-outfits-20260913",
+      "files": [
+        "agent-reports/AGENT-5-CURRENT-MAIN-REPORT.md",
+        "src/lib/character-outfits.test.ts",
+        "src/lib/character-outfits.ts",
+        "src/pages/ArchieOutfitPage.tsx",
+        "src/pages/__tests__/ArchieOutfitPage.test.tsx",
+        "src/routes.tsx"
+      ],
+      "head": "24a9ffe068aa0b4d7144805753feb6cd3f54af49",
+      "status": "diverged"
+    },
+    {
+      "ahead": 6,
+      "behind": 57,
+      "branch": "recovery/agent5-handoff-20260913",
+      "files": [
+        "agent-reports/AGENT-5-REPORT.md",
+        "src/lib/character-outfits.test.ts",
+        "src/lib/character-outfits.ts",
+        "src/pages/ArchieOutfitPage.tsx"
+      ],
+      "head": "19ad358faa17015ee193c9967af304e8db4a6485",
+      "status": "diverged"
+    },
+    {
+      "ahead": 2,
+      "behind": 57,
+      "branch": "codex/sod-software-repairs-20260914",
+      "files": [
+        "docs/qa/coordinator-repair-handoff-2026-09-14.md",
+        "docs/world/planet-motion.md",
+        "docs/world/shop-foundation.md",
+        "src/components/world/FloatingLearningRoom.tsx",
+        "src/components/world/PlanetRoom.tsx",
+        "src/components/world/VictorianStreet.tsx",
+        "src/components/world/floating/FloatingLearningRoom.test.tsx",
+        "src/components/world/floating/README.md",
+        "src/components/world/floating/animation-clock.ts",
+        "src/components/world/floating/create-scene.ts",
+        "src/components/world/floating/floating-room.css",
+        "src/components/world/floating/floating-room.test.ts",
+        "src/components/world/floating/models.ts",
+        "src/components/world/floating/room-config.ts",
+        "src/components/world/floating/scene-resources.test.ts",
+        "src/components/world/planet-motion.css",
+        "src/components/world/planet-motion.test.tsx",
+        "src/components/world/planet-motion.ts",
+        "src/components/world/usePlanetMotion.ts",
+        "src/components/world/victorian/journey.test.ts",
+        "src/components/world/victorian/journey.ts",
+        "src/components/world/victorian/scene.test.ts",
+        "src/components/world/victorian/scene.ts",
+        "src/components/world/victorian/street.test.tsx",
+        "src/components/world/victorian/victorian.css",
+        "src/layouts/RootLayout.tsx",
+        "src/lib/world/return-navigation.test.ts",
+        "src/lib/world/return-navigation.ts",
+        "src/lib/world/shop-registry.ts",
+        "src/routes.tsx"
+      ],
+      "head": "c8470de5a93c2c9a3838b0bb3603cef07da5cc19",
+      "status": "diverged"
+    },
+    {
+      "ahead": 2,
+      "behind": 57,
+      "branch": "codex/sod-06-phone-look-360",
+      "files": [
+        "agent-reports/SOD-06-PHONE-LOOK-REPORT.md",
+        "docs/world/shop-foundation.md",
+        "src/lib/world/shop-registry.ts"
+      ],
+      "head": "398a51445c2bb242b6e532e16c7b0fca24c31d41",
+      "status": "diverged"
+    },
+    {
+      "ahead": 1,
+      "behind": 57,
+      "branch": "codex/children-foundation-first-pass",
+      "files": [
+        "docs/world/shop-foundation.md",
+        "src/lib/world/shop-registry.ts"
+      ],
+      "head": "81a78e12c5fd35cef4de24180047480364d0358b",
+      "status": "diverged"
+    }
+  ]
+}
