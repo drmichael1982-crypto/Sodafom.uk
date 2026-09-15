@@ -1,0 +1,153 @@
+name: Agent27 isolated QA (no deployment)
+
+on:
+  push:
+    branches:
+      - agent27/full-app-qa-safe-fixes-20260913
+    paths:
+      - '.github/workflows/agent27-qa.yml'
+      - 'scripts/qa/agent27/**'
+      - 'src/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'vite.config.ts'
+      - 'tsconfig*.json'
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Public-repository checkout: no checkout token or production secrets.
+      - name: Read the exact Agent27 commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = 'refs/heads/agent27/full-app-qa-safe-fixes-20260913'
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          mkdir -p qa-output
+          git archive --format=tar.gz --output=qa-output/agent27-source.tar.gz HEAD
+      - name: Retain exact source for this QA run
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agent27-source
+          path: qa-output/agent27-source.tar.gz
+          retention-days: 1
+      - name: Prepare the project's Node major version
+        shell: bash
+        run: docker pull node:22-bookworm
+      - name: Agent27 recovery regressions (no dependencies or network)
+        id: recovery
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            node:22-bookworm node --experimental-strip-types --test \
+            scripts/qa/agent27/critical-error-display.node.mjs 2>&1 | tee qa-output/recovery.txt
+      - name: Install with the package manager and lockfile used by Dockerfile
+        id: install
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm -v "$GITHUB_WORKSPACE:/app" -w /app node:22-bookworm \
+            sh -c 'node --version && corepack enable && corepack prepare pnpm@11.23.0 --activate && pnpm install --frozen-lockfile --ignore-scripts' \
+            2>&1 | tee qa-output/install.txt
+      - name: Startup storage regressions (network isolated)
+        id: startup
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            -e CI=true node:22-bookworm \
+            node --test scripts/qa/agent27/startup-config.node.mjs 2>&1 | tee qa-output/startup.txt
+      # No real data, paid AI, payment, email or deployment endpoints are reachable.
+      - name: Existing island regression tests (network isolated)
+        id: islands
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            -e CI=true -e NODE_ENV=test node:22-bookworm \
+            node --test scripts/test-island-adventures.cjs 2>&1 | tee qa-output/islands.txt
+      - name: Existing admin and paid-AI guard regressions (network isolated)
+        id: guard
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            -e CI=true -e NODE_ENV=test node:22-bookworm \
+            node --test scripts/test-admin-paid-ai-guard.mjs 2>&1 | tee qa-output/guard.txt
+      - name: Existing Vitest suite (network isolated)
+        id: unit
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            -e CI=true -e NODE_ENV=test node:22-bookworm \
+            npm test -- --run 2>&1 | tee qa-output/vitest.txt
+      - name: Project type check (network isolated)
+        id: types
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            -e CI=true node:22-bookworm npm run type-check 2>&1 | tee qa-output/types.txt
+      - name: Client and server build (network isolated)
+        id: build
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            -e CI=true node:22-bookworm npm run build 2>&1 | tee qa-output/build.txt
+      - name: Project lint (network isolated; existing warnings are retained)
+        id: lint
+        continue-on-error: true
+        shell: bash
+        run: |
+          docker run --rm --network none -v "$GITHUB_WORKSPACE:/app" -w /app \
+            -e CI=true node:22-bookworm npm run lint 2>&1 | tee qa-output/lint.txt
+      - name: Package built app for local isolated browser QA
+        if: steps.build.outcome == 'success'
+        shell: bash
+        run: tar -czf qa-output/agent27-dist.tar.gz dist
+      - name: Retain built app for local QA, not deployment
+        if: steps.build.outcome == 'success'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agent27-built-app
+          path: qa-output/agent27-dist.tar.gz
+          retention-days: 1
+      - name: Retain QA logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: agent27-qa-logs
+          path: qa-output/*.txt
+          retention-days: 1
+          if-no-files-found: ignore
+      - name: Report honest outcomes
+        if: always()
+        shell: bash
+        env:
+          RECOVERY: ${{ steps.recovery.outcome }}
+          INSTALL: ${{ steps.install.outcome }}
+          STARTUP: ${{ steps.startup.outcome }}
+          ISLANDS: ${{ steps.islands.outcome }}
+          UNIT: ${{ steps.unit.outcome }}
+          GUARD: ${{ steps.guard.outcome }}
+          LINT: ${{ steps.lint.outcome }}
+          TYPES: ${{ steps.types.outcome }}
+          BUILD: ${{ steps.build.outcome }}
+        run: |
+          printf '## Agent27 baseline QA\n\nCommit: `%s`\n\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+          printf '| Check | Outcome |\n| --- | --- |\n| Recovery regressions | %s |\n| Frozen pnpm install | %s |\n| Startup storage regressions | %s |\n| Existing island tests | %s |\n| Vitest | %s |\n| Admin/paid-AI guards | %s |\n| Lint | %s |\n| Type check | %s |\n| Build | %s |\n' "$RECOVERY" "$INSTALL" "$STARTUP" "$ISLANDS" "$UNIT" "$GUARD" "$LINT" "$TYPES" "$BUILD" >> "$GITHUB_STEP_SUMMARY"
+          printf '\nAutomated checks only: not a real-device, microphone, camera or live-account end-to-end certification. Dependency lifecycle scripts are intentionally disabled. No merge or deployment was performed.\n' >> "$GITHUB_STEP_SUMMARY"
+          test "$RECOVERY" = success && test "$INSTALL" = success && test "$STARTUP" = success && test "$ISLANDS" = success && test "$UNIT" = success && test "$GUARD" = success && test "$LINT" = success && test "$TYPES" = success && test "$BUILD" = success
