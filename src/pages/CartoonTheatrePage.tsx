@@ -3,20 +3,30 @@ import { ArrowLeft, Pause, Play, RotateCcw, SkipForward, Volume2 } from 'lucide-
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router';
 import ArchieCharacter from '@/components/ArchieCharacter';
+import CartoonEpisodePlayer from '@/components/cartoon/CartoonEpisodePlayer';
+import { ARCHIES_AMAZING_SCIENCE_ADVENTURE } from '@/lib/cartoons/archies-amazing-science-adventure';
 import { stopTts, ttsSpeak } from '@/lib/voice-context';
 
-const EPISODES = [
+type EpisodeCard = { title: string; image: string; colour: string; scenes: string[] };
+
+const EPISODES: EpisodeCard[] = [
   { title: 'The Number Island', image: '/assets/cartoon/worlds/maths.png', colour: 'from-blue-500 to-indigo-700', scenes: ['Archie arrives at Number Island.', 'The number bridge needs ten correct answers.', 'Archie and Soda Bot solve the puzzle and earn a golden star!'] },
   { title: 'The Magical Library', image: '/assets/cartoon/worlds/reading.png', colour: 'from-purple-500 to-fuchsia-700', scenes: ['A storybook begins to glow.', 'Archie reads the clues carefully.', 'The friends discover that every book can open a new world!'] },
   { title: 'The Word Kingdom', image: '/assets/cartoon/worlds/spelling.png', colour: 'from-rose-500 to-red-700', scenes: ['The letters have escaped from Word Kingdom.', 'Archie listens to every sound.', 'The letters return in the correct order and the castle cheers!'] },
-  { title: 'Soda Bot’s Science Mission', image: '/assets/cartoon/worlds/science.png', colour: 'from-emerald-500 to-green-700', scenes: ['Soda Bot finds a mysterious seed.', 'The friends give it light, water and warmth.', 'A bright new flower grows—the experiment worked!'] },
   { title: 'Around Our Amazing Planet', image: '/assets/cartoon/worlds/geography.png', colour: 'from-orange-500 to-amber-700', scenes: ['Archie opens the magical globe.', 'Mountains, rivers and oceans appear.', 'The friends learn that our planet is full of wonderful places.'] },
   { title: 'The Crossword Treasure', image: '/assets/cartoon/worlds/crossword.png', colour: 'from-violet-600 to-slate-800', scenes: ['A crossword hides the treasure-map key.', 'Across and Down words share matching letters.', 'The final word opens the treasure chest!'] },
 ];
 
+const SCIENCE_ADVENTURE_CARD = {
+  title: ARCHIES_AMAZING_SCIENCE_ADVENTURE.title,
+  image: '/assets/cartoon/worlds/science.png',
+  colour: 'from-cyan-500 to-emerald-600',
+};
+
 export default function CartoonTheatrePage() {
   const navigate = useNavigate();
-  const [episode, setEpisode] = useState<(typeof EPISODES)[number] | null>(null);
+  const [episode, setEpisode] = useState<EpisodeCard | null>(null);
+  const [scienceAdventureOpen, setScienceAdventureOpen] = useState(false);
   const [scene, setScene] = useState(0);
   const [playing, setPlaying] = useState(false);
 
@@ -36,7 +46,7 @@ export default function CartoonTheatrePage() {
     return () => window.clearTimeout(timer);
   }, [episode, playing, scene]);
 
-  const play = (item: (typeof EPISODES)[number]) => {
+  const play = (item: EpisodeCard) => {
     setEpisode(item);
     setScene(0);
     setPlaying(true);
@@ -48,6 +58,13 @@ export default function CartoonTheatrePage() {
     setScene(value => value + 1 < episode.scenes.length ? value + 1 : 0);
     setPlaying(true);
   };
+
+  if (scienceAdventureOpen) {
+    return <CartoonEpisodePlayer episode={ARCHIES_AMAZING_SCIENCE_ADVENTURE} onExit={() => {
+      stopTts();
+      setScienceAdventureOpen(false);
+    }} />;
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-500 via-blue-700 to-indigo-950 px-4 py-5 text-white">
@@ -95,6 +112,17 @@ export default function CartoonTheatrePage() {
             <motion.section key="episodes" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <p className="mb-5 text-center text-lg font-bold">Choose a colourful learning cartoon with Archie.</p>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                <button
+                  onClick={() => { stopTts(); setScienceAdventureOpen(true); }}
+                  className="overflow-hidden rounded-3xl border-4 border-yellow-300 bg-white text-blue-950 shadow-xl ring-4 ring-cyan-300/40 active:scale-95"
+                  aria-label="Play Archie's Amazing Science Adventure, about six minutes long"
+                >
+                  <img src={SCIENCE_ADVENTURE_CARD.image} alt="Archie’s Amazing Science Adventure" className="aspect-square w-full object-cover" />
+                  <div className={`bg-gradient-to-r ${SCIENCE_ADVENTURE_CARD.colour} p-3 text-white`}>
+                    <p className="font-black">{SCIENCE_ADVENTURE_CARD.title}</p>
+                    <span className="mt-1 inline-flex items-center gap-1 text-xs font-bold"><Play size={13} /> Approx. 6 min · Play</span>
+                  </div>
+                </button>
                 {EPISODES.map(item => (
                   <button key={item.title} onClick={() => play(item)} className="overflow-hidden rounded-3xl border-4 border-white/80 bg-white text-blue-950 shadow-xl active:scale-95">
                     <img src={item.image} alt="" className="aspect-square w-full object-cover" />
