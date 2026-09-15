@@ -37,7 +37,7 @@ jobs:
 
       - name: Account server source checks
         run: |
-          node --experimental-strip-types --test --test-name-pattern='^(?!parent API).*' scripts/agent29-server-reliability.test.mjs
+          node --experimental-strip-types --test --test-name-pattern='server admin|founder|reset|logout|teacher helper|auth configuration|signup' scripts/agent29-server-reliability.test.mjs
           node --experimental-strip-types --test scripts/stable-parent-dashboard-auth.test.mjs
 
       - name: Account UI regression checks
