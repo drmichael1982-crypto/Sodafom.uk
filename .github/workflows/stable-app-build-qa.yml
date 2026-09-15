@@ -13,6 +13,21 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: sodafom-ci-root-only
+          MYSQL_DATABASE: agent29_auth_test
+          MYSQL_USER: agent29_test
+          MYSQL_PASSWORD: agent29-disposable-test-only
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uagent29_test -pagent29-disposable-test-only"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
     steps:
       - name: Check out stable branch
         uses: actions/checkout@v4
@@ -43,14 +58,22 @@ jobs:
       - name: Account UI regression checks
         run: pnpm exec vitest run --config agent29.vitest.config.ts
 
+      - name: Account database integration checks
+        env:
+          AGENT29_TEST_DB: '1'
+        run: pnpm exec vitest run --config agent29.vitest.config.ts tests/agent29/auth-api.test.ts
+
+      - name: Scanner native Node regression checks
+        run: node --test tests/scanners/scanners.test.cjs
+
       - name: Books playback regression checks
         run: pnpm exec vitest run src/pages/__tests__/BooksPlaybackQA.test.tsx
 
       - name: TypeScript check
         run: pnpm run type-check
 
-      - name: Full test suite
-        run: pnpm exec vitest run
+      - name: Application Vitest suite
+        run: pnpm exec vitest run src
 
       - name: Production client and SSR build
         run: pnpm run build
