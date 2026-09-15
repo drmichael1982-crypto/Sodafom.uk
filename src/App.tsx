@@ -5,6 +5,7 @@ import AiroErrorBoundary from '../export-plugins/AiroErrorBoundary';
 import CookieBannerErrorBoundary from '@/components/CookieBannerErrorBoundary';
 import RootLayout from './layouts/RootLayout';
 import Spinner from './components/Spinner';
+import OrfordTownPreviewPage from './pages/OrfordTownPreviewPage';
 import { routes } from './routes';
 const CookieBanner = lazy(() => import('@/components/CookieBanner').catch(error => {
   console.warn('Failed to load CookieBanner:', error);
@@ -36,8 +37,31 @@ const isCapacitorApp = typeof window !== 'undefined' && !!(window as any).Capaci
 // A packaged Capacitor app serves static files from its WebView. Hash routing keeps
 // navigation entirely inside index.html and avoids native/static-server path mismatches.
 const router = isCapacitorApp ? createHashRouter(routeTree) : createBrowserRouter(routeTree);
+
 export default function App() {
   console.log('App rendering');
+
+  // Michael's 16 Sep phone-review branch opens on the connected Orford-style
+  // town prototype first. Existing app routes remain intact and are reached by
+  // adding ?classic=1. This is intentionally branch-scoped and must not be
+  // treated as permission to change production routing.
+  const townPreviewEnabled = typeof window !== 'undefined' && !new URLSearchParams(window.location.search).has('classic');
+
+  if (townPreviewEnabled) {
+    return <>
+      <Suspense fallback={<SpinnerFallback />}>
+        <AiroErrorBoundary captureGlobalErrors={true}>
+          <OrfordTownPreviewPage />
+        </AiroErrorBoundary>
+      </Suspense>
+      <CookieBannerErrorBoundary>
+        <Suspense fallback={null}>
+          <CookieBanner />
+        </Suspense>
+      </CookieBannerErrorBoundary>
+    </>;
+  }
+
   return <>
       <RouterProvider router={router} />
       {/*
