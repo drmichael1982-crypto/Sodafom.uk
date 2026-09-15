@@ -1,13 +1,13 @@
 /**
  * ArchieHintButton — floating help button that appears during games.
- * Calls the /api/chat endpoint with a curriculum-aligned hint prompt.
+ * Uses the shared local-first Archie router for contextual hint guidance.
  * Renders as a small Archie avatar button; expands into a hint bubble.
  * Also reads the current question aloud via speechSynthesis when tapped.
  */
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Loader2, Volume2 } from 'lucide-react';
-import { API_PREFIX } from '@/lib/config';
+import { askArchie, friendlyArchieError } from '@/lib/archie-routing';
 import { ttsSpeak } from '@/lib/voice-context';
 import { ArchieCharacter } from './ArchieCharacter';
 
@@ -48,15 +48,13 @@ export default function ArchieHintButton({ gameTitle, subject, currentQuestion }
   const [error, setError] = useState('');
   const [speaking, setSpeaking] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const prevQuestion = useRef('');
+  const requestInFlightRef = useRef(false);
 
-  // Reset cached hint when question changes
+  // Do not show or speak a stale answer after the question/context changes.
   useEffect(() => {
-    if (currentQuestion && currentQuestion !== prevQuestion.current) {
-      prevQuestion.current = currentQuestion;
-      setHint('');
-    }
-  }, [currentQuestion]);
+    abortRef.current?.abort();
+    setHint('');
+  }, [currentQuestion, gameTitle, subject]);
 
   // Stop speech on unmount
   useEffect(() => () => {
@@ -72,37 +70,31 @@ export default function ArchieHintButton({ gameTitle, subject, currentQuestion }
 
   async function fetchHint() {
     if (hint) { setOpen(true); return; }
+    if (requestInFlightRef.current) return;
+    requestInFlightRef.current = true;
     setOpen(true);
     setLoading(true);
     setError('');
-    abortRef.current = new AbortController();
-
-    const prompt = currentQuestion
-      ? `You are Archie, a friendly and encouraging learning assistant for children aged 5–13. The child is playing "${gameTitle}" (${subject}). The current question is: "${currentQuestion}". Give a short, friendly hint (2–3 sentences max) that helps them think through it without giving the answer away. Use simple language suitable for a child.`
-      : `You are Archie, a friendly learning assistant for children aged 5–13. The child is playing "${gameTitle}" (${subject}). Give them a short, encouraging tip (2–3 sentences) about how to do well at this type of game. Use simple, fun language.`;
-
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
-      const res = await fetch(`${API_PREFIX}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: prompt }],
-          stream: false,
-        }),
-        signal: abortRef.current.signal,
+      const localHint = currentQuestion
+        ? `Let's work it out together. Read this carefully: ${currentQuestion}. Look at each choice, rule out the ones that cannot be right, then choose your best answer.`
+        : `You are playing ${gameTitle}. Read the instructions carefully, take your time, and try one step at a time. I'm right here if you need me.`;
+      const reply = await askArchie({
+        messages: [{ role: 'user', content: 'Give me a hint please!' }],
+        localHint,
+        allowOpenAiFallback: false,
+        signal: controller.signal,
       });
-
-      if (!res.ok) throw new Error('Could not get hint');
-      const data = await res.json() as { message?: string; content?: string; text?: string };
-      const hintText = data.message ?? data.content ?? data.text ?? 'Keep trying — you can do it! 🌟';
-      setHint(hintText);
-      // Auto-read the hint aloud
-      ttsSpeak(hintText);
-    } catch (e) {
-      if ((e as Error).name !== 'AbortError') {
-        setError('Archie is thinking… try again in a moment!');
-      }
+      if (controller.signal.aborted) return;
+      setHint(reply.text);
+      ttsSpeak(reply.text);
+    } catch (error) {
+      if (!controller.signal.aborted) setError(friendlyArchieError(error));
     } finally {
+      requestInFlightRef.current = false;
+      abortRef.current = null;
       setLoading(false);
     }
   }
