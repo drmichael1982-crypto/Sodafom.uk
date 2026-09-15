@@ -20,12 +20,16 @@
 - `pnpm run type-check` — passed.
 - `pnpm run build` — passed (client and SSR builds).
 - `git diff --check` — passed.
+- Free demo → Number Pop: opened successfully; a correct answer showed “Correct!” and advanced from Question 1 to Question 2.
+- Header Ask Archie control: opened its read-aloud state.
+- Accessibility control: opened the dyslexia-friendly font, high-contrast, and large-text choices.
 
 ## Results and remaining work
 
 - The isolated route-fallback change compiles and builds successfully.
 - It is not deployed, so the live site will continue to show the pre-fix links until someone deliberately merges this branch.
 - A complete whole-site journey, real microphone testing, authenticated parent/teacher flows, payments, and individual game content need separate tests. No such pages were changed here.
+- The live demo currently advertises £1/month and £100/year school pricing. That does not match Michael's later £4.99 home / free-in-school policy, but payment pages were intentionally not changed because they may belong to another agent.
 - The repository lockfiles are out of sync with `package.json`; a frozen install failed before testing. Dependencies were installed locally without changing lockfiles to run the checks.
 
 ## Merge notes
