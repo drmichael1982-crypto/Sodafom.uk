@@ -148,6 +148,11 @@ const GAME_ROUTES: Record<string, string> = {
   'game-evolution-explorer':  '/games/evolution-explorer',
   'game-science-quiz':        '/games/science-quiz',
 };
+
+// New game content can appear before it is added to the route map. Its ID is
+// still a reliable route, so never generate a broken “/games/undefined” link.
+const getGameRoute = (game: { id: string; slug?: string }) =>
+  GAME_ROUTES[game.id] ?? `/games/${game.slug ?? game.id.replace(/^game-/, '')}`;
 const siteUrl = 'https://sodafom.uk';
 const ogImage = `${siteUrl}/og-image.png`;
 
@@ -1078,8 +1083,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
     const visible = games.games.filter(isGameVisible);
     if (visible.length === 0) return;
     const pick = visible[Math.floor(Math.random() * visible.length)];
-    const route = GAME_ROUTES[pick.id];
-    if (route) navigate(route);
+    navigate(getGameRoute(pick));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAge, selectedCat, starsFilter, searchQuery, earnedStars, navigate]);
 
@@ -1638,7 +1642,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
         {/* ── WEEKLY CHALLENGE BANNER ── */}
         {games.weeklyChallenge && (() => {
           const wc = games.weeklyChallenge;
-          const route = GAME_ROUTES[wc.gameId];
+          const route = getGameRoute({ id: wc.gameId });
           return (
             <section className="bg-accent py-5 border-b-4 border-accent/60">
               <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -2098,11 +2102,11 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                     <span className="text-xs text-muted-foreground font-bold">{newGames.length} new game{newGames.length !== 1 ? 's' : ''} added!</span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {newGames.map((g: { slug: string; emoji: string; title: string; subject: string }) => {
-                      const href = GAME_ROUTES[`game-${g.slug}` as keyof typeof GAME_ROUTES] ?? `/games/${g.slug}`;
+                    {newGames.map((g: { id: string; slug?: string; emoji: string; title: string; subject: string }) => {
+                      const href = getGameRoute(g);
                       return (
                         <Link
-                          key={g.slug}
+                          key={g.id}
                           to={href}
                           className="flex items-center gap-1.5 bg-card border border-border rounded-xl px-3 py-1.5 text-sm font-bold text-foreground hover:border-primary hover:bg-primary/5 transition-all"
                         >
@@ -2337,8 +2341,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                     }} whileTap={{
                       scale: 0.97
                     }} onClick={() => {
-                      const route = GAME_ROUTES[game.id];
-                      if (route) navigate(route);
+                      navigate(getGameRoute(game));
                     }} className="mt-1 w-full py-3.5 rounded-xl font-black text-base bg-primary text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm">
                             <Play size={17} className="fill-current" />
                             {isDemo ? 'Play Free' : 'Play Now'}
