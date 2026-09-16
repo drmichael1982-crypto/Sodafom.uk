@@ -8,6 +8,8 @@
   }
   function mount(){
     if(document.getElementById('sodafom-village-entry'))return;
+    document.body.appendChild(makeButton('sodafom-library-entry','/library-world.html','📚 Library World',164,'linear-gradient(135deg,#5335a8,#1c3478)'));
+    document.body.appendChild(makeButton('sodafom-sports-entry','/sports-centre.html','⚽ Sports Centre',114,'linear-gradient(135deg,#138a50,#123f8d)'));
     document.body.appendChild(makeButton('sodafom-village-entry','/village-sweet-shop.html','🚶 Village + Sweet Shop',64,'linear-gradient(135deg,#123f8d,#7d4bd1)'));
     document.body.appendChild(makeButton('sodafom-fairground-entry','/fairground.html','🎡 Funfair World',14,'linear-gradient(135deg,#8b3f8f,#123f8d)'));
   }
