@@ -460,7 +460,7 @@ function SurpriseMeButton({
 const ARCHIE_INTRO_LINES = [
   "Hi! I'm Archie, and welcome to Sodafom!",
   "Sodafom is a fun learning platform for children aged 5 to 13.",
-  "We have over 118 games covering maths, spelling, reading, and science.",
+  `We have ${games.games.length} games covering maths, spelling, reading, and science.`,
   "Play games, earn stars, unlock badges, and track your progress!",
   "Every game has read-aloud support — just tap the speaker icon.",
   "You can sign up for a free 7-day trial, or enter an access code if you have one.",
@@ -1357,7 +1357,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                       <ShieldCheck size={18} />
                       Research Mode Active
                     </div>
-                    <p className="text-white/80 text-sm text-center font-bold">All 127 games are currently unlocked for testing.</p>
+                    <p className="text-white/80 text-sm text-center font-bold">All {games.games.length} games are currently unlocked for testing.</p>
                   </div>
                 )}
               </motion.div>
@@ -1989,7 +1989,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                   step: '1',
                   emoji: '🎮',
                   title: 'Pick a game',
-                  desc: 'Browse 118 games across Maths, Spelling, Reading and Science. Filter by age or subject.',
+                  desc: `Browse ${games.games.length} games across Maths, Spelling, Reading and Science. Filter by age or subject.`,
                   color: 'bg-blue-100 border-blue-300 text-blue-800',
                   connector: true,
                 },
@@ -1997,7 +1997,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                   step: '2',
                   emoji: '⭐',
                   title: 'Play & earn stars',
-                  desc: 'Complete games to earn stars. Score 3 stars for a perfect game and unlock achievement badges.',
+                  desc: 'Complete games to earn stars, work towards three stars, and unlock achievement badges.',
                   color: 'bg-yellow-100 border-yellow-300 text-yellow-800',
                   connector: true,
                 },
@@ -2064,8 +2064,8 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                 { emoji: '🔒', label: 'GDPR compliant', sub: 'Your data is safe' },
                 { emoji: '📚', label: 'UK curriculum aligned', sub: 'KS1, KS2 & KS3' },
                 { emoji: '🚫', label: 'Zero adverts', sub: 'No distractions' },
-                { emoji: '👶', label: 'Safe for children', sub: 'No external links' },
-                { emoji: '🏆', label: '118 games', sub: 'Always growing' },
+                { emoji: '👶', label: 'Child-friendly activities', sub: 'Learning through play' },
+                { emoji: '🏆', label: `${games.games.length} games`, sub: 'Always growing' },
                 { emoji: '⭐', label: '7-day free trial', sub: 'No card needed' },
               ].map((item, i) => (
                 <motion.div

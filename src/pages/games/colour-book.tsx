@@ -259,7 +259,7 @@ function ColourBookInner({ onComplete }: { onComplete: (result: GameResult) => v
           transition={{ duration: 0.3 }}
         />
       </div>
-      <p className="text-xs text-muted-foreground">{coloured} of {scene.regions.length} sections coloured</p>
+      <p className="rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm" aria-live="polite">{coloured} of {scene.regions.length} sections coloured</p>
 
       {/* SVG canvas */}
       <div className="w-full rounded-2xl overflow-hidden border-4 border-border shadow-lg bg-white">
@@ -280,7 +280,7 @@ function ColourBookInner({ onComplete }: { onComplete: (result: GameResult) => v
           />
         ))}
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="rounded-xl bg-white px-3 py-2 text-center text-sm font-semibold text-slate-900 shadow-sm">
         Tap a colour, then tap a section to colour it in!
       </p>
     </div>

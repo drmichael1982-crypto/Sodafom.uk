@@ -1,4 +1,5 @@
 import type { LessonQuestion, TopicLesson } from './curriculum';
+import { buildMathsTeaching } from './maths-lesson-content';
 
 export const CURRICULUM_DAYS = 365;
 export const CURRICULUM_SOURCE_URL = 'https://www.gov.uk/government/collections/national-curriculum';
@@ -289,28 +290,36 @@ export function buildDailyCurriculumLesson({
     `${stage.strategy} Use spiral challenge ${spiral} at an age-appropriate level.`,
     `Give a short class-style presentation, answer the exit check and choose confident / nearly there / need help.`,
   ];
+  const maths = subject === 'Maths' ? buildMathsTeaching(ageGroup, strandIndex, safeDay) : null;
+  const activities = maths ? [
+    maths.simplerExplanation,
+    maths.explanation,
+    `Try the example with Archie: ${maths.examples[0]}`,
+    'Try the questions one at a time. Ask for a hint whenever you need one.',
+    'Show or say how you worked out one answer. Choose: confident, nearly there, or need help.',
+  ] : phaseActivities;
 
   return {
     id: `year:${slugify(subject)}:${ageGroup}:day-${String(safeDay).padStart(3, '0')}`,
     subject,
     topic: slugify(strand.title),
     ageGroup,
-    title: `${subject} Day ${safeDay}: ${strand.title} — ${stage.name}`,
-    explanation: `Today Archie will help you ${objective}. This is spiral ${spiral}, so familiar ideas return with a little more challenge.`,
-    simplerExplanation: `We will learn ${strand.title.toLowerCase()} one small step at a time. You can listen, read, point, type or ask Archie to repeat.`,
-    examples: [
+    title: `${subject} Day ${safeDay}: ${maths?.title ?? strand.title} — ${stage.name}`,
+    explanation: maths?.explanation ?? `Today Archie will help you ${objective}. This is spiral ${spiral}, so familiar ideas return with a little more challenge.`,
+    simplerExplanation: maths?.simplerExplanation ?? `We will learn ${strand.title.toLowerCase()} one small step at a time. You can listen, read, point, type or ask Archie to repeat.`,
+    examples: maths?.examples ?? [
       `${progression.keyStage} curriculum-informed focus: ${strand.objective}.`,
       `Archie model: say what you notice, show one example, then explain why it works.`,
       `Presentation prompt: “Today I learned… My evidence or example is…”`,
     ],
-    questions: buildQuestions(subject, strandIndex, ageGroup, safeDay, objective, stageIndex),
+    questions: maths?.questions ?? buildQuestions(subject, strandIndex, ageGroup, safeDay, objective, stageIndex),
     lessonDay: safeDay,
     week: Math.ceil(safeDay / 7),
     durationMinutes,
     sequenceStage: stage.name,
     curriculumRef: `${progression.keyStage} curriculum-informed planning reference: ${CURRICULUM_SOURCE_URL}`,
     reviewStatus: 'curriculum-informed-teacher-review-required',
-    lessonPhases: phaseNames.map((name, index) => ({ name, minutes: minutes[index], activity: phaseActivities[index] })),
+    lessonPhases: phaseNames.map((name, index) => ({ name, minutes: minutes[index], activity: activities[index] })),
     accessibility: {
       dyslexia: 'Offer read-aloud, short chunks, extra spacing, repeatable instructions and reduced copying.',
       autism: 'Show a predictable now/next sequence, allow processing time, offer a low-sensory view and avoid forced eye contact.',

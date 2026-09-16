@@ -144,7 +144,7 @@ function SubscriptionManager() {
                 <p className="text-sm text-muted-foreground">
                   {sub?.status === 'trial_expired' || sub?.status === 'cancelled'
                     ? 'Your access has ended. Subscribe to keep learning.'
-                    : 'Start a 7-day free trial to unlock all 118 games.'}
+                    : 'Start a 7-day free trial to unlock the full game catalogue.'}
                 </p>
               )}
             </motion.div>
@@ -219,7 +219,7 @@ function SubscriptionManager() {
               <h2 className="font-black text-foreground text-sm mb-3">What's included</h2>
               <ul className="space-y-2">
                 {[
-                  '118 educational games across Maths, Spelling, Reading & Science',
+                  'The full game catalogue across Maths, Spelling, Reading & Science',
                   'Ages 5–7, 8–10, and 11–13 difficulty tiers',
                   'Star rewards, badges, and achievement certificates',
                   'Parent dashboard with progress charts',

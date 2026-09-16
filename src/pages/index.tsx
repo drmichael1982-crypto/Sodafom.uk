@@ -1,4 +1,4 @@
-import { home } from 'virtual:content';
+import { home, games as gamesContent } from 'virtual:content';
 /**
  * Homepage — Full-screen subject icon picker.
  *
@@ -279,17 +279,17 @@ export default function HomePage() {
         <title>Sodafom — Fun Learning Games for Kids Ages 5–13</title>
         <meta
           name="description"
-          content="Sodafom: 127 fun maths, spelling, reading and science games for children aged 5–13. Earn stars, unlock badges and learn through play. Start your free trial today!"
+          content={`Sodafom: ${gamesContent.games.length} fun maths, spelling, reading and science games for children aged 5–13. Earn stars, unlock badges and learn through play. Start your free trial today!`}
         />
         <link rel="canonical" href={siteUrl} />
         <meta property="og:title" content="Sodafom — Fun Learning Games for Kids Ages 5–13" />
-        <meta property="og:description" content="127 fun learning games for children aged 5–13. Maths, spelling, reading and science. Start free today!" />
+        <meta property="og:description" content={`${gamesContent.games.length} fun learning games for children aged 5–13. Maths, spelling, reading and science. Start free today!`} />
         <meta property="og:url" content={siteUrl} />
         <meta property="og:type" content="website" />
         <meta property="og:image" content={ogImage} />
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Sodafom — Fun Learning Games for Kids Ages 5–13" />
-        <meta name="twitter:description" content="127 fun learning games for children aged 5–13. Start free today!" />
+        <meta name="twitter:description" content={`${gamesContent.games.length} fun learning games for children aged 5–13. Start free today!`} />
         <meta name="twitter:image" content={ogImage} />
         <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
       </Helmet>
@@ -465,7 +465,7 @@ export default function HomePage() {
                   className="mt-12 flex items-center gap-2 px-8 py-4 rounded-full bg-white/20 border-2 border-white/40 text-white font-black text-lg hover:bg-white/30 transition-colors backdrop-blur-sm shadow-xl"
                 >
                   <Zap size={20} className="text-accent fill-accent" />
-                  Show all 127 games
+                  Show all {gamesContent.games.length} games
                   <ChevronDown size={20} />
                 </motion.button>
 
@@ -490,7 +490,7 @@ export default function HomePage() {
               <div className="max-w-5xl mx-auto px-4">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
                   {[
-                    { value: '127', label: 'Learning games', emoji: '🎮' },
+                    { value: String(gamesContent.games.length), label: 'Learning games', emoji: '🎮' },
                     { value: '5–13', label: 'Ages covered', emoji: '👧' },
                     { value: '4', label: 'Subjects', emoji: '📚' },
                     { value: '£1', label: 'Per month', emoji: '⭐' },
@@ -726,7 +726,7 @@ export default function HomePage() {
                 ))}
                 {chosen === 'all' && (
                   <span className="px-3 py-1 rounded-full bg-white/20 text-white text-xs font-black border border-white/30">
-                    All 127 games
+                    All {gamesContent.games.length} games
                   </span>
                 )}
               </div>

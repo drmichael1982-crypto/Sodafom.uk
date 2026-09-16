@@ -9,7 +9,7 @@ type Story = { title: string; strapline: string; colour: string; image?: string;
 
 const STORIES: Story[] = [
   { title: 'Archie and the Magic Key', strapline: 'Believe in yourself', colour: 'from-indigo-600 to-violet-800', image: '/assets/stories/archie-magic-key.jpg', pages: [
-    'Archie found a little golden key sparkling beneath his pillow.', 'The key had a tiny heart and felt warm in his hand.', 'At breakfast, it pointed towards the old oak tree in the garden.', 'Jessica, Sally and Daisy sniffed a hidden door in the tree trunk.', 'The key opened the door with a friendly click.', 'Inside was a library where every book glowed like a star.', 'A sign said, “Brave readers can open any adventure.”', 'Archie chose a book and read the first word slowly and clearly.', 'The library cheered because Archie had believed in himself.', 'He went home with the key, ready for tomorrow’s adventure.'
+    'Archie found a little golden key sparkling on the garden path.', 'The key had a tiny heart and felt warm in his hand.', 'Soon, it pointed towards the old oak tree in the garden.', 'Jessica, Sally and Daisy sniffed a hidden door in the tree trunk.', 'The key opened the door with a friendly click.', 'Inside was a library where every book glowed like a star.', 'A sign said, “Brave readers can open any adventure.”', 'Archie chose a book and read the first word slowly and clearly.', 'The library cheered because Archie had believed in himself.', 'He went home with the key, ready for tomorrow’s adventure.'
   ] },
   { title: 'A Day at the Seaside', strapline: 'Exploring together', colour: 'from-sky-500 to-blue-800', image: '/assets/stories/archie-seaside.jpg', pages: [
     'The sun shone over Felixstowe seafront as Archie packed a picnic.', 'Mum brought sandwiches while Dad carried a bright blue bucket.', 'The dogs raced across the sand, leaving bouncy paw prints.', 'Archie found a smooth shell shaped like a little trumpet.', 'He heard a soft cry near the rocks and followed the sound.', 'A tiny crab was stuck in a plastic ring beside the tide.', 'With a grown-up’s help, Archie gently freed the crab.', 'The crab clicked its claws as if it was saying thank you.', 'Everyone put their litter in the bin and watched the waves sparkle.', 'On the way home, Archie said the best adventures are shared.'
@@ -328,14 +328,14 @@ export default function ArchieStoryCollectionPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-sky-200 via-amber-50 to-amber-100 px-4 py-5 text-slate-950">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <button onClick={() => navigate('/reading')} className="flex min-h-12 items-center gap-2 rounded-full bg-white px-5 font-black shadow-xl">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <button onClick={() => navigate('/reading')} className="flex min-h-12 shrink-0 items-center gap-2 rounded-full bg-white px-5 font-black shadow-xl">
             <ArrowLeft /> Reading
           </button>
-          <div className="rounded-3xl border-4 border-amber-700 bg-white px-5 py-3 text-center shadow-lg">
+          <div className="w-full min-w-0 rounded-3xl border-4 border-amber-700 bg-white px-5 py-3 text-center shadow-lg sm:w-auto sm:flex-1">
             <div className="flex items-center justify-center gap-2 text-purple-950">
-              <BookOpen aria-hidden />
-              <h1 className="text-2xl font-black sm:text-4xl">ARCHIE’S BOOK COLLECTION</h1>
+              <BookOpen aria-hidden className="shrink-0" />
+              <h1 className="min-w-0 break-words text-2xl font-black sm:text-4xl">ARCHIE’S BOOK COLLECTION</h1>
             </div>
             <p className="mt-1 font-bold text-slate-600">Choose a cover from the library shelves.</p>
           </div>
@@ -350,7 +350,8 @@ export default function ArchieStoryCollectionPage() {
           <div className="space-y-10 px-4 py-8 sm:px-8">
             {shelfRows.map((row, rowIndex) => (
               <div key={`shelf-${rowIndex}`} className="relative pb-8">
-                <div className="flex gap-5 overflow-x-auto px-2 pb-4 pt-3 sm:justify-center">
+                <div className="overflow-x-auto">
+                  <div className="flex w-max min-w-full justify-center gap-5 px-2 pb-4 pt-3">
                   {row.map((item) => {
                     const index = STORIES.indexOf(item);
                     return (
@@ -377,6 +378,7 @@ export default function ArchieStoryCollectionPage() {
                       </button>
                     );
                   })}
+                  </div>
                 </div>
                 <div aria-hidden className="absolute inset-x-0 bottom-1 h-7 rounded-md border-y-4 border-[#6b351c] bg-gradient-to-b from-[#b96f35] to-[#7a3f21] shadow-[0_12px_18px_rgba(62,31,13,.35)]" />
                 <div aria-hidden className="absolute inset-x-4 bottom-0 h-2 rounded-b-full bg-[#4d2819]" />

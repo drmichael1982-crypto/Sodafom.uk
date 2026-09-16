@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { BookOpen, Mic, Send, Square, Trash2, Volume2 } from 'lucide-react';
 import { motion, useReducedMotion } from 'motion/react';
@@ -14,9 +14,9 @@ function suggestedAge() {
   return group === '5-7' ? 6 : group === '11-13' ? 12 : 9;
 }
 
-export default function ScannerWorkspace({ mode }: { mode: ScannerMode }) {
+export default function ScannerWorkspace({ mode, beforeScanner }: { mode: ScannerMode; beforeScanner?: ReactNode }) {
   const reading = mode === 'reading';
-  const title = reading ? 'Scan Reading Book' : 'Scan Homework';
+  const title = reading ? 'Scan Reading Book' : 'Homework Helper';
   const [age, setAge] = useState(suggestedAge);
   const [photo, setPhoto] = useState('');
   const [question, setQuestion] = useState('');
@@ -84,9 +84,10 @@ export default function ScannerWorkspace({ mode }: { mode: ScannerMode }) {
   return <>
     <Helmet><title>{title} — Sodafom</title></Helmet>
     <FeaturePageShell title={title} subtitle={reading ? 'Read a real page with Archie and ask about tricky words.' : 'Work through your homework with hints, small steps and time to try.'} emoji="" accent="from-sky-600 via-violet-700 to-indigo-950" backTo={reading ? '/reading' : '/'}>
+      {beforeScanner}
       <section className={`${panel} mb-5 flex items-center gap-4`}>
         {characterAvailable && <motion.img src="/assets/images/archie-character-v2.png" alt="Archie, your learning helper" className="h-28 w-24 shrink-0 object-contain" onError={() => setCharacterAvailable(false)} animate={!reduceMotion && voice.speaking ? { rotate: [0, -1, 0, 1, 0] } : { rotate: 0 }} transition={{ duration: 2.5, repeat: voice.speaking && !reduceMotion ? Infinity : 0 }} />}
-        <div><h2 className="text-xl font-black">Let&apos;s work together</h2><p className="mt-2 leading-relaxed">{reading ? 'Choose one book page. We can read it together, practise a word, or talk about the story.' : 'Photograph one question. I will help you understand the method, then you can try the next step.'}</p></div>
+        <div><h2 className="text-xl font-black">{reading ? 'Let’s work together' : 'Or get help with a photo'}</h2><p className="mt-2 leading-relaxed">{reading ? 'Choose one book page. We can read it together, practise a word, or talk about the story.' : 'Photograph one question. I will help you understand the method, then you can try the next step.'}</p></div>
       </section>
       <div className="grid items-start gap-5 lg:grid-cols-2">
         <section className={`${panel} space-y-4`}>

@@ -251,7 +251,7 @@ export default function GameOfTheWeekPage() {
                 Ready to play?
               </motion.h2>
               <motion.p variants={fadeUp} className="text-primary-foreground/80 mb-6">
-                Start your 7-day free trial and unlock all 118 games today.
+                Start your 7-day free trial and unlock all {gamesContent.games.length} games today.
               </motion.p>
               <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
                 {game && (

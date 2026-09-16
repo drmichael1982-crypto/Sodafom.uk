@@ -17,14 +17,14 @@
       "monthlyPrice": "£0",
       "annualPrice": "£0",
       "period": "forever",
-      "description": "Full access to all 118 games is enabled in this build.",
+      "description": "Full access to the game catalogue is enabled in this build.",
       "cta": "Start learning",
       "ctaHref": "/auth",
       "highlight": true,
       "features": [
         {
           "id": "ff-1",
-          "text": "All 118 games unlocked",
+          "text": "Full game catalogue unlocked",
           "included": true
         },
         {

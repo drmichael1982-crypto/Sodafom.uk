@@ -149,7 +149,7 @@ function instructionForStage(
   if (kind === 'example') return `Worked example: ${lesson.examples[0] ?? lesson.simplerExplanation}`;
   if (kind === 'guided') return 'Now try one with the teacher. You can tap, type or speak your answer.';
   if (kind === 'activity') {
-    if (subject === 'Maths') return 'Fun activity: show the idea in two different ways, then choose which representation is clearest.';
+    if (subject === 'Maths') return 'Try one maths example with a drawing, objects or numbers. Tell Archie how you worked it out.';
     if (subject === 'English') return 'Fun activity: make one short example using today’s idea, then improve one word or detail.';
     if (subject === 'French' || subject === 'German') return 'Fun activity: say a key word, match it to its meaning, then use it in a short phrase.';
     return 'Fun activity: sort what you know into a fact, an example and a question, then explain one choice.';
@@ -221,7 +221,10 @@ export default function ClassroomLessonPage() {
     [subject, safeAge, day, duration],
   );
   const cloudLesson = useMemo(
-    () => cloudLessonToTopic(cloud ?? { available: false }, subject, safeAge),
+    // The existing Maths cloud seed stores teacher planning instructions, not
+    // child-facing teaching. Use the concrete local Maths content until that
+    // cloud library has an independently reviewed teaching-content format.
+    () => subject === 'Maths' ? null : cloudLessonToTopic(cloud ?? { available: false }, subject, safeAge),
     [cloud, subject, safeAge],
   );
   const lesson = cloudLesson ?? localLesson ?? CURRICULUM_LESSONS[0];
@@ -263,8 +266,9 @@ export default function ClassroomLessonPage() {
   }, [ageGroup, day, duration, subject]);
 
   useEffect(() => {
-    if (!ageGroup) {
+    if (!ageGroup || subject === 'Maths') {
       setCloud(null);
+      setCloudLoading(false);
       return;
     }
     const controller = new AbortController();
@@ -601,7 +605,7 @@ export default function ClassroomLessonPage() {
                 <div className="mb-2 flex flex-wrap items-center gap-2 text-xs font-black">
                   <span className="rounded-full bg-cyan-200 px-3 py-1 text-cyan-950">Stage {stageIndex + 1} of {stages.length}: {stage.label}</span>
                   <span className="rounded-full bg-white/15 px-3 py-1">Planned: {stage.minutes} min</span>
-                  {cloudLoading ? <span className="flex items-center gap-1"><Cloud size={14} /> Checking cloud library…</span> : cloud?.available ? <span className="flex items-center gap-1 text-emerald-200"><Cloud size={14} /> Existing cloud lesson · {cloud.verifiedInventoryCount} verified matches</span> : <span className="flex items-center gap-1 text-amber-200"><CloudOff size={14} /> Local curriculum plan {cloud?.reason ? `· ${cloud.reason}` : ''}</span>}
+                  {subject === 'Maths' ? <span className="flex items-center gap-1 text-emerald-200"><CloudOff size={14} /> Maths practice · available offline</span> : cloudLoading ? <span className="flex items-center gap-1"><Cloud size={14} /> Checking cloud library…</span> : cloud?.available ? <span className="flex items-center gap-1 text-emerald-200"><Cloud size={14} /> Existing cloud lesson · {cloud.verifiedInventoryCount} verified matches</span> : <span className="flex items-center gap-1 text-amber-200"><CloudOff size={14} /> Local curriculum plan {cloud?.reason ? `· ${cloud.reason}` : ''}</span>}
                 </div>
                 <p className="font-semibold text-slate-100">{stageText}</p>
               </div>

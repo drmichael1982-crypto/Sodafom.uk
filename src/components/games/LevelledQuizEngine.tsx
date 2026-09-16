@@ -73,14 +73,13 @@ export default function LevelledQuizEngine({
     ? [...baseQuestions, ...generateMathQuestions(gameSlug, tier, effectiveLevel)]
     : baseQuestions;
 
-  async function handleComplete(stars: number) {
+  async function handleComplete(stars: number, result: GameResult) {
     const newLevel = await recordResult(stars);
     if (newLevel > prevLevel.current) setToast('up');
     else if (newLevel < prevLevel.current) setToast('down');
     prevLevel.current = newLevel;
 
-    const sc = stars === 3 ? 95 : stars === 2 ? 70 : stars === 1 ? 45 : 20;
-    onComplete({ score: sc, correct: Math.round(sc / 10), total: 10, stars });
+    onComplete(result);
   }
 
   return (

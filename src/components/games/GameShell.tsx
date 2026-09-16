@@ -323,6 +323,8 @@ function ResultScreen({
   const [nextRoundIn, setNextRoundIn] = useState(8);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const animatedScore = useCountUp(result.score, 1000, 400);
+  // Three stars starts at 90%; only an all-correct, 100% round is perfect.
+  const isPerfectScore = result.total > 0 && result.correct === result.total && result.score === 100;
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -388,7 +390,7 @@ function ResultScreen({
   }, [nextRoundIn, onReplay, showCert]);
 
   const headlineMap: Record<number, string> = {
-    3: '🎉 Amazing! Perfect score!',
+    3: isPerfectScore ? '🎉 Amazing! Perfect score!' : '🎉 Amazing! Three stars!',
     2: '🌟 Great job!',
     1: '👍 Good try!',
     0: '💪 Keep practising!',
@@ -429,9 +431,11 @@ function ResultScreen({
                 style={bannerStyle}
               >
                 <p className="font-black text-lg tracking-wide" style={{ fontFamily: 'var(--font-heading)' }}>
-                  ⭐ Perfect Score! ⭐
+                  {isPerfectScore ? '⭐ Perfect Score! ⭐' : '⭐ Three Stars! ⭐'}
                 </p>
-                <p className="text-sm opacity-90 font-bold">You got every question right!</p>
+                <p className="text-sm opacity-90 font-bold">
+                  {isPerfectScore ? 'You got every question right!' : 'You earned three stars. Well done!'}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -504,7 +508,7 @@ function ResultScreen({
               >
                 <Trophy size={16} />
                 You earned {result.stars} star{result.stars !== 1 ? 's' : ''}!
-                {result.stars === 3 && <span className="ml-1 text-yellow-600">🏆 Perfect!</span>}
+                {isPerfectScore && <span className="ml-1 text-yellow-600">🏆 Perfect!</span>}
               </motion.div>
             )}
 
