@@ -1,0 +1,234 @@
+{
+  "testedCommit": "442656b4e2ec76167b4d0b5fb7b804cf742904a5",
+  "browser": "153.0.8010.0",
+  "capturedAt": "2026-09-16T13:29:57.079Z",
+  "limitations": [
+    "Viewport simulations, not physical devices.",
+    "Local API calls return 503; external requests are blocked.",
+    "No audible voice, real microphone, scanner, auth, payment or Town integration certification."
+  ],
+  "journeys": [
+    {
+      "viewport": {
+        "width": 360,
+        "height": 800
+      },
+      "checks": [
+        {
+          "name": "Reading menu to ten-book shelf",
+          "pass": true,
+          "count": 10
+        },
+        {
+          "name": "Previous page disabled at first page",
+          "pass": true
+        },
+        {
+          "name": "Next and previous page",
+          "pass": true
+        },
+        {
+          "name": "Enter and leave Archie view",
+          "pass": true
+        },
+        {
+          "name": "Return to reading menu",
+          "pass": true
+        }
+      ],
+      "directEntry": {
+        "url": "http://127.0.0.1:5179/reading",
+        "readingMenuVisible": false,
+        "capacitorPlatform": "web"
+      },
+      "shelf": {
+        "viewport": 360,
+        "document": 422,
+        "horizontalOverflow": true,
+        "brokenImages": [],
+        "shelves": [
+          {
+            "width": 280,
+            "contentWidth": 976,
+            "scrollLeft": 0,
+            "firstLeft": 48,
+            "containerLeft": 40
+          },
+          {
+            "width": 280,
+            "contentWidth": 976,
+            "scrollLeft": 0,
+            "firstLeft": 48,
+            "containerLeft": 40
+          }
+        ]
+      },
+      "opening": {
+        "viewport": 360,
+        "document": 360,
+        "horizontalOverflow": false,
+        "brokenImages": [],
+        "shelves": []
+      },
+      "openingCharacter": {
+        "image": "/assets/images/archie-character-v2.png",
+        "rect": {
+          "x": 204,
+          "y": 782.6197509765625,
+          "width": 190,
+          "height": 190,
+          "top": 782.6197509765625,
+          "right": 394,
+          "bottom": 972.6197509765625,
+          "left": 204
+        }
+      },
+      "reader": {
+        "viewport": 360,
+        "document": 360,
+        "horizontalOverflow": false,
+        "brokenImages": [],
+        "shelves": []
+      },
+      "spaceIllustration": "/assets/approved/stories.png"
+    },
+    {
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "checks": [
+        {
+          "name": "Reading menu to ten-book shelf",
+          "pass": true,
+          "count": 10
+        }
+      ],
+      "directEntry": {
+        "url": "http://127.0.0.1:5179/reading",
+        "readingMenuVisible": false,
+        "capacitorPlatform": "web"
+      },
+      "shelf": {
+        "viewport": 768,
+        "document": 768,
+        "horizontalOverflow": false,
+        "brokenImages": [],
+        "shelves": [
+          {
+            "width": 656,
+            "contentWidth": 816,
+            "scrollLeft": 0,
+            "firstLeft": -96,
+            "containerLeft": 56
+          },
+          {
+            "width": 656,
+            "contentWidth": 816,
+            "scrollLeft": 0,
+            "firstLeft": -96,
+            "containerLeft": 56
+          }
+        ]
+      },
+      "failure": "Normal click on first book timed out; shelf container intercepts pointer events; first book starts at x=-96 with shelf starting at x=56 and scrollLeft=0."
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "checks": [
+        {
+          "name": "Reading menu to ten-book shelf",
+          "pass": true,
+          "count": 10
+        },
+        {
+          "name": "Previous page disabled at first page",
+          "pass": true
+        },
+        {
+          "name": "Next and previous page",
+          "pass": true
+        },
+        {
+          "name": "Enter and leave Archie view",
+          "pass": true
+        },
+        {
+          "name": "Return to reading menu",
+          "pass": true
+        }
+      ],
+      "directEntry": {
+        "url": "http://127.0.0.1:5179/reading",
+        "readingMenuVisible": false,
+        "capacitorPlatform": "web"
+      },
+      "shelf": {
+        "viewport": 1280,
+        "document": 1280,
+        "horizontalOverflow": false,
+        "brokenImages": [],
+        "shelves": [
+          {
+            "width": 1168,
+            "contentWidth": 1168,
+            "scrollLeft": 0,
+            "firstLeft": 160,
+            "containerLeft": 56
+          },
+          {
+            "width": 1168,
+            "contentWidth": 1168,
+            "scrollLeft": 0,
+            "firstLeft": 160,
+            "containerLeft": 56
+          }
+        ]
+      },
+      "opening": {
+        "viewport": 1280,
+        "document": 1280,
+        "horizontalOverflow": false,
+        "brokenImages": [],
+        "shelves": []
+      },
+      "openingCharacter": {
+        "image": "/assets/images/archie-character-v2.png",
+        "rect": {
+          "x": 890.796875,
+          "y": 418.6775207519531,
+          "width": 190,
+          "height": 189.99996948242188,
+          "top": 418.6775207519531,
+          "right": 1080.796875,
+          "bottom": 608.677490234375,
+          "left": 890.796875
+        },
+        "centerCoveredBy": "<p class=\"mt-2 font-bold text-slate-700\">Archie has stepped out of the cover. Open the book when you are ready.</p>"
+      },
+      "reader": {
+        "viewport": 1280,
+        "document": 1280,
+        "horizontalOverflow": false,
+        "brokenImages": [],
+        "shelves": []
+      },
+      "spaceIllustration": "/assets/approved/stories.png"
+    }
+  ],
+  "reducedMotion": {
+    "mediaMatched": true,
+    "book": "A Day at the Seaside",
+    "viewport": {
+      "width": 768,
+      "height": 1024
+    },
+    "first": "matrix(1, 0, 0, 1, 0, -0.285264)",
+    "second": "matrix(1, 0, 0, 1, 0, -0.0732742)",
+    "characterStillMoving": true
+  },
+  "reducedMotionProbe": "Separate follow-up on a visible middle book after the first-cover tablet defect blocked the initial probe."
+}
