@@ -1,0 +1,137 @@
+{
+  "handoffCommit": "cbe4a727b2edd561fcc29d024844ca920904e1dc",
+  "scope": "Reference integrity only; no visual, motion, voice or app approval",
+  "status": "PASS",
+  "passed": 9,
+  "total": 9,
+  "assets": [
+    {
+      "path": "images/master/michael-davis-approved.jpg",
+      "sha256": "74e4bc78fddea3ca40bc8bbb383a8b6c8a344178e27d9a2591d88e810dedefa2",
+      "bytes": 72665,
+      "width": 685,
+      "height": 1536,
+      "checks": {
+        "sha256": true,
+        "bytes": true,
+        "dimensions": true,
+        "decodes": true,
+        "approvedMasterHash": true
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "images/master/approved-group-rocket.png",
+      "sha256": "aaef7bb409f6a35a40029bdb518a92f511511f5908c84ce00ac07f0f54dc6099",
+      "bytes": 2191326,
+      "width": 1672,
+      "height": 941,
+      "checks": {
+        "sha256": true,
+        "bytes": true,
+        "dimensions": true,
+        "decodes": true,
+        "approvedMasterHash": true
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "images/six-scene-review.jpg",
+      "sha256": "2d4132eac007a027373bbb11ffc9fa191010458f3709d7265ead5f8223c9ea9c",
+      "bytes": 1379334,
+      "width": 1984,
+      "height": 2050,
+      "checks": {
+        "sha256": true,
+        "bytes": true,
+        "dimensions": true,
+        "decodes": true
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "images/scenes/Sodafom-Shop-Walk-Character-Correction.png",
+      "sha256": "60e260e695089327a9750309518c3d8fcceea5f2aa1a90151258a7a231bfd7bb",
+      "bytes": 3007058,
+      "width": 1920,
+      "height": 1080,
+      "checks": {
+        "sha256": true,
+        "bytes": true,
+        "dimensions": true,
+        "decodes": true
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "images/scenes/Sodafom-Funfair-Character-Correction.png",
+      "sha256": "4d860c16e4ef4e2e1cf4890331e28b26571058cd453b56484dd366cd4e96807c",
+      "bytes": 3077790,
+      "width": 1920,
+      "height": 1080,
+      "checks": {
+        "sha256": true,
+        "bytes": true,
+        "dimensions": true,
+        "decodes": true
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "images/scenes/Sodafom-Funfair-Continuation-Character-Correction.png",
+      "sha256": "30567560ca34e013c3c8bd93522c5c7421f3fb535613cfa3de72af2c54398d8d",
+      "bytes": 2171473,
+      "width": 1672,
+      "height": 941,
+      "checks": {
+        "sha256": true,
+        "bytes": true,
+        "dimensions": true,
+        "decodes": true
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "images/scenes/Sodafom-Coaster-Character-Correction.png",
+      "sha256": "c6cb4fe1fbc2f17ef5ba6e7f4e477f0405c5835b62312c52840613ff02450d6b",
+      "bytes": 2003229,
+      "width": 1672,
+      "height": 941,
+      "checks": {
+        "sha256": true,
+        "bytes": true,
+        "dimensions": true,
+        "decodes": true
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "images/scenes/Sodafom-Waltzers-Character-Correction.png",
+      "sha256": "0f500afac15358ef5cab6460fa21ef97d2a6d2af89122396f1903b32c2910628",
+      "bytes": 2685571,
+      "width": 1920,
+      "height": 1080,
+      "checks": {
+        "sha256": true,
+        "bytes": true,
+        "dimensions": true,
+        "decodes": true
+      },
+      "status": "PASS"
+    },
+    {
+      "path": "images/scenes/Sodafom-Twister-Character-Correction.png",
+      "sha256": "992d5f06ee21a4416528f88cbb623e90604935d1eba2f3c15989c23eb8b145ed",
+      "bytes": 2627623,
+      "width": 1920,
+      "height": 1080,
+      "checks": {
+        "sha256": true,
+        "bytes": true,
+        "dimensions": true,
+        "decodes": true
+      },
+      "status": "PASS"
+    }
+  ]
+}
