@@ -1,0 +1,296 @@
+{
+  "schemaVersion": 2,
+  "date": "2026-09-16",
+  "section": "SOD-VIS-01 shared character-reference contribution",
+  "handoff": "https://github.com/drmichael1982-crypto/Sodafom.uk/pull/33",
+  "branch": "codex/sod-vis-01-character-reference-review-20260916",
+  "baseCommit": "cbe4a727b2edd561fcc29d024844ca920904e1dc",
+  "referencePriority": [
+    "original/images/master/michael-davis-approved.jpg for Michael",
+    "original/images/master/approved-group-rocket.png for the rest of the cast"
+  ],
+  "status": "Eight current candidates: seven landscapes and one portrait. Initial outfit review failed; targeted repairs completed, final outfit/detail acceptance still open.",
+  "originalsUnchanged": true,
+  "expectedDogCountPerFamilyScene": 3,
+  "pixelIdenticalPreservationClaimed": false,
+  "fourKMasterClaimed": false,
+  "voiceGenerationPerformed": false,
+  "merged": false,
+  "deployed": false,
+  "assets": [
+    {
+      "path": "original/images/master/michael-davis-approved.jpg",
+      "sha256": "74e4bc78fddea3ca40bc8bbb383a8b6c8a344178e27d9a2591d88e810dedefa2",
+      "bytes": 72665,
+      "width": 685,
+      "height": 1536,
+      "role": "Untouched original reference"
+    },
+    {
+      "path": "original/images/master/approved-group-rocket.png",
+      "sha256": "aaef7bb409f6a35a40029bdb518a92f511511f5908c84ce00ac07f0f54dc6099",
+      "bytes": 2191326,
+      "width": 1672,
+      "height": 941,
+      "role": "Untouched original reference"
+    },
+    {
+      "path": "original/images/six-scene-review.jpg",
+      "sha256": "2d4132eac007a027373bbb11ffc9fa191010458f3709d7265ead5f8223c9ea9c",
+      "bytes": 1379334,
+      "width": 1984,
+      "height": 2050,
+      "role": "Untouched original reference"
+    },
+    {
+      "path": "original/images/scenes/Sodafom-Shop-Walk-Character-Correction.png",
+      "sha256": "60e260e695089327a9750309518c3d8fcceea5f2aa1a90151258a7a231bfd7bb",
+      "bytes": 3007058,
+      "width": 1920,
+      "height": 1080,
+      "role": "Untouched original reference"
+    },
+    {
+      "path": "original/images/scenes/Sodafom-Funfair-Character-Correction.png",
+      "sha256": "4d860c16e4ef4e2e1cf4890331e28b26571058cd453b56484dd366cd4e96807c",
+      "bytes": 3077790,
+      "width": 1920,
+      "height": 1080,
+      "role": "Untouched original reference"
+    },
+    {
+      "path": "original/images/scenes/Sodafom-Funfair-Continuation-Character-Correction.png",
+      "sha256": "30567560ca34e013c3c8bd93522c5c7421f3fb535613cfa3de72af2c54398d8d",
+      "bytes": 2171473,
+      "width": 1672,
+      "height": 941,
+      "role": "Untouched original reference"
+    },
+    {
+      "path": "original/images/scenes/Sodafom-Coaster-Character-Correction.png",
+      "sha256": "c6cb4fe1fbc2f17ef5ba6e7f4e477f0405c5835b62312c52840613ff02450d6b",
+      "bytes": 2003229,
+      "width": 1672,
+      "height": 941,
+      "role": "Untouched original reference"
+    },
+    {
+      "path": "original/images/scenes/Sodafom-Waltzers-Character-Correction.png",
+      "sha256": "0f500afac15358ef5cab6460fa21ef97d2a6d2af89122396f1903b32c2910628",
+      "bytes": 2685571,
+      "width": 1920,
+      "height": 1080,
+      "role": "Untouched original reference"
+    },
+    {
+      "path": "original/images/scenes/Sodafom-Twister-Character-Correction.png",
+      "sha256": "992d5f06ee21a4416528f88cbb623e90604935d1eba2f3c15989c23eb8b145ed",
+      "bytes": 2627623,
+      "width": 1920,
+      "height": 1080,
+      "role": "Untouched original reference"
+    },
+    {
+      "path": "candidates/rocket-michael-portrait-v2.png",
+      "sha256": "448283fdbe8d258ccfca18b3a6122aba97c8ca747b9fded50e93ff09d19037a6",
+      "bytes": 2157052,
+      "width": 1672,
+      "height": 941,
+      "role": "Michael portrait refinement; review candidate, not user approved"
+    },
+    {
+      "path": "candidates/shop-walk-portrait-outfit-v3.png",
+      "sha256": "8c070c57fc2ec7a418baf0e3d52dd7a3d52287e08a10ca5448053ed0ab17fc86",
+      "bytes": 2188931,
+      "width": 1672,
+      "height": 941,
+      "role": "Michael portrait and Archie outfit correction; candidate awaiting visual acceptance"
+    },
+    {
+      "path": "candidates/funfair-portrait-outfit-v3.png",
+      "sha256": "439b7dc50effafe76130a750ec056464f234713901426ca944e872a851c7dba1",
+      "bytes": 2163130,
+      "width": 1672,
+      "height": 941,
+      "role": "Michael portrait and Archie outfit correction; candidate awaiting visual acceptance"
+    },
+    {
+      "path": "candidates/funfair-continuation-portrait-outfit-v3.png",
+      "sha256": "2ebf9b5cbc614940007666cb2dea2c358c59e024f1bee567285677e70f3aace8",
+      "bytes": 2131307,
+      "width": 1672,
+      "height": 941,
+      "role": "Michael portrait and Archie outfit correction; candidate awaiting visual acceptance"
+    },
+    {
+      "path": "candidates/coaster-portrait-outfit-v3.png",
+      "sha256": "08d71a205c5d9d9d2b557f3ce1ab099eebb974fd3ec5dad8b30224f6d2b1de2b",
+      "bytes": 1975705,
+      "width": 1672,
+      "height": 941,
+      "role": "Michael portrait and Archie outfit correction; candidate awaiting visual acceptance"
+    },
+    {
+      "path": "candidates/waltzers-portrait-outfit-v3.png",
+      "sha256": "ce2e771712eecfab6e138cb124686157d6faaba5a98e24d9d31e8d9f156a7396",
+      "bytes": 2156337,
+      "width": 1672,
+      "height": 941,
+      "role": "Michael portrait and Archie outfit correction; candidate awaiting visual acceptance"
+    },
+    {
+      "path": "candidates/twister-portrait-outfit-v3.png",
+      "sha256": "8ba01034f15d88a7273742dbd7c5dc2e24994a651ab4368f9d23c30b6889d757",
+      "bytes": 2085273,
+      "width": 1672,
+      "height": 941,
+      "role": "Michael portrait and Archie outfit correction; candidate awaiting visual acceptance"
+    },
+    {
+      "path": "candidates/twister-vertical-outfit-v3.png",
+      "sha256": "d047d245b6776ee8be42eb598ff9d4f10efd069b60b3facd8a24224ca8882517",
+      "bytes": 2442140,
+      "width": 941,
+      "height": 1672,
+      "role": "Twister portrait variant with outfit correction; candidate awaiting visual acceptance"
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Rocket / shared group",
+      "original": "original/images/master/approved-group-rocket.png",
+      "candidate": "candidates/rocket-michael-portrait-v2.png",
+      "width": 1672,
+      "height": 941,
+      "reviewNote": "Master portrait remains authoritative; this rocket edit is a review candidate.",
+      "visualInspection": "Completed; recognisable portrait characteristics and cast retained",
+      "userApproved": false,
+      "motionReviewed": false,
+      "voiceReviewed": false,
+      "appIntegrated": false,
+      "physicalPhoneTested": false
+    },
+    {
+      "name": "Shop Walk",
+      "original": "original/images/scenes/Sodafom-Shop-Walk-Character-Correction.png",
+      "candidate": "candidates/shop-walk-portrait-outfit-v3.png",
+      "width": 1672,
+      "height": 941,
+      "reviewNote": "Full motion and voice continuity remain untested.",
+      "visualInspection": "Outfit correction inspected after user feedback; fine-detail consistency not signed off",
+      "userApproved": false,
+      "motionReviewed": false,
+      "voiceReviewed": false,
+      "appIntegrated": false,
+      "physicalPhoneTested": false,
+      "outfitMatchApproved": false
+    },
+    {
+      "name": "Funfair",
+      "original": "original/images/scenes/Sodafom-Funfair-Character-Correction.png",
+      "candidate": "candidates/funfair-portrait-outfit-v3.png",
+      "width": 1672,
+      "height": 941,
+      "reviewNote": "Full motion and voice continuity remain untested.",
+      "visualInspection": "Outfit correction inspected after user feedback; fine-detail consistency not signed off",
+      "userApproved": false,
+      "motionReviewed": false,
+      "voiceReviewed": false,
+      "appIntegrated": false,
+      "physicalPhoneTested": false,
+      "outfitMatchApproved": false
+    },
+    {
+      "name": "Funfair Continuation",
+      "original": "original/images/scenes/Sodafom-Funfair-Continuation-Character-Correction.png",
+      "candidate": "candidates/funfair-continuation-portrait-outfit-v3.png",
+      "width": 1672,
+      "height": 941,
+      "reviewNote": "Source framing crops dog bodies and feet; full-body/contact review is not established.",
+      "visualInspection": "Outfit correction inspected after user feedback; fine-detail consistency not signed off",
+      "userApproved": false,
+      "motionReviewed": false,
+      "voiceReviewed": false,
+      "appIntegrated": false,
+      "physicalPhoneTested": false,
+      "outfitMatchApproved": false
+    },
+    {
+      "name": "Coaster",
+      "original": "original/images/scenes/Sodafom-Coaster-Character-Correction.png",
+      "candidate": "candidates/coaster-portrait-outfit-v3.png",
+      "width": 1672,
+      "height": 941,
+      "reviewNote": "Daytime setting retained; transition to dusk/night remains outstanding.",
+      "visualInspection": "Outfit correction inspected after user feedback; fine-detail consistency not signed off",
+      "userApproved": false,
+      "motionReviewed": false,
+      "voiceReviewed": false,
+      "appIntegrated": false,
+      "physicalPhoneTested": false,
+      "outfitMatchApproved": false
+    },
+    {
+      "name": "Waltzers",
+      "original": "original/images/scenes/Sodafom-Waltzers-Character-Correction.png",
+      "candidate": "candidates/waltzers-portrait-outfit-v3.png",
+      "width": 1672,
+      "height": 941,
+      "reviewNote": "Source airborne pose retained; boarding and ride safety in motion remain untested.",
+      "visualInspection": "Outfit correction inspected after user feedback; fine-detail consistency not signed off",
+      "userApproved": false,
+      "motionReviewed": false,
+      "voiceReviewed": false,
+      "appIntegrated": false,
+      "physicalPhoneTested": false,
+      "outfitMatchApproved": false
+    },
+    {
+      "name": "Twister",
+      "original": "original/images/scenes/Sodafom-Twister-Character-Correction.png",
+      "candidate": "candidates/twister-portrait-outfit-v3.png",
+      "width": 1672,
+      "height": 941,
+      "reviewNote": "Inherited bone-shaped collar tags differ from the group reference.",
+      "visualInspection": "Outfit correction inspected after user feedback; fine-detail consistency not signed off",
+      "userApproved": false,
+      "motionReviewed": false,
+      "voiceReviewed": false,
+      "appIntegrated": false,
+      "physicalPhoneTested": false,
+      "outfitMatchApproved": false
+    },
+    {
+      "name": "Twister portrait",
+      "original": "original/images/scenes/Sodafom-Twister-Character-Correction.png",
+      "candidate": "candidates/twister-vertical-outfit-v3.png",
+      "width": 941,
+      "height": 1672,
+      "requestedAspectRatio": "9:16",
+      "exactPixelRatio9To16": false,
+      "reviewNote": "Tall reframing retains the full cast. Native generated dimensions are recorded; exact 9:16 pixel ratio has not been achieved.",
+      "visualInspection": "Portrait and outfit correction inspected; fine-detail consistency not signed off",
+      "outfitMatchApproved": false,
+      "userApproved": false,
+      "motionReviewed": false,
+      "voiceReviewed": false,
+      "appIntegrated": false,
+      "physicalPhoneTested": false
+    }
+  ],
+  "remaining": [
+    "Final detailed Archie outfit comparison; first-pass acceptance superseded by user feedback",
+    "Michael acceptance of seven candidate likenesses",
+    "Inherited collar-tag differences",
+    "Cropped body/feet limits and Waltzers airborne pose",
+    "Daytime to dusk/night continuity",
+    "Full motion, voices, mouths, contact, boarding/exits and joins",
+    "Final-resolution masters and mobile assets",
+    "Integration by existing owners",
+    "Real app routes, controls and physical phone/tablet checks",
+    "Exact 9:16 portrait pixel dimensions: generated portrait is 941 x 1672, approximately 9:16"
+  ],
+  "userFeedback": "After the Michael-focused pass, Michael flagged differences across pictures. Review identified Archie A badge, neckline/zip, pocket trim and other outfit details drifting.",
+  "outfitReference": "original/images/master/approved-group-rocket.png",
+  "outfitAcceptance": "NOT SIGNED OFF: compare A geometry/scale, hood/neckline, zipper, cord details, two separate pocket trims, cuffs and waistband."
+}
