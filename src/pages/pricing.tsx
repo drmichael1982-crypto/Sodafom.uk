@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { Check, X, ChevronDown, ChevronRight, Shield, KeyRound } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { pricing } from 'virtual:content';
+import { pricing, games as gamesContent } from 'virtual:content';
 import PromoCodeBox from '@/components/PromoCodeBox';
 import { useNavigate } from 'react-router';
 
@@ -37,9 +37,9 @@ export default function PricingPage() {
     <>
       <Helmet>
         <title>Pricing — Simple, Honest Plans | Sodafom</title>
-        <meta name="description" content="One subscription unlocks all 118 Sodafom games for up to 4 children. Start with a 7-day free trial. No hidden fees, cancel any time." />
+        <meta name="description" content={`One subscription unlocks all ${gamesContent.games.length} Sodafom games for up to 4 children. Start with a 7-day free trial. No hidden fees, cancel any time.`} />
         <link rel="canonical" href="https://sodafom.uk/pricing" />
-        <meta property="og:title" content="Sodafom Pricing — All 118 Games, One Price" />
+        <meta property="og:title" content={`Sodafom Pricing — All ${gamesContent.games.length} Games, One Price`} />
         <meta property="og:description" content="Family plan from £3.33/month. 7-day free trial. Cancel any time." />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://sodafom.uk/pricing" />
@@ -269,9 +269,9 @@ export default function PricingPage() {
                     {pricing.comparison.rows.map((row, i) => (
                       <tr key={row.id} className={i % 2 === 0 ? 'bg-card' : 'bg-muted/50'}>
                         <td className="p-4 text-foreground font-semibold">{row.feature}</td>
-                        <td className="p-4 text-center text-muted-foreground">{row.free}</td>
-                        <td className="p-4 text-center font-bold text-primary">{row.family}</td>
-                        <td className="p-4 text-center text-muted-foreground">{row.school}</td>
+                        <td className="p-4 text-center text-muted-foreground">{row.feature === 'Number of games' ? gamesContent.games.length : row.free}</td>
+                        <td className="p-4 text-center font-bold text-primary">{row.feature === 'Number of games' ? gamesContent.games.length : row.family}</td>
+                        <td className="p-4 text-center text-muted-foreground">{row.feature === 'Number of games' ? gamesContent.games.length : row.school}</td>
                       </tr>
                     ))}
                   </tbody>

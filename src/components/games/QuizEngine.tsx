@@ -1,7 +1,8 @@
 /**
  * QuizEngine — reusable multiple-choice quiz component used by all new games.
  * Accepts a question bank, renders one question at a time, tracks score,
- * and calls onComplete(stars) when all rounds are done.
+ * and calls onComplete(stars, result) when all rounds are done.
+ * The first argument stays compatible with existing stars-only consumers.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -9,6 +10,7 @@ import { CheckCircle, XCircle, Star } from 'lucide-react';
 import ArchieGameHelper from '@/components/games/ArchieGameHelper';
 import ArchieReadAloudButton from '@/components/games/ArchieReadAloudButton';
 import { useVoice } from '@/lib/voice-context';
+import type { GameResult } from './GameShell';
 
 export interface QuizQuestion {
   question: string;
@@ -21,7 +23,7 @@ interface QuizEngineProps {
   title: string;
   emoji: string;
   questions: QuizQuestion[];
-  onComplete: (stars: number) => void;
+  onComplete: (stars: number, result: GameResult) => void;
   accentClass?: string; // tailwind bg class for correct highlight
   onQuestionChange?: (question: string, options?: string[]) => void; // reports current question text upward
   sessionKey?: string;
@@ -97,13 +99,23 @@ export default function QuizEngine({
   }, [selected, current, idx, pool.length, speak]);
 
   useEffect(() => {
-    if (done) {
+    if (done && pool.length > 0) {
       const pct = correct / pool.length;
       const stars = pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
-      const t = setTimeout(() => onComplete(stars), 1200);
+      const result: GameResult = { score: Math.round(pct * 100), correct, total: pool.length, stars };
+      const t = setTimeout(() => onComplete(stars, result), 1200);
       return () => clearTimeout(t);
     }
   }, [done, correct, pool.length, onComplete]);
+
+  if (pool.length === 0) {
+    return (
+      <div role="status" className="rounded-2xl border border-border bg-card p-6 text-center">
+        <p className="font-bold">No questions are ready for this game yet.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Choose another game to keep learning.</p>
+      </div>
+    );
+  }
 
   if (done) {
     const pct = correct / pool.length;

@@ -1,4 +1,4 @@
-import { about } from 'virtual:content';
+import { about, games as gamesContent } from 'virtual:content';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
@@ -125,7 +125,7 @@ function MissionVideo() {
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           {[
-            { emoji: '🎮', text: '127 games' },
+            { emoji: '🎮', text: `${gamesContent.games.length} games` },
             { emoji: '🇬🇧', text: 'UK curriculum' },
             { emoji: '⭐', text: 'Star rewards' },
             { emoji: '🔒', text: 'Ad-free & safe' },
@@ -213,7 +213,7 @@ export default function AboutPage() {
                 {about.STATS.map(stat => (
                   <motion.div key={stat.label} variants={fadeUp} className="bg-muted rounded-2xl p-6 text-center border border-border">
                     <div className="text-3xl mb-2">{stat.emoji}</div>
-                    <div className="text-3xl font-black text-primary mb-1" style={{ fontFamily: 'var(--font-heading)' }}>{stat.value}</div>
+                    <div className="text-3xl font-black text-primary mb-1" style={{ fontFamily: 'var(--font-heading)' }}>{stat.label === 'Learning games' ? gamesContent.games.length : stat.value}</div>
                     <div className="text-sm font-bold text-muted-foreground">{stat.label}</div>
                   </motion.div>
                 ))}
