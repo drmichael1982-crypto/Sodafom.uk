@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/components/three/**/*.ts",
+    "src/components/three/**/*.tsx",
+    "src/lib/visual-world.ts"
+  ]
+}
