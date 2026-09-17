@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -23,7 +24,7 @@ vi.mock('@react-three/drei', () => {
   });
 
   return {
-    Html: ({ children }: { children?: React.ReactNode }) => <>{children}</>,
+    Html: ({ children }: { children?: ReactNode }) => <>{children}</>,
     Preload: () => null,
     useGLTF,
   };
