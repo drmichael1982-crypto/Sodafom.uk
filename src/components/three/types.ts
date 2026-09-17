@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { MovementId } from '@/lib/visual-world';
 
 export type Sodafom3DQuality = 'auto' | 'low' | 'balanced' | 'high';
@@ -23,7 +23,7 @@ export interface Sodafom3DEnvironment {
 export interface Sodafom3DWorldProps {
   children?: ReactNode;
   className?: string;
-  style?: React.CSSProperties;
+  style?: CSSProperties;
   ariaLabel?: string;
   paused?: boolean;
   reducedMotion?: boolean;
