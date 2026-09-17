@@ -6,6 +6,7 @@
   "include": [
     "src/components/three/**/*.ts",
     "src/components/three/**/*.tsx",
-    "src/lib/visual-world.ts"
+    "src/lib/visual-world.ts",
+    "src/tests/setup.ts"
   ]
 }
