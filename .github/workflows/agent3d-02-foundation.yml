@@ -44,25 +44,11 @@ jobs:
         continue-on-error: true
         run: pnpm type-check
 
-      - name: Create Agent 02 scoped TypeScript config
-        run: |
-          cat > tsconfig.agent3d-02-ci.json <<'EOF'
-          {
-            "extends": "./tsconfig.json",
-            "include": [
-              "src/components/three/**/*.ts",
-              "src/components/three/**/*.tsx",
-              "src/lib/visual-world.ts",
-              "src/tests/setup.ts"
-            ]
-          }
-          EOF
-
       - name: Agent 02 scoped type-check
-        run: pnpm exec tsc -p tsconfig.agent3d-02-ci.json --noEmit
+        run: pnpm exec tsc -p tsconfig.agent3d-02.json --noEmit
 
       - name: Agent 02 focused tests
-        run: pnpm test -- --run src/components/three
+        run: pnpm exec vitest run src/components/three
 
       - name: Production build
         run: pnpm build
