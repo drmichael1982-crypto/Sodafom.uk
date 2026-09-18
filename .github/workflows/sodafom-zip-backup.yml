@@ -1,0 +1,44 @@
+name: Sodafom ZIP Backup Checkpoint
+
+on:
+  push:
+    branches:
+      - backup/sodafom-review-20260918-0600-bst-73e093a
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact coordinator-approved commit
+        uses: actions/checkout@v4
+        with:
+          ref: 73e093aa3f6ff9a5f68a77e37ce0629e9c8ababe
+          fetch-depth: 1
+
+      - name: Record checkpoint metadata
+        shell: bash
+        run: |
+          cat > SODAFOM_CHECKPOINT.txt <<'EOF'
+          Repository: drmichael1982-crypto/Sodafom.uk
+          Coordinator review branch: visual/approved-3d-world-20260917
+          Captured commit: 73e093aa3f6ff9a5f68a77e37ce0629e9c8ababe
+          Captured commit message: Add tests for approved Sodafom world routes and reusable movement IDs
+          Captured branch commit time: 2026-09-17T15:34:21Z
+          Backup requested: 2026-09-18T05:00:03Z (2026-09-18 06:00:03 Europe/London)
+          Coordinator source: GitHub issue #51
+          Main/master merged: NO
+          Railway deployed: NO
+          Sodafoam Systems 797: kept separate; not part of this Sodafom.uk checkpoint
+          EOF
+
+      - name: Upload timestamped ZIP checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sodafom-review-20260918-0600-bst-73e093a
+          path: .
+          include-hidden-files: false
+          if-no-files-found: error
+          retention-days: 90
