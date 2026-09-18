@@ -44,6 +44,14 @@ import {
   type LessonDuration,
   type LessonStageKind,
 } from '@/lib/tutor/classroom-system';
+import { ageBandFromCurriculumGroup, type LessonAgeBand } from '@/lib/lessons/lesson-model';
+import {
+  beginLessonSessionFromLegacy,
+  publishLessonVisibility,
+  readActiveLessonSession,
+  updateLessonSession,
+  type LessonSession,
+} from '@/lib/lessons/lesson-session';
 
 const SUBJECTS: CurriculumSubject[] = ['Maths', 'English', 'Science', 'History', 'Geography', 'French', 'German', 'PE'];
 const DURATIONS: LessonDuration[] = [15, 20, 30, 60];
@@ -167,31 +175,38 @@ export default function ClassroomLessonPage() {
   const requestedSubject = searchParams.get('subject');
   const requestedAge = searchParams.get('age');
   const directLesson = searchParams.get('direct') === '1';
+  const initialSessionRef = useRef<LessonSession | null>(
+    searchParams.get('resume') === '1' || !requestedSubject ? readActiveLessonSession() : null,
+  );
+  const initialSession = initialSessionRef.current;
+  const lessonSessionRef = useRef<LessonSession | null>(initialSession);
+  const skipInitialResetRef = useRef(Boolean(initialSession));
 
   const [profile, setProfile] = useState<ChildTutorProfile>(() => loadTutorMemory());
   const [showProfileSetup, setShowProfileSetup] = useState(() => !directLesson && !profile.childName);
   const [ageGroup, setAgeGroup] = useState<CurriculumAgeGroup | null>(() => {
     if (requestedAge === '5-7' || requestedAge === '8-10' || requestedAge === '11-13') return requestedAge;
+    if (initialSession) return initialSession.curriculumAgeGroup;
     return explicitAge();
   });
   const [subject, setSubject] = useState<CurriculumSubject>(() => {
     const stored = typeof window === 'undefined' ? null : localStorage.getItem('sodafom_lesson_subject');
-    const candidate = requestedSubject ?? stored ?? profile.recentSubject ?? 'Maths';
+    const candidate = requestedSubject ?? initialSession?.subject ?? stored ?? profile.recentSubject ?? 'Maths';
     return SUBJECTS.includes(candidate as CurriculumSubject) ? (candidate as CurriculumSubject) : 'Maths';
   });
   const [duration, setDuration] = useState<LessonDuration>(() => {
-    const stored = typeof window === 'undefined' ? 30 : Number(localStorage.getItem('sodafom_lesson_minutes') ?? 30);
+    const stored = initialSession?.durationMinutes ?? (typeof window === 'undefined' ? 30 : Number(localStorage.getItem('sodafom_lesson_minutes') ?? 30));
     return DURATIONS.includes(stored as LessonDuration) ? (stored as LessonDuration) : 30;
   });
   const [day, setDay] = useState(() => {
-    const stored = typeof window === 'undefined' ? 1 : Number(localStorage.getItem('sodafom_lesson_day') ?? 1);
+    const stored = initialSession?.day ?? (typeof window === 'undefined' ? 1 : Number(localStorage.getItem('sodafom_lesson_day') ?? 1));
     return Number.isInteger(stored) ? Math.min(365, Math.max(1, stored)) : 1;
   });
   const [cloud, setCloud] = useState<CloudLessonResponse | null>(null);
   const [cloudLoading, setCloudLoading] = useState(false);
-  const [stageIndex, setStageIndex] = useState(0);
-  const [secondsRemaining, setSecondsRemaining] = useState(() => duration * 60);
-  const [paused, setPaused] = useState(false);
+  const [stageIndex, setStageIndex] = useState(() => initialSession?.stageIndex ?? 0);
+  const [secondsRemaining, setSecondsRemaining] = useState(() => Math.max(0, duration * 60 - (initialSession?.elapsedSeconds ?? 0)));
+  const [paused, setPaused] = useState(() => initialSession?.status === 'paused');
   const [helpPaused, setHelpPaused] = useState(false);
   const [complete, setComplete] = useState(false);
   const [activityDone, setActivityDone] = useState(false);
@@ -204,18 +219,19 @@ export default function ClassroomLessonPage() {
   const [hint, setHint] = useState(false);
   const [simpler, setSimpler] = useState(false);
   const [feedback, setFeedback] = useState<{ isCorrect: boolean; message: string } | null>(null);
-  const [questionIndex, setQuestionIndex] = useState(0);
+  const [questionIndex, setQuestionIndex] = useState(() => initialSession?.questionIndex ?? 0);
   const [selectedOption, setSelectedOption] = useState('');
   const [typedInput, setTypedInput] = useState('');
   const [attemptedIds, setAttemptedIds] = useState<Record<string, boolean>>({});
-  const [score, setScore] = useState({ correct: 0, attempted: 0 });
-  const [saveStatus, setSaveStatus] = useState('Progress saves as you learn');
+  const [score, setScore] = useState(() => initialSession?.score ?? { correct: 0, attempted: 0 });
+  const [saveStatus, setSaveStatus] = useState(() => initialSession ? 'Lesson restored on this device' : 'Progress saves as you learn');
   const recognitionRef = useRef<any>(null);
   const progressSavedRef = useRef(false);
 
   const activeChild = typeof window === 'undefined' ? null : getActiveChild();
   const childName = activeChild?.name || profile.childName || 'Learner';
   const safeAge = ageGroup ?? '8-10';
+  const lessonAgeBand: LessonAgeBand = lessonSessionRef.current?.ageBand ?? ageBandFromCurriculumGroup(safeAge);
   const localLesson = useMemo(
     () => buildDailyCurriculumLesson({ subject, ageGroup: safeAge, day, durationMinutes: duration }),
     [subject, safeAge, day, duration],
@@ -285,6 +301,10 @@ export default function ClassroomLessonPage() {
   }, [ageGroup, day, subject]);
 
   useEffect(() => {
+    if (skipInitialResetRef.current) {
+      skipInitialResetRef.current = false;
+      return;
+    }
     setSecondsRemaining(duration * 60);
     setStageIndex(0);
     setQuestionIndex(0);
@@ -297,6 +317,67 @@ export default function ClassroomLessonPage() {
     setFeedback(null);
     progressSavedRef.current = false;
   }, [duration, subject, ageGroup, day]);
+
+  useEffect(() => {
+    if (!ageGroup) return;
+    const existing = lessonSessionRef.current;
+    const matches = existing
+      && existing.subject === subject
+      && existing.curriculumAgeGroup === ageGroup
+      && existing.day === day
+      && existing.durationMinutes === duration
+      && existing.status !== 'completed';
+    if (matches) return;
+    lessonSessionRef.current = beginLessonSessionFromLegacy({
+      subject,
+      ageGroup,
+      day,
+      durationMinutes: duration,
+      childId: activeChild?.id === undefined ? undefined : String(activeChild.id),
+    });
+  }, [activeChild?.id, ageGroup, day, duration, subject]);
+
+  const persistLessonPlace = useCallback((nextStatus?: 'in-progress' | 'paused') => {
+    const existing = lessonSessionRef.current;
+    if (!existing || !ageGroup || existing.status === 'completed') return;
+    const elapsedSeconds = Math.max(0, duration * 60 - secondsRemaining);
+    const status = nextStatus ?? (paused || helpPaused ? 'paused' : 'in-progress');
+    const shouldWrite = existing.stageIndex !== stageIndex
+      || existing.questionIndex !== questionIndex
+      || existing.status !== status
+      || existing.score.correct !== score.correct
+      || existing.score.attempted !== score.attempted
+      || Math.abs(existing.elapsedSeconds - elapsedSeconds) >= 15;
+    if (!shouldWrite) return;
+    const updated = updateLessonSession(existing, {
+      childId: activeChild?.id === undefined ? existing.childId : String(activeChild.id),
+      lessonId: lesson.id,
+      lessonTitle: lesson.title,
+      stageIndex,
+      questionIndex,
+      elapsedSeconds,
+      score,
+      status,
+    });
+    lessonSessionRef.current = updated;
+    publishLessonVisibility(updated);
+  }, [activeChild?.id, ageGroup, duration, helpPaused, lesson.id, lesson.title, paused, questionIndex, score, secondsRemaining, stageIndex]);
+
+  useEffect(() => {
+    persistLessonPlace();
+  }, [persistLessonPlace]);
+
+  useEffect(() => {
+    const flush = () => persistLessonPlace(paused || helpPaused ? 'paused' : 'in-progress');
+    const onVisibility = () => { if (document.visibilityState === 'hidden') flush(); };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      flush();
+      window.removeEventListener('pagehide', flush);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [helpPaused, paused, persistLessonPlace]);
 
   useEffect(() => {
     if (effectivePaused || secondsRemaining <= 0) return;
@@ -437,8 +518,24 @@ export default function ClassroomLessonPage() {
     saveTutorMemory(updated);
     setProfile(updated);
     setSaveStatus('Saved on this device');
+    let summary = null;
+    if (lessonSessionRef.current) {
+      const finished = updateLessonSession(lessonSessionRef.current, {
+        childId: activeChild?.id === undefined ? lessonSessionRef.current.childId : String(activeChild.id),
+        lessonId: lesson.id,
+        lessonTitle: lesson.title,
+        stageIndex,
+        questionIndex,
+        elapsedSeconds: Math.max(0, duration * 60 - secondsRemaining),
+        score,
+        status: 'completed',
+        completedAt: new Date().toISOString(),
+      });
+      lessonSessionRef.current = finished;
+      summary = publishLessonVisibility(finished);
+    }
     if (!activeChild?.id) return;
-    const percentage = score.attempted ? Math.round((score.correct / score.attempted) * 100) : 0;
+    const percentage = summary?.scorePercent ?? (score.attempted ? Math.round((score.correct / score.attempted) * 100) : 0);
     try {
       const response = await fetch(`/api/children/${activeChild.id}/progress`, {
         method: 'POST',
@@ -450,13 +547,17 @@ export default function ClassroomLessonPage() {
           score: percentage,
           maxScore: 100,
           durationSeconds: Math.max(0, duration * 60 - secondsRemaining),
+          activityType: 'lesson',
+          lessonSessionId: summary?.sessionId,
+          ageBand: summary?.ageBand ?? lessonAgeBand,
+          status: 'completed',
         }),
       });
       if (response.ok) setSaveStatus('Saved on this device and to your signed-in progress');
     } catch {
       // Local learning memory is the supported offline fallback.
     }
-  }, [activeChild?.id, activeChild?.name, ageGroup, duration, lesson.id, lesson.title, lesson.topic, profile, score.attempted, score.correct, secondsRemaining, subject]);
+  }, [activeChild?.id, activeChild?.name, ageGroup, duration, lesson.id, lesson.title, lesson.topic, lessonAgeBand, profile, questionIndex, score, secondsRemaining, stageIndex, subject]);
 
   const finishLesson = useCallback(() => {
     setComplete(true);
@@ -521,6 +622,13 @@ export default function ClassroomLessonPage() {
     }
   };
 
+  const leaveLesson = () => {
+    stopRecognition();
+    stopTts();
+    persistLessonPlace('paused');
+    navigate('/lessons');
+  };
+
   if (!ageGroup) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-sky-700 via-indigo-800 to-purple-950 p-4 text-white">
@@ -547,12 +655,12 @@ export default function ClassroomLessonPage() {
       <Helmet><title>{subject} Classroom Lesson — Sodafom</title></Helmet>
       <header className="sticky top-0 z-40 border-b border-white/20 bg-slate-950/90 p-3 backdrop-blur">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2">
-          <button type="button" onClick={() => { stopRecognition(); stopTts(); navigate('/lessons'); }} className="rounded-xl bg-white px-3 py-2 font-black text-slate-900" aria-label="Back to lessons">
+          <button type="button" onClick={leaveLesson} className="rounded-xl bg-white px-3 py-2 font-black text-slate-900" aria-label="Back to lessons">
             <ArrowLeft size={18} />
           </button>
           <div className="min-w-40 flex-1">
             <h1 className="font-black">{subject} Classroom</h1>
-            <p className="text-xs font-bold text-cyan-200">Ages {ageGroup.replace('-', '–')} · Day {day} · {duration} minutes</p>
+            <p className="text-xs font-bold text-cyan-200">Ages {lessonAgeBand.replace('-', '–')} · Day {day} · {duration} minutes</p>
           </div>
           <select value={subject} onChange={(event) => changeSubject(event.target.value as CurriculumSubject)} className="rounded-xl bg-white px-3 py-2 text-xs font-black text-slate-900" aria-label="Subject">
             {SUBJECTS.map((value) => <option key={value}>{value}</option>)}

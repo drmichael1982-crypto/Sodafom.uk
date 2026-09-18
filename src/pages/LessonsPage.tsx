@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion } from 'motion/react';
-import { Clock3, Play, Volume2 } from 'lucide-react';
+import { BookOpen, Clock3, Play, RotateCcw, Volume2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import FeaturePageShell from '@/components/FeaturePageShell';
 import { ttsSpeak } from '@/lib/voice-context';
-import { CURRICULUM_DAYS, type CurriculumAgeGroup, type CurriculumSubject } from '@/lib/tutor/curriculum-year-plan';
+import { CURRICULUM_DAYS, type CurriculumSubject } from '@/lib/tutor/curriculum-year-plan';
+import {
+  LESSON_AGE_OPTIONS,
+  LESSON_DURATIONS,
+  curriculumGroupForAgeBand,
+  isLessonAgeBand,
+  type LessonAgeBand,
+  type LessonDuration,
+} from '@/lib/lessons/lesson-model';
+import { beginLessonSession, readActiveLessonSession, type LessonSession } from '@/lib/lessons/lesson-session';
 
 const SUBJECTS: Array<{ name: CurriculumSubject; label?: string; emoji: string; colour: string }> = [
   { name: 'Maths', emoji: '🔢', colour: 'from-blue-500 to-indigo-700' },
@@ -26,33 +35,41 @@ const SUBJECTS: Array<{ name: CurriculumSubject; label?: string; emoji: string; 
   { name: 'German', emoji: '🇩🇪', colour: 'from-amber-400 to-red-700' },
 ];
 
-const DURATIONS = [15, 20, 30, 60] as const;
-const AGE_GROUPS: Array<{ value: CurriculumAgeGroup; label: string }> = [
-  { value: '5-7', label: 'Ages 5–7 · KS1' },
-  { value: '8-10', label: 'Ages 8–10 · KS2' },
-  { value: '11-13', label: 'Ages 11–13 · KS3' },
-];
-
 export default function LessonsPage() {
   const navigate = useNavigate();
-  const [minutes, setMinutes] = useState<(typeof DURATIONS)[number]>(30);
-  const [ageGroup, setAgeGroup] = useState<CurriculumAgeGroup>('8-10');
+  const [minutes, setMinutes] = useState<LessonDuration>(30);
+  const [ageBand, setAgeBand] = useState<LessonAgeBand>('8-9');
   const [lessonDay, setLessonDay] = useState(1);
+  const [activeSession, setActiveSession] = useState<LessonSession | null>(null);
 
   useEffect(() => {
-    const storedAge = localStorage.getItem('sodafom_lesson_age');
-    if (storedAge === '5-7' || storedAge === '8-10' || storedAge === '11-13') setAgeGroup(storedAge);
+    const current = readActiveLessonSession();
+    setActiveSession(current);
+    if (current) {
+      setAgeBand(current.ageBand);
+      setMinutes(current.durationMinutes);
+      setLessonDay(current.day);
+    }
+    const storedBand = localStorage.getItem('sodafom_lesson_age_band');
+    if (!current && isLessonAgeBand(storedBand)) setAgeBand(storedBand);
     const storedDay = Number(localStorage.getItem('sodafom_lesson_day'));
-    if (Number.isInteger(storedDay) && storedDay >= 1 && storedDay <= CURRICULUM_DAYS) setLessonDay(storedDay);
+    if (!current && Number.isInteger(storedDay) && storedDay >= 1 && storedDay <= CURRICULUM_DAYS) setLessonDay(storedDay);
   }, []);
 
   const startLesson = (subject: CurriculumSubject) => {
+    const ageGroup = curriculumGroupForAgeBand(ageBand);
     localStorage.setItem('sodafom_lesson_subject', subject);
     localStorage.setItem('sodafom_lesson_minutes', String(minutes));
     localStorage.setItem('sodafom_lesson_age', ageGroup);
+    localStorage.setItem('sodafom_lesson_age_band', ageBand);
     localStorage.setItem('sodafom_lesson_day', String(lessonDay));
+    beginLessonSession({ subject, ageBand, day: lessonDay, durationMinutes: minutes });
     ttsSpeak(`Starting day ${lessonDay} of your ${minutes} minute ${subject} lesson with Archie.`);
     navigate('/tutor');
+  };
+
+  const continueLesson = () => {
+    if (activeSession) navigate('/tutor?resume=1');
   };
 
   return (
@@ -62,18 +79,34 @@ export default function LessonsPage() {
         <meta name="description" content="Choose an age-friendly Sodafom lesson with Archie." />
       </Helmet>
       <FeaturePageShell title="Archie's Lessons" subtitle="Choose an age, a day and a subject from the 365-day learning path." emoji="🎓" accent="from-blue-500 via-purple-600 to-indigo-900">
+        {activeSession && (
+          <section className="mb-6 rounded-[2rem] border-4 border-amber-200 bg-amber-50 p-5 text-indigo-950 shadow-xl" aria-label="Continue lesson">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-black uppercase tracking-wide text-amber-700">Ready when you are</p>
+                <h2 className="mt-1 flex items-center gap-2 text-2xl font-black"><BookOpen /> Continue {activeSession.subject}</h2>
+                <p className="mt-1 font-semibold">Ages {activeSession.ageBand.replace('-', '–')} · Day {activeSession.day} · {Math.floor(activeSession.elapsedSeconds / 60)} minutes done</p>
+              </div>
+              <button type="button" onClick={continueLesson} className="flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 font-black text-indigo-950 shadow-lg hover:bg-amber-400">
+                <RotateCcw size={20} /> Carry on
+              </button>
+            </div>
+          </section>
+        )}
+
         <section className="mb-6 rounded-[2rem] border-4 border-white/70 bg-white/95 p-5 text-sky-950 shadow-xl">
           <h2 className="text-xl font-black">1. Who is learning?</h2>
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            {AGE_GROUPS.map(age => (
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+            {LESSON_AGE_OPTIONS.map(age => (
               <button
                 key={age.value}
                 type="button"
-                onClick={() => setAgeGroup(age.value)}
-                aria-pressed={ageGroup === age.value}
-                className={`min-h-14 rounded-2xl border-2 px-3 font-black transition ${ageGroup === age.value ? 'border-sky-700 bg-sky-600 text-white shadow-lg' : 'border-sky-200 bg-sky-50 text-sky-900'}`}
+                onClick={() => setAgeBand(age.value)}
+                aria-pressed={ageBand === age.value}
+                className={`min-h-16 rounded-2xl border-2 px-2 font-black transition ${ageBand === age.value ? 'border-sky-700 bg-sky-600 text-white shadow-lg' : 'border-sky-200 bg-sky-50 text-sky-900'}`}
               >
-                {age.label}
+                <span className="block">{age.label}</span>
+                <span className="block text-xs opacity-80">{age.schoolStage}</span>
               </button>
             ))}
           </div>
@@ -98,7 +131,7 @@ export default function LessonsPage() {
         <section className="mb-6 rounded-[2rem] border-4 border-white/70 bg-white/95 p-5 text-sky-950 shadow-xl">
           <h2 className="flex items-center gap-2 text-xl font-black"><Clock3 className="text-purple-600" /> 2. How long should the lesson be?</h2>
           <div className="mt-4 grid grid-cols-4 gap-2">
-            {DURATIONS.map(duration => (
+            {LESSON_DURATIONS.map(duration => (
               <button
                 key={duration}
                 type="button"
