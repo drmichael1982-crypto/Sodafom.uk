@@ -68,6 +68,8 @@ import MockExamsPage from './pages/mock-exams/index';
 import AdminPortal from './pages/admin/AdminPortal';
 import SodafomBotPage from './pages/chatbot/SodafomBotPage';
 import AdminPanelPage from './pages/admin-panel';
+import AdminBusinessSectionsPage from './pages/admin797/AdminBusinessSectionsPage';
+import { Admin797Gate } from './components/admin797/Admin797Gate';
 import TeacherHubDashboard from './pages/teacher-hub/index';
 import TeacherHubLoginPage from './pages/teacher-hub/login';
 import StudentDetailPage from './pages/teacher-hub/student/[studentId]';
@@ -219,6 +221,9 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/admin-panel',
   element: <AdminPanelPage />
+}, {
+  path: '/admin/797',
+  element: <Admin797Gate><AdminBusinessSectionsPage /></Admin797Gate>
 }, {
   path: '/admin/sodafom-bot',
   element: <Navigate to="/admin-panel?tab=bot" replace />
