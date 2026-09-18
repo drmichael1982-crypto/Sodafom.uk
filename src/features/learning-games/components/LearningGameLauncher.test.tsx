@@ -7,7 +7,7 @@ describe("LearningGameLauncher", () => {
   it("filters by subject and launches the selected game", async () => {
     const user = userEvent.setup();
     const onLaunch = vi.fn();
-    render(<LearningGameLauncher onLaunch={onLaunch} learnerAge={7} />);
+    render(<LearningGameLauncher onLaunch={onLaunch} learnerAgeBand="5-7" />);
 
     expect(
       screen.getByRole("button", { name: "Play Number Bonds to 10" }),

@@ -4,32 +4,37 @@ This folder is the isolated Worker 08 foundation for the new children's app. It 
 
 ## What is included
 
-- A data-driven launcher with subject and age filtering.
+- A versioned, data-driven launcher with subject and age-band filtering.
 - A pure reducer for ready, playing, feedback, paused, and completed states.
 - An accessible multiple-choice shell with large touch targets, keyboard controls, text feedback, pause/resume, and no timer.
 - Two small starter games: Number Bonds to 10 and Word Family Match.
-- Versioned completion events and reward requests.
+- Server-issued attempt receipts, versioned completion commands, and reward requests.
 - Focused unit and interaction tests.
 
 ## Progress ownership
 
-Games do not persist progress and do not award stars, badges, or levels. A host app injects `onProgress` and `onReward` into `LearningGamesExperience`. This keeps storage, retries, parent/teacher reporting, and reward policy in one app-wide service shared with lessons and reading.
+Games do not persist progress and do not award stars, badges, or levels. Durable progress requires a short-lived `GameAttemptReceipt` issued by the trusted game-attempt service. Without one, the same UI works in honest practice mode and emits no progress or reward request.
 
-Completion event IDs are stable within one play attempt. The app-wide progress service must treat `eventId` as an idempotency key. A replay creates a new session attempt and therefore a new event ID.
+The game sends only the canonical Worker 14 progress fields that the child client can safely claim: activity kind/ID/version, completion type, score percentage, skill codes, source, attempt ID, and idempotency key. The server attaches authoritative tenant, child, event ID, and occurrence time. Raw answers are not included in durable progress commands.
 
 ## Integration example
 
 ```tsx
 <LearningGamesExperience
-  learnerAge={7}
+  learnerAgeBand="5-7"
+  attemptsByGameId={issuedAttempts}
   onProgress={progressService.recordCompletion}
   onReward={rewardService.requestReward}
   onReadAloud={speechService.speak}
 />
 ```
 
-The progress and reward callbacks are intentionally fire-and-forget from the child-facing screen. The host services own durable queuing, retry, error reporting, and offline sync.
+The host services own durable queuing, retry, error reporting, offline sync, server-side score validation, and reward calculation. The client never mints stars or trusts itself as the final progress authority.
+
+## 797 and Archie isolation
+
+The learning-games package is a pure child-learning feature. It has no direct network client and must not import Archie, 797, admin, business, diagnostic, codebase, payment, secret, database, or server modules. Boundary tests fail if one of those dependencies or a direct network call is added. Integration happens only through the narrow progress, reward, and read-aloud ports supplied by the trusted host app.
 
 ## Route status
 
-No production route is wired in this branch. Worker 01 architecture notes were not available when this pass was completed. The coordinator should choose whether this experience replaces the legacy `/games` page or launches from a new 3D/world route.
+No production route is wired in this branch. Worker 01 requires a canonical game-attempt API, a shared progress service, full checks, and peer review before dev-branch integration. The coordinator should then choose whether this experience replaces the legacy `/games` page or launches from a new 3D/world route.

@@ -1,5 +1,5 @@
 import { scorePercentage } from "./engine";
-import type { LearningGameDefinition, LearningGameResult } from "./types";
+import type { GameAttemptReceipt, LearningGameDefinition } from "./types";
 
 /**
  * Boundary shared with the future app-wide progress service.
@@ -8,70 +8,89 @@ import type { LearningGameDefinition, LearningGameResult } from "./types";
  * update totals, or write rewards, so lessons and reading can use one upstream
  * progress service without competing local state.
  */
-export interface LearningActivityCompletedEventV1 {
+export interface GameCompletionCommandV1 {
   schemaVersion: 1;
-  eventId: string;
-  activityType: "game";
+  idempotencyKey: string;
+  attemptId: string;
+  activityKind: "game";
   activityId: string;
-  sessionId: string;
-  subject: LearningGameDefinition["subject"];
-  skills: readonly string[];
-  correctCount: number;
-  questionCount: number;
+  activityVersion: number;
+  eventType: "completed";
   scorePercent: number;
-  results: readonly LearningGameResult[];
+  skillCodes: readonly string[];
+  source: "client";
 }
 
 export type LearningProgressSink = (
-  event: LearningActivityCompletedEventV1,
-) => void | Promise<void>;
+  event: GameCompletionCommandV1,
+) => GameProgressReceiptV1 | Promise<GameProgressReceiptV1>;
 
-export interface LearningRewardRequestV1 {
+export interface VerifiedGameRewardV1 {
   schemaVersion: 1;
-  requestId: string;
-  reason: "activity-completed";
-  activityType: "game";
-  activityId: string;
-  sessionId: string;
-  scorePercent: number;
+  ledgerEntryId: string;
+  attemptId: string;
+  kind: "stars" | "badge";
+  amount?: number;
 }
 
 export type LearningRewardHook = (
-  request: LearningRewardRequestV1,
+  reward: VerifiedGameRewardV1,
 ) => void | Promise<void>;
 
-export function createGameCompletionEvent(input: {
+export interface GameProgressReceiptV1 {
+  schemaVersion: 1;
+  attemptId: string;
+  status: "queued" | "recorded";
+  reward?: VerifiedGameRewardV1;
+}
+
+export function createGameCompletionCommand(input: {
   definition: LearningGameDefinition;
-  sessionId: string;
+  attempt: GameAttemptReceipt;
   score: number;
-  results: readonly LearningGameResult[];
-}): LearningActivityCompletedEventV1 {
+}): GameCompletionCommandV1 {
+  assertAttemptMatchesGame(input.attempt, input.definition);
   const questionCount = input.definition.questions.length;
   return {
     schemaVersion: 1,
-    eventId: `${input.sessionId}:${input.definition.id}:completed`,
-    activityType: "game",
+    idempotencyKey: `${input.attempt.attemptId}:completed`,
+    attemptId: input.attempt.attemptId,
+    activityKind: "game",
     activityId: input.definition.id,
-    sessionId: input.sessionId,
-    subject: input.definition.subject,
-    skills: input.definition.skills,
-    correctCount: input.score,
-    questionCount,
+    activityVersion: input.definition.version,
+    eventType: "completed",
     scorePercent: scorePercentage(input.score, questionCount),
-    results: input.results,
+    skillCodes: input.definition.skillCodes,
+    source: "client",
   };
 }
 
-export function createRewardRequest(
-  event: LearningActivityCompletedEventV1,
-): LearningRewardRequestV1 {
-  return {
-    schemaVersion: 1,
-    requestId: `${event.eventId}:reward`,
-    reason: "activity-completed",
-    activityType: "game",
-    activityId: event.activityId,
-    sessionId: event.sessionId,
-    scorePercent: event.scorePercent,
-  };
+export function assertAttemptMatchesGame(
+  attempt: GameAttemptReceipt,
+  definition: LearningGameDefinition,
+): void {
+  if (
+    attempt.gameId !== definition.id ||
+    attempt.gameVersion !== definition.version ||
+    attempt.contentVersion !== definition.questionSource.contentVersion
+  ) {
+    throw new Error("Game attempt does not match the reviewed game content.");
+  }
+
+  const expiresAt = Date.parse(attempt.expiresAt);
+  if (!Number.isFinite(expiresAt) || expiresAt <= Date.now()) {
+    throw new Error("Game attempt has expired.");
+  }
+}
+
+export function assertProgressReceiptMatchesAttempt(
+  receipt: GameProgressReceiptV1,
+  attempt: GameAttemptReceipt,
+): void {
+  if (receipt.attemptId !== attempt.attemptId) {
+    throw new Error("Progress receipt does not match the game attempt.");
+  }
+  if (receipt.reward && receipt.reward.attemptId !== attempt.attemptId) {
+    throw new Error("Reward receipt does not match the game attempt.");
+  }
 }

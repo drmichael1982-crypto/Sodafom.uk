@@ -1,6 +1,7 @@
 export * from "./accessibility";
 export * from "./catalog";
 export * from "./engine";
+export * from "./navigation";
 export * from "./progress";
 export * from "./types";
 export * from "./components/LearningGameLauncher";

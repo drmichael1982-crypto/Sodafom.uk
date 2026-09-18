@@ -1,10 +1,14 @@
 import { useMemo, useState } from "react";
 import { learningGameCatalog } from "../catalog";
-import type { LearningGameDefinition, LearningGameSubject } from "../types";
+import type {
+  LearningAgeBand,
+  LearningGameDefinition,
+  LearningGameSubject,
+} from "../types";
 
 export interface LearningGameLauncherProps {
   games?: readonly LearningGameDefinition[];
-  learnerAge?: number;
+  learnerAgeBand?: LearningAgeBand;
   onLaunch: (game: LearningGameDefinition) => void;
 }
 
@@ -12,7 +16,7 @@ type SubjectFilter = "all" | LearningGameSubject;
 
 export function LearningGameLauncher({
   games = learningGameCatalog,
-  learnerAge,
+  learnerAgeBand,
   onLaunch,
 }: LearningGameLauncherProps) {
   const [subject, setSubject] = useState<SubjectFilter>("all");
@@ -22,11 +26,11 @@ export function LearningGameLauncher({
       games.filter((game) => {
         const matchesSubject = subject === "all" || game.subject === subject;
         const matchesAge =
-          learnerAge === undefined ||
-          (learnerAge >= game.ageRange.min && learnerAge <= game.ageRange.max);
+          learnerAgeBand === undefined ||
+          game.ageBands.includes(learnerAgeBand);
         return matchesSubject && matchesAge;
       }),
-    [games, learnerAge, subject],
+    [games, learnerAgeBand, subject],
   );
 
   return (
@@ -85,7 +89,7 @@ export function LearningGameLauncher({
             >
               <article className="flex w-full flex-col">
                 <p className="text-sm font-bold uppercase tracking-wide text-sky-800">
-                  {game.subject} · Ages {game.ageRange.min}–{game.ageRange.max}
+                  {game.subject} · Age bands {game.ageBands.join(", ")}
                 </p>
                 <h2 className="mt-1 text-2xl font-black text-slate-950">
                   {game.title}

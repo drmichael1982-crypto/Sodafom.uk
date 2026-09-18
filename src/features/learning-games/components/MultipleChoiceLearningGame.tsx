@@ -1,19 +1,22 @@
-import { useId, useReducer, useRef } from "react";
+import { useId, useReducer, useRef, useState } from "react";
 import {
   INITIAL_LEARNING_GAME_SESSION,
   learningGameReducer,
   scorePercentage,
 } from "../engine";
 import {
-  createGameCompletionEvent,
-  createRewardRequest,
+  createGameCompletionCommand,
+  assertProgressReceiptMatchesAttempt,
   type LearningProgressSink,
   type LearningRewardHook,
 } from "../progress";
-import type { LearningGameDefinition } from "../types";
+import type { GameAttemptReceipt, LearningGameDefinition } from "../types";
+
+type ProgressStatus = "practice" | "pending" | "queued" | "failed";
 
 export interface MultipleChoiceLearningGameProps {
   definition: LearningGameDefinition;
+  attempt?: GameAttemptReceipt;
   onExit: () => void;
   onProgress?: LearningProgressSink;
   onReward?: LearningRewardHook;
@@ -22,16 +25,17 @@ export interface MultipleChoiceLearningGameProps {
 
 export function MultipleChoiceLearningGame({
   definition,
+  attempt,
   onExit,
   onProgress,
   onReward,
   onReadAloud,
 }: MultipleChoiceLearningGameProps) {
   const reactId = useId();
-  const sessionBaseId = useRef(`game-${reactId.replaceAll(":", "")}`).current;
-  const attemptNumber = useRef(1);
-  const emittedSessionIds = useRef(new Set<string>());
-  const sessionId = `${sessionBaseId}-attempt-${attemptNumber.current}`;
+  const emittedAttemptIds = useRef(new Set<string>());
+  const [progressStatus, setProgressStatus] = useState<ProgressStatus>(
+    attempt ? "pending" : "practice",
+  );
   const [session, dispatch] = useReducer(
     learningGameReducer,
     INITIAL_LEARNING_GAME_SESSION,
@@ -42,18 +46,32 @@ export function MultipleChoiceLearningGame({
   const finishOrContinue = () => {
     const isLastQuestion =
       session.questionIndex + 1 >= definition.questions.length;
-    if (isLastQuestion && !emittedSessionIds.current.has(sessionId)) {
-      emittedSessionIds.current.add(sessionId);
-      const event = createGameCompletionEvent({
-        definition,
-        sessionId,
-        score: session.score,
-        results: session.results,
-      });
-      void Promise.resolve(onProgress?.(event)).catch(() => undefined);
-      void Promise.resolve(onReward?.(createRewardRequest(event))).catch(
-        () => undefined,
-      );
+    if (
+      isLastQuestion &&
+      attempt &&
+      onProgress &&
+      !emittedAttemptIds.current.has(attempt.attemptId)
+    ) {
+      try {
+        const command = createGameCompletionCommand({
+          definition,
+          attempt,
+          score: session.score,
+        });
+        emittedAttemptIds.current.add(attempt.attemptId);
+        setProgressStatus("pending");
+        void Promise.resolve(onProgress(command))
+          .then((receipt) => {
+            assertProgressReceiptMatchesAttempt(receipt, attempt);
+            setProgressStatus("queued");
+            if (receipt.reward && onReward) {
+              return onReward(receipt.reward);
+            }
+          })
+          .catch(() => setProgressStatus("failed"));
+      } catch {
+        setProgressStatus("failed");
+      }
     }
     dispatch({ type: "next", questionCount: definition.questions.length });
   };
@@ -120,11 +138,20 @@ export function MultipleChoiceLearningGame({
           <p className="mt-2 text-slate-700">
             Good work for finishing every question.
           </p>
+          <p className="mt-3 font-semibold text-slate-800" aria-live="polite">
+            {progressStatus === "practice"
+              ? "Practice mode: this result has not been added to progress."
+              : progressStatus === "pending"
+                ? "Saving progress…"
+                : progressStatus === "queued"
+                  ? "Progress sent for secure checking."
+                  : "Progress could not be saved yet. Ask an adult to try again."}
+          </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
             <button
               type="button"
               onClick={() => {
-                attemptNumber.current += 1;
+                setProgressStatus("practice");
                 dispatch({ type: "restart" });
               }}
               className="min-h-12 rounded-2xl bg-sky-800 px-6 py-3 font-black text-white"

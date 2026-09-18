@@ -1,11 +1,16 @@
 import { useState } from "react";
 import type { LearningProgressSink, LearningRewardHook } from "../progress";
-import type { LearningGameDefinition } from "../types";
+import type {
+  GameAttemptReceipt,
+  LearningAgeBand,
+  LearningGameDefinition,
+} from "../types";
 import { LearningGameLauncher } from "./LearningGameLauncher";
 import { MultipleChoiceLearningGame } from "./MultipleChoiceLearningGame";
 
 export interface LearningGamesExperienceProps {
-  learnerAge?: number;
+  learnerAgeBand?: LearningAgeBand;
+  attemptsByGameId?: Readonly<Record<string, GameAttemptReceipt>>;
   onProgress?: LearningProgressSink;
   onReward?: LearningRewardHook;
   onReadAloud?: (text: string) => void;
@@ -19,7 +24,7 @@ export function LearningGamesExperience(props: LearningGamesExperienceProps) {
   if (!activeGame) {
     return (
       <LearningGameLauncher
-        learnerAge={props.learnerAge}
+        learnerAgeBand={props.learnerAgeBand}
         onLaunch={setActiveGame}
       />
     );
@@ -28,6 +33,7 @@ export function LearningGamesExperience(props: LearningGamesExperienceProps) {
   return (
     <MultipleChoiceLearningGame
       definition={activeGame}
+      attempt={props.attemptsByGameId?.[activeGame.id]}
       onExit={() => setActiveGame(null)}
       onProgress={props.onProgress}
       onReward={props.onReward}

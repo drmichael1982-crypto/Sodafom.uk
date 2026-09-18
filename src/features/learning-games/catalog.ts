@@ -9,13 +9,18 @@ const standardAccessibility = {
 
 export const numberBondsGame: LearningGameDefinition = {
   id: "number-bonds-to-10",
+  version: 1,
   title: "Number Bonds to 10",
   summary: "Choose the number that completes each pair to make 10.",
   subject: "maths",
-  ageRange: { min: 5, max: 8 },
+  ageBands: ["5-7", "8-9"],
   estimatedMinutes: 4,
-  skills: ["addition", "number bonds", "mental maths"],
+  learningObjectiveCodes: ["KS1-MATHS-NUMBER-BONDS-10"],
+  skillCodes: ["addition", "number-bonds", "mental-maths"],
+  questionSource: { kind: "bundled-reviewed", contentVersion: 1 },
+  scoringRule: { kind: "count-correct", maximumScore: 3 },
   accessibility: standardAccessibility,
+  assetBudget: { maximumInitialBytes: 0, motion: "none" },
   questions: [
     {
       id: "bond-7",
@@ -27,7 +32,7 @@ export const numberBondsGame: LearningGameDefinition = {
       ],
       correctAnswerId: "3",
       explanation: "7 and 3 are a number bond. Together they make 10.",
-      skill: "number bonds",
+      skillCode: "number-bonds",
     },
     {
       id: "bond-4",
@@ -39,7 +44,7 @@ export const numberBondsGame: LearningGameDefinition = {
       ],
       correctAnswerId: "6",
       explanation: "4 plus 6 equals 10.",
-      skill: "number bonds",
+      skillCode: "number-bonds",
     },
     {
       id: "bond-9",
@@ -51,20 +56,25 @@ export const numberBondsGame: LearningGameDefinition = {
       ],
       correctAnswerId: "1",
       explanation: "9 needs 1 more to make 10.",
-      skill: "number bonds",
+      skillCode: "number-bonds",
     },
   ],
 };
 
 export const wordFamiliesGame: LearningGameDefinition = {
   id: "word-family-match",
+  version: 1,
   title: "Word Family Match",
   summary: "Find the word that has the same ending sound.",
   subject: "english",
-  ageRange: { min: 5, max: 8 },
+  ageBands: ["5-7", "8-9"],
   estimatedMinutes: 4,
-  skills: ["phonics", "rhyming", "word recognition"],
+  learningObjectiveCodes: ["KS1-ENGLISH-PHONICS-RHYME"],
+  skillCodes: ["phonics", "rhyming", "word-recognition"],
+  questionSource: { kind: "bundled-reviewed", contentVersion: 1 },
+  scoringRule: { kind: "count-correct", maximumScore: 3 },
   accessibility: standardAccessibility,
+  assetBudget: { maximumInitialBytes: 0, motion: "none" },
   questions: [
     {
       id: "family-cat",
@@ -76,7 +86,7 @@ export const wordFamiliesGame: LearningGameDefinition = {
       ],
       correctAnswerId: "hat",
       explanation: "Cat and hat both end with the “at” sound.",
-      skill: "rhyming",
+      skillCode: "rhyming",
     },
     {
       id: "family-log",
@@ -88,7 +98,7 @@ export const wordFamiliesGame: LearningGameDefinition = {
       ],
       correctAnswerId: "frog",
       explanation: "Log and frog both end with the “og” sound.",
-      skill: "rhyming",
+      skillCode: "rhyming",
     },
     {
       id: "family-star",
@@ -100,7 +110,7 @@ export const wordFamiliesGame: LearningGameDefinition = {
       ],
       correctAnswerId: "car",
       explanation: "Star and car share the “ar” ending sound.",
-      skill: "phonics",
+      skillCode: "phonics",
     },
   ],
 };
