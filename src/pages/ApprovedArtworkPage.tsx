@@ -5,6 +5,7 @@ import { ArchieCharacter } from '@/components/ArchieCharacter';
 import IslandAdventure from '@/components/IslandAdventure';
 import PaywallGate from '@/components/games/PaywallGate';
 import { ISLANDS, isIslandId, islandRoute } from '@/lib/island-adventures';
+import { readActiveLessonSession } from '@/lib/lessons/lesson-session';
 
 function buttonWords(label: string) {
   return label.replace(/^Open protected /, '').replace(/^Open /, '').replace(/^Meet /, '').replace(/^Return /, '').trim();
@@ -159,6 +160,7 @@ export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtw
   const [searchParams] = useSearchParams();
   const [doorTransition, setDoorTransition] = useState<string | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
+  const [activeLesson] = useState(() => variant === 'lessons' ? readActiveLessonSession() : null);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     setImageFailed(false); setDoorTransition(null);
@@ -233,6 +235,10 @@ export default function ApprovedArtworkPage({ variant }: { variant: ApprovedArtw
           {hotspots.map(hotspot => <button key={hotspot.label} type="button" aria-label={hotspot.label} title={hotspot.label} onClick={() => activate(hotspot)} className="absolute cursor-pointer rounded-2xl bg-transparent transition-transform duration-150 hover:scale-105 active:scale-95 focus-visible:bg-white/20 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-yellow-300" style={{ left: `${hotspot.left}%`, top: `${hotspot.top}%`, width: `${hotspot.width}%`, height: `${hotspot.height}%` }}><span className="sr-only">{hotspot.label}</span></button>)}
           {variant === 'home' && <button type="button" onClick={() => navigate('/museum?trip=1')} className="absolute z-10 flex items-center gap-1 rounded-full border-2 border-yellow-100 bg-gradient-to-r from-yellow-400 to-amber-500 px-3 py-2 text-xs font-black text-blue-950 shadow-lg transition hover:scale-105 active:scale-95" style={{ right: '3%', top: '15%' }} aria-label="Open School Trip Adventure">🚌 School Trip</button>}
           {variant === 'game-islands' && <button type="button" onClick={() => navigate('/games/colour-book')} className="absolute z-10 flex items-center gap-1 rounded-full border-2 border-white bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 px-4 py-2 text-sm font-black text-white shadow-xl transition hover:scale-105 active:scale-95" style={{ right: '4%', bottom: '8%' }} aria-label="Open Colouring Book on Games Island">🎨 Colouring Book</button>}
+          {variant === 'lessons' && <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 flex-wrap justify-center gap-2 sm:bottom-4">
+            {activeLesson && <button type="button" onClick={() => navigate('/tutor?resume=1')} className="rounded-full border-2 border-yellow-100 bg-amber-400 px-4 py-2 text-xs font-black text-indigo-950 shadow-xl transition hover:scale-105 active:scale-95 sm:text-sm" aria-label={`Continue ${activeLesson.subject} lesson`}>▶ Continue {activeLesson.subject}</button>}
+            <button type="button" onClick={() => navigate('/lesson-library')} className="rounded-full border-2 border-white bg-indigo-700 px-4 py-2 text-xs font-black text-white shadow-xl transition hover:scale-105 active:scale-95 sm:text-sm" aria-label="Browse all lessons and age groups">📚 Browse lessons</button>
+          </div>}
           {doorTransition && <div role="status" aria-live="polite" className="absolute inset-0 z-20 flex items-end justify-center bg-sky-950/30 p-5 backdrop-blur-[2px]"><div className="mb-8 flex w-full max-w-xl items-center gap-3 rounded-[2rem] border-4 border-yellow-200 bg-white/95 p-4 text-sky-950 shadow-2xl"><div className="relative shrink-0 animate-[bounce_0.7s_ease-in-out_infinite]"><ArchieCharacter size={92} /><span aria-hidden="true" className="absolute -right-1 top-0 animate-spin text-4xl">🔑</span></div><p className="text-lg font-black sm:text-2xl">{doorTransition}</p></div></div>}
         </div>
       </div>
