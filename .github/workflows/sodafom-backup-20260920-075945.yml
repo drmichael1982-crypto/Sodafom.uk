@@ -1,0 +1,48 @@
+name: Sodafom Review Backup 20260920-075945
+
+on:
+  push:
+    branches:
+      - backup-build/sodafom-review-20260920-075945-BST
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact approved review commit
+        uses: actions/checkout@v4
+        with:
+          ref: 73e093aa3f6ff9a5f68a77e37ce0629e9c8ababe
+          fetch-depth: 1
+          submodules: false
+      - name: Write backup manifest
+        shell: bash
+        run: |
+          cat > BACKUP-MANIFEST.txt <<'EOF'
+          Sodafom.uk coordinator-approved review backup
+          Created: 2026-09-20 07:59:45 BST (Europe/London)
+          Repository: drmichael1982-crypto/Sodafom.uk
+          Source branch: visual/approved-3d-world-20260917
+          Captured commit: 73e093aa3f6ff9a5f68a77e37ce0629e9c8ababe
+          Checkpoint branch: backup/sodafom-review-20260920-075945-BST
+          Scope: Sodafom children's app review state only.
+          Excluded/separate: Sodafoam Systems 797 and its dedicated branches/work.
+          No merge to main/master. No Railway deployment performed.
+          EOF
+      - name: Build timestamped ZIP
+        shell: bash
+        run: |
+          zip -qr Sodafom-review-backup-20260920-075945-BST-73e093a.zip . -x '.git/*'
+          sha256sum Sodafom-review-backup-20260920-075945-BST-73e093a.zip > Sodafom-review-backup-20260920-075945-BST-73e093a.sha256
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sodafom-review-backup-20260920-075945-BST-73e093a
+          path: |
+            Sodafom-review-backup-20260920-075945-BST-73e093a.zip
+            Sodafom-review-backup-20260920-075945-BST-73e093a.sha256
+          if-no-files-found: error
+          retention-days: 90
