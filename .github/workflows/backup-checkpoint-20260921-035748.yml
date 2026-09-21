@@ -1,0 +1,49 @@
+name: Backup checkpoint 20260921-035748
+
+on:
+  push:
+    branches:
+      - backup/sodafom-coordinator-review-20260921-035748
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out exact coordinator-approved commit
+        uses: actions/checkout@v4
+        with:
+          ref: 442656b4e2ec76167b4d0b5fb7b804cf742904a5
+          fetch-depth: 1
+
+      - name: Create exact source ZIP and checkpoint manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP_NAME="Sodafom.uk-coordinator-approved-20260921-035748-BST-442656b.zip"
+          git archive --format=zip --prefix="Sodafom.uk-442656b/" --output="$ZIP_NAME" 442656b4e2ec76167b4d0b5fb7b804cf742904a5
+          cat > CHECKPOINT.txt <<'EOF'
+          Repository: drmichael1982-crypto/Sodafom.uk
+          Source branch: codex/stable-app-build-20260915
+          Source commit: 442656b4e2ec76167b4d0b5fb7b804cf742904a5
+          Coordinator review/integration base: integration/sodafom-big-jobs-20260915
+          Backup branch: backup/sodafom-coordinator-review-20260921-035748
+          Captured: 2026-09-21 03:57:48 Europe/London
+          Railway deploy: NOT PERFORMED
+          Main/master merge: NOT PERFORMED
+          Sodafoam Systems 797: EXCLUDED / KEPT SEPARATE
+          EOF
+          sha256sum "$ZIP_NAME" > SHA256SUMS.txt
+
+      - name: Upload checkpoint artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sodafom.uk-coordinator-approved-20260921-035748-BST-442656b
+          path: |
+            Sodafom.uk-coordinator-approved-20260921-035748-BST-442656b.zip
+            CHECKPOINT.txt
+            SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
