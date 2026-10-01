@@ -1,0 +1,32 @@
+:root {
+  color-scheme: light;
+  font-family: Arial, Helvetica, sans-serif;
+  --blue: #1557c0;
+  --gold: #f4b63f;
+  --ink: #172033;
+  --paper: #fff9e8;
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: linear-gradient(180deg, #dff2ff 0%, #fff7d7 100%); color: var(--ink); }
+button, input, select { font: inherit; }
+.app { width: min(1180px, 100%); margin: 0 auto; padding: 16px; }
+.hero { min-height: 46vh; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 24px; align-items: center; padding: 28px 0; }
+.eyebrow { margin: 0 0 8px; font-weight: 800; color: var(--blue); }
+h1 { margin: 0; font-size: clamp(44px, 8vw, 92px); line-height: 0.95; }
+.lede { max-width: 620px; font-size: 20px; line-height: 1.45; }
+.hero-actions, .ask-form, .subjects, .lesson-controls { display: flex; gap: 12px; flex-wrap: wrap; }
+button { min-height: 48px; border: 0; border-radius: 8px; padding: 0 18px; font-weight: 800; cursor: pointer; }
+.primary { background: var(--blue); color: white; }
+.secondary, .subjects button, .ask-form button { background: var(--gold); color: #241806; }
+.teacher-card { min-height: 260px; display: grid; place-items: center; border: 6px solid white; border-radius: 8px; box-shadow: 0 16px 40px rgba(34, 64, 98, 0.18); background: radial-gradient(circle at top, #fff7c2, #7bc7ff); }
+.teacher-art { width: min(320px, 80%); aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; background: white; color: var(--blue); font-size: 38px; font-weight: 900; text-align: center; box-shadow: inset 0 0 0 8px #f4b63f; }
+.panel { background: rgba(255, 255, 255, 0.82); border-radius: 8px; padding: 16px; }
+label { display: grid; gap: 5px; font-weight: 800; }
+select, input { min-height: 46px; border: 2px solid #cdd9ef; border-radius: 8px; padding: 0 12px; background: white; }
+.subjects { margin: 18px 0; }
+.lesson-box { display: grid; gap: 12px; }
+.lesson-output { min-height: 190px; max-height: 44vh; overflow: auto; padding: 14px; background: var(--paper); border: 2px solid #f4dea4; border-radius: 8px; line-height: 1.45; }
+.message { margin: 0 0 10px; }
+.message strong { color: var(--blue); }
+.ask-form { display: grid; grid-template-columns: 1fr auto; }
+@media (max-width: 760px) { .hero { grid-template-columns: 1fr; min-height: auto; } .ask-form { grid-template-columns: 1fr; } }
