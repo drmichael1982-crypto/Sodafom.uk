@@ -1,4 +1,5 @@
-import { useMemo, useRef, useState } from 'react';
+import { useArchieContext } from '@/contexts/ArchieContext';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, BookOpen, Camera, PenLine, Send, Sparkles, Volume2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
@@ -32,6 +33,8 @@ export default function AITeacherPage() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
   const [question, setQuestion] = useState('');
+  const { setGameContext, clearGameContext } = useArchieContext();
+  useEffect(() => { setGameContext('AI Teacher', 'Learning', question); return clearGameContext; }, [question, setGameContext, clearGameContext]);
   const [answer, setAnswer] = useState('');
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);

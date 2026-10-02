@@ -15,7 +15,7 @@ import { useProgression } from '@/contexts/ProgressionContext';
 export { useChildAge } from '@/hooks/useChildAge';
 export type { AgeGroup } from '@/hooks/useChildAge';
 import { getActiveChild } from '@/hooks/useChildAge';
-import { API_PREFIX } from '@/lib/config';
+import { API_PREFIX, ARCHIE_PREVIEW } from '@/lib/config';
 import { games as gamesContent } from 'virtual:content';
 
 export interface GameResult {
@@ -212,7 +212,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
             );
           })}
           {/* Login / Logout key */}
-          {isLoggedIn ? (
+          {ARCHIE_PREVIEW ? <Link to="/parents" className="px-3 py-2 rounded-xl bg-white/20 text-xs font-black" title="Learning settings"><User size={16} /><span className="sr-only">Learning settings</span></Link> : isLoggedIn ? (
             <div className="flex items-center gap-1.5">
               <Link
                 to="/hub"
@@ -570,7 +570,7 @@ function ResultScreen({
             )}
 
             {/* Get Started CTA — shown to logged-out users */}
-            {!isLoggedIn && (
+            {!isLoggedIn && !ARCHIE_PREVIEW && (
               <motion.button
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}

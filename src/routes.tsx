@@ -1,3 +1,4 @@
+import { ArchieHome, ArchieWorld, ArchieGames, ArchieLesson, ArchieLibrary, ArchieReader, ArchieHomework, ArchieRewards, ArchieParents, ArchieCartoons, ArchieAskRoute } from '@/pages/archie/ArchiePages';
 import { RouteObject } from "react-router";
 import { lazy } from 'react';
 import { Navigate } from 'react-router';
@@ -198,9 +199,19 @@ import ScienceQuizGame from './pages/games/science-quiz';
 import BackToSchoolShopPage from './pages/shop/back-to-school';
 const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
 const NotFoundPage = ProdNotFoundPage;
-export const routes: RouteObject[] = [{
+export const routes: RouteObject[] = [
+  { path: '/world', element: <ArchieWorld /> },
+  { path: '/lesson', element: <ArchieLesson /> },
+  { path: '/library', element: <ArchieLibrary /> },
+  { path: '/reader/:bookId', element: <ArchieReader /> },
+  { path: '/homework', element: <ArchieHomework /> },
+  { path: '/stickers', element: <ArchieRewards stickers /> },
+  { path: '/progress', element: <ArchieRewards progress /> },
+  { path: '/settings', element: <ArchieParents settingsOnly /> },
+  { path: '/classic-adventure', element: <SodafomAdventurePage /> },
+{
   path: '/',
-  element: <SodafomAdventurePage />
+  element: <ArchieHome />
 }, {
   path: '/about',
   element: <AboutPage />
@@ -248,7 +259,7 @@ export const routes: RouteObject[] = [{
   element: <ScienceSubjectPage />
 }, {
   path: '/games',
-  element: <Navigate to="/" replace />,
+  element: <ArchieGames />,
 }, {
   path: '/demo',
   element: <DemoPage />
@@ -654,7 +665,7 @@ export const routes: RouteObject[] = [{
   element: <ReviewsPage />,
 }, {
   path: '/rewards',
-  element: <RewardsPage />,
+  element: <ArchieRewards />,
 }, {
   path: '/voice-studio',
   element: <VoiceStudioPage />,
@@ -753,7 +764,7 @@ export const routes: RouteObject[] = [{
   element: <ResetPasswordPage />,
 }, {
   path: '/parents',
-  element: <ParentsPage />
+  element: <ArchieParents />
 }, {
   path: '/games/number-bonds',
   element: <NumberBondsGame />,
@@ -771,7 +782,7 @@ export const routes: RouteObject[] = [{
   element: <SodafomAdventurePage />
 }, {
   path: '/cartoons',
-  element: <CartoonTheatrePage />
+  element: <ArchieCartoons />
 }, {
   path: '/ai-teacher',
   element: <AITeacherPage />
@@ -795,11 +806,11 @@ export const routes: RouteObject[] = [{
   element: <BackToSchoolShopPage />
 }, {
   path: '/ask-archie',
-  element: <ChatbotPage />
+  element: <ArchieAskRoute />
 }, {
   // Legacy /chat alias — redirects to /ask-archie
   path: '/chat',
-  element: <ChatbotPage />
+  element: <ArchieAskRoute />
 }, {
   path: '*',
   // Broken/legacy links must never strand a child on a 404 screen.

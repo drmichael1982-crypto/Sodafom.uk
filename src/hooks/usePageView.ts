@@ -4,12 +4,13 @@
  */
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router';
-import { API_PREFIX } from '@/lib/config';
+import { API_PREFIX, ARCHIE_PREVIEW } from '@/lib/config';
 
 export function usePageView() {
   const location = useLocation();
 
   React.useEffect(() => {
+    if (ARCHIE_PREVIEW) return;
     // Fire-and-forget — never block the UI
     fetch(`${API_PREFIX}/track/pageview`, {
       method: 'POST',

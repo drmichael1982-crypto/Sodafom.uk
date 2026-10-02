@@ -175,54 +175,6 @@ export default function Header() {
 
             <SearchButton onClick={() => setSearchOpen(true)} variant="bar" />
 
-            {/* Ask Archie button — speaks on click */}
-            <div className="relative ml-1">
-              <motion.button
-                onClick={handleArchieClick}
-                animate={archieActive ? { scale: [1, 1.12, 1] } : { scale: 1 }}
-                transition={archieActive ? { duration: 0.6, repeat: Infinity, ease: 'easeInOut' as const } : {}}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-black text-sm transition-all border ${
-                  archieActive
-                    ? 'bg-accent text-accent-foreground border-accent shadow-lg'
-                    : 'bg-white/20 text-primary-foreground hover:bg-white/30 active:scale-95 border-white/30'
-                }`}
-                aria-label={archieActive ? 'Stop Archie talking' : 'Let Archie talk'}
-              >
-                <div className="w-5 h-5 rounded-full bg-white flex items-center justify-center overflow-hidden border border-amber-400">
-                  <img src="/assets/images/sodafom-launcher-icon-v2.png" alt="" className="h-full w-full rounded-full object-cover" />
-                </div>
-                Ask Archie
-              </motion.button>
-
-              {/* Speech bubble */}
-              <AnimatePresence>
-                {archieActive && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8, y: 4 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, y: 4 }}
-                    transition={{ duration: 0.2, ease: "easeOut" as const }}
-                    className="absolute top-full right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl p-3 z-50 border border-accent/30"
-                  >
-                    {/* Tail */}
-                    <div className="absolute -top-2 right-6 w-4 h-4 bg-white rotate-45 border-l border-t border-accent/30" />
-                    <div className="flex items-start gap-2">
-                      <div className="shrink-0 w-8 h-8 rounded-full bg-white flex items-center justify-center overflow-hidden border border-amber-400">
-                        <img src="/assets/images/sodafom-launcher-icon-v2.png" alt="" className="h-full w-full rounded-full object-cover" />
-                      </div>
-                      <p className="text-xs font-semibold text-gray-700 leading-snug">{archieMsg}</p>
-                    </div>
-                    <button
-                      onClick={handleArchieClick}
-                      className="mt-2 w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      Tap to stop
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
             {/* Subscribe CTA — only shown to non-subscribers */}
             {!subLoading && !subscribed && !researchMode && (
               <motion.div
@@ -430,25 +382,6 @@ export default function Header() {
               >
                 <Search size={18} />
                 Search games &amp; pages
-              </button>
-
-              {/* Ask Archie — mobile */}
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  const msg = ARCHIE_GREETINGS[Math.floor(Math.random() * ARCHIE_GREETINGS.length)];
-                  setArchieMsg(msg);
-                  setArchieActive(true);
-                  archieSpeak(msg);
-                  if (archieTimerRef.current) clearTimeout(archieTimerRef.current);
-                  archieTimerRef.current = setTimeout(() => setArchieActive(false), 6000);
-                }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl font-black text-base text-primary-foreground bg-white/20 hover:bg-white/30 transition-all border border-white/30 w-full text-left"
-              >
-                <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center overflow-hidden border border-amber-400">
-                  <img src="/assets/images/sodafom-launcher-icon-v2.png" alt="" className="h-full w-full rounded-full object-cover" />
-                </div>
-                Ask Archie
               </button>
 
               {/* Free Trial — mobile, non-subscribers only */}

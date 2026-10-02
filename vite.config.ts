@@ -158,6 +158,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
 
   return {
     envPrefix: ["VITE_", "SITE_"],
+    define: { "import.meta.env.VITE_ARCHIE_PREVIEW": JSON.stringify(mode === "archie-test" ? "true" : "false") },
     test: {
       environment: "jsdom",
       setupFiles: ["./src/tests/setup.ts"]

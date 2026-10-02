@@ -272,7 +272,7 @@ export function safeEvaluateMath(expr: string): number | null {
 }
 
 export function tryLocalMaths(input: string): LocalArchieResult | null {
-  const lowered = input.toLowerCase().replace(/,/g, '');
+  const lowered = input.toLowerCase().replace(/,/g, '').replace(/[?!]+$/g, '').trim();
 
   // 1. Check percentage "X% of Y" or "X percent of Y"
   const percentMatch = lowered.match(/(?:what\s+is\s+)?(?:the\s+)?(\d+(?:\.\d+)?)\s*(?:percent|%)\s+of\s+(.+)/i);

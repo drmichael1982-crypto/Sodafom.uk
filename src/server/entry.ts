@@ -1,3 +1,4 @@
+import { brainStatus } from './lib/archie-brain';
 import express, { type Express, type NextFunction, type Request, type Response } from "express";
 import { fileURLToPath } from "node:url";
 import { dirname, extname, join } from "node:path";
@@ -297,6 +298,7 @@ app.get("/api/daily-challenge", daily_challenge_get_26);
 app.post("/api/daily-challenge/claim", daily_challenge_claim_post_27);
 app.get("/api/daily-challenge/history", daily_challenge_history_get_28);
 app.get("/api/health", health_get_29);
+app.get('/api/archie/status', (_req, res) => { res.setHeader('Cache-Control', 'no-store'); res.json(brainStatus()); });
 app.get("/api/homework-scan", homework_scan_get);
 app.post("/api/homework-scan", homework_scan_post);
 app.delete("/api/homework-scan", homework_scan_delete);

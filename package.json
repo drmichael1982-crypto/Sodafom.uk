@@ -7,9 +7,8 @@
   },
   "scripts": {
     "dev": "vite --host",
-    "build": "vite build && vite build --ssr src/server/entry.ts",
-    "prestart": "tsx scripts/run-education-cloud-seed.ts",
-    "start": "node dist/server.bundle.mjs",
+    "build": "npm run build:archie",
+    "start": "npm run start:archie",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "vitest --ui",
@@ -20,7 +19,14 @@
     "type-check": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,md}\"",
     "clean": "rm -rf dist node_modules/.vite",
-    "reset": "npm run clean && npm install"
+    "reset": "npm run clean && npm install",
+    "build:archie": "vite build --mode archie-test",
+    "start:archie": "tsx scripts/serve-archie-test.ts",
+    "test:archie": "vitest run src/contexts/ArchieContext.test.tsx src/server/lib/archie-brain.test.ts src/lib/archie/math-punctuation.test.ts src/lib/__tests__/archie-local.test.ts src/contexts/ProgressionContext.test.ts",
+    "build:legacy": "vite build && vite build --ssr src/server/entry.ts",
+    "start:legacy": "node dist/server.bundle.mjs",
+    "seed:legacy": "tsx scripts/run-education-cloud-seed.ts",
+    "test:archie:ui": "node scripts/test-archie-ui.cjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.43",
@@ -134,6 +140,7 @@
     "eslint-plugin-security": "^3.0.1",
     "jsdom": "^29.0.2",
     "lockfile-lint": "~4.13.2",
+    "playwright": "^1.62.1",
     "postcss": "^8.5.18",
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.19",

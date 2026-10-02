@@ -1,3 +1,4 @@
+import { useArchieContext } from '@/contexts/ArchieContext';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
@@ -30,6 +31,11 @@ export default function TeacherModePage() {
 
   const currentLesson: TopicLesson = CURRICULUM_LESSONS[currentLessonIndex] ?? CURRICULUM_LESSONS[0];
   const currentQuestion: LessonQuestion | undefined = currentLesson.questions[currentQuestionIndex];
+  const { setGameContext, clearGameContext } = useArchieContext();
+  useEffect(() => {
+    setGameContext(currentLesson.title, currentLesson.subject, currentQuestion?.question, currentQuestion?.options);
+    return clearGameContext;
+  }, [currentLesson, currentQuestion, setGameContext, clearGameContext]);
 
   const speakText = useCallback((text: string) => {
     if (profile.readAloudPreference === false) return;

@@ -1,3 +1,4 @@
+import { isSoundEnabled } from '@/lib/archie/storage';
 /**
  * VoiceContext — manages the child's recorded voice clips.
  *
@@ -142,6 +143,7 @@ function getNativeArchieSpeech(): any | null {
  * Falls back to the browser Web Speech API on desktop/web.
  */
 function ttsSpeak(text: string, onEnd?: () => void) {
+  if (!isSoundEnabled()) { onEnd?.(); return; }
   if (typeof window === 'undefined') {
     onEnd?.();
     return;
@@ -318,6 +320,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   const speak = useCallback(
     (key: ClipKey, fallbackText?: string) => {
       stop();
+      if (!isSoundEnabled()) return;
       const clip = Object.hasOwn(clips, key) ? clips[key as keyof typeof clips] : undefined;
       if (clip?.dataUrl) {
         // Play recorded audio

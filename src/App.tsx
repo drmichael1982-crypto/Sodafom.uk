@@ -1,3 +1,5 @@
+import { Capacitor } from '@capacitor/core';
+import { ARCHIE_PREVIEW } from '@/lib/config';
 import { lazy, Suspense } from 'react';
 import { Outlet, createBrowserRouter, createHashRouter, type RouteObject } from "react-router";
 import { RouterProvider } from "react-router/dom";
@@ -32,7 +34,7 @@ const routeTree: RouteObject[] = [{
   element: rootElement,
   children: routes
 }];
-const isCapacitorApp = typeof window !== 'undefined' && !!(window as any).Capacitor;
+const isCapacitorApp = typeof window !== 'undefined' && Capacitor.isNativePlatform();
 // A packaged Capacitor app serves static files from its WebView. Hash routing keeps
 // navigation entirely inside index.html and avoids native/static-server path mismatches.
 const router = isCapacitorApp ? createHashRouter(routeTree) : createBrowserRouter(routeTree);
@@ -47,7 +49,7 @@ export default function App() {
        */}
       <CookieBannerErrorBoundary>
         <Suspense fallback={null}>
-          <CookieBanner />
+          {!ARCHIE_PREVIEW && <CookieBanner />}
         </Suspense>
       </CookieBannerErrorBoundary>
     </>;

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router';
 import ArchieCharacter from '@/components/ArchieCharacter';
 import { stopTts, ttsSpeak } from '@/lib/voice-context';
 
-const EPISODES = [
+export const EPISODES = [
   { title: 'The Number Island', image: '/assets/cartoon/worlds/maths.png', colour: 'from-blue-500 to-indigo-700', scenes: ['Archie arrives at Number Island.', 'The number bridge needs ten correct answers.', 'Archie and Soda Bot solve the puzzle and earn a golden star!'] },
   { title: 'The Magical Library', image: '/assets/cartoon/worlds/reading.png', colour: 'from-purple-500 to-fuchsia-700', scenes: ['A storybook begins to glow.', 'Archie reads the clues carefully.', 'The friends discover that every book can open a new world!'] },
   { title: 'The Word Kingdom', image: '/assets/cartoon/worlds/spelling.png', colour: 'from-rose-500 to-red-700', scenes: ['The letters have escaped from Word Kingdom.', 'Archie listens to every sound.', 'The letters return in the correct order and the castle cheers!'] },

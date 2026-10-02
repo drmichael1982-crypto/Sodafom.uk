@@ -1,3 +1,4 @@
+import { isArchiePage } from '@/pages/archie/ArchiePages';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { type ReactElement } from 'react';
 import { ScrollRestoration, useLocation } from "react-router";
@@ -23,7 +24,7 @@ export default function RootLayout({
   usePageView();
   const location = useLocation();
   // Hide the top header on the homepage — it has its own full-screen nav experience
-  const immersiveHome = location.pathname === '/' || location.pathname === '/cartoon-mode';
+  const immersiveHome = isArchiePage(location.pathname) || location.pathname.startsWith('/games/') || location.pathname === '/cartoon-mode';
   const hideHeader = immersiveHome;
   const isIndividualGame = location.pathname.startsWith('/games/');
   return (
@@ -44,7 +45,7 @@ export default function RootLayout({
                 {/* Floating UI — accessibility toolbar + unified Archie helper + mobile CTA */}
                 {/* Immersive home/cartoon mode already has its own Settings control. */}
                 {!immersiveHome && <AccessibilityBar gameMode={isIndividualGame} />}
-                {!immersiveHome && <ArchieHelper gameMode={isIndividualGame} />}
+                <ArchieHelper gameMode={isIndividualGame} hideLauncher={location.pathname === '/' || location.pathname === '/lesson'} />
                 {!immersiveHome && <MobileTrialBar />}
               </Website>
             </CartProvider>
