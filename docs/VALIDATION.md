@@ -22,6 +22,18 @@
 9. All 127 linked game routes render without a crash or home redirect
 10. Phone and desktop layouts: no horizontal overflow
 
-## Remaining hosted/device checks
+## Hosted release
 
-GitHub push and deployment have not happened yet because repository creation is waiting for secure browser sign-in. AI provider configuration/reuse and a live answer remain to be verified on the new hosted service. Speech output, microphone permission and camera behaviour need a real phone check. Existing game routes were opened, not all played to completion.
+- Pushed to `test/archie-2026-10-02` in `drmichael1982-crypto/Sodafom.uk`.
+- Separate service: `https://archie-learning-test-production.up.railway.app`.
+- Health endpoint returned HTTP 200 with `ok: true`.
+- Hosted AI returned a correct, child-friendly rainbow explanation, HTTP 200, in 3.54 seconds on 2 October 2026.
+- The new service references the existing 797 provider key and economy model securely in Railway; it does not use the private 797 control API.
+- A 390px browser check passed home navigation, rubber clearing a typed spelling, correct spelling, next word and the shared assistant.
+- Original main remains `5b9641d1090abe762a1f23ac6cb0cda0590e57ce`.
+
+## Remaining work
+
+The user prioritised a quick release of static 3D-looking artwork and working buttons. Accounts, cross-device syncing and photo OCR are not enabled in this first test release. Their follow-up implementation is checkpointed separately on local branch `wip/archie-accounts-photo` and is not release-verified. A permanent storage volume is required before accounts can be enabled.
+
+The completely separate private GitHub repository still needs browser sign-in. Speech output, microphone permission and camera behaviour need a real phone check. Existing game routes were opened, not all played to completion.

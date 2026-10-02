@@ -15,7 +15,9 @@ export default async function handler(req: Request, res: Response) {
   try {
     const text=await answerWithArchie(messages,typeof req.body?.systemExtra==='string'?req.body.systemExtra:'');
     return res.type('text/plain').send(text);
-  } catch {
+  } catch (error) {
+    const failure=error as {status?:number;code?:string};
+    console.warn('Archie provider request failed', {status:failure.status,code:failure.code});
     return res.status(503).type('text/plain').send('Archie’s online learning service is unavailable. Built-in help still works.');
   }
 }
