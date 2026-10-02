@@ -32,7 +32,10 @@ function Page({ title, intro, children, back = '/world' }: { title: string; intr
   const { settings } = useArchieData();
   return <main className={`archie-app ${settings.largeText ? 'archie-large' : ''}`}><div className="a-page">
     <header className="a-top"><Link className="a-button a-icon" to={back} aria-label={back === '/' ? 'Home' : 'Back to my world'}>{back === '/' ? <Home/> : <ArrowLeft/>}</Link><Link className="a-logo" to="/">SODAFOM<small>Learn • Play • Grow</small></Link><SoundButton/></header>
-    <h1>{title}</h1>{intro && <p className="a-intro">{intro}</p>}{children}
+    <section className="a-hero" style={{ backgroundImage: `linear-gradient(90deg,rgba(5,37,102,.96),rgba(9,65,147,.78) 58%,rgba(9,65,147,.2)),url(/assets/cartoon/worlds/${/library|story|key|garden|pup|reading/i.test(title)?'reading':/spell|word/i.test(title)?'spelling':/theatre/i.test(title)?'geography':'maths'}.png)` }}>
+      <div className="a-hero-copy"><span className="a-eyebrow">A little adventure with Archie</span><h1>{title}</h1>{intro && <p className="a-intro">{intro}</p>}</div>
+      <img className="a-hero-archie" src="/assets/images/archie-character-v2.png" width="1024" height="1536" alt="Archie smiles and holds his golden heart key."/>
+    </section>{children}
     <nav className="a-bottom" aria-label="Main navigation"><Link to="/">Home</Link><Link to="/world">My world</Link><Link to="/games">Games</Link><Link to="/lesson">Lesson</Link></nav>
   </div></main>;
 }
@@ -77,7 +80,7 @@ export function ArchieGames() {
     <label className="a-search"><Search/><input type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
     <div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
     <p role="status">{filtered.length} games to explore</p>
-    <div className="a-grid">{filtered.map((g,i)=><Link key={g.id} to={g.route} className={`a-card colour-${i%4}`} data-game-link><ArtIcon symbol={g.subject==='maths'?'🧮':g.subject==='spelling'?'🔤':g.subject==='reading'?'📖':'🔬'}/><h2>{g.title}</h2><p>{g.description}</p><small>Ages {g.ageGroups.join(', ')}</small><span className="a-play">Play game →</span></Link>)}</div>
+    <div className="a-grid">{filtered.map((g,i)=><Link key={g.id} to={g.route} className={`a-card colour-${i%4}`} data-game-link><img className="a-game-art" loading="lazy" src={`/assets/cartoon/worlds/${['maths','spelling','reading','science'].includes(g.subject)?g.subject:'geography'}.png`} alt=""/><h2>{g.title}</h2><p>{g.description}</p><small>Ages {g.ageGroups.join(', ')}</small><span className="a-play">Play game →</span></Link>)}</div>
     {!filtered.length && <div className="a-panel"><p>No games match that search.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});}}>Show all games</button></div>}
   </Page>;
 }
@@ -136,7 +139,7 @@ export function ArchieLesson() {
 export function ArchieLibrary() {
   useLearning('Library','Reading');
   const { activities } = useArchieData();
-  return <Page title="Archie’s library" intro="Choose a starter story. Read it yourself or listen together."><div className="a-grid">{BOOKS.map((book,i)=><Link to={`/reader/${book.id}`} key={book.id} className={`a-card a-book colour-${i%4}`}><ArtIcon symbol={book.emoji}/><h2>{book.title}</h2><p>{book.pages.length} pages • {activities.some(a=>a.id===`book-${book.id}`)?'Read again':'Start reading'}</p><BookOpen/></Link>)}</div></Page>;
+  return <Page title="Archie’s library" intro="Choose a starter story. Read it yourself or listen together."><div className="a-grid">{BOOKS.map((book,i)=><Link to={`/reader/${book.id}`} key={book.id} className={`a-card a-book colour-${i%4}`}><img className="a-book-art" loading="lazy" src={book.id==='lost-key'?'/assets/images/archie-character-v2.png':`/assets/cartoon/worlds/${book.id==='number-bridge'?'maths':book.id==='seal-pup'?'geography':'reading'}.png`} alt=""/><h2>{book.title}</h2><p>{book.pages.length} pages • {activities.some(a=>a.id===`book-${book.id}`)?'Read again':'Start reading'}</p><BookOpen/></Link>)}</div></Page>;
 }
 export function ArchieReader() {
   const { bookId }=useParams();
