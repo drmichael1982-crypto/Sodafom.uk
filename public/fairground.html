@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sodafom Learning Fairground</title>
+  <style>
+    :root{--blue:#123f8d;--gold:#f4c542;--navy:#081a3a;--cream:#fff8df;--pink:#ef4f91;--green:#2ab66f;--purple:#7d4bd1}
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:radial-gradient(circle at 50% -10%,#5637a9 0,#15265d 42%,#07142f 100%);min-height:100vh;overflow-x:hidden}
+    button,a{font:inherit}.sky{position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(#fff 1px,transparent 1px);background-size:54px 54px;opacity:.28;animation:twinkle 5s linear infinite}
+    @keyframes twinkle{50%{opacity:.48}} @keyframes bob{50%{transform:translateY(-8px)}} @keyframes spin{to{transform:rotate(360deg)}} @keyframes pulse{50%{filter:brightness(1.25);transform:scale(1.03)}}
+    header{position:sticky;top:0;z-index:30;display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(5,15,45,.88);backdrop-filter:blur(12px);border-bottom:3px solid var(--gold)}
+    .brand{font-weight:900;font-size:clamp(20px,4vw,34px);color:var(--gold);text-shadow:0 2px 0 #000}.controls{display:flex;gap:8px;flex-wrap:wrap}.pill{border:0;border-radius:999px;padding:10px 14px;font-weight:900;background:#fff;color:var(--navy);box-shadow:0 4px 0 rgba(0,0,0,.25)}
+    main{max-width:1200px;margin:auto;padding:18px}.hero{border:3px solid rgba(255,255,255,.8);border-radius:28px;padding:22px;background:linear-gradient(135deg,rgba(19,64,141,.92),rgba(125,75,209,.82));box-shadow:0 20px 50px rgba(0,0,0,.35);position:relative;overflow:hidden}
+    .hero h1{margin:0;color:#fff;font-size:clamp(34px,7vw,70px);line-height:1}.hero p{max-width:760px;font-size:18px;font-weight:700}.route{display:flex;align-items:center;gap:8px;overflow-x:auto;padding:12px 0 4px}.stop{min-width:76px;text-align:center;font-size:12px;font-weight:900;opacity:.55}.stop.done,.stop.active{opacity:1}.dot{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;margin:auto;background:#223d72;border:3px solid #fff}.stop.done .dot{background:var(--green)}.stop.active .dot{background:var(--gold);color:#13275f;box-shadow:0 0 22px var(--gold)}
+    .world{margin-top:18px;position:relative;min-height:560px;border-radius:34px;border:4px solid #fff;background:linear-gradient(#5c2f89 0 20%,#192a61 55%,#214a38 56% 100%);box-shadow:0 24px 65px #0007;overflow:hidden;padding:24px}.lights{position:absolute;inset:12px 0 auto;height:18px;background:radial-gradient(circle,#ffe87c 0 4px,transparent 5px) 0 0/50px 18px repeat-x;filter:drop-shadow(0 0 8px #ffd54c)}
+    .rides{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin-top:46px}.ride{position:relative;min-height:220px;border-radius:28px;padding:18px;background:linear-gradient(145deg,#ffffffee,#e9efffff);color:var(--navy);border:5px solid var(--gold);box-shadow:0 10px 0 #101e48,0 20px 35px #0008;transform:perspective(700px) rotateX(2deg);transition:.25s}.ride.active{outline:6px solid #fff;animation:pulse 1.6s ease-in-out infinite}.ride h2{margin:0 0 6px}.icon{font-size:72px;display:block;text-align:center;animation:bob 2s ease-in-out infinite}.ride button{width:100%;border:0;border-radius:18px;padding:11px;font-weight:900;background:var(--blue);color:#fff;box-shadow:0 4px 0 #061534}.ride.locked button{background:#6d7489}.ride small{display:block;margin:8px 0;font-weight:700;color:#52607a}
+    .walker{position:sticky;bottom:12px;z-index:20;margin-top:20px;display:flex;align-items:flex-end;gap:10px;padding:10px 14px;border-radius:24px;background:rgba(5,15,45,.85);border:3px solid var(--gold);box-shadow:0 8px 30px #0008}.archie{font-size:64px;filter:drop-shadow(0 5px 3px #0006)}.dogs{font-size:34px;letter-spacing:4px}.bubble{flex:1;background:#fff;color:var(--navy);border-radius:18px;padding:12px;font-weight:900}.walkbtn{border:0;border-radius:18px;padding:12px 16px;background:var(--gold);color:var(--navy);font-weight:900}
+    dialog{max-width:560px;width:calc(100% - 28px);border:0;border-radius:28px;padding:0;box-shadow:0 24px 70px #000b;background:#fff;color:var(--navy)} dialog::backdrop{background:#020816cc}.card{padding:24px}.card h2{margin-top:0}.answers{display:grid;gap:10px}.answers button{border:2px solid #bed0ff;border-radius:16px;padding:13px;background:#eef4ff;color:var(--navy);font-weight:900}.answers button:hover{background:#d9e6ff}.message{min-height:28px;font-weight:900;margin-top:12px}.close{background:#102f72;color:#fff;border:0;border-radius:14px;padding:10px 14px;font-weight:900}.ride-run{font-size:100px;text-align:center;animation:spin 3s linear infinite}.skeleton{font-size:110px;text-align:center;animation:bob 1.6s ease-in-out infinite}.footer-links{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:20px 0}.footer-links a{color:#fff;background:#102f72;border:2px solid #fff;padding:10px 14px;border-radius:16px;text-decoration:none;font-weight:900}
+    @media(max-width:620px){.world{padding:14px}.walker{align-items:center}.archie{font-size:50px}.dogs{display:none}.bubble{font-size:13px}.walkbtn{font-size:13px;padding:10px}.rides{grid-template-columns:1fr}.ride{min-height:190px}}
+  </style>
+</head>
+<body>
+<div class="sky"></div>
+<header><div class="brand">🎡 Sodafom Learning Fairground</div><div class="controls"><button class="pill" id="soundBtn">🔊 Sound on</button><a class="pill" href="/">🏠 Home</a></div></header>
+<main>
+  <section class="hero">
+    <h1>Walk. Learn. Unlock. Ride.</h1>
+    <p>Archie leads children around one connected 3D-style fairground. Every ride is a learning game: answer, explain or solve the challenge and the ride comes alive.</p>
+    <div class="route" id="route"></div>
+  </section>
+
+  <section class="world">
+    <div class="lights"></div>
+    <div class="rides" id="rides"></div>
+    <div class="walker">
+      <div class="archie">👦🏼</div><div class="dogs">🐕‍🦺🐕‍🦺🐕</div>
+      <div class="bubble" id="bubble">Hi! I’m Archie. Come on — let’s walk around the fair and unlock the rides!</div>
+      <button class="walkbtn" id="nextBtn">Walk to next ride ➜</button>
+    </div>
+  </section>
+
+  <div class="footer-links">
+    <a href="/games/maths">Maths Games</a><a href="/games/reading">Reading Games</a><a href="/games/spelling">Spelling Games</a><a href="/games/science-lab">Science Lab</a><a href="/games/skeleton-builder">Skeleton Builder</a>
+  </div>
+</main>
+<dialog id="challenge"><div class="card"><h2 id="qTitle"></h2><div id="qVisual"></div><p id="qText"></p><div class="answers" id="answers"></div><div class="message" id="message"></div><button class="close" id="closeBtn">Close</button></div></dialog>
+<script>
+const rides=[
+ {icon:'🎡',name:'Ferris Wheel Maths',subject:'Maths',line:'Let’s unlock the Ferris wheel with a quick number challenge!',q:'What is 8 × 4?',a:['24','32','36'],ok:1,after:'Brilliant — 32! The wheel is moving. Look how high we can see!'},
+ {icon:'🎠',name:'Carousel Reading',subject:'Reading',line:'Next stop: the story carousel. Read carefully to make the horses move.',q:'Which word best describes a horse moving gently around the carousel?',a:['galloping','circling','sleeping'],ok:1,after:'Yes — circling! The carousel starts to turn.'},
+ {icon:'🎈',name:'Balloon Spelling',subject:'Spelling',line:'Pop only the balloon with the correctly spelled word.',q:'Which spelling is correct?',a:['adventure','advencher','advanture'],ok:0,after:'Adventure! Pop! Great spelling.'},
+ {icon:'💀',name:'Skeleton Science House',subject:'Science',line:'Here’s our friendly skeleton. Help put the science clues together to open the spooky-but-funny ride.',q:'Which bone protects your brain?',a:['Skull','Rib','Femur'],ok:0,after:'Correct — the skull protects the brain. Our skeleton gives you a friendly wave!'},
+ {icon:'🏀',name:'Hoop Shot Challenge',subject:'Maths + PE',line:'Score the question, then score the basket!',q:'You score 2 points three times. How many points altogether?',a:['5','6','8'],ok:1,after:'Six points! Swish — the ball drops through the hoop.'},
+ {icon:'🚗',name:'Dodgem Directions',subject:'Geography',line:'Choose the right direction and Archie can drive the dodgem to the next gate.',q:'If the sun rises in the east, which direction is opposite east?',a:['North','West','South'],ok:1,after:'West is opposite east. The dodgem zooms through the gate!'},
+ {icon:'🎢',name:'Final Knowledge Coaster',subject:'Mixed',line:'One last question unlocks the big learning coaster!',q:'Which one is a planet?',a:['Moon','Mars','Sun'],ok:1,after:'Mars! The coaster lights up — you unlocked the whole fairground!'}
+];
+let current=0; const unlocked=new Set(); let soundOn=true;
+const ridesEl=document.getElementById('rides'),routeEl=document.getElementById('route'),bubble=document.getElementById('bubble');
+const dlg=document.getElementById('challenge'),qTitle=document.getElementById('qTitle'),qVisual=document.getElementById('qVisual'),qText=document.getElementById('qText'),answers=document.getElementById('answers'),message=document.getElementById('message');
+function speak(t){if(!soundOn||!('speechSynthesis'in window))return; speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t);u.lang='en-GB';u.rate=.95;u.pitch=1.12;speechSynthesis.speak(u)}
+function bark(){if(!soundOn)return; try{const ctx=new AudioContext();[0,.18].forEach((d,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.type='sawtooth';o.frequency.setValueAtTime(150+i*20,ctx.currentTime+d);o.frequency.exponentialRampToValueAtTime(85,ctx.currentTime+d+.12);g.gain.setValueAtTime(.0001,ctx.currentTime+d);g.gain.exponentialRampToValueAtTime(.05,ctx.currentTime+d+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+d+.14);o.connect(g);g.connect(ctx.destination);o.start(ctx.currentTime+d);o.stop(ctx.currentTime+d+.15)})}catch(e){}}
+function render(){routeEl.innerHTML=rides.map((r,i)=>`<div class="stop ${unlocked.has(i)?'done':''} ${i===current?'active':''}"><div class="dot">${unlocked.has(i)?'✓':r.icon}</div>${r.subject}</div>`).join('');ridesEl.innerHTML=rides.map((r,i)=>`<article class="ride ${i===current?'active':''} ${i>current?'locked':''}"><span class="icon">${r.icon}</span><h2>${r.name}</h2><small>${r.subject} learning ride</small><p>${i<current?'Unlocked and ready to replay.':i===current?r.line:'Walk here with Archie to unlock this ride.'}</p><button ${i>current?'disabled':''} onclick="openRide(${i})">${unlocked.has(i)?'Ride again':'Try challenge'}</button></article>`).join('')}
+window.openRide=function(i){if(i>current)return;const r=rides[i];qTitle.textContent=r.name;qVisual.innerHTML=r.icon==='💀'?'<div class="skeleton">💀🦴</div>':`<div class="ride-run">${r.icon}</div>`;qText.textContent=r.q;message.textContent='';answers.innerHTML='';r.a.forEach((x,idx)=>{const b=document.createElement('button');b.textContent=x;b.onclick=()=>answer(i,idx);answers.appendChild(b)});dlg.showModal();speak(r.line+' '+r.q)}
+function answer(i,idx){const r=rides[i];if(idx===r.ok){unlocked.add(i);message.textContent='✅ '+r.after;message.style.color='#137445';speak(r.after);bark();if(i===current&&current<rides.length-1)current++;bubble.textContent=r.after+' Walk with me to the next ride!';render()}else{message.textContent='Try again — Archie will help you think it through.';message.style.color='#b42318';speak('Nearly. Try again. Think carefully and have another go.') }}
+document.getElementById('nextBtn').onclick=()=>{const r=rides[current];bubble.textContent=r.line;speak(r.line);document.querySelectorAll('.ride')[current]?.scrollIntoView({behavior:'smooth',block:'center'})};
+document.getElementById('closeBtn').onclick=()=>dlg.close();document.getElementById('soundBtn').onclick=()=>{soundOn=!soundOn;document.getElementById('soundBtn').textContent=soundOn?'🔊 Sound on':'🔇 Sound off';if(soundOn)speak('Sound is on. Let’s keep exploring!')};
+render();setTimeout(()=>speak(bubble.textContent),500);
+</script>
+</body></html>
