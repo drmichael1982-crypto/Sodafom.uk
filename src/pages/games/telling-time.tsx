@@ -175,7 +175,7 @@ function TellingTimeInner({ onComplete }: { onComplete: (r: GameResult) => void 
 
           <div className="px-6 py-5 flex flex-col items-center gap-4">
             {/* Clocks side by side */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center justify-center flex-wrap gap-4 w-full">
               {/* Analogue */}
               <div className="flex flex-col items-center gap-1">
                 <AnalogClock hours={q.hours} minutes={q.minutes} />

@@ -1,14 +1,14 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES ? process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES + '/playwright' : 'playwright');
+const { chromium, webkit } = require(process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES ? process.env.CODEX_PRIMARY_RUNTIME_NODE_MODULES + '/playwright' : 'playwright');
 const base = process.env.ARCHIE_TEST_URL || 'http://127.0.0.1:4173';
 const catalog = require('../src/lib/archie/game-catalog.json');
 const browserOptions = { headless: true };
 if (process.env.ARCHIE_CHROMIUM_PATH) browserOptions.executablePath = process.env.ARCHIE_CHROMIUM_PATH;
 const results=[];
 (async()=>{
-  const browser=await chromium.launch(browserOptions);
+  const browser=await (process.env.ARCHIE_BROWSER==='webkit'?webkit.launch({headless:true}):chromium.launch(browserOptions));
   const page=await browser.newPage({viewport:{width:390,height:844}});
   const errors=[];const liveApi=[];
   page.on('pageerror',e=>errors.push({url:page.url(),error:String(e)}));

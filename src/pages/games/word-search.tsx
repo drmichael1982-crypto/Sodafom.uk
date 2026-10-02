@@ -251,7 +251,7 @@ function WordSearchInner({ onComplete, difficulty }: { onComplete: (result: Game
       {/* Grid */}
       <div
         className="border border-border rounded-lg overflow-hidden"
-        style={{ display: 'grid', gridTemplateColumns: `repeat(${gridSize}, 1fr)`, gap: '1px', background: 'hsl(var(--border))' }}
+        style={{ display: 'grid', maxWidth:'100%', gridTemplateColumns: `repeat(${gridSize}, minmax(0,1fr))`, gap: '1px', background: 'hsl(var(--border))' }}
       >
         {grid.map((row, r) =>
           row.map((c_cell, c) => (
@@ -259,7 +259,7 @@ function WordSearchInner({ onComplete, difficulty }: { onComplete: (result: Game
               key={`${r}-${c}`}
               whileTap={{ scale: 0.85 }}
               onClick={() => handleCellClick(r, c)}
-              className={`${cellCls} font-black flex items-center justify-center transition-all select-none
+              className={`${cellCls} max-w-full min-w-0 font-black flex items-center justify-center transition-all select-none
                 ${isFound(r, c)
                   ? 'bg-green-400 text-white'
                   : isSelected(r, c)

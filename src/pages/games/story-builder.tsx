@@ -170,7 +170,7 @@ function StoryBuilderPlay({ onComplete, onQuestionChange }: { onComplete: (r: Ga
     <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-green-50 to-background">
       <AnimatePresence mode="wait">
         {phase === 'pick-char' && (
-          <motion.div key="char" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="w-full max-w-md text-center">
+          <motion.div key="char" initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 0 }} className="w-full max-w-md text-center">
             <div className="text-5xl mb-3">📜</div>
             <h2 className="text-2xl font-black text-foreground mb-6" style={{ fontFamily: 'var(--font-heading)' }}>Choose your hero!</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -187,7 +187,7 @@ function StoryBuilderPlay({ onComplete, onQuestionChange }: { onComplete: (r: Ga
         )}
 
         {phase === 'pick-setting' && (
-          <motion.div key="setting" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="w-full max-w-md text-center">
+          <motion.div key="setting" initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 0 }} className="w-full max-w-md text-center">
             <div className="text-4xl mb-2">{char?.emoji}</div>
             <h2 className="text-2xl font-black text-foreground mb-6" style={{ fontFamily: 'var(--font-heading)' }}>Where does the adventure happen?</h2>
             <div className="grid grid-cols-2 gap-3">
@@ -204,7 +204,7 @@ function StoryBuilderPlay({ onComplete, onQuestionChange }: { onComplete: (r: Ga
         )}
 
         {phase === 'pick-adventure' && (
-          <motion.div key="adventure" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="w-full max-w-md text-center">
+          <motion.div key="adventure" initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 0 }} className="w-full max-w-md text-center">
             <h2 className="text-2xl font-black text-foreground mb-6" style={{ fontFamily: 'var(--font-heading)' }}>What is the quest?</h2>
             <div className="grid grid-cols-2 gap-3">
               {ADVENTURES.map(a => (
@@ -249,7 +249,7 @@ function StoryBuilderPlay({ onComplete, onQuestionChange }: { onComplete: (r: Ga
         )}
 
         {phase === 'quiz' && questions.length > 0 && (
-          <motion.div key="quiz" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -40 }} className="w-full max-w-md text-center">
+          <motion.div key="quiz" initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 0 }} className="w-full max-w-md text-center">
             <div className="text-4xl mb-3">🎯</div>
             <p className="text-sm font-bold text-muted-foreground mb-2">Question {quizQ + 1} of {questions.length}</p>
             <h2 className="text-xl font-black text-foreground mb-6" style={{ fontFamily: 'var(--font-heading)' }}>

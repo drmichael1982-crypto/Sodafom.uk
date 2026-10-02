@@ -103,9 +103,9 @@ function GeographyQuizGame({ onComplete }: { onComplete: (r: GameResult) => void
       <AnimatePresence mode="wait">
         <motion.div
           key={round}
-          initial={{ opacity: 0, x: 40 }}
+          initial={{ opacity: 0, x: 0 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -40 }}
+          exit={{ opacity: 0, x: 0 }}
           transition={{ duration: 0.25 }}
           className="w-full bg-card border-2 border-border rounded-3xl p-6 text-center shadow-lg"
         >

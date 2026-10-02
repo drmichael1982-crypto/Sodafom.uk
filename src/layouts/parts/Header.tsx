@@ -152,7 +152,7 @@ export default function Header() {
           </Link>
 
           {/* Desktop nav */}
-          <nav aria-label="Main navigation" className="hidden md:flex items-center gap-1 ml-auto">
+          <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-1 ml-auto">
             {navLinks.filter(link => {
               if (researchMode && (link.label === 'Pricing' || link.label === 'Subscribe')) return false;
               return true;
@@ -318,7 +318,7 @@ export default function Header() {
           </nav>
 
           {/* Mobile: search + cart + hamburger */}
-          <div className="md:hidden flex items-center gap-2 ml-auto">
+          <div className="lg:hidden flex items-center gap-2 ml-auto">
             <SearchButton onClick={() => setSearchOpen(true)} variant="icon" />
             {!researchMode && (
               <Link
@@ -353,7 +353,7 @@ export default function Header() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.25, ease: 'easeInOut' as const }}
-            className="md:hidden overflow-hidden bg-primary/95"
+            className="lg:hidden overflow-hidden bg-primary/95"
           >
             <nav aria-label="Mobile navigation" className="px-4 py-4 flex flex-col gap-2">
               {navLinks.filter(link => {

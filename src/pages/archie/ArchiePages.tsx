@@ -43,11 +43,18 @@ function ArtButton({ label, x, y, w, h, onClick, to }: { label: string; x: numbe
   const props = { className: 'art-hit', style: { left: `${x/841*100}%`, top: `${y/1870*100}%`, width: `${w/841*100}%`, height: `${h/1870*100}%` }, 'aria-label': label };
   return to ? <Link {...props} to={to}><span className="sr-only">{label}</span></Link> : <button {...props} onClick={onClick}><span className="sr-only">{label}</span></button>;
 }
+function useCompactLandscape() {
+  const [compact, setCompact] = useState(() => window.matchMedia('(min-width:550px) and (max-height:500px)').matches);
+  useEffect(() => { const query=window.matchMedia('(min-width:550px) and (max-height:500px)'); const update=()=>setCompact(query.matches); query.addEventListener('change',update); return ()=>query.removeEventListener('change',update); },[]);
+  return compact;
+}
 export function ArchieHome() {
   useLearning('Home');
   const { openArchie } = useArchieContext();
   const { settings, setSettings } = useArchieData();
   const { stop } = useVoice();
+  const compact = useCompactLandscape();
+  if(compact) return <main className="compact-home"><img src="/assets/archie-approved/home.png" alt="Archie with blond hair and green eyes beside a magical castle."/><section><h1>SODAFOM <small>Learn · Play · Grow</small></h1><nav aria-label="Home activities">{[['Explore my world','/world'],['Games','/games'],['Lessons','/lesson'],['Parents','/parents'],['Rewards','/rewards'],['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Settings','/settings']].map(([label,to])=><Link className="a-button" to={to} key={to}>{label}</Link>)}<button className="a-button" onClick={()=>openArchie()}>Ask Archie</button><SoundButton/></nav></section></main>;
   return <main className="art-stage" aria-label="Sodafom home"><h1 className="sr-only">Sodafom — Learn, Play, Grow</h1><div className="approved-art">
     <img src="/assets/archie-approved/home.png" width="841" height="1870" alt="Archie with blond hair and green eyes, holding a heart-shaped key beside a magical castle."/>
     <ArtButton label="Settings" x={22} y={74} w={112} h={112} to="/settings"/>
@@ -100,6 +107,7 @@ export function ArchieLesson() {
   const { openArchie } = useArchieContext();
   const { speak,stop } = useVoice();
   const input = useRef<HTMLInputElement>(null);
+  const compact = useCompactLandscape();
   const word = words[step];
   const hideWord = trying && !correct && !feedback.startsWith('Good try.');
   useLearning('My spelling lesson', 'Spelling', `Spell the word ${word}.`);
@@ -118,6 +126,7 @@ export function ArchieLesson() {
     setStep(s=>s+1);setAttempt('');setTrying(false);setCorrect(false);setFeedback('');
   };
   if(finished) return <Page title="Brilliant learning!" back="/" intro="You completed all seven words."><div className="a-panel a-celebrate"><ArtIcon symbol="🌟"/><h2>3 stars earned</h2><p>Your lesson is saved on this device.</p><Link className="a-button" to="/rewards">See my rewards</Link><Link className="a-button" to="/games">Choose a game</Link></div></Page>;
+  if(compact) return <main className="compact-lesson"><header><Link className="a-button" to="/" aria-label="Home"><Home/></Link><h1>My spelling lesson <small>Year {year} · Step {step+1} of {words.length} · {Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')} left</small></h1><SoundButton/></header><section className="compact-board" aria-label="Lesson whiteboard"><h2>{paused?'Lesson paused':hideWord?'Listen, then type':word}</h2>{trying && !paused && <form onSubmit={e=>{e.preventDefault();check();}}><input ref={input} aria-label="Your spelling" autoComplete="off" spellCheck={false} autoCapitalize="off" value={attempt} disabled={remaining===0||correct} onChange={e=>setAttempt(e.target.value)}/><button className="a-button" disabled={remaining===0||correct}>Check</button></form>}<p role="status">{feedback || (paused?'Tap Resume lesson when you are ready.':'Hear the word, then try spelling it.')}</p></section><nav aria-label="Lesson actions"><button className="a-button" onClick={()=>{if(!paused)speak('read:lesson-word',word);}} aria-label="Hear the word">Hear the word</button><button className="a-button" onClick={()=>{if(!paused&&remaining>0){setTrying(true);setCorrect(false);setFeedback('');speak('read:lesson-word',word);}}}>Try spelling</button><button className="a-button" aria-label="Rubber: clear spelling" onClick={()=>{if(!paused&&remaining>0){setAttempt('');setCorrect(false);setTrying(true);setFeedback('Cleared. Have another go.');input.current?.focus();}}}>Rubber</button><button className="a-button" onClick={()=>openArchie()}>Ask Archie</button><button className="a-button" aria-label={paused?'Resume lesson':'Pause lesson'} onClick={()=>{setPaused(p=>!p);stop();}}>{paused?'Resume lesson':'Pause lesson'}</button><button className="a-button" onClick={next}>{step===6?'Finish lesson':'Next word'}</button></nav>{remaining===0 && <button className="a-button" onClick={()=>setRemaining(5*60)}>Practise for 5 more minutes</button>}</main>;
   return <main className="art-stage" aria-label="My spelling lesson"><h1 className="sr-only">My spelling lesson</h1><div className="approved-art lesson-art">
     <img src="/assets/archie-approved/lesson.png" width="841" height="1870" alt="Archie beside a whiteboard in a colourful classroom."/>
     <ArtButton label="Home" x={18} y={58} w={190} h={96} to="/"/>

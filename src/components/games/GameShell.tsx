@@ -170,7 +170,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
     : null;
 
   const gameContent = (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="archie-game-shell min-h-screen bg-background flex flex-col">
       <Helmet>
         <title>{title} — Sodafom Games</title>
         <meta name="description" content={`Play ${title} on Sodafom — a fun educational game for children ages ${ageGroups.join(', ')}.`} />
