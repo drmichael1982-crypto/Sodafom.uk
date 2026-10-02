@@ -156,5 +156,6 @@
   "overrides": {
     "cmdk": "^1.1.1",
     "react-day-picker": "^9.9.0"
-  }
+  },
+  "packageManager": "npm@10.9.8"
 }
