@@ -104,12 +104,12 @@ export function useSession() {
   const isAuthenticated = !isPending && !!session?.user;
   useStaleSessionRecovery(error, isPending, isAuthenticated);
 
-  // MOCK SESSION FOR FREE ACCESS (1182 code)
+  // Child/free access must never inherit adult administration privileges.
   const hasFreeAccess = typeof window !== 'undefined' && localStorage.getItem('sodafom_free_access') === 'true';
   if (hasFreeAccess) {
     return {
-      session: { user: { id: 'free-user', name: 'Archie Friend', email: '1182@sodafom.uk', isAdmin: true } } as any,
-      user: { id: 'free-user', name: 'Archie Friend', email: '1182@sodafom.uk', isAdmin: true } as any,
+      session: { user: { id: 'free-user', name: 'Archie Friend', email: '1182@sodafom.uk', isAdmin: false, role: 'child' } } as any,
+      user: { id: 'free-user', name: 'Archie Friend', email: '1182@sodafom.uk', isAdmin: false, role: 'child' } as any,
       isPending: false,
       error: null,
       isAuthenticated: true
