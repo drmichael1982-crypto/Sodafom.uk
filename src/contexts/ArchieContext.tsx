@@ -9,7 +9,8 @@ interface LearningContext {
 export interface ArchieContextType extends LearningContext {
   isOpen: boolean;
   draft: string;
-  openArchie: (question?: string) => void;
+  voiceOnOpen: boolean;
+  openArchie: (question?: string, spokenLesson?: boolean) => void;
   closeArchie: () => void;
   setGameContext: (title: string, subject: string, question?: string, options?: string[]) => void;
   clearGameContext: () => void;
@@ -20,6 +21,7 @@ export function ArchieProvider({ children }: { children: ReactNode }) {
   const [context, setContext] = useState(EMPTY);
   const [isOpen, setOpen] = useState(false);
   const [draft, setDraft] = useState('');
+  const [voiceOnOpen, setVoiceOnOpen] = useState(false);
   const setGameContext = useCallback((title: string, subject: string, question?: string, options?: string[]) => {
     setContext(previous => {
       const next = { gameTitle: title, subject, currentQuestion: question ?? null, currentOptions: options ?? null };
@@ -27,10 +29,10 @@ export function ArchieProvider({ children }: { children: ReactNode }) {
     });
   }, []);
   const clearGameContext = useCallback(() => setContext(EMPTY), []);
-  const openArchie = useCallback((question = '') => { setDraft(question); setOpen(true); }, []);
+  const openArchie = useCallback((question = '', spokenLesson = false) => { setDraft(question); setVoiceOnOpen(spokenLesson); setOpen(true); }, []);
   const closeArchie = useCallback(() => setOpen(false), []);
-  const value = useMemo(() => ({ ...context, isOpen, draft, openArchie, closeArchie, setGameContext, clearGameContext }),
-    [context, isOpen, draft, openArchie, closeArchie, setGameContext, clearGameContext]);
+  const value = useMemo(() => ({ ...context, isOpen, draft, voiceOnOpen, openArchie, closeArchie, setGameContext, clearGameContext }),
+    [context, isOpen, draft, voiceOnOpen, openArchie, closeArchie, setGameContext, clearGameContext]);
   return <ArchieContext.Provider value={value}>{children}</ArchieContext.Provider>;
 }
 export function useArchieContext() {
