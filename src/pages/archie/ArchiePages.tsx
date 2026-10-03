@@ -106,7 +106,7 @@ export function ArchieLesson() {
   const [finished,setFinished] = useState(false);
   const [runId] = useState(()=>`lesson-${crypto.randomUUID()}`);
   const { openArchie } = useArchieContext();
-  const { speak,stop } = useVoice();
+  const { speak,stop,playing } = useVoice();
   const input = useRef<HTMLInputElement>(null);
   const compact = useCompactLandscape();
   const word = words[step];
@@ -115,6 +115,7 @@ export function ArchieLesson() {
   useEffect(()=>{ if(paused || finished || remaining <= 0) return; const endAt=Date.now()+remaining*1000; const timer=window.setInterval(()=>setRemaining(Math.max(0,Math.ceil((endAt-Date.now())/1000))),1000); return ()=>clearInterval(timer); },[paused,finished,remaining===0]);
   useEffect(()=>{ if(trying) input.current?.focus(); },[trying]);
   useEffect(()=>()=>stop(),[]);
+  useEffect(()=>{ const handle=()=>{if(paused||finished||remaining===0)return;setAttempt(word);setTrying(true);setCorrect(true);setFeedback(`Brilliant! You spelled ${word} correctly.`);}; window.addEventListener('archie-spelling-correct',handle); return ()=>window.removeEventListener('archie-spelling-correct',handle); },[word,paused,finished,remaining]);
   const check = () => {
     if(!attempt.trim()) {setFeedback('Type the word first.');return;}
     const ok=attempt.trim().toLowerCase()===word.toLowerCase(); setCorrect(ok);setFeedback(ok?'Brilliant! You spelled it correctly.':'Good try. Look at the word, then try again.');
@@ -126,6 +127,8 @@ export function ArchieLesson() {
     if(step===words.length-1) {complete({id:runId,kind:'lesson',title:`Year ${year} spelling`,stars:3});setFinished(true);stop();return;}
     setStep(s=>s+1);setAttempt('');setTrying(false);setCorrect(false);setFeedback('');
   };
+  const advanceRef=useRef<()=>void>(()=>{}); advanceRef.current=next;
+  useEffect(()=>{if(!correct||paused||remaining===0||finished)return;const timer=window.setTimeout(()=>advanceRef.current(),playing?8000:900);return()=>window.clearTimeout(timer);},[correct,playing,paused,remaining===0,finished,step]);
   if(finished) return <Page title="Brilliant learning!" back="/" intro="You completed all seven words."><div className="a-panel a-celebrate"><ArtIcon symbol="🌟"/><h2>3 stars earned</h2><p>Your lesson is saved on this device.</p><Link className="a-button" to="/rewards">See my rewards</Link><Link className="a-button" to="/games">Choose a game</Link></div></Page>;
   if(compact) return <main className="compact-lesson"><header><Link className="a-button" to="/" aria-label="Home"><Home/></Link><h1>My spelling lesson <small>Year {year} · Step {step+1} of {words.length} · {Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')} left</small></h1><SoundButton/></header><section className="compact-board" aria-label="Lesson whiteboard"><h2>{paused?'Lesson paused':hideWord?'Listen, then type':word}</h2>{trying && !paused && <form onSubmit={e=>{e.preventDefault();check();}}><input ref={input} aria-label="Your spelling" autoComplete="off" spellCheck={false} autoCapitalize="off" value={attempt} disabled={remaining===0||correct} onChange={e=>setAttempt(e.target.value)}/><button className="a-button" disabled={remaining===0||correct}>Check</button></form>}<p role="status">{correct && <span className="lesson-correct-tick" aria-label="Correct answer">✓</span>}{feedback || (paused?'Tap Resume lesson when you are ready.':'Hear the word, then try spelling it.')}</p></section><nav aria-label="Lesson actions"><button className="a-button" onClick={()=>{if(!paused)speak('read:lesson-word',word);}} aria-label="Hear the word">Hear the word</button><button className="a-button" onClick={()=>{if(!paused&&remaining>0){setTrying(true);setCorrect(false);setFeedback('');speak('read:lesson-word',word);}}}>Try spelling</button><button className="a-button" aria-label="Rubber: clear spelling" onClick={()=>{if(!paused&&remaining>0){setAttempt('');setCorrect(false);setTrying(true);setFeedback('Cleared. Have another go.');input.current?.focus();}}}>Rubber</button><button className="a-button" onClick={()=>openArchie(undefined,true)}>Start spoken lesson</button><button className="a-button" aria-label={paused?'Resume lesson':'Pause lesson'} onClick={()=>{setPaused(p=>!p);stop();}}>{paused?'Resume lesson':'Pause lesson'}</button><button className="a-button" onClick={next}>{step===6?'Finish lesson':'Next word'}</button></nav>{remaining===0 && <button className="a-button" onClick={()=>setRemaining(5*60)}>Practise for 5 more minutes</button>}</main>;
   return <main className="art-stage" aria-label="My spelling lesson"><h1 className="sr-only">My spelling lesson</h1><div className="approved-art lesson-art">

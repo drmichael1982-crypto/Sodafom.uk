@@ -30,6 +30,7 @@ const results=[];
       await button('Ask Archie').click();assert.equal(await page.getByRole('dialog').count(),1);
       await page.getByLabel('Your question for Archie').fill('What is 8 plus 4?');await button('Send question').click();await page.getByRole('log').getByText(/8 plus 4 is 12/i).waitFor();await button('Listen to Archie').waitFor({state:'visible'});await button('Listen to Archie').click();
       await button('Close Ask Archie').click();await link('Lessons').click();await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
+      await page.getByLabel('Your question for Archie').fill('Wednesday');await button('Send question').click();await page.getByRole('log').getByText(/spelled Wednesday correctly/i).waitFor();await page.getByText('Step 2 of 7').waitFor();
       await page.getByLabel('Your question for Archie').fill('Open maths games');await button('Send question').click();await page.waitForURL(base+'/games?subject=maths');
       await button('Ask Archie').waitFor({state:'visible'});assert.equal(await button('Ask Archie').count(),1);
     });
