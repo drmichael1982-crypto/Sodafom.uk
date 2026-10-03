@@ -5,6 +5,7 @@ import HomePage from './pages/index';
 import SodafomAdventurePage from './pages/SodafomAdventurePage';
 import CartoonTheatrePage from './pages/CartoonTheatrePage';
 import AITeacherPage from './pages/AITeacherPage';
+import ScannerWorkspace from './components/scanners/ScannerWorkspace';
 import TeacherModePage from './pages/tutor/TeacherModePage';
 import SubjectsPage from './pages/subjects';
 import MathsSubjectPage from './pages/subjects/maths';
@@ -775,6 +776,12 @@ export const routes: RouteObject[] = [{
 }, {
   path: '/ai-teacher',
   element: <AITeacherPage />
+}, {
+  path: '/scanner/reading',
+  element: <ScannerWorkspace mode="reading" />
+}, {
+  path: '/scanner/homework',
+  element: <ScannerWorkspace mode="homework" />
 }, {
   path: '/mock-exams',
   element: <MockExamsPage />
