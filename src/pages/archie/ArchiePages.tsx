@@ -6,6 +6,7 @@ import { useProgression } from '@/contexts/ProgressionContext';
 import { useVoice } from '@/lib/voice-context';
 import { API_PREFIX } from '@/lib/config';
 import { BOOKS, SPELLING_WORDS } from '@/lib/archie/books';
+import { clearSavedLearning, loadSavedLearning } from '@/lib/archie/device-learning';
 import { useArchieData, updateSavedData, readGameStars } from '@/lib/archie/storage';
 import catalog from '@/lib/archie/game-catalog.json';
 import { EPISODES } from '@/pages/CartoonTheatrePage';
@@ -211,7 +212,7 @@ export function ArchieParents({ settingsOnly = false }: { settingsOnly?: boolean
     <label className="a-check"><input type="checkbox" checked={settings.sound} onChange={e=>setSettings({sound:e.target.checked})}/> Read aloud and sound</label>
     <label className="a-check"><input type="checkbox" checked={settings.largeText} onChange={e=>setSettings({largeText:e.target.checked})}/> Larger text on menus and books</label>
     <button className="a-button">Save learning settings</button><p role="status">{notice}</p>
-  </form><div className="a-panel"><h2>Archie’s learning helper</h2><p>Built-in help works first. A connected AI teacher can help with wider questions.</p><button className="a-button" disabled={checking} onClick={checkConnection}>{checking?'Checking…':'Check AI setup'}</button><p role="status">{connection}</p></div><div className="a-actions"><Link className="a-button" to="/progress">View progress</Link><Link className="a-button" to="/lesson">Try the lesson</Link></div><p className="a-note">This test version saves progress in this browser. Accounts and cross-device syncing are not connected.</p></Page>;
+  </form><div className="a-panel"><h2>Archie’s learning helper</h2><p>Built-in help works first. A connected AI teacher can help with wider questions.</p><button className="a-button" disabled={checking} onClick={checkConnection}>{checking?'Checking…':'Check AI setup'}</button><p role="status">{connection}</p></div><div className="a-panel"><h2>Ask Archie memory on this device</h2><p>{loadSavedLearning().length} saved question-and-answer pairs. These stay in this browser on this device.</p><button className="a-button" onClick={()=>{if(window.confirm('Clear saved Ask Archie questions and answers from this device?')){clearSavedLearning();setNotice('Saved Ask Archie memory has been cleared from this device.');}}}>Clear saved Ask Archie memory</button><p role="status">{notice}</p></div><div className="a-actions"><Link className="a-button" to="/progress">View progress</Link><Link className="a-button" to="/lesson">Try the lesson</Link></div><p className="a-note">This test version saves progress in this browser. Accounts and cross-device syncing are not connected.</p></Page>;
 }
 export function ArchieCartoons() {
   const [episode,setEpisode]=useState<number|null>(null);
