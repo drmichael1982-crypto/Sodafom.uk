@@ -6,6 +6,7 @@ import { API_PREFIX } from '@/lib/config';
 import { useArchieContext } from '@/contexts/ArchieContext';
 import { useVoice } from '@/lib/voice-context';
 import { tryLocalArchieResponse } from '@/lib/archie-local';
+import { answerFromDevice, saveLearningTurn } from '@/lib/archie/device-learning';
 import catalog from '@/lib/archie/game-catalog.json';
 import '@/pages/archie/archie.css';
 
@@ -61,7 +62,8 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     try {
       const destination = destinationFor(question);
       if (destination) { navigate(destination); close(); return; }
-      const local = tryLocalArchieResponse(question);
+      const deviceAnswer = answerFromDevice(question);
+      const local = deviceAnswer ? { text: deviceAnswer } : tryLocalArchieResponse(question);
       const hint = /\b(hint|help|instructions|what do i do)\b/i.test(question);
       let reply = local?.text;
       if (!reply && hint && gameTitle) {
@@ -79,11 +81,12 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
         if (!reply) throw new Error('Empty reply');
         setNotice('Answered by the learning service.');
       }
-      if (!controller.signal.aborted) { setMessages([...history, { role: 'assistant', content: reply }]); read(reply); }
+      if (!controller.signal.aborted) { saveLearningTurn(question, reply); setMessages([...history, { role: 'assistant', content: reply }]); read(reply); }
     } catch {
       if (pending.current !== controller) return;
       const reply = 'The online teacher is unavailable right now. I can still help on this device with maths, spelling and finding a game. Try “What is 8 plus 4?” or “Spell Wednesday”.';
       setNotice('Using the built-in learning helper.');
+      saveLearningTurn(question, reply);
       setMessages([...history, { role: 'assistant', content: reply }]);
     } finally { window.clearTimeout(timeout); if (pending.current === controller) setBusy(false); }
   }
