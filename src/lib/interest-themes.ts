@@ -3,6 +3,7 @@ export type InterestTheme = {
   palette: string;
   motif: string;
   emoji: string;
+  background: string;
 };
 
 const THEMES: InterestTheme[] = [
@@ -22,6 +23,31 @@ const THEMES: InterestTheme[] = [
   { label: 'teletubbies', palette: 'rolling-hills', motif: 'playful bright colours and abstract geometric shapes', emoji: '☀️' },
   { label: 'he-man', palette: 'heroic-fantasy', motif: 'bold heroic colours and abstract star patterns', emoji: '🛡️' },
 ];
+
+const PALETTES: Record<string, string> = {
+  cosmic: 'linear-gradient(145deg, #292c7a 0%, #4c5fd7 55%, #9a62d7 100%)',
+  jungle: 'linear-gradient(145deg, #285b47 0%, #69a858 55%, #d7ad52 100%)',
+  meadow: 'linear-gradient(145deg, #42a981 0%, #38b8b5 55%, #6dc9e8 100%)',
+  stadium: 'linear-gradient(145deg, #12664b 0%, #19815c 55%, #16477d 100%)',
+  hero: 'linear-gradient(145deg, #5e3da0 0%, #cc466e 55%, #ef9a45 100%)',
+  starlight: 'linear-gradient(145deg, #443487 0%, #9b56bc 55%, #e27ca0 100%)',
+  circuit: 'linear-gradient(145deg, #126b78 0%, #2962a3 55%, #554da8 100%)',
+  raceway: 'linear-gradient(145deg, #bd394d 0%, #e87934 55%, #e1b940 100%)',
+  soundwave: 'linear-gradient(145deg, #6939a6 0%, #c94691 55%, #f08a62 100%)',
+  ocean: 'linear-gradient(145deg, #075d83 0%, #1387aa 55%, #31b4b0 100%)',
+  storybook: 'linear-gradient(145deg, #9b4c87 0%, #d778a4 55%, #f0b856 100%)',
+  railway: 'linear-gradient(145deg, #304d6d 0%, #3e7796 55%, #d78a43 100%)',
+  cosy: 'linear-gradient(145deg, #936143 0%, #c88759 55%, #ddbb70 100%)',
+  'rolling-hills': 'linear-gradient(145deg, #5443a2 0%, #ad4e8e 55%, #e5974a 100%)',
+  'heroic-fantasy': 'linear-gradient(145deg, #34386f 0%, #6955a0 55%, #bb7747 100%)',
+};
+
+function customPalette(value: string): string {
+  let hash = 0;
+  for (const char of value) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  const hue = hash % 360;
+  return `linear-gradient(145deg, hsl(${hue} 68% 45%), hsl(${(hue + 48) % 360} 72% 32%))`;
+}
 
 const NORMALIZED = new Map(THEMES.map(theme => [theme.label, theme]));
 const MAX_INTERESTS = 5;
@@ -84,12 +110,13 @@ export function clearChildInterests(): void {
 export function getInterestTheme(value: string): InterestTheme {
   const normalized = normalizeInterest(value) ?? '';
   const known = NORMALIZED.get(normalized);
-  if (known) return known;
+  if (known) return { ...known, background: PALETTES[known.palette] };
   return {
     label: normalized,
     palette: 'personal',
     motif: 'original colours and abstract shapes inspired by this interest',
     emoji: '✨',
+    background: customPalette(normalized),
   };
 }
 
