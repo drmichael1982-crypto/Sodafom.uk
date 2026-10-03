@@ -25,4 +25,5 @@ jobs:
           cache: pnpm
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm run type-check
+      - run: pnpm run build
       - run: pnpm test -- --run src/lib/__tests__/interest-themes.test.ts
