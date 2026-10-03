@@ -11,6 +11,7 @@ import { useArchieData, updateSavedData, readGameStars } from '@/lib/archie/stor
 import catalog from '@/lib/archie/game-catalog.json';
 import { EPISODES } from '@/pages/CartoonTheatrePage';
 import './archie.css';
+import { getChildInterests, getInterestTheme, isSchoolFriendlyInterest, removeChildInterest, saveChildInterest } from '@/lib/interest-themes';
 
 export const ARCHIE_PATHS = ['/', '/world', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons'];
 export function isArchiePage(path: string) { return ARCHIE_PATHS.includes(path) || path.startsWith('/reader/'); }
@@ -55,8 +56,78 @@ export function ArchieHome() {
   const { settings, setSettings } = useArchieData();
   const { stop } = useVoice();
   const compact = useCompactLandscape();
-  if(compact) return <main className="compact-home"><img src="/assets/archie-approved/home.png" alt="Archie with blond hair and green eyes beside a magical castle."/><section><h1>SODAFOM <small>Learn · Play · Grow</small></h1><nav aria-label="Home activities">{[['Explore my world','/world'],['Games','/games'],['Lessons','/lesson'],['Parents','/parents'],['Rewards','/rewards'],['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Settings','/settings']].map(([label,to])=><Link className="a-button" to={to} key={to}>{label}</Link>)}<button className="a-button" onClick={()=>openArchie()}>Ask Archie</button><SoundButton/></nav></section></main>;
-  return <main className="art-stage" aria-label="Sodafom home"><h1 className="sr-only">Sodafom — Learn, Play, Grow</h1><div className="approved-art">
+  const [interests, setInterests] = useState<string[]>(() => getChildInterests());
+  const [interestInput, setInterestInput] = useState('');
+  const [personalizing, setPersonalizing] = useState(false);
+  const [interestNotice, setInterestNotice] = useState('');
+  const activeInterest = interests[0] ?? '';
+  const theme = activeInterest ? getInterestTheme(activeInterest) : null;
+
+  useEffect(() => {
+    const refresh = () => setInterests(getChildInterests());
+    window.addEventListener('sodafom:child-interests-updated', refresh);
+    return () => window.removeEventListener('sodafom:child-interests-updated', refresh);
+  }, []);
+
+  function addInterest(value = interestInput) {
+    const clean = value.trim();
+    if (!clean) return;
+    if (!isSchoolFriendlyInterest(clean)) {
+      setInterestNotice('Choose a friendly, school-ready interest for your screen.');
+      setInterestInput('');
+      return;
+    }
+    const next = saveChildInterest(clean);
+    setInterests(next);
+    setInterestInput('');
+    setInterestNotice('Saved on this device. Archie uses an original colour palette and abstract shapes.');
+  }
+
+  function removeInterest(value: string) {
+    const next = removeChildInterest(value);
+    setInterests(next);
+    setInterestNotice('Interest removed. Your home screen colours have been updated.');
+  }
+
+  const homePersonalizer = (
+    <>
+      <div className="home-personalize-bar">
+        <span>{theme ? <>{theme.emoji} Your {theme.palette} learning world</> : 'Make your learning world yours'}</span>
+        <button className="home-personalize-trigger" type="button" aria-label="Personalise my home screen" onClick={() => setPersonalizing(true)}>🎨 Personalise</button>
+      </div>
+      {personalizing && (
+        <div className="home-interest-scrim">
+          <section className="home-interest-dialog" role="dialog" aria-modal="true" aria-labelledby="home-interest-title">
+            <h2 id="home-interest-title">Make your home screen yours</h2>
+            <p>Add a favourite interest. Archie keeps it on this device and uses original colours and abstract patterns, not characters or logos.</p>
+            <form onSubmit={(event) => { event.preventDefault(); addInterest(); }}>
+              <label htmlFor="home-interest-input">What are you into?</label>
+              <div className="home-interest-form">
+                <input id="home-interest-input" value={interestInput} onChange={(event) => setInterestInput(event.target.value)} maxLength={32} placeholder="Space, football, animals…" />
+                <button className="a-button" type="submit" disabled={!interestInput.trim()}>Save</button>
+              </div>
+            </form>
+            {interests.length > 0 && <div className="home-interest-list" aria-label="Saved interests">{interests.map(value => (
+              <button key={value} type="button" className="home-interest-chip" aria-label={`Remove interest ${value}`} onClick={() => removeInterest(value)}>{getInterestTheme(value).emoji} {value} <span aria-hidden="true">×</span></button>
+            ))}</div>}
+            <p className="home-interest-note" role="status">{interestNotice || 'You can change these any time. Up to five interests are saved for this child.'}</p>
+            <button type="button" className="home-interest-close" onClick={() => setPersonalizing(false)}>Done</button>
+          </section>
+        </div>
+      )}
+    </>
+  );
+
+  if (compact) return <main className="compact-home" style={theme ? { backgroundImage: theme.background } : undefined}>
+    <img src="/assets/archie-approved/home.png" alt="Archie with blond hair and green eyes beside a magical castle."/>
+    <section>{homePersonalizer}<h1>SODAFOM <small>Learn · Play · Grow</small></h1>
+      <nav aria-label="Home activities">{[['Explore my world','/world'],['Games','/games'],['Lessons','/lesson'],['Parents','/parents'],['Rewards','/rewards'],['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Settings','/settings']].map(([label,to])=><Link className="a-button" to={to} key={to}>{label}</Link>)}<button className="a-button" onClick={()=>openArchie()}>Ask Archie</button><SoundButton/></nav>
+    </section>
+  </main>;
+
+  return <main className="art-stage" aria-label="Sodafom home" style={theme ? { backgroundImage: theme.background } : undefined}>
+    {homePersonalizer}
+    <h1 className="sr-only">Sodafom — Learn, Play, Grow</h1><div className="approved-art" data-interest-theme={theme?.palette ?? 'default'}>
     <img src="/assets/archie-approved/home.png" width="841" height="1870" alt="Archie with blond hair and green eyes, holding a heart-shaped key beside a magical castle."/>
     <ArtButton label="Settings" x={22} y={74} w={112} h={112} to="/settings"/>
     <ArtButton label={settings.sound ? 'Turn sound off' : 'Turn sound on'} x={710} y={76} w={116} h={111} onClick={() => { setSettings({sound:!settings.sound}); stop(); }}/>
@@ -68,6 +139,7 @@ export function ArchieHome() {
     {[['Parents','/parents'],['Rewards','/rewards'],['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress']].map(([label,to],i) => <ArtButton key={to} label={label} to={to} x={20+i*163} y={1643} w={154} h={181}/>)}
   </div></main>;
 }
+
 const WORLDS = [
   ['Maths','🧮','/games?subject=maths'], ['Reading','📖','/games?subject=reading'], ['Spelling','🔤','/games?subject=spelling'],
   ['Science','🔬','/games?subject=science'], ['Geography','🌍','/games/geography-quiz'], ['My lesson','🖍️','/lesson'],
