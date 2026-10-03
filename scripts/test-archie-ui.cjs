@@ -62,8 +62,33 @@ const results=[];
     await check('All 127 linked game routes render without a crash or home redirect',async()=>{
       for(const game of catalog){await goto(game.route);await page.waitForTimeout(70);console.log('ROUTE '+game.route);assert.equal(new URL(page.url()).pathname,game.route);assert.equal(await page.getByText('Something went wrong',{exact:false}).count(),0);}
     });
-    await check('Phone and desktop layouts: no horizontal overflow',async()=>{
-      for(const width of [360,390,1280]){await page.setViewportSize({width,height:900});for(const route of ['/','/world','/games','/lesson','/library','/reader/lost-key','/homework','/cartoons','/stickers','/rewards','/progress','/parents']){await goto(route);assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),`${width}px ${route} overflows`);}}
+    await check('Phone, foldable, tablet and landscape layouts: no horizontal overflow',async()=>{
+      const routes=['/','/world','/games','/lesson','/library','/reader/lost-key','/homework','/cartoons','/stickers','/rewards','/progress','/parents'];
+      const viewports=[
+        {width:320,height:640,label:'small phone'},
+        {width:360,height:740,label:'compact phone'},
+        {width:375,height:812,label:'phone'},
+        {width:390,height:844,label:'phone'},
+        {width:414,height:896,label:'large phone'},
+        {width:430,height:932,label:'large phone'},
+        {width:600,height:960,label:'foldable portrait'},
+        {width:768,height:1024,label:'small tablet'},
+        {width:820,height:1180,label:'tablet'},
+        {width:1024,height:768,label:'tablet landscape'},
+        {width:1280,height:900,label:'laptop'},
+        {width:1440,height:900,label:'desktop'},
+        {width:640,height:360,label:'phone landscape'},
+        {width:844,height:390,label:'phone landscape'},
+        {width:932,height:430,label:'foldable landscape'},
+      ];
+      for(const viewport of viewports){
+        await page.setViewportSize({width:viewport.width,height:viewport.height});
+        for(const route of routes){
+          await goto(route);
+          const dimensions=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
+          assert.ok(dimensions.document<=dimensions.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' overflows: '+JSON.stringify(dimensions));
+        }
+      }
       await page.setViewportSize({width:390,height:844});await goto('/lesson');await page.screenshot({path:'test-results/lesson-mobile.png',fullPage:true});await goto('/world');await page.screenshot({path:'test-results/world-mobile.png',fullPage:true});
     });
     assert.deepEqual(liveApi,[],'Preview contacted the live production API');assert.deepEqual(errors,[],'Browser errors');
