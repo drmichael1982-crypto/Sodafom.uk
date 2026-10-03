@@ -7,6 +7,20 @@ import { LocalArchieResult } from '../archie-local';
 import { CURRICULUM_LESSONS, TopicLesson, LessonQuestion } from './curriculum';
 import { loadTutorMemory, recordQuestionAnswer, getRecentLessonSummary } from './memory';
 
+
+function getActiveAgeGroup(): TopicLesson['ageGroup'] {
+  if (typeof window === 'undefined') return '8-10';
+  try {
+    const app = JSON.parse(localStorage.getItem('sodafom_archie_design_v1') || '{}');
+    const year = Number(app.settings?.year);
+    if (year >= 1 && year <= 3) return '5-7';
+    if (year >= 4 && year <= 6) return '8-10';
+    if (year >= 7 && year <= 9) return '11-13';
+  } catch { /* fall back to the saved tutor profile */ }
+  const group = loadTutorMemory().ageGroup;
+  return group === '5-7' || group === '11-13' ? group : '8-10';
+}
+
 let activePendingQuestion: {
   subject: string;
   topic: string;
@@ -101,7 +115,9 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
   // Subjects: Maths, English, Science, Geography, RE, Technology, Computing, General Knowledge
   let matchedLesson: TopicLesson | null = null;
 
+  const activeAgeGroup = getActiveAgeGroup();
   for (const lesson of CURRICULUM_LESSONS) {
+    if (lesson.ageGroup !== activeAgeGroup) continue;
     const topicPattern = new RegExp(`\\b${lesson.topic}\\b`, 'i');
     const subjectPattern = new RegExp(`\\b${lesson.subject}\\b`, 'i');
     if (topicPattern.test(lower) || (subjectPattern.test(lower) && /\b(?:teach|quiz|practice|explain|learn)\b/i.test(lower))) {
