@@ -138,6 +138,15 @@ export default function AITeacherPage() {
           {SUBJECTS.map(subject => <button key={subject.name} onClick={() => { ttsSpeak(subject.prompt); navigate(subject.route); }} className="min-h-28 rounded-3xl border-2 border-white bg-white p-4 text-center shadow-lg active:scale-95"><span className="text-4xl">{subject.emoji}</span><p className="mt-2 font-black text-sky-950">{subject.name}</p></button>)}
         </section>
 
+        <section className="mt-5 rounded-3xl border-2 border-violet-200 bg-white p-5 shadow-lg">
+          <h2 className="flex items-center gap-2 text-xl font-black text-sky-950"><Camera aria-hidden/> Book and homework scanners</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">Scan one clear page, ask Archie a question, and work through it together.</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <button type="button" onClick={() => navigate('/scanner/reading')} className="min-h-12 rounded-2xl bg-violet-700 px-4 py-3 font-black text-white">Scan a reading book</button>
+            <button type="button" onClick={() => navigate('/scanner/homework')} className="min-h-12 rounded-2xl bg-sky-700 px-4 py-3 font-black text-white">Get homework help</button>
+          </div>
+        </section>
+
         <section className="mt-5 rounded-3xl bg-white p-5 shadow-xl">
           <h2 className="flex items-center gap-2 text-xl font-black text-sky-950"><Sparkles className="text-yellow-500"/> Ask your teacher</h2>
           <div className="mt-3 flex gap-2"><input value={question} onChange={e => setQuestion(e.target.value)} placeholder="What would you like Archie to teach?" className="min-w-0 flex-1 rounded-2xl border-2 border-sky-200 px-4 py-3"/><button onClick={() => void askTeacher()} disabled={busy || !question.trim()} className="rounded-2xl bg-sky-600 px-4 text-white disabled:opacity-50"><Send/></button></div>
