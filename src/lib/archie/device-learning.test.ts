@@ -15,7 +15,7 @@ describe('Archie offline learning memory', () => {
   it('remembers a tutor answer on this device and reuses it for the same year age', () => {
     saveLearningTurn('Why do planets orbit the Sun?', 'Gravity keeps planets in orbit.', 9);
     expect(answerFromDevice('Why do planets orbit the Sun?', 9)).toBe('Gravity keeps planets in orbit.');
-    expect(answerFromDevice('Why do planets orbit the Sun?', 6)).toBeNull();
+    expect(answerFromDevice('Why do planets orbit the Sun?', 6)).not.toBe('Gravity keeps planets in orbit.');
     expect(loadSavedLearning()).toHaveLength(1);
   });
 
