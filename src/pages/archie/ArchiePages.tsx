@@ -52,22 +52,28 @@ function useCompactLandscape() {
 export function ArchieHome() {
   useLearning('Home');
   const { openArchie } = useArchieContext();
-  const { settings, setSettings } = useArchieData();
-  const { stop } = useVoice();
-  const compact = useCompactLandscape();
-  if(compact) return <main className="compact-home"><img src="/assets/archie-approved/home.png" alt="Archie with blond hair and green eyes beside a magical castle."/><section><h1>SODAFOM <small>Learn · Play · Grow</small></h1><nav aria-label="Home activities">{[['Explore my world','/world'],['Games','/games'],['Lessons','/lesson'],['Parents','/parents'],['Rewards','/rewards'],['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Settings','/settings']].map(([label,to])=><Link className="a-button" to={to} key={to}>{label}</Link>)}<button className="a-button" onClick={()=>openArchie()}>Ask Archie</button><SoundButton/></nav></section></main>;
-  return <main className="art-stage" aria-label="Sodafom home"><h1 className="sr-only">Sodafom — Learn, Play, Grow</h1><div className="approved-art">
-    <img src="/assets/archie-approved/home.png" width="841" height="1870" alt="Archie with blond hair and green eyes, holding a heart-shaped key beside a magical castle."/>
-    <ArtButton label="Settings" x={22} y={74} w={112} h={112} to="/settings"/>
-    <ArtButton label={settings.sound ? 'Turn sound off' : 'Turn sound on'} x={710} y={76} w={116} h={111} onClick={() => { setSettings({sound:!settings.sound}); stop(); }}/>
-    {!settings.sound && <span className="home-muted" aria-hidden="true">🔇</span>}
-    <ArtButton label="Explore my world" x={29} y={944} w={788} h={179} to="/world"/>
-    <ArtButton label="Games" x={25} y={1133} w={393} h={297} to="/games"/>
-    <ArtButton label="Lessons" x={429} y={1133} w={389} h={297} to="/lesson"/>
-    <ArtButton label="Ask Archie" x={22} y={1444} w={797} h={188} onClick={() => openArchie()}/>
-    {[['Parents','/parents'],['Rewards','/rewards'],['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress']].map(([label,to],i) => <ArtButton key={to} label={label} to={to} x={20+i*163} y={1643} w={154} h={181}/>)}
-  </div></main>;
+  const activities = [
+    ['Explore my world', '/world', Castle], ['Games', '/games', Gamepad2],
+    ['Lessons', '/lesson', BookOpen], ['Parents', '/parents', Users],
+    ['Rewards', '/rewards', Trophy], ['Sticker book', '/stickers', Star],
+    ['Cartoons', '/cartoons', Film], ['Progress', '/progress', Milestone],
+  ] as const;
+  return <main className="responsive-home" aria-label="Sodafom home">
+    <header className="responsive-home-header">
+      <Link className="a-button a-icon" to="/settings" aria-label="Settings"><KeyRound aria-hidden="true"/></Link>
+      <h1>SODAFOM <small>Learn · Play · Grow</small></h1>
+      <SoundButton/>
+    </header>
+    <div className="responsive-home-body">
+      <div className="responsive-home-art" role="img" aria-label="Archie with blond hair and green eyes, holding his heart key beside a magical castle."/>
+      <nav className="responsive-home-nav" aria-label="Home activities">
+        {activities.map(([label,to,Icon],i)=><Link key={to} to={to} className={`responsive-home-card colour-${i%4}`}><Icon aria-hidden="true"/><span>{label}</span></Link>)}
+        <button className="responsive-home-ask a-button" onClick={()=>openArchie()}>Ask Archie <span aria-hidden="true">→</span></button>
+      </nav>
+    </div>
+  </main>;
 }
+
 const WORLDS = [
   ['Maths','🧮','/games?subject=maths'], ['Reading','📖','/games?subject=reading'], ['Spelling','🔤','/games?subject=spelling'],
   ['Science','🔬','/games?subject=science'], ['Geography','🌍','/games/geography-quiz'], ['My lesson','🖍️','/lesson'],
