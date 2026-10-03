@@ -13,7 +13,7 @@ import '@/pages/archie/archie.css';
 type Message = { role: 'user' | 'assistant'; content: string };
 function cleanTutorText(text: string) {
   return text.replaceAll('**', '').replaceAll('__', '').replaceAll('~~', '')
-    .replaceAll('*', '').replaceAll('`', '').replace(/\\[PLAY:[^\\]]+\\]/g, '').trim();
+    .replaceAll('`', '').replace(/\\[PLAY:[^\\]]+\\]/g, '').trim();
 }
 function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
