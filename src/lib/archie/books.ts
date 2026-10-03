@@ -32,4 +32,7 @@ export const SPELLING_WORDS: Record<number, string[]> = {
   4: ['Wednesday','beautiful','because','different','important','remember','question'],
   5: ['achieve','available','curiosity','excellent','familiar','immediate','language'],
   6: ['necessary','opportunity','pronunciation','recommend','sufficient','temperature','vegetable'],
+  7: ['accommodate','accompany','achieve','aggressive','amateur','ancient','apparent'],
+  8: ['appreciate','attached','available','average','awkward','bargain','bruise'],
+  9: ['cemetery','committee','conscience','conscious','controversy','convenience','correspond'],
 };
