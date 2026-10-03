@@ -51,7 +51,7 @@ function customPalette(value: string): string {
 
 const NORMALIZED = new Map(THEMES.map(theme => [theme.label, theme]));
 const MAX_INTERESTS = 5;
-const UNSUITABLE_THEME_LANGUAGE = /\\b(?:fuck|fucking|shit|shitting|cunt|bitch|bastard|porn|pornography)\\b/i;
+const UNSUITABLE_THEME_LANGUAGE = /\b(?:fuck|fucking|shit|shitting|cunt|bitch|bastard|porn|pornography)\b/i;
 
 export function isSchoolFriendlyInterest(value: string): boolean {
   return !UNSUITABLE_THEME_LANGUAGE.test(value);
@@ -135,6 +135,7 @@ export function tryRememberChildInterest(input: string): string | null {
   const match = input.match(/\b(?:i like|i love|my favourite (?:toy|show|programme|program|thing) is|my favorite (?:toy|show|program|thing) is)\s+([^.!?\n]{2,48})/i);
   if (!match) return null;
   const value = match[1].replace(/\b(?:and|because|so)\b.*$/i, '').trim();
+  if (!isSchoolFriendlyInterest(value)) return 'Let’s choose a friendly, school-ready interest for your learning screen. You can ask about difficult topics in a lesson with age-appropriate help.';
   const interests = saveChildInterest(value);
   const saved = interests[0];
   return saved ? `Nice choice! I’ll remember that you like ${saved}. I can use original ${getInterestTheme(saved).motif} in your learning screen. Your interest stays on this device.` : null;
