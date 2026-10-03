@@ -8,7 +8,7 @@ on:
       - "src/components/ArchieHelper.tsx"
       - "src/pages/index.tsx"
       - "package.json"
-      - "package-lock.json"
+      - "pnpm-lock.yaml"
       - ".github/workflows/archie-interest-themes.yml"
 
 jobs:
@@ -16,10 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci --no-audit --no-fund
-      - run: npm run type-check
-      - run: npm test -- --run src/lib/__tests__/interest-themes.test.ts
+          cache: pnpm
+      - run: pnpm install --no-frozen-lockfile --no-fund
+      - run: pnpm run type-check
+      - run: pnpm test -- --run src/lib/__tests__/interest-themes.test.ts
