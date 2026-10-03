@@ -6,7 +6,7 @@ import { API_PREFIX } from '@/lib/config';
 import { useArchieContext } from '@/contexts/ArchieContext';
 import { useVoice } from '@/lib/voice-context';
 import { getRememberedChildName, tryLocalArchieResponse } from '@/lib/archie-local';
-import { answerFromDevice, saveLearningTurn } from '@/lib/archie/device-learning';
+import { answerFromDevice, answerLessonReply, saveLearningTurn } from '@/lib/archie/device-learning';
 import catalog from '@/lib/archie/game-catalog.json';
 import '@/pages/archie/archie.css';
 
@@ -87,8 +87,9 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     try {
       const destination = destinationFor(question);
       if (destination) { navigate(destination); close(); return; }
-      const deviceAnswer = answerFromDevice(question);
-      const local = deviceAnswer ? { text: deviceAnswer } : tryLocalArchieResponse(question);
+      const deviceAnswer = answerFromDevice(question, getLearnerAge());
+      const lessonAnswer = answerLessonReply(question, currentQuestion || '', subject);
+      const local = deviceAnswer ? { text: deviceAnswer } : lessonAnswer ? { text: lessonAnswer } : tryLocalArchieResponse(question);
       const hint = /\b(hint|help|instructions|what do i do)\b/i.test(question);
       let reply = local?.text;
       if (!reply && hint && gameTitle) {
