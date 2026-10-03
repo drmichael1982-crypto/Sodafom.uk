@@ -92,6 +92,7 @@ export function saveChildInterest(value: string): string[] {
   if (!interest) return getChildInterests();
   const next = [interest, ...getChildInterests().filter(item => item !== interest)].slice(0, MAX_INTERESTS);
   try { localStorage.setItem(activeProfileKey(), JSON.stringify(next)); } catch { /* private browsing/quota */ }
+  window.dispatchEvent(new Event('sodafom:child-interests-updated'));
   return next;
 }
 
@@ -100,11 +101,15 @@ export function removeChildInterest(value: string): string[] {
   const interest = normalizeInterest(value);
   const next = getChildInterests().filter(item => item !== interest);
   try { localStorage.setItem(activeProfileKey(), JSON.stringify(next)); } catch { /* private browsing/quota */ }
+  window.dispatchEvent(new Event('sodafom:child-interests-updated'));
   return next;
 }
 
 export function clearChildInterests(): void {
-  if (typeof window !== 'undefined') localStorage.removeItem(activeProfileKey());
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(activeProfileKey());
+    window.dispatchEvent(new Event('sodafom:child-interests-updated'));
+  }
 }
 
 export function getInterestTheme(value: string): InterestTheme {
