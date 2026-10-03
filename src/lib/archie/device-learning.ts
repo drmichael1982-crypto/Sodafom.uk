@@ -3,7 +3,7 @@
  * Bundled historical notes answer common questions without a network. All
  * question/answer pairs are held only in this browser profile and can be cleared.
  */
-export type SavedLearningTurn = { question: string; answer: string; age: number; savedAt: string };
+export type SavedLearningTurn = { question: string; answer: string; age: number; profileId: string; savedAt: string };
 const KEY = 'sodafom_archie_learning_v1';
 const MAX_TURNS = 120;
 
@@ -30,6 +30,14 @@ const HISTORY = [
   { keys: ['5 times 5', '5 x 5', 'five times five'], ages: [8, 9, 10, 11, 12, 13], answer: '5 × 5 = 25. Multiplication is repeated addition: 5 + 5 + 5 + 5 + 5 = 25.' },
 ] as const;
 
+function getProfileId(): string {
+  if (typeof window === 'undefined') return 'device-default';
+  try {
+    const child = JSON.parse(localStorage.getItem('sodafom_active_child') || 'null');
+    if (child?.id !== undefined && child?.id !== null) return String(child.id).slice(0, 80);
+  } catch { /* keep a separate default device profile */ }
+  return 'device-default';
+}
 function normalise(value: string) { return value.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); }
 
 export function loadSavedLearning(): SavedLearningTurn[] {
@@ -37,14 +45,15 @@ export function loadSavedLearning(): SavedLearningTurn[] {
   try {
     const rows = JSON.parse(localStorage.getItem(KEY) || '[]');
     if (!Array.isArray(rows)) return [];
-    return rows.filter((x): x is SavedLearningTurn => x && typeof x.question === 'string' && typeof x.answer === 'string' && Number.isInteger(x.age)).slice(-MAX_TURNS);
+    return rows.filter((x): x is SavedLearningTurn => x && typeof x.question === 'string' && typeof x.answer === 'string' && Number.isInteger(x.age) && (typeof x.profileId === 'string' || x.profileId === undefined)).slice(-MAX_TURNS);
   } catch { return []; }
 }
 export function saveLearningTurn(question: string, answer: string, age = 9): void {
   if (typeof window === 'undefined' || !question.trim() || !answer.trim()) return;
   try {
-    const rows = loadSavedLearning().filter(x => normalise(x.question) !== normalise(question) || x.age !== age);
-    rows.push({ question: question.trim().slice(0, 1000), answer: answer.trim().slice(0, 6000), age, savedAt: new Date().toISOString() });
+    const profileId = getProfileId();
+    const rows = loadSavedLearning().filter(x => normalise(x.question) !== normalise(question) || x.age !== age || (x.profileId || 'device-default') !== profileId);
+    rows.push({ question: question.trim().slice(0, 1000), answer: answer.trim().slice(0, 6000), age, profileId, savedAt: new Date().toISOString() });
     localStorage.setItem(KEY, JSON.stringify(rows.slice(-MAX_TURNS)));
   } catch { /* private browsing/storage limits: keep the current answer usable */ }
 }
@@ -54,7 +63,8 @@ export function clearSavedLearning(): void {
 export function answerFromDevice(question: string, age = 9): string | null {
   const q = normalise(question);
   if (!q) return null;
-  const saved = loadSavedLearning().find(x => normalise(x.question) === q && x.age === age);
+  const profileId = getProfileId();
+  const saved = loadSavedLearning().find(x => normalise(x.question) === q && x.age === age && (x.profileId || 'device-default') === profileId);
   if (saved) return saved.answer;
   const entry = HISTORY.find(item => item.ages.includes(age as never) && item.keys.some(key => q.includes(key)));
   if (entry) return entry.answer;
