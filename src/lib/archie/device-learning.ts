@@ -60,6 +60,14 @@ export function saveLearningTurn(question: string, answer: string, age = 9): voi
 export function clearSavedLearning(): void {
   if (typeof window !== 'undefined') localStorage.removeItem(KEY);
 }
+export function answerLessonReply(reply: string, prompt: string, subject: string | null): string | null {
+  if (subject?.toLowerCase() !== 'spelling' || /\\b(help|hint|repeat|explain)\\b/i.test(reply)) return null;
+  const target = prompt.match(/\\bspell the word\\s+(.+?)[.!?]*$/i)?.[1]?.trim().toLowerCase();
+  if (!target || reply.trim().length > 80) return null;
+  const spoken = reply.trim().replace(/[.!?,]+$/g, '').toLowerCase();
+  return spoken === target ? `Brilliant! You spelled ${target} correctly.` : `Good try. The word is ${target}. Say it slowly, listen to the sounds, and try once more.`;
+}
+
 export function answerFromDevice(question: string, age = 9): string | null {
   const q = normalise(question);
   if (!q) return null;
