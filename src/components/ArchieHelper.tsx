@@ -5,15 +5,15 @@ import { Mic, Send, Volume2, X, MessageCircle } from 'lucide-react';
 import { API_PREFIX } from '@/lib/config';
 import { useArchieContext } from '@/contexts/ArchieContext';
 import { useVoice } from '@/lib/voice-context';
-import { tryLocalArchieResponse } from '@/lib/archie-local';
+import { getRememberedChildName, tryLocalArchieResponse } from '@/lib/archie-local';
 import { answerFromDevice, saveLearningTurn } from '@/lib/archie/device-learning';
 import catalog from '@/lib/archie/game-catalog.json';
 import '@/pages/archie/archie.css';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 function cleanTutorText(text: string) {
-  return text.replace(/\\*\\*(.*?)\\*\\*/g, '$1').replace(/__(.*?)__/g, '$1')
-    .replace(/(^|\\s)\\*([^*\\n]+)\\*(?=\\s|$)/g, '$1$2').replace(/\\[PLAY:[^\\]]+\\]/g, '').trim();
+  return text.replaceAll('**', '').replaceAll('__', '').replaceAll('~~', '')
+    .replaceAll('*', '').replaceAll('`', '').replace(/\\[PLAY:[^\\]]+\\]/g, '').trim();
 }
 function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
@@ -96,7 +96,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
           ? `Let's work on ${gameTitle}. ${currentQuestion} Try one small step first. What do you notice?${currentOptions?.length ? ` Your choices are ${currentOptions.join(', ')}.` : ''}`
           : `You are on ${gameTitle}. Read the instructions, then try one step. You can type the question here and we can work it out together.`;
       }
-      if (reply) setNotice('Answered on this device.');
+      if (reply) { const childName = getRememberedChildName(); if (childName && !reply.toLowerCase().includes(childName.toLowerCase())) reply = `${childName}, ${reply}`; setNotice('Answered on this device.'); }
       else {
         const response = await fetch(`${API_PREFIX}/chat`, { method: 'POST', credentials: 'include', signal: controller.signal,
           headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: history.slice(-12),
