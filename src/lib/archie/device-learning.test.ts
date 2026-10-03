@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { answerFromDevice, clearSavedLearning, loadSavedLearning, saveLearningTurn } from './device-learning';
+import { answerFromDevice, answerLessonReply, clearSavedLearning, loadSavedLearning, saveLearningTurn } from './device-learning';
 
 describe('Archie offline learning memory', () => {
   beforeEach(() => localStorage.clear());
+
+  it('checks a spoken spelling reply locally against the active lesson word', () => {
+    expect(answerLessonReply('Wednesday', 'Spell the word Wednesday.', 'Spelling')).toContain('spelled Wednesday correctly');
+    expect(answerLessonReply('Wensday', 'Spell the word Wednesday.', 'Spelling')).toContain('Good try');
+    expect(answerLessonReply('help me', 'Spell the word Wednesday.', 'Spelling')).toBeNull();
+  });
 
   it('answers common history questions offline with an age-appropriate explanation', () => {
     const younger = answerFromDevice('Who was Christopher Columbus?', 6);
