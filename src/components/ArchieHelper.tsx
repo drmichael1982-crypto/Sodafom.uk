@@ -89,6 +89,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
       if (destination) { navigate(destination); close(); return; }
       const deviceAnswer = answerFromDevice(question, getLearnerAge());
       const lessonAnswer = answerLessonReply(question, currentQuestion || '', subject);
+      if (lessonAnswer?.startsWith('Brilliant!')) window.dispatchEvent(new Event('archie-spelling-correct'));
       const local = deviceAnswer ? { text: deviceAnswer } : lessonAnswer ? { text: lessonAnswer } : tryLocalArchieResponse(question);
       const hint = /\b(hint|help|instructions|what do i do)\b/i.test(question);
       let reply = local?.text;
