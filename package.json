@@ -22,7 +22,7 @@
     "reset": "npm run clean && npm install",
     "build:archie": "vite build --mode archie-test",
     "start:archie": "tsx scripts/serve-archie-test.ts",
-    "test:archie": "vitest run src/contexts/ArchieContext.test.tsx src/server/lib/archie-brain.test.ts src/lib/archie/math-punctuation.test.ts src/lib/__tests__/archie-local.test.ts src/contexts/ProgressionContext.test.ts",
+    "test:archie": "vitest run src/contexts/ArchieContext.test.tsx src/server/lib/archie-brain.test.ts src/lib/archie/math-punctuation.test.ts src/lib/__tests__/archie-local.test.ts src/lib/archie/device-learning.test.ts src/contexts/ProgressionContext.test.ts",
     "build:legacy": "vite build && vite build --ssr src/server/entry.ts",
     "start:legacy": "node dist/server.bundle.mjs",
     "seed:legacy": "tsx scripts/run-education-cloud-seed.ts",
