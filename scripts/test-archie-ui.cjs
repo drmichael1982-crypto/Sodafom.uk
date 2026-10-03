@@ -26,6 +26,21 @@ const results=[];
       await goto('/');await button('Turn sound off').click();await button('Turn sound on').click();
       await page.screenshot({path:'test-results/home-mobile.png',fullPage:true});
     });
+    await check('Live home personalisation saves, applies and clears interests on device',async()=>{
+      await goto('/');
+      await page.evaluate(()=>{for(const key of Object.keys(localStorage)){if(key.startsWith('sodafom_child_interests:'))localStorage.removeItem(key);}localStorage.removeItem('sodafom_active_child');});
+      await page.reload();
+      await page.getByRole('button',{name:'Personalise my home screen'}).click();
+      await page.getByLabel('What are you into?').fill('dinosaurs');
+      await page.getByRole('button',{name:'Save',exact:true}).click();
+      await page.getByText('Your jungle learning world').waitFor();
+      assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_child_interests:default')||'[]')),['dinosaurs']);
+      await page.getByRole('button',{name:'Personalise my home screen'}).click();
+      await page.getByRole('button',{name:'Remove interest dinosaurs'}).click();
+      await page.getByText('Make your learning world yours').waitFor();
+      assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_child_interests:default')||'[]')),[]);
+      await page.getByRole('button',{name:'Done',exact:true}).click();
+    });
     await check('One shared Ask Archie: local maths, close, context and navigation',async()=>{
       await button('Ask Archie').click();assert.equal(await page.getByRole('dialog').count(),1);
       await page.getByLabel('Your question for Archie').fill('What is 8 plus 4?');await button('Send question').click();await page.getByRole('log').getByText(/8 plus 4 is 12/i).waitFor();await button('Listen to Archie').waitFor({state:'visible'});await button('Listen to Archie').click();
