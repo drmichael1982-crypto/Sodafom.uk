@@ -230,6 +230,12 @@ export default function HomePage() {
   const interestTheme = interests[0] ? getInterestTheme(interests[0]) : null;
   const matureHome = !!selectedAge && ['10–11', '11–12', '12–13'].includes(selectedAge);
 
+  React.useEffect(() => {
+    const refreshInterests = () => setInterests(getChildInterests());
+    window.addEventListener('sodafom:child-interests-updated', refreshInterests);
+    return () => window.removeEventListener('sodafom:child-interests-updated', refreshInterests);
+  }, []);
+
   function addInterest(value = interestInput) {
     const trimmed = value.trim();
     if (!trimmed) return;
