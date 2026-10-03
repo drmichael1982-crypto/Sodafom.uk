@@ -23,6 +23,6 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - run: pnpm install --no-frozen-lockfile --no-fund
+      - run: pnpm install --no-frozen-lockfile
       - run: pnpm run type-check
       - run: pnpm test -- --run src/lib/__tests__/interest-themes.test.ts
