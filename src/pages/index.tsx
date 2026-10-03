@@ -331,13 +331,7 @@ export default function HomePage() {
             <section
               className="hero-bg relative overflow-hidden min-h-screen flex flex-col transition-colors duration-700"
               aria-label="Choose a subject"
-              style={interestTheme ? {
-                backgroundImage: interestTheme.palette === 'rolling-hills'
-                  ? 'linear-gradient(180deg, #60c4e8 0%, #7fdbb3 55%, #a7e89b 100%)'
-                  : interestTheme.palette === 'heroic-fantasy'
-                    ? 'linear-gradient(145deg, #27345f 0%, #74529f 52%, #e9a94b 100%)'
-                    : `linear-gradient(145deg, hsl(${(interests[0].length * 37) % 360} 68% 48%), hsl(${(interests[0].length * 37 + 42) % 360} 72% 34%))`,
-              } : undefined}
+              style={interestTheme ? { backgroundImage: interestTheme.background } : undefined}
             >
 
               {/* Sky decorations */}
