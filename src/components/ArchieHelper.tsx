@@ -6,6 +6,7 @@ import { API_PREFIX } from '@/lib/config';
 import { useArchieContext } from '@/contexts/ArchieContext';
 import { useVoice } from '@/lib/voice-context';
 import { getRememberedChildName, tryLocalArchieResponse } from '@/lib/archie-local';
+import { tryRememberChildInterest } from '@/lib/interest-themes';
 import { answerFromDevice, answerLessonReply, saveLearningTurn } from '@/lib/archie/device-learning';
 import catalog from '@/lib/archie/game-catalog.json';
 import '@/pages/archie/archie.css';
@@ -85,6 +86,13 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     const controller = new AbortController(); pending.current = controller;
     const timeout = window.setTimeout(() => controller.abort(), 15000);
     try {
+      const interestReply = tryRememberChildInterest(question);
+      if (interestReply) {
+        setNotice('Handled on this device.');
+        setMessages([...history, { role: 'assistant', content: cleanTutorText(interestReply) }]);
+        read(interestReply);
+        return;
+      }
       const destination = destinationFor(question);
       if (destination) { navigate(destination); close(); return; }
       const deviceAnswer = answerFromDevice(question, getLearnerAge());
