@@ -9,6 +9,7 @@ import { motion } from 'motion/react';
 import { Volume2, VolumeX, Star, Lock, Play, ChevronRight, Pencil } from 'lucide-react';
 import { games } from 'virtual:content';
 import { isDemoGameId, useSubscription } from '@/hooks/useSubscription';
+import { useChildAge } from '@/hooks/useChildAge';
 
 
 const GAME_ROUTES = new Map<string, string>([
@@ -32,6 +33,12 @@ const difficultyConfig: Record<string, string> = {
   Medium: 'bg-red-100 text-red-800 border-red-200',
   Hard:   'bg-rose-100 text-rose-800 border-rose-200',
 };
+
+const spellingAgeGroups = ['4–6', '5–7', '8–10', '11–13'] as const;
+
+function normaliseAgeLabel(value: string) {
+  return value.replace(/[–—]/g, '-').trim();
+}
 
 const cardAnim = {
   hidden:  { opacity: 0, y: 28, scale: 0.96 },
@@ -64,11 +71,21 @@ export default function SpellingHubPage() {
   const navigate = useNavigate();
   const { speak, speakingId } = useReadAloud();
   const { subscribed } = useSubscription();
+  const { child, ageGroup } = useChildAge();
+  const [selectedAge, setSelectedAge] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (ageGroup) setSelectedAge(normaliseAgeLabel(ageGroup));
+  }, [ageGroup]);
 
   const allGames = ((games as unknown) as { games: Array<Record<string, unknown>> }).games ?? [];
-  const spellingGames = allGames.filter(
-    (g) => g.subject === 'spelling'
-  );
+  const spellingGames = allGames.filter((g) => g.subject === 'spelling');
+  const visibleSpellingGames = selectedAge
+    ? spellingGames.filter((game) => {
+        const groups = (game.ageGroups as string[]) ?? [];
+        return groups.some((group) => normaliseAgeLabel(group) === selectedAge);
+      })
+    : spellingGames;
 
   return (
     <main className="min-h-screen bg-background pb-20">
@@ -105,7 +122,7 @@ export default function SpellingHubPage() {
                 Spelling Activities
               </h1>
               <p className="text-secondary-foreground/80 mt-1">
-                Word search, spelling bee, phonics — all spelling games in one place
+                Pick an age group to find spelling activities at the right level.
               </p>
             </div>
           </div>
@@ -124,8 +141,29 @@ export default function SpellingHubPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
-        {spellingGames.length === 0 ? (
-          <p className="text-center text-muted-foreground py-16">No spelling games found.</p>
+        <section aria-labelledby="spelling-age-heading" className="mb-7 rounded-3xl border-2 border-secondary/25 bg-card p-5 shadow-sm">
+          <h2 id="spelling-age-heading" className="text-lg font-black text-foreground" style={{ fontFamily: 'var(--font-heading)' }}>
+            {child ? `Spelling for ${child.name}` : 'Choose an age group'}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">Choose an age band to show activities made for that group. You can change it any time.</p>
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {spellingAgeGroups.map((age) => {
+              const active = selectedAge === normaliseAgeLabel(age);
+              return (
+                <button key={age} type="button" aria-pressed={active}
+                  onClick={() => setSelectedAge(active ? null : normaliseAgeLabel(age))}
+                  className={`min-h-12 rounded-2xl border-2 px-3 py-2 text-sm font-black transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-secondary/40 ${active ? 'border-secondary bg-secondary text-secondary-foreground' : 'border-border bg-background text-foreground hover:border-secondary/60'}`}>
+                  {age} years
+                </button>
+              );
+            })}
+          </div>
+        </section>
+        <p className="mb-4 text-sm font-bold text-muted-foreground" aria-live="polite">
+          {selectedAge ? `${visibleSpellingGames.length} spelling activities for ages ${selectedAge.replace('-', '–')}` : `${spellingGames.length} spelling activities for all ages`}
+        </p>
+        {visibleSpellingGames.length === 0 ? (
+          <p className="text-center text-muted-foreground py-16">No spelling activities are tagged for this age group yet. Try another age group.</p>
         ) : (
           <motion.div
             variants={stagger}
@@ -133,9 +171,9 @@ export default function SpellingHubPage() {
             animate="visible"
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
           >
-            {spellingGames.map((game) => {
+            {visibleSpellingGames.map((game) => {
               const id = game.id as string;
-              const route = GAME_ROUTES.get(id);
+              const route = GAME_ROUTES.get(id) ?? `/games/${id.replace(/^game-/, '')}`;
               const isDemo = isDemoGameId(id);
               const locked = !isDemo && !subscribed;
               const ageGroups = (game.ageGroups as string[]) ?? [];
