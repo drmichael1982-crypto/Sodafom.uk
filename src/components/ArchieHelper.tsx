@@ -48,7 +48,7 @@ export function destinationFor(text: string): string | undefined {
   return game?.route ?? DESTINATIONS.find(([pattern]) => pattern.test(text))?.[1];
 }
 export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: boolean; gameMode?: boolean }) {
-  const { isOpen, draft, openArchie, closeArchie, gameTitle, subject, currentQuestion, currentOptions } = useArchieContext();
+  const { isOpen, draft, voiceOnOpen, openArchie, closeArchie, gameTitle, subject, currentQuestion, currentOptions } = useArchieContext();
   const { speak, stop, playing } = useVoice();
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,9 +67,9 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   const [notice, setNotice] = useState('');
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (isOpen) { setInput(draft); if (!dialog.current?.open) dialog.current?.showModal(); inputRef.current?.focus(); }
+    if (isOpen) { setInput(draft); if (!dialog.current?.open) dialog.current?.showModal(); inputRef.current?.focus(); if (voiceOnOpen) startVoiceLesson(); }
     else { voiceLessonRef.current = false; setVoiceLesson(false); dialog.current?.close(); recognition.current?.abort(); setListening(false); pending.current?.abort(); pending.current = null; setBusy(false); stop(); }
-  }, [isOpen, draft]);
+  }, [isOpen, draft, voiceOnOpen]);
   useEffect(() => {
     pending.current?.abort(); pending.current = null; setBusy(false); setMessages([]); setNotice(''); recognition.current?.abort(); setListening(false);
     return () => pending.current?.abort();
@@ -141,7 +141,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   function startVoiceLesson() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) { setNotice('Voice conversation is not supported here. You can still type to Archie.'); return; }
-    voiceLessonRef.current = true; setVoiceLesson(true); setNotice('Starting your spoken lesson…');
+    voiceLessonRef.current = true; setVoiceLesson(true); setNotice('Starting your spoken lesson…'); if (currentQuestion) read(currentQuestion);
   }
   function stopVoiceLesson() {
     voiceLessonRef.current = false; setVoiceLesson(false); recognition.current?.abort(); setListening(false); setNotice('Spoken lesson paused.');
