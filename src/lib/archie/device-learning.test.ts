@@ -19,6 +19,15 @@ describe('Archie offline learning memory', () => {
     expect(loadSavedLearning()).toHaveLength(1);
   });
 
+  it('keeps saved answers separate for different child profiles on one device', () => {
+    localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 'child-a' }));
+    saveLearningTurn('What is a habitat?', 'A place where an organism lives.', 8);
+    localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 'child-b' }));
+    expect(answerFromDevice('What is a habitat?', 8)).toBeNull();
+    saveLearningTurn('What is a habitat?', 'A home for living things.', 8);
+    expect(answerFromDevice('What is a habitat?', 8)).toBe('A home for living things.');
+  });
+
   it('clears local learning turns when requested', () => {
     saveLearningTurn('What is a habitat?', 'A place where an organism lives.', 8);
     clearSavedLearning();
