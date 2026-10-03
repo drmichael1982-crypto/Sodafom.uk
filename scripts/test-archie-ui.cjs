@@ -31,7 +31,7 @@ const results=[];
       await page.getByLabel('Your question for Archie').fill('What is 8 plus 4?');await button('Send question').click();await page.getByRole('log').getByText(/8 plus 4 is 12/i).waitFor();
       await button('Close Ask Archie').click();await link('Lessons').click();await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
       await page.getByLabel('Your question for Archie').fill('Open maths games');await button('Send question').click();await page.waitForURL(base+'/games?subject=maths');
-      assert.equal(await button('Ask Archie').count(),1);
+      await button('Ask Archie').waitFor({state:'visible'});assert.equal(await button('Ask Archie').count(),1);
     });
     await check('Spelling whiteboard: wrong answer, seven correct answers, pause and saved reward',async()=>{
       await goto('/lesson');await button('Hear the word').click();await button('Try spelling').click();await page.getByLabel('Your spelling').fill('wrong');await button('Check').click();await page.getByText('Good try.',{exact:false}).waitFor();
