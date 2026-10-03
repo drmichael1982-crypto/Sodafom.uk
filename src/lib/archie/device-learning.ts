@@ -3,7 +3,7 @@
  * Bundled historical notes answer common questions without a network. All
  * question/answer pairs are held only in this browser profile and can be cleared.
  */
-export type SavedLearningTurn = { question: string; answer: string; savedAt: string };
+export type SavedLearningTurn = { question: string; answer: string; age: number; savedAt: string };
 const KEY = 'sodafom_archie_learning_v1';
 const MAX_TURNS = 120;
 
@@ -24,14 +24,14 @@ export function loadSavedLearning(): SavedLearningTurn[] {
   try {
     const rows = JSON.parse(localStorage.getItem(KEY) || '[]');
     if (!Array.isArray(rows)) return [];
-    return rows.filter((x): x is SavedLearningTurn => x && typeof x.question === 'string' && typeof x.answer === 'string').slice(-MAX_TURNS);
+    return rows.filter((x): x is SavedLearningTurn => x && typeof x.question === 'string' && typeof x.answer === 'string' && Number.isInteger(x.age)).slice(-MAX_TURNS);
   } catch { return []; }
 }
-export function saveLearningTurn(question: string, answer: string): void {
+export function saveLearningTurn(question: string, answer: string, age = 9): void {
   if (typeof window === 'undefined' || !question.trim() || !answer.trim()) return;
   try {
     const rows = loadSavedLearning().filter(x => normalise(x.question) !== normalise(question));
-    rows.push({ question: question.trim().slice(0, 1000), answer: answer.trim().slice(0, 6000), savedAt: new Date().toISOString() });
+    rows.push({ question: question.trim().slice(0, 1000), answer: answer.trim().slice(0, 6000), age, savedAt: new Date().toISOString() });
     localStorage.setItem(KEY, JSON.stringify(rows.slice(-MAX_TURNS)));
   } catch { /* private browsing/storage limits: keep the current answer usable */ }
 }
@@ -41,7 +41,7 @@ export function clearSavedLearning(): void {
 export function answerFromDevice(question: string, age = 9): string | null {
   const q = normalise(question);
   if (!q) return null;
-  const saved = loadSavedLearning().find(x => normalise(x.question) === q);
+  const saved = loadSavedLearning().find(x => normalise(x.question) === q && x.age === age);
   if (saved) return saved.answer;
   const entry = HISTORY.find(item => item.ages.includes(age as never) && item.keys.some(key => q.includes(key)));
   if (entry) return entry.answer;
