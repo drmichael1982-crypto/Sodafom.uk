@@ -3,7 +3,7 @@ export type InterestTheme = {
   palette: string;
   motif: string;
   emoji: string;
-  background: string;
+  background?: string;
 };
 
 const THEMES: InterestTheme[] = [
@@ -51,6 +51,11 @@ function customPalette(value: string): string {
 
 const NORMALIZED = new Map(THEMES.map(theme => [theme.label, theme]));
 const MAX_INTERESTS = 5;
+const UNSUITABLE_THEME_LANGUAGE = /\\b(?:fuck|fucking|shit|shitting|cunt|bitch|bastard|porn|pornography)\\b/i;
+
+export function isSchoolFriendlyInterest(value: string): boolean {
+  return !UNSUITABLE_THEME_LANGUAGE.test(value);
+}
 
 function activeProfileKey(): string {
   try {
@@ -89,7 +94,7 @@ export function getChildInterests(): string[] {
 export function saveChildInterest(value: string): string[] {
   if (typeof window === 'undefined') return [];
   const interest = normalizeInterest(value);
-  if (!interest) return getChildInterests();
+  if (!interest || !isSchoolFriendlyInterest(interest)) return getChildInterests();
   const next = [interest, ...getChildInterests().filter(item => item !== interest)].slice(0, MAX_INTERESTS);
   try { localStorage.setItem(activeProfileKey(), JSON.stringify(next)); } catch { /* private browsing/quota */ }
   window.dispatchEvent(new Event('sodafom:child-interests-updated'));
