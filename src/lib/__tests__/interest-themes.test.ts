@@ -44,6 +44,12 @@ describe('device-local interest themes', () => {
     expect(getChildInterests()).toEqual(['space']);
   });
 
+  it('keeps explicit profanity out of the saved theme and answers locally', () => {
+    const reply = tryRememberChildInterest('I like shit');
+    expect(reply).toContain('school-ready');
+    expect(getChildInterests()).toEqual([]);
+  });
+
   it('does not save an unprompted or overly long message', () => {
     expect(tryRememberChildInterest('Today I went to school and played outside.')).toBeNull();
     expect(getChildInterests()).toEqual([]);
