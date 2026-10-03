@@ -19,6 +19,7 @@ import GamesPage from './games';
 import { useSession } from '@/lib/auth/auth-client';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 import { getChildInterests, getInterestTheme, saveChildInterest, removeChildInterest } from '@/lib/interest-themes';
+import { loadTutorMemory } from '@/lib/tutor/memory';
 
 const siteUrl = 'https://sodafom.uk';
 const ogImage = `${siteUrl}/og-image.png`;
@@ -228,7 +229,7 @@ export default function HomePage() {
   const [interestInput, setInterestInput] = useState('');
   const [interestNotice, setInterestNotice] = useState('');
   const interestTheme = interests[0] ? getInterestTheme(interests[0]) : null;
-  const matureHome = !!selectedAge && ['10–11', '11–12', '12–13'].includes(selectedAge);
+  const matureHome = (!!selectedAge && ['10–11', '11–12', '12–13'].includes(selectedAge)) || loadTutorMemory().ageGroup === '11-13';
 
   React.useEffect(() => {
     const refreshInterests = () => setInterests(getChildInterests());
