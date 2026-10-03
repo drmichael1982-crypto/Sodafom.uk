@@ -19,8 +19,8 @@ const THEMES: InterestTheme[] = [
   { label: 'princesses', palette: 'storybook', motif: 'castles, crowns and soft sparkles', emoji: '👑' },
   { label: 'trains', palette: 'railway', motif: 'tracks and friendly trains', emoji: '🚂' },
   { label: 'teddies', palette: 'cosy', motif: 'soft shapes and friendly bears', emoji: '🧸' },
-  { label: 'teletubbies', palette: 'rolling-hills', motif: 'bright rolling hills, sunshine and friendly original shapes', emoji: '☀️' },
-  { label: 'he-man', palette: 'heroic-fantasy', motif: 'bold heroic colours, mountains and original fantasy symbols', emoji: '🛡️' },
+  { label: 'teletubbies', palette: 'rolling-hills', motif: 'playful bright colours and abstract geometric shapes', emoji: '☀️' },
+  { label: 'he-man', palette: 'heroic-fantasy', motif: 'bold heroic colours and abstract star patterns', emoji: '🛡️' },
 ];
 
 const NORMALIZED = new Map(THEMES.map(theme => [theme.label, theme]));
