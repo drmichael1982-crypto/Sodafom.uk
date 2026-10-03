@@ -1,0 +1,25 @@
+name: Archie interest themes
+
+on:
+  pull_request:
+    paths:
+      - "src/lib/interest-themes.ts"
+      - "src/lib/__tests__/interest-themes.test.ts"
+      - "src/components/ArchieHelper.tsx"
+      - "src/pages/index.tsx"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/archie-interest-themes.yml"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run type-check
+      - run: npm test -- --run src/lib/__tests__/interest-themes.test.ts
