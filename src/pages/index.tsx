@@ -18,7 +18,7 @@ import { ArchieCharacter } from '../components/ArchieCharacter';
 import GamesPage from './games';
 import { useSession } from '@/lib/auth/auth-client';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
-import { getChildInterests, getInterestTheme, saveChildInterest, removeChildInterest } from '@/lib/interest-themes';
+import { getChildInterests, getInterestTheme, isSchoolFriendlyInterest, saveChildInterest, removeChildInterest } from '@/lib/interest-themes';
 import { loadTutorMemory } from '@/lib/tutor/memory';
 
 const siteUrl = 'https://sodafom.uk';
@@ -240,6 +240,11 @@ export default function HomePage() {
   function addInterest(value = interestInput) {
     const trimmed = value.trim();
     if (!trimmed) return;
+    if (!isSchoolFriendlyInterest(trimmed)) {
+      setInterestNotice('Please choose a friendly, school-ready interest for your screen.');
+      setInterestInput('');
+      return;
+    }
     const updated = saveChildInterest(trimmed);
     setInterests(updated);
     setInterestInput('');
