@@ -514,8 +514,8 @@ export default function HomePage() {
                       onClick={() => handleNavClick(s)}
                       className={`relative flex flex-col items-center ${matureHome ? "gap-3 rounded-2xl p-4 sm:p-6 border-2" : "gap-4 rounded-[2.5rem] p-6 sm:p-10 border-4"} shadow-2xl border-white/30 cursor-pointer text-center overflow-hidden group`}
                       style={{
-                        background: `linear-gradient(145deg, ${s.gradFrom}, ${s.gradTo})`,
-                        boxShadow: `0 12px 40px ${s.glow}`,
+                        background: interestTheme?.background ?? `linear-gradient(145deg, ${s.gradFrom}, ${s.gradTo})`,
+                        boxShadow: interestTheme ? '0 12px 40px rgba(10, 16, 38, 0.38)' : `0 12px 40px ${s.glow}`,
                       }}
                     >
                       {/* Hover shine */}
