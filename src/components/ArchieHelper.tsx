@@ -17,6 +17,11 @@ function cleanTutorText(text: string) {
 }
 function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
+  try {
+    const app = JSON.parse(localStorage.getItem('sodafom_archie_design_v1') || '{}');
+    const year = Number(app.settings?.year);
+    if (year >= 1 && year <= 9) return year + 4;
+  } catch { /* use the next available local learner setting */ }
   const selected = Number(localStorage.getItem('sodafom_ai_teacher_age'));
   if (selected >= 5 && selected <= 13) return selected;
   try {
@@ -159,7 +164,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
       <header><div><h2 id="archie-title">Ask Archie</h2><p>{gameTitle ? `Helping with ${gameTitle}` : 'Your learning helper'}</p></div><button aria-label="Close Ask Archie" onClick={close}><X /></button></header>
       <div className="archie-chat-history" role="log" aria-live="polite">
         {!messages.length && <p>Hi! Ask me about this game or lesson. You can type or tap the microphone.</p>}
-        {messages.map((m,i) => <p key={i} className={`chat-${m.role}`}><strong>{m.role === 'user' ? 'You' : 'Archie'}: </strong>{m.content.replace(/\[PLAY:[^\]]+\]/g, '')}</p>)}
+        {messages.map((m,i) => <p key={i} className={`chat-${m.role}`}><strong>{m.role === 'user' ? 'You' : 'Archie'}: </strong>{m.role === 'assistant' && /\\b(correct|spot on|brilliant|well done|excellent|right answer)\\b/i.test(m.content) && <span className="archie-correct-tick" aria-label="Correct">✓</span>}{m.role === 'assistant' ? m.content.split(/(\\s+)/).map((part,wordIndex) => /^\\s+$/.test(part) ? part : <span className="archie-word" style={{ animationDelay: `${Math.min(wordIndex, 24) * 22}ms` }} key={wordIndex}>{part}</span>) : m.content.replace(/\\[PLAY:[^\\]]+\\]/g, '')}</p>)}
         {busy && <p>Archie is thinking…</p>}<div ref={end}/>
       </div>
       <button className="archie-quick" disabled={busy || listening} onClick={voiceLesson ? stopVoiceLesson : startVoiceLesson}>{voiceLesson ? 'Stop spoken lesson' : 'Start spoken lesson'}</button>
