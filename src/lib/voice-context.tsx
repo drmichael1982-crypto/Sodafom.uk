@@ -188,8 +188,8 @@ function browserTtsSpeak(text: string, onEnd?: () => void) {
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = 'en-GB';
   // A natural, gentle pace. Avoid artificially extreme pitch, which can sound robotic.
-  utt.rate = 0.94;
-  utt.pitch = 1.24;
+  utt.rate = 0.96;
+  utt.pitch = 1.34;
   utt.volume = 1;
 
   const speakNow = () => {
