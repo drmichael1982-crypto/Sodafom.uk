@@ -18,6 +18,7 @@ import { ArchieCharacter } from '../components/ArchieCharacter';
 import GamesPage from './games';
 import { useSession } from '@/lib/auth/auth-client';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
+import { getChildInterests, getInterestTheme, saveChildInterest, removeChildInterest } from '@/lib/interest-themes';
 
 const siteUrl = 'https://sodafom.uk';
 const ogImage = `${siteUrl}/og-image.png`;
@@ -223,6 +224,26 @@ export default function HomePage() {
     return (age ? age.replace('-', '–') : null) as AgeBandLabel;
   });
   const [showAgePicker, setShowAgePicker] = useState(false);
+  const [interests, setInterests] = useState<string[]>(() => getChildInterests());
+  const [interestInput, setInterestInput] = useState('');
+  const [interestNotice, setInterestNotice] = useState('');
+  const interestTheme = interests[0] ? getInterestTheme(interests[0]) : null;
+
+  function addInterest(value = interestInput) {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const updated = saveChildInterest(trimmed);
+    setInterests(updated);
+    setInterestInput('');
+    setInterestNotice(`Your home screen is now inspired by ${trimmed} with original artwork.`);
+  }
+
+  function deleteInterest(value: string) {
+    const updated = removeChildInterest(value);
+    setInterests(updated);
+    setInterestNotice(updated.length ? 'Interest removed. Your home screen has been updated.' : 'Interests cleared. The standard home screen is back.');
+  }
+
   const gamesRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useSession();
   const navigate = useNavigate();
@@ -307,7 +328,17 @@ export default function HomePage() {
             exit={{ opacity: 0, y: -30, scale: 0.98 }}
             transition={{ duration: 0.35, ease: 'easeIn' as const }}
           >
-            <section className="hero-bg relative overflow-hidden min-h-screen flex flex-col" aria-label="Choose a subject">
+            <section
+              className="hero-bg relative overflow-hidden min-h-screen flex flex-col transition-colors duration-700"
+              aria-label="Choose a subject"
+              style={interestTheme ? {
+                backgroundImage: interestTheme.palette === 'rolling-hills'
+                  ? 'linear-gradient(180deg, #60c4e8 0%, #7fdbb3 55%, #a7e89b 100%)'
+                  : interestTheme.palette === 'heroic-fantasy'
+                    ? 'linear-gradient(145deg, #27345f 0%, #74529f 52%, #e9a94b 100%)'
+                    : `linear-gradient(145deg, hsl(${(interests[0].length * 37) % 360} 68% 48%), hsl(${(interests[0].length * 37 + 42) % 360} 72% 34%))`,
+              } : undefined}
+            >
 
               {/* Sky decorations */}
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -401,7 +432,57 @@ export default function HomePage() {
                   <p className="text-white font-black text-xl mt-2 hero-sub-shadow">
                     What shall we learn today?
                   </p>
+                  {interestTheme && (
+                    <p className="text-white font-bold text-sm mt-2 drop-shadow">
+                      {interestTheme.emoji} {interestTheme.motif} — an original look made for you
+                    </p>
+                  )}
                 </motion.div>
+
+                <div className="w-full max-w-3xl mb-6 rounded-3xl border border-white/40 bg-black/15 backdrop-blur-md p-4 sm:p-5 text-white">
+                  <label htmlFor="child-interest" className="block text-sm font-black mb-2">
+                    Make this learning world yours
+                  </label>
+                  <p className="text-xs sm:text-sm text-white/90 mb-3">
+                    Add or change an interest as you grow. Archie creates an original colour theme and shapes inspired by it.
+                  </p>
+                  <form
+                    className="flex flex-col sm:flex-row gap-2"
+                    onSubmit={(event) => { event.preventDefault(); addInterest(); }}
+                  >
+                    <input
+                      id="child-interest"
+                      value={interestInput}
+                      onChange={(event) => setInterestInput(event.target.value)}
+                      maxLength={32}
+                      placeholder="Try space, dinosaurs, football, or your own idea"
+                      aria-label="Favourite interest"
+                      className="min-w-0 flex-1 rounded-xl px-4 py-3 text-gray-900 font-semibold"
+                    />
+                    <button type="submit" className="rounded-xl bg-white px-5 py-3 font-black text-slate-900 hover:bg-white/90">
+                      Add interest
+                    </button>
+                  </form>
+                  <div className="flex flex-wrap gap-2 mt-3" aria-label="Quick interests">
+                    {['Space', 'Dinosaurs', 'Football', 'Magic', 'Animals'].map((item) => (
+                      <button key={item} type="button" onClick={() => addInterest(item)} className="rounded-full border border-white/60 bg-white/15 px-3 py-1.5 text-xs font-bold hover:bg-white/25">
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                  {interests.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3 items-center">
+                      <span className="text-xs font-bold">Saved on this device:</span>
+                      {interests.map((item) => (
+                        <button key={item} type="button" onClick={() => deleteInterest(item)} aria-label={`Remove ${item} interest`} className="rounded-full bg-white text-slate-900 px-3 py-1.5 text-xs font-bold">
+                          {item} <span aria-hidden="true">×</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {interestNotice && <p className="text-xs font-bold mt-2" role="status">{interestNotice}</p>}
+                  <p className="text-[11px] text-white/80 mt-2">Interests stay in this browser and can be removed here at any time. Archie uses original artwork and does not copy characters or logos.</p>
+                </div>
 
                 {/* 3×2 subject icon grid (2 cols on mobile, 3 on desktop) */}
                 <motion.div
