@@ -62,10 +62,11 @@ export function clearSavedLearning(): void {
 }
 export function answerLessonReply(reply: string, prompt: string, subject: string | null): string | null {
   if (subject?.toLowerCase() !== 'spelling' || /\b(help|hint|repeat|explain)\b/i.test(reply)) return null;
-  const target = prompt.match(/\bspell the word\s+(.+?)[.!?]*$/i)?.[1]?.trim().toLowerCase();
-  if (!target || reply.trim().length > 80) return null;
+  const targetText = prompt.match(/\bspell the word\s+(.+?)[.!?]*$/i)?.[1]?.trim();
+  if (!targetText || reply.trim().length > 80) return null;
+  const target = targetText.toLowerCase();
   const spoken = reply.trim().replace(/[.!?,]+$/g, '').toLowerCase();
-  return spoken === target ? `Brilliant! You spelled ${target} correctly.` : `Good try. The word is ${target}. Say it slowly, listen to the sounds, and try once more.`;
+  return spoken === target ? `Brilliant! You spelled ${targetText} correctly.` : `Good try. The word is ${targetText}. Say it slowly, listen to the sounds, and try once more.`;
 }
 
 export function answerFromDevice(question: string, age = 9): string | null {
