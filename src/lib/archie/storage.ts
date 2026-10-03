@@ -17,7 +17,7 @@ function read(): SavedData {
     cachedRaw = raw;
     const data = JSON.parse(raw || 'null');
     cached = data ? {
-      settings: { year: [1,2,3,4,5,6].includes(data.settings?.year) ? data.settings.year : 4,
+      settings: { year: [1,2,3,4,5,6,7,8,9].includes(data.settings?.year) ? data.settings.year : 4,
         sound: data.settings?.sound !== false, largeText: data.settings?.largeText === true },
       activities: Array.isArray(data.activities) ? data.activities.filter((v: Activity) => v && typeof v.id === 'string' && typeof v.title === 'string' && ['book','lesson'].includes(v.kind) && Number.isFinite(v.stars) && typeof v.date === 'string').slice(-500) : [],
       stickers: Array.isArray(data.stickers) ? data.stickers.filter((s: unknown) => typeof s === 'string') : [],
