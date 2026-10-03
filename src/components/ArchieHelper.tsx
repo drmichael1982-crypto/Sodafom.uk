@@ -127,7 +127,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
       const words = String(event.results?.[0]?.[0]?.transcript || '').trim();
       if (words) { setInput(words); window.setTimeout(() => { void sendRef.current(words); }, 0); }
     };
-    listener.onerror = () => { setListening(false); setNotice('I could not hear that. Archie will listen again, or you can type.'); };
+    listener.onerror = (event: any) => { setListening(false); if (['not-allowed','service-not-allowed','audio-capture'].includes(event?.error)) { voiceLessonRef.current = false; setVoiceLesson(false); setNotice('Microphone access is unavailable. You can type to Archie or check microphone permission.'); } else { setNotice('I could not hear that. Archie will listen again, or you can type.'); } };
     listener.onend = () => setListening(false);
     try { listener.start(); setListening(true); setNotice('Listening for your answer…'); }
     catch { setListening(false); }
