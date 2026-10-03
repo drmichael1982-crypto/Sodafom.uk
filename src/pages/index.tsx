@@ -228,6 +228,7 @@ export default function HomePage() {
   const [interestInput, setInterestInput] = useState('');
   const [interestNotice, setInterestNotice] = useState('');
   const interestTheme = interests[0] ? getInterestTheme(interests[0]) : null;
+  const matureHome = !!selectedAge && ['10–11', '11–12', '12–13'].includes(selectedAge);
 
   function addInterest(value = interestInput) {
     const trimmed = value.trim();
@@ -331,6 +332,7 @@ export default function HomePage() {
             <section
               className="hero-bg relative overflow-hidden min-h-screen flex flex-col transition-colors duration-700"
               aria-label="Choose a subject"
+              data-learner-band={matureHome ? "older" : "younger"}
               style={interestTheme ? { backgroundImage: interestTheme.background } : undefined}
             >
 
@@ -418,12 +420,12 @@ export default function HomePage() {
                   className="text-center mb-10"
                 >
                   <h2
-                    className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight text-white hero-title-shadow"
+                    className={`${matureHome ? "text-3xl sm:text-4xl md:text-5xl tracking-tight" : "text-4xl sm:text-5xl md:text-6xl"} font-black leading-tight text-white hero-title-shadow`}
                     style={{ fontFamily: 'var(--font-heading)' }}
                   >
                     Hi! I'm Archie!
                   </h2>
-                  <p className="text-white font-black text-xl mt-2 hero-sub-shadow">
+                  <p className={`${matureHome ? "text-lg sm:text-xl" : "text-xl"} text-white font-black mt-2 hero-sub-shadow`}>
                     What shall we learn today?
                   </p>
                   {interestTheme && (
@@ -498,7 +500,7 @@ export default function HomePage() {
                       whileHover={{ scale: 1.07, y: -6 }}
                       whileTap={{ scale: 0.94 }}
                       onClick={() => handleNavClick(s)}
-                      className="relative flex flex-col items-center gap-4 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl border-4 border-white/30 cursor-pointer text-center overflow-hidden group"
+                      className={`relative flex flex-col items-center ${matureHome ? "gap-3 rounded-2xl p-4 sm:p-6 border-2" : "gap-4 rounded-[2.5rem] p-6 sm:p-10 border-4"} shadow-2xl border-white/30 cursor-pointer text-center overflow-hidden group`}
                       style={{
                         background: `linear-gradient(145deg, ${s.gradFrom}, ${s.gradTo})`,
                         boxShadow: `0 12px 40px ${s.glow}`,
@@ -511,7 +513,7 @@ export default function HomePage() {
                       <motion.span
                         animate={{ y: [0, -8, 0] }}
                         transition={{ duration: 2.5 + HOME_NAV.indexOf(s) * 0.3, repeat: Infinity, ease: 'easeInOut' as const }}
-                        className="text-7xl sm:text-8xl leading-none select-none drop-shadow-lg"
+                        className={`${matureHome ? "text-5xl sm:text-6xl" : "text-7xl sm:text-8xl"} leading-none select-none drop-shadow-lg`}
                         role="img"
                         aria-hidden="true"
                       >
