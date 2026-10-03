@@ -17,7 +17,7 @@ const HISTORY = [
   { keys: ['history timeline', 'timeline', 'present day', 'today'], ages: [8, 9, 10, 11, 12, 13], answer: 'A broad world-history timeline is: prehistoric societies; ancient civilisations (including Egypt, Greece, Rome, China and many others); post-classical societies and empires; medieval periods (which differed by region); early modern global connections and colonisation; industrialisation; and contemporary history. These periods overlap and are experienced differently around the world. Tell me a place or period and we can zoom in.' },
 ] as const;
 
-function normalise(value: string) { return value.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\\s+/g, ' ').trim(); }
+function normalise(value: string) { return value.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); }
 
 export function loadSavedLearning(): SavedLearningTurn[] {
   if (typeof window === 'undefined') return [];
@@ -30,7 +30,7 @@ export function loadSavedLearning(): SavedLearningTurn[] {
 export function saveLearningTurn(question: string, answer: string, age = 9): void {
   if (typeof window === 'undefined' || !question.trim() || !answer.trim()) return;
   try {
-    const rows = loadSavedLearning().filter(x => normalise(x.question) !== normalise(question));
+    const rows = loadSavedLearning().filter(x => normalise(x.question) !== normalise(question) || x.age !== age);
     rows.push({ question: question.trim().slice(0, 1000), answer: answer.trim().slice(0, 6000), age, savedAt: new Date().toISOString() });
     localStorage.setItem(KEY, JSON.stringify(rows.slice(-MAX_TURNS)));
   } catch { /* private browsing/storage limits: keep the current answer usable */ }
