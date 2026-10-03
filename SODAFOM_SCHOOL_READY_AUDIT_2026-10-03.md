@@ -1,0 +1,33 @@
+# Sodafom school-ready and app-store audit
+
+Date: 3 October 2026
+Working branch: codex/school-ready-2d-curriculum-2026-10
+Scope: 2D child app, school readiness, lesson quality, one-to-one tutoring, reading and homework scanning, parent model choices.
+
+## Existing software found
+
+- src/pages/AITeacherPage.tsx: age selection for ages 5–13, year-stage topic guidance, two-way text prompt to /chat, speech output, and reading-page image upload to /ai-teacher/read-page.
+- src/server/api/ai-teacher/read-page/POST.ts: age-banded book-page reading endpoint; sends images to configured OpenAI model gpt-4o-mini. It currently requires the server API key and has no local OCR fallback.
+- src/pages/tutor/TeacherModePage.tsx plus src/lib/tutor/{curriculum,engine,memory,voice-commands}.ts: child profile, local tutor lessons, question feedback, hints/simpler explanations, progress memory, microphone and spoken output.
+- src/server/api/homework-scan/{POST,GET,DELETE}.ts: authenticated saved-homework image storage. This is storage, not proof of a working homework OCR/marking journey.
+- src/server/db/migrations/education-cloud-seed.ts: generates 90 Maths, 90 English and 30 Ancient Egypt lessons across age bands 5–7, 8–10 and 11–13. Most are topic templates with repeated variants, not a complete differentiated school-year sequence.
+- sodafom-177-child-tutor/: separate 177 child tutor prototype with age/subject/lesson controls, voice, and local 797 endpoint configuration. Keep private 797 administration hidden from children and do not make 797 a launch dependency.
+
+## What a real full-year curriculum needs
+
+A full year requires a planned sequence mapped to England's National Curriculum by year group (Year 1 through Year 9), subject, term, unit, learning objective, prerequisite, lesson, retrieval practice, assessment and extension/support. The three broad age bands are useful for an initial profile but are too wide for school-level progression on their own. Existing topics and games can be reused as resources within that progression.
+
+## Parent AI model choice
+
+Parent-only settings should explain, in plain language, each model that is actually configured: local/offline tutor, any parent-supplied key provider, and any server-hosted cloud provider. For each, show what it is good at, whether it needs internet, who pays, what data is sent, and controls. Default child use to local-first and age-appropriate mode; require an adult gate before provider changes or adding API keys. Never display a provider as available until a real adapter, credential path, error handling and privacy disclosure exist. The current book scanner specifically uses server-configured OpenAI; that is not the same as a selectable multi-model router.
+
+## Launch blockers to verify before submission
+
+- Test signup/sign-in, parent gate, deletion/export, consent and data retention with real supported accounts and privacy disclosures.
+- Test camera permission, image limits, upload, page recognition, read-along, offline/error states and homework save/reopen on representative iOS and Android devices.
+- Test voice round trips, interruption, microphone denial/retry, speech echo, child age handling and local/cloud fallback.
+- Replace repeated lesson templates with an expert-reviewed year/term sequence and independently verify every answer key.
+- Audit child privacy, school data processing, safeguarding, accessibility, payments, subscriptions, store screenshots/descriptions, support contact and age ratings.
+- Build and sign Android and iOS release packages, run device QA, and submit through the owner's Google Play and Apple developer accounts. A code change alone cannot publish the app.
+
+No camera-device QA, store submission, or claim of 100% operation is made by this audit.
