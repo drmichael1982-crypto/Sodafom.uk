@@ -13,6 +13,7 @@ import { API_PREFIX } from '@/lib/config';
 import { ArchieCharacter } from './ArchieCharacter';
 import { useArchieContext } from '@/contexts/ArchieContext';
 import { tryLocalArchieResponse } from '@/lib/archie-local';
+import { tryRememberChildInterest } from '@/lib/interest-themes';
 import { games as gamesContent } from 'virtual:content';
 
 type State = 'idle' | 'listening' | 'thinking' | 'speaking';
@@ -139,6 +140,12 @@ export default function ArchieHelper({ gameMode = false }: { gameMode?: boolean 
 
     try {
       console.log('AI_RESPONSE_RECEIVED');
+      const interestReply = tryRememberChildInterest(trimmed);
+      if (interestReply) {
+        setMessages((prev) => prev.map((m) => m.id === assistantId ? { ...m, content: interestReply } : m));
+        speak(interestReply);
+        return;
+      }
       const destination = requestedDestination(trimmed);
       if (destination) {
         const reply = `Of course! Opening ${destination.label} now.`;

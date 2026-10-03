@@ -18,6 +18,8 @@ import { ArchieCharacter } from '../components/ArchieCharacter';
 import GamesPage from './games';
 import { useSession } from '@/lib/auth/auth-client';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
+import { getChildInterests, getInterestTheme, isSchoolFriendlyInterest, saveChildInterest, removeChildInterest } from '@/lib/interest-themes';
+import { loadTutorMemory } from '@/lib/tutor/memory';
 
 const siteUrl = 'https://sodafom.uk';
 const ogImage = `${siteUrl}/og-image.png`;
@@ -223,6 +225,38 @@ export default function HomePage() {
     return (age ? age.replace('-', '–') : null) as AgeBandLabel;
   });
   const [showAgePicker, setShowAgePicker] = useState(false);
+  const [interests, setInterests] = useState<string[]>(() => getChildInterests());
+  const [interestInput, setInterestInput] = useState('');
+  const [interestNotice, setInterestNotice] = useState('');
+  const interestTheme = interests[0] ? getInterestTheme(interests[0]) : null;
+  const matureHome = (!!selectedAge && ['10–11', '11–12', '12–13'].includes(selectedAge)) || loadTutorMemory().ageGroup === '11-13';
+
+  React.useEffect(() => {
+    const refreshInterests = () => setInterests(getChildInterests());
+    window.addEventListener('sodafom:child-interests-updated', refreshInterests);
+    return () => window.removeEventListener('sodafom:child-interests-updated', refreshInterests);
+  }, []);
+
+  function addInterest(value = interestInput) {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    if (!isSchoolFriendlyInterest(trimmed)) {
+      setInterestNotice('Please choose a friendly, school-ready interest for your screen.');
+      setInterestInput('');
+      return;
+    }
+    const updated = saveChildInterest(trimmed);
+    setInterests(updated);
+    setInterestInput('');
+    setInterestNotice(`Your home screen is now inspired by ${trimmed} with original artwork.`);
+  }
+
+  function deleteInterest(value: string) {
+    const updated = removeChildInterest(value);
+    setInterests(updated);
+    setInterestNotice(updated.length ? 'Interest removed. Your home screen has been updated.' : 'Interests cleared. The standard home screen is back.');
+  }
+
   const gamesRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated } = useSession();
   const navigate = useNavigate();
@@ -307,7 +341,12 @@ export default function HomePage() {
             exit={{ opacity: 0, y: -30, scale: 0.98 }}
             transition={{ duration: 0.35, ease: 'easeIn' as const }}
           >
-            <section className="hero-bg relative overflow-hidden min-h-screen flex flex-col" aria-label="Choose a subject">
+            <section
+              className="hero-bg relative overflow-hidden min-h-screen flex flex-col transition-colors duration-700"
+              aria-label="Choose a subject"
+              data-learner-band={matureHome ? "older" : "younger"}
+              style={interestTheme ? { backgroundImage: interestTheme.background } : undefined}
+            >
 
               {/* Sky decorations */}
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -393,15 +432,65 @@ export default function HomePage() {
                   className="text-center mb-10"
                 >
                   <h2
-                    className="text-4xl sm:text-5xl md:text-6xl font-black leading-tight text-white hero-title-shadow"
+                    className={`${matureHome ? "text-3xl sm:text-4xl md:text-5xl tracking-tight" : "text-4xl sm:text-5xl md:text-6xl"} font-black leading-tight text-white hero-title-shadow`}
                     style={{ fontFamily: 'var(--font-heading)' }}
                   >
                     Hi! I'm Archie!
                   </h2>
-                  <p className="text-white font-black text-xl mt-2 hero-sub-shadow">
+                  <p className={`${matureHome ? "text-lg sm:text-xl" : "text-xl"} text-white font-black mt-2 hero-sub-shadow`}>
                     What shall we learn today?
                   </p>
+                  {interestTheme && (
+                    <p className="text-white font-bold text-sm mt-2 drop-shadow">
+                      {interestTheme.emoji} {interestTheme.motif} — an original look made for you
+                    </p>
+                  )}
                 </motion.div>
+
+                <div className="w-full max-w-3xl mb-6 rounded-3xl border border-white/40 bg-black/15 backdrop-blur-md p-4 sm:p-5 text-white">
+                  <label htmlFor="child-interest" className="block text-sm font-black mb-2">
+                    Make this learning world yours
+                  </label>
+                  <p className="text-xs sm:text-sm text-white/90 mb-3">
+                    Add or change an interest as you grow. Archie creates an original colour theme and shapes inspired by it.
+                  </p>
+                  <form
+                    className="flex flex-col sm:flex-row gap-2"
+                    onSubmit={(event) => { event.preventDefault(); addInterest(); }}
+                  >
+                    <input
+                      id="child-interest"
+                      value={interestInput}
+                      onChange={(event) => setInterestInput(event.target.value)}
+                      maxLength={32}
+                      placeholder="Try space, dinosaurs, football, or your own idea"
+                      aria-label="Favourite interest"
+                      className="min-w-0 flex-1 rounded-xl px-4 py-3 text-gray-900 font-semibold"
+                    />
+                    <button type="submit" className="rounded-xl bg-white px-5 py-3 font-black text-slate-900 hover:bg-white/90">
+                      Add interest
+                    </button>
+                  </form>
+                  <div className="flex flex-wrap gap-2 mt-3" aria-label="Quick interests">
+                    {['Space', 'Dinosaurs', 'Football', 'Magic', 'Animals'].map((item) => (
+                      <button key={item} type="button" onClick={() => addInterest(item)} className="rounded-full border border-white/60 bg-white/15 px-3 py-1.5 text-xs font-bold hover:bg-white/25">
+                        {item}
+                      </button>
+                    ))}
+                  </div>
+                  {interests.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3 items-center">
+                      <span className="text-xs font-bold">Saved on this device:</span>
+                      {interests.map((item) => (
+                        <button key={item} type="button" onClick={() => deleteInterest(item)} aria-label={`Remove ${item} interest`} className="rounded-full bg-white text-slate-900 px-3 py-1.5 text-xs font-bold">
+                          {item} <span aria-hidden="true">×</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {interestNotice && <p className="text-xs font-bold mt-2" role="status">{interestNotice}</p>}
+                  <p className="text-[11px] text-white/80 mt-2">Interests stay in this browser and can be removed here at any time. Archie uses original artwork and does not copy characters or logos.</p>
+                </div>
 
                 {/* 3×2 subject icon grid (2 cols on mobile, 3 on desktop) */}
                 <motion.div
@@ -423,10 +512,10 @@ export default function HomePage() {
                       whileHover={{ scale: 1.07, y: -6 }}
                       whileTap={{ scale: 0.94 }}
                       onClick={() => handleNavClick(s)}
-                      className="relative flex flex-col items-center gap-4 rounded-[2.5rem] p-6 sm:p-10 shadow-2xl border-4 border-white/30 cursor-pointer text-center overflow-hidden group"
+                      className={`relative flex flex-col items-center ${matureHome ? "gap-3 rounded-2xl p-4 sm:p-6 border-2" : "gap-4 rounded-[2.5rem] p-6 sm:p-10 border-4"} shadow-2xl border-white/30 cursor-pointer text-center overflow-hidden group`}
                       style={{
-                        background: `linear-gradient(145deg, ${s.gradFrom}, ${s.gradTo})`,
-                        boxShadow: `0 12px 40px ${s.glow}`,
+                        background: interestTheme?.background ?? `linear-gradient(145deg, ${s.gradFrom}, ${s.gradTo})`,
+                        boxShadow: interestTheme ? '0 12px 40px rgba(10, 16, 38, 0.38)' : `0 12px 40px ${s.glow}`,
                       }}
                     >
                       {/* Hover shine */}
@@ -436,7 +525,7 @@ export default function HomePage() {
                       <motion.span
                         animate={{ y: [0, -8, 0] }}
                         transition={{ duration: 2.5 + HOME_NAV.indexOf(s) * 0.3, repeat: Infinity, ease: 'easeInOut' as const }}
-                        className="text-7xl sm:text-8xl leading-none select-none drop-shadow-lg"
+                        className={`${matureHome ? "text-5xl sm:text-6xl" : "text-7xl sm:text-8xl"} leading-none select-none drop-shadow-lg`}
                         role="img"
                         aria-hidden="true"
                       >
