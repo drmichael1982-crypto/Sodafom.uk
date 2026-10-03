@@ -35,7 +35,6 @@ const results=[];
       await page.getByRole('button',{name:'Save',exact:true}).click();
       await page.getByText('Your jungle learning world').waitFor();
       assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_child_interests:default')||'[]')),['dinosaurs']);
-      await page.getByRole('button',{name:'Personalise my home screen'}).click();
       await page.getByRole('button',{name:'Remove interest dinosaurs'}).click();
       await page.getByText('Make your learning world yours').waitFor();
       assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_child_interests:default')||'[]')),[]);
