@@ -49,3 +49,13 @@ Reuse the active React app's own tutor and scanner routes first. Bring in v1 rea
 ## Model explainer requirement
 
 Expose a parent-gated model comparison screen that lists only genuinely configured choices and explains capability, internet need, estimated cost/payer, data flow/retention, and fallback behavior in plain language. A local-first default should remain for children's sessions. The current code proves only a local rules-based tutor and one server-configured cloud provider for image reading; a menu of multiple models would be misleading until adapters and privacy handling exist.
+
+## Library ZIP check
+
+Library inventory confirms these available archives:
+
+- `SODAFOM-test-archie-2026-10-02-source.zip` (40.8 MB; newest app source archive found in the first results page)
+- `Sodafoam_177_Child_Tutor_SIP_60_Lessons.zip` (12.0 MB)
+- `Sodafom_177_Child_Tutor_TOP_NOTCH.zip` (197 KB)
+
+The ZIPs have no extracted text view. Two attempts to materialize the first and second archives failed with a Library transfer network error, so no ZIP contents were extracted or compared in this pass. GitHub source inspection is therefore not a substitute for those ZIP bytes; compare the October 2 source archive against the repo before choosing a final release base.
