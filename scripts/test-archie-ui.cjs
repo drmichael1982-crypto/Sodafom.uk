@@ -14,7 +14,7 @@ const results=[];
   page.on('pageerror',e=>errors.push({url:page.url(),error:String(e)}));
   page.on('request',r=>{if(r.url().includes('sodafomuk-production')&&r.url().includes('/api'))liveApi.push(r.url());});
   const check=async(name,fn)=>{await fn();results.push(name);console.log('PASS '+name);};
-  const goto=async(route)=>{await page.goto(base+route);await page.getByRole('main').waitFor();};
+  const goto=async(route)=>{await page.goto(base+route);await page.locator('#app > *').first().waitFor();};
   const button=name=>page.getByRole('button',{name,exact:true});
   const link=name=>page.getByRole('link',{name,exact:true});
   fs.mkdirSync('test-results',{recursive:true});
