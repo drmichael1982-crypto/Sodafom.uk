@@ -16,4 +16,4 @@ app.use('/api',(_req,res)=>res.status(503).json({error:'Accounts and cloud progr
 const root=resolve('dist/client');
 app.use(express.static(root,{setHeaders:(res,path)=>{if(path.endsWith('index.html'))res.setHeader('Cache-Control','no-store');}}));
 app.use((req,res)=>{if(req.method!=='GET')return res.status(405).end();if(req.path.includes('.'))return res.status(404).end();res.sendFile(resolve(root,'index.html'));});
-app.listen(Number(process.env.PORT||4173),process.env.HOST||'127.0.0.1',()=>console.log(`Archie test app is listening on port ${process.env.PORT||4173}`));
+app.listen(Number(process.env.PORT||4173),process.env.HOST||'0.0.0.0',()=>console.log(`Archie test app is listening on port ${process.env.PORT||4173}`));
