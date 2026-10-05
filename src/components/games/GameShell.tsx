@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ArrowRight, Star, Trophy, RotateCcw, Home, Zap, LogIn, LogOut, User, X, Award, Gift, MessageCircle } from 'lucide-react';
 import { useNavigate, Link } from "react-router";
@@ -68,6 +68,20 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   const isLoggedIn = !!session?.user;
   const [result, setResult] = useState<GameResult | null>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const gameAreaRef = useRef<HTMLDivElement>(null);
+  const resultFocusOriginRef = useRef<Element | null>(null);
+  const gameTitleRef = useRef<HTMLHeadingElement>(null);
+  const replayFocusOriginRef = useRef<Element | null>(null);
+  const handleGamePanelMount = useCallback((panel: HTMLDivElement | null) => {
+    if (!panel) return;
+    const origin = replayFocusOriginRef.current;
+    replayFocusOriginRef.current = null;
+    if (origin && !origin.isConnected && document.activeElement === document.body && !document.querySelector('dialog[open]')) {
+      // Cancel inherited smooth scrolling so the new focus stays in view.
+      gameTitleRef.current?.focus({ preventScroll: true });
+      gameTitleRef.current?.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'nearest' });
+    }
+  }, []);
   const [key, setKey] = useState(0);
   const [newBadges, setNewBadges] = useState<{ id: string; emoji: string; name: string; rarity: string }[]>([]);
   const [isDailyChallenge, setIsDailyChallenge] = useState(false);
@@ -106,6 +120,8 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   }, []);
 
   const handleComplete = (r: GameResult) => {
+    const focused = document.activeElement;
+    resultFocusOriginRef.current = gameAreaRef.current?.contains(focused) ? focused : null;
     const stars = calcStars(r.score);
     const durationSeconds = r.durationSeconds ?? Math.round((Date.now() - startTimeRef.current) / 1000);
     setResult({ ...r, stars, durationSeconds });
@@ -159,6 +175,8 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   };
 
   const handleReplay = () => {
+    const focused = document.activeElement;
+    replayFocusOriginRef.current = gameAreaRef.current?.contains(focused) ? focused : null;
     setResult(null);
     setKey(k => k + 1);
     startTimeRef.current = Date.now();
@@ -200,7 +218,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
         </div>
         <div className="min-w-0 flex items-center justify-center gap-1.5 sm:gap-2">
           <span className="shrink-0 text-xl sm:text-2xl">{emoji}</span>
-          <h1 className="truncate text-center font-black text-sm sm:text-lg" style={{ fontFamily: 'var(--font-heading)' }}>{title}</h1>
+          <h1 ref={gameTitleRef} tabIndex={-1} className="truncate text-center font-black text-sm sm:text-lg rounded-md focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-current" style={{ fontFamily: 'var(--font-heading)' }}>{title}</h1>
         </div>
         <div className="flex items-center gap-2">
           {/* Age badges — desktop only */}
@@ -213,7 +231,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
             );
           })}
           {/* Login / Logout key */}
-          {ARCHIE_PREVIEW ? <Link to="/parents" className="px-3 py-2 rounded-xl bg-white/20 text-xs font-black" title="Learning settings"><User size={16} /><span className="sr-only">Learning settings</span></Link> : isLoggedIn ? (
+          {ARCHIE_PREVIEW ? <Link to="/parents" className="min-h-11 min-w-11 flex items-center justify-center px-3 py-2 rounded-xl bg-white/20 text-xs font-black" title="Learning settings"><User size={16} /><span className="sr-only">Learning settings</span></Link> : isLoggedIn ? (
             <div className="flex items-center gap-1.5">
               <Link
                 to="/hub"
@@ -253,11 +271,11 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
       </div>
 
       {/* Game area */}
-      <div className="flex-1 flex flex-col pb-6">
+      <div ref={gameAreaRef} className="flex-1 flex flex-col pb-6">
         <AnimatePresence mode="wait">
           {result
-            ? <ResultScreen key="result" result={result} onReplay={handleReplay} onHome={() => navigate('/')} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: `/games/${nextGame.slug}` } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
-            : <motion.div key={`game-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
+            ? <ResultScreen key="result" result={result} focusOrigin={resultFocusOriginRef.current} onReplay={handleReplay} onHome={() => navigate('/')} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: `/games/${nextGame.slug}` } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
+            : <motion.div ref={handleGamePanelMount} key={`game-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
                 {children(handleComplete)}
               </motion.div>
           }
@@ -310,9 +328,10 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
 // ── Result Screen ──────────────────────────────────────────────────────────────
 
 export function ResultScreen({
-  result, onReplay, onHome, gameTitle, subject, nextGame, isDailyChallenge = false, dailyClaimed = false, isLoggedIn = false, navigate,
+  result, focusOrigin, onReplay, onHome, gameTitle, subject, nextGame, isDailyChallenge = false, dailyClaimed = false, isLoggedIn = false, navigate,
 }: {
   result: GameResult;
+  focusOrigin?: Element | null;
   onReplay: () => void;
   onHome: () => void;
   gameTitle: string;
@@ -329,7 +348,15 @@ export function ResultScreen({
   const [starsRevealed, setStarsRevealed] = useState(0);
   const [bannerVisible, setBannerVisible] = useState(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const animatedScore = useCountUp(result.score, 1000, 400);
+
+  useEffect(() => {
+    // Replace lost game focus without interrupting a surviving control or open dialog.
+    if (focusOrigin && !focusOrigin.isConnected && document.activeElement === document.body && !document.querySelector('dialog[open]')) {
+      headingRef.current?.focus();
+    }
+  }, [focusOrigin]);
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -410,7 +437,7 @@ export function ResultScreen({
         initial={{ opacity: 0, scale: 0.88, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-        className="flex-1 flex items-center justify-center px-4 pt-4 pb-44 sm:p-6 sm:pb-36"
+        className="flex-1 flex items-center justify-center px-4 pt-4 pb-44 sm:p-6 sm:pb-36 focus-within:!opacity-100 [&_*:focus-within]:!opacity-100"
       >
         <div className="max-w-md w-full">
 
@@ -439,7 +466,7 @@ export function ResultScreen({
             {/* Subtle shimmer for 3 stars */}
             {result.stars === 3 && (
               <motion.div
-                className="absolute inset-0 rounded-3xl opacity-5"
+                className="absolute inset-0 rounded-3xl opacity-5 motion-reduce:hidden"
                 style={bannerStyle}
                 animate={{ opacity: [0.05, 0.12, 0.05] }}
                 transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' as const }}
@@ -448,10 +475,12 @@ export function ResultScreen({
 
             {/* Headline */}
             <motion.h2
+              ref={headingRef}
+              tabIndex={-1}
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="text-2xl sm:text-3xl font-black text-foreground mb-4"
+              className="text-2xl sm:text-3xl font-black text-foreground mb-4 rounded-lg focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-blue-700"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               {headline}

@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/components/games/GameShell',()=>({default:()=>null,useChildAge:()=>({tier:1})}));
 vi.mock('@/lib/config',()=>({ARCHIE_PREVIEW:true}));
@@ -8,6 +9,31 @@ import { submitGameVoiceAnswer } from '@/lib/archie/game-voice';
 afterEach(()=>{vi.restoreAllMocks();vi.useRealTimers();});
 
 describe('Fraction Pizza picnic',()=>{
+  it('updates the complete slice-count status without moving keyboard focus',async()=>{
+    vi.spyOn(Math,'random').mockReturnValue(0.5);
+    const user=userEvent.setup();
+    render(<FractionPizzaPlay difficulty="Easy" year={1} onComplete={vi.fn()}/>);
+    const count=screen.getByRole('status',{name:'Pizza slice count'});
+    const slice=screen.getByRole('button',{name:'Slice 1'});
+    expect(count).toHaveAttribute('aria-atomic','true');
+    expect(count).toHaveTextContent('0 of 2 slices shaded');
+    slice.focus();
+    await user.keyboard(' ');
+    expect(slice).toHaveFocus();
+    expect(slice).toHaveAttribute('aria-pressed','true');
+    expect(count).toHaveTextContent('1 of 2 slices shaded');
+    await user.keyboard('{Enter}');
+    expect(slice).toHaveFocus();
+    expect(slice).toHaveAttribute('aria-pressed','false');
+    expect(count).toHaveTextContent('0 of 2 slices shaded');
+    await user.click(screen.getByRole('button',{name:'Slice 2'}));
+    expect(count).toHaveTextContent('1 of 2 slices shaded');
+    const clear=screen.getByRole('button',{name:'Clear slices'});
+    await user.click(clear);
+    expect(clear).toHaveFocus();
+    expect(count).toHaveTextContent('0 of 2 slices shaded');
+    expect(screen.getByRole('button',{name:'Slice 2'})).toHaveAttribute('aria-pressed','false');
+  });
   it('preserves valid equal-slice recipes and explains equivalent fractions',()=>{
     for(const pool of Object.values(FRACTION_SETS))for(const fraction of pool){
       expect(fraction.slices).toBe(fraction.denominator);expect(fraction.fill).toBe(fraction.numerator);
@@ -36,6 +62,7 @@ describe('Fraction Pizza picnic',()=>{
     fireEvent.click(screen.getByRole('button',{name:'Slice 1'}));fireEvent.click(screen.getByRole('button',{name:'Take a breather'}));
     expect(screen.queryByRole('button',{name:'Slice 1'})).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:'Resume kitchen'}));expect(screen.getByRole('button',{name:'Slice 1'})).toHaveAttribute('aria-pressed','true');
+    expect(screen.getByRole('status',{name:'Pizza slice count'})).toHaveTextContent('1 of 2 slices shaded');
     for(let order=0;order<8;order++){
       if(order)fireEvent.click(screen.getByRole('button',{name:'Slice 1'}));
       fireEvent.click(screen.getByRole('button',{name:'Serve my pizza'}));expect(onComplete).not.toHaveBeenCalled();

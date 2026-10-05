@@ -12,39 +12,37 @@ afterEach(() => {
   age.tier = 1;
 });
 describe("Number Planets", () => {
-  it("keeps retry focus, follows correct answers to Next and announces the next question across all age tiers", async () => {
+  it.each([1, 2, 3])("keeps retry focus, follows correct answers to Next and announces the next question for age tier %i", async (tier) => {
     const user = userEvent.setup();
-    for (const tier of [1, 2, 3]) {
-      age.tier = tier;
-      const onComplete = vi.fn();
-      const view = render(<NumberPlanetsPlay onComplete={onComplete} />);
-      const first = makePlanetQuestion(tier, 0);
-      const wrong = screen.getByRole("button", { name: "Answer " + first.options.find(value => value !== first.answer) });
-      act(() => wrong.focus());
+    age.tier = tier;
+    const onComplete = vi.fn();
+    const view = render(<NumberPlanetsPlay onComplete={onComplete} />);
+    const first = makePlanetQuestion(tier, 0);
+    const wrong = screen.getByRole("button", { name: "Answer " + first.options.find(value => value !== first.answer) });
+    act(() => wrong.focus());
+    await user.keyboard("{Enter}");
+    expect(wrong).toHaveFocus();
+    expect(screen.queryByRole("button", { name: "Next space mission" })).not.toBeInTheDocument();
+    for (let round = 0; round < 8; round++) {
+      const question = makePlanetQuestion(tier, round);
+      const right = screen.getByRole("button", { name: "Answer " + question.answer });
+      act(() => right.focus());
+      await user.keyboard(round % 2 ? " " : "{Enter}");
+      const next = screen.getByRole("button", { name: round === 7 ? "Finish space mission" : "Next space mission" });
+      expect(next).toHaveFocus();
+      expect(onComplete).not.toHaveBeenCalled();
+      expect(screen.getByText(new RegExp("Mission " + (round + 1) + " of 8"))).toBeInTheDocument();
       await user.keyboard("{Enter}");
-      expect(wrong).toHaveFocus();
-      expect(screen.queryByRole("button", { name: "Next space mission" })).not.toBeInTheDocument();
-      for (let round = 0; round < 8; round++) {
-        const question = makePlanetQuestion(tier, round);
-        const right = screen.getByRole("button", { name: "Answer " + question.answer });
-        act(() => right.focus());
-        await user.keyboard(round % 2 ? " " : "{Enter}");
-        const next = screen.getByRole("button", { name: round === 7 ? "Finish space mission" : "Next space mission" });
-        expect(next).toHaveFocus();
-        expect(onComplete).not.toHaveBeenCalled();
-        expect(screen.getByText(new RegExp("Mission " + (round + 1) + " of 8"))).toBeInTheDocument();
-        await user.keyboard("{Enter}");
-        if (round < 7) {
-          const heading = screen.getByRole("heading", { name: "Choose the answer planet" });
-          expect(heading).toHaveFocus();
-          expect(heading).toHaveAccessibleDescription(makePlanetQuestion(tier, round + 1).prompt);
-          await user.tab();
-          expect(screen.getByRole("button", { name: "Answer " + makePlanetQuestion(tier, round + 1).options[0] })).toHaveFocus();
-        }
+      if (round < 7) {
+        const heading = screen.getByRole("heading", { name: "Choose the answer planet" });
+        expect(heading).toHaveFocus();
+        expect(heading).toHaveAccessibleDescription(makePlanetQuestion(tier, round + 1).prompt);
+        await user.tab();
+        expect(screen.getByRole("button", { name: "Answer " + makePlanetQuestion(tier, round + 1).options[0] })).toHaveFocus();
       }
-      expect(onComplete).toHaveBeenCalledExactlyOnceWith({ score: 88, correct: 7, total: 8, stars: 2 });
-      view.unmount();
     }
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith({ score: 88, correct: 7, total: 8, stars: 2 });
+    view.unmount();
   });
   it("keeps focus in the tutor when the answer bridge solves the current mission", async () => {
     const user = userEvent.setup();

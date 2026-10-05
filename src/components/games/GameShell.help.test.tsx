@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
@@ -60,4 +60,72 @@ it('opens in-flow game-menu help with its subject context without starting voice
   fireEvent.click(screen.getByRole('button', { name: 'Close Ask Archie' }));
   expect(screen.queryByRole('dialog', { name: 'Ask Archie' })).not.toBeInTheDocument();
   expect(help).toBeEnabled();
+});
+
+it('hands focus from Finish to results, then from Replay to the restarted game title', async () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  render(<HelmetProvider><MemoryRouter><ArchieProvider>
+    <GameShell title="Number Planets" emoji="Planet" subject="maths" ageGroups={['5-7']}>
+      {complete => <button onClick={() => complete({ score: 100, correct: 8, total: 8, stars: 3 })}>Finish test mission</button>}
+    </GameShell>
+  </ArchieProvider></MemoryRouter></HelmetProvider>);
+  const finish = screen.getByRole('button', { name: 'Finish test mission' });
+  expect(screen.getByRole('heading', { level: 1, name: 'Number Planets' })).not.toHaveFocus();
+  finish.focus();
+  fireEvent.click(finish);
+  await waitFor(() => expect(screen.getByRole('heading', { name: /Amazing exploring/ })).toHaveFocus());
+  expect(finish).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /Amazing exploring/ })).toHaveAttribute('tabindex', '-1');
+  expect(screen.getByText('8 correct out of 8 questions')).toBeInTheDocument();
+  const replay = screen.getByRole('button', { name: 'Play another round' });
+  replay.focus();
+  fireEvent.click(replay);
+  await waitFor(() => expect(screen.getByRole('heading', { level: 1, name: 'Number Planets' })).toHaveFocus());
+  expect(replay).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Finish test mission' })).toBeInTheDocument();
+  expect(screen.queryByText('8 correct out of 8 questions')).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', { level: 1 })).toHaveAttribute('tabindex', '-1');
+});
+
+it('preserves surviving tutor input focus while Replay replaces the result', async () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  render(<HelmetProvider><MemoryRouter><ArchieProvider>
+    <input aria-label="Tutor question" />
+    <GameShell title="Number Planets" emoji="Planet" subject="maths" ageGroups={['5-7']}>
+      {complete => <button onClick={() => complete({ score: 100, correct: 8, total: 8, stars: 3 })}>Finish test mission</button>}
+    </GameShell>
+  </ArchieProvider></MemoryRouter></HelmetProvider>);
+  const finish = screen.getByRole('button', { name: 'Finish test mission' });
+  finish.focus(); fireEvent.click(finish);
+  await waitFor(() => expect(screen.getByRole('heading', { name: /Amazing exploring/ })).toHaveFocus());
+  const replay = screen.getByRole('button', { name: 'Play another round' });
+  const input = screen.getByRole('textbox', { name: 'Tutor question' });
+  input.focus();
+  fireEvent.click(replay);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Finish test mission' })).toBeInTheDocument());
+  expect(input).toHaveFocus();
+});
+
+it('does not retry a modal-blocked replay handoff after a later rerender', async () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true }));
+  const content = (title: string) => <HelmetProvider><MemoryRouter><ArchieProvider>
+    <dialog aria-label="Test help" />
+    <GameShell title={title} emoji="Planet" subject="maths" ageGroups={['5-7']}>
+      {complete => <button onClick={() => complete({ score: 100, correct: 8, total: 8, stars: 3 })}>Finish test mission</button>}
+    </GameShell>
+  </ArchieProvider></MemoryRouter></HelmetProvider>;
+  const view = render(content('Number Planets'));
+  const finish = screen.getByRole('button', { name: 'Finish test mission' });
+  finish.focus(); fireEvent.click(finish);
+  await waitFor(() => expect(screen.getByRole('heading', { name: /Amazing exploring/ })).toHaveFocus());
+  const replay = screen.getByRole('button', { name: 'Play another round' });
+  const dialog = screen.getByLabelText('Test help');
+  dialog.setAttribute('open', '');
+  replay.focus(); fireEvent.click(replay);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Finish test mission' })).toBeInTheDocument());
+  expect(document.body).toHaveFocus();
+  dialog.removeAttribute('open');
+  view.rerender(content('Restarted Number Planets'));
+  expect(screen.getByRole('heading', { level: 1, name: 'Restarted Number Planets' })).not.toHaveFocus();
+  expect(document.body).toHaveFocus();
 });

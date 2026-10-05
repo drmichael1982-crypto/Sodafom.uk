@@ -281,6 +281,7 @@ export function NumberPlanetsPlay({
             className={
               "atom-model " + (!atoms || !motion || paused ? "is-still" : "")
             }
+            role="img"
             aria-label="Simplified neutral carbon atom: nucleus with six protons and six neutrons, surrounded by six electrons"
           >
             <div className="atom-nucleus">

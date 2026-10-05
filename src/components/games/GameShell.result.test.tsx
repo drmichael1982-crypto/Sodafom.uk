@@ -26,3 +26,25 @@ it('does not start result audio when the child has turned sound off',()=>{
   act(()=>vi.advanceTimersByTime(3000));
   expect(audioStarted).not.toHaveBeenCalled();
 });
+
+it('preserves surviving tutor input focus when a completion control has disappeared',()=>{
+  const origin=document.createElement('button');
+  document.body.append(origin);origin.focus();origin.remove();
+  render(<input aria-label="Your question for Archie" />);
+  const input=screen.getByRole('textbox',{name:'Your question for Archie'});input.focus();
+  render(<MemoryRouter><ResultScreen result={{score:80,correct:8,total:10,stars:2}} focusOrigin={origin} onReplay={vi.fn()} onHome={vi.fn()} gameTitle="Number Pop" subject="maths" nextGame={null} navigate={vi.fn()}/></MemoryRouter>);
+  act(()=>vi.advanceTimersByTime(3000));
+  expect(input).toHaveFocus();
+});
+
+it('does not move focus for completion without a focused game control',()=>{
+  render(<MemoryRouter><ResultScreen result={{score:80,correct:8,total:10,stars:2}} onReplay={vi.fn()} onHome={vi.fn()} gameTitle="Number Pop" subject="maths" nextGame={null} navigate={vi.fn()}/></MemoryRouter>);
+  expect(document.body).toHaveFocus();
+});
+
+it('leaves focus alone while a native dialog is open',()=>{
+  const origin=document.createElement('button');
+  document.body.append(origin);origin.focus();origin.remove();
+  render(<><dialog open aria-label="Ask Archie"><input aria-label="Tutor question" /></dialog><MemoryRouter><ResultScreen result={{score:80,correct:8,total:10,stars:2}} focusOrigin={origin} onReplay={vi.fn()} onHome={vi.fn()} gameTitle="Number Pop" subject="maths" nextGame={null} navigate={vi.fn()}/></MemoryRouter></>);
+  expect(document.body).toHaveFocus();
+});
