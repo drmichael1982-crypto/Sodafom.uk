@@ -1,0 +1,22 @@
+/* These diagrams scale within the course card; the existing models keep their styles. */
+.learning-model .learning-clock-picture,
+.learning-model .learning-coin-picture,
+.learning-model .learning-rectangle-picture,
+.learning-model .learning-grid-picture,
+.learning-model .learning-chart-picture {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 12px auto;
+  overflow: visible;
+  font-family: inherit;
+  color: #263957;
+}
+.learning-model .learning-clock-picture { max-width: 280px; }
+.learning-model .learning-coin-picture { max-width: 160px; }
+.learning-model .learning-rectangle-picture,
+.learning-model .learning-chart-picture { max-width: 420px; }
+.learning-model .learning-grid-picture { max-width: 352px; }
+.learning-model .learning-rectangle-picture text,
+.learning-model .learning-grid-picture text,
+.learning-model .learning-chart-picture text { fill: #263957; font-size: 15px; }

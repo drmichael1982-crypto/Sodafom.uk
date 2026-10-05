@@ -77,3 +77,98 @@
 .home-interest-dialog :focus-visible,.home-personalize-trigger:focus-visible{outline:4px solid #ef9e00;outline-offset:3px}
 .compact-home .home-personalize-bar{width:100%;min-height:38px;gap:4px;margin:0 0 6px;padding:2px 6px;font-size:11px}.compact-home .home-personalize-trigger{min-height:32px;padding:3px 7px;font-size:11px}
 @media(max-width:400px){.home-personalize-bar{font-size:12px;padding-left:7px;padding-right:7px}.home-personalize-trigger{padding-left:8px;padding-right:8px;font-size:12px}.home-interest-dialog{padding:18px}}
+
+/* Launch audit: generous targets, native modal focus and curriculum quests. */
+.art-hit{min-width:44px;min-height:44px}
+.home-personalize-trigger,.home-interest-chip{min-height:44px}
+.home-interest-dialog{margin:auto;max-height:calc(100dvh - 32px);max-width:calc(100vw - 32px)}
+.home-interest-dialog::backdrop{background:#081d47b8}
+.quest-board h2{overflow-wrap:anywhere}
+.quest-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.quest-options .a-button{min-width:0;min-height:64px}
+.quest-progress{display:flex;flex-direction:column;gap:8px;font-weight:800}
+.quest-progress progress{width:100%;height:20px;accent-color:#126ce0}
+.quest-hint{padding:16px;border-radius:16px;background:#fff3b5}
+.quest-feedback{min-height:48px}
+@media(max-width:700px){.quest-options{grid-template-columns:1fr}}
+@media(max-width:300px){.compact-home{flex-direction:column;align-items:stretch}.compact-home>img{width:100px;max-width:100%;height:auto;max-height:none;align-self:center}.compact-home nav{grid-template-columns:repeat(2,minmax(0,1fr))}.compact-home .home-personalize-bar{flex-wrap:wrap;min-height:44px}.a-grid{grid-template-columns:1fr}.a-stats{grid-template-columns:1fr}.a-logo{font-size:20px}.a-logo small{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.lesson-word,.letter-tiles span,.lesson-correct-tick,.a-sticker-art img{animation:none;transition:none}}
+
+.art-stage[aria-label="Sodafom home"] .approved-art{width:min(100%,630px,calc((100svh - 64px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 841 / 1870))}
+.lesson-sound .a-button{min-width:44px;min-height:44px}
+/* Keep menu labels readable on narrow screens, including Rewards and Progress. */
+@media(max-width:700px){.a-tabs .a-button{min-width:80px;padding:10px 8px;font-size:14px;overflow-wrap:normal;word-break:normal}}
+
+/* Keep interactive text and spelling controls usable without shrinking their targets. */
+.a-logo{min-height:44px;display:flex;flex-direction:column;justify-content:center}
+.compact-home .home-personalize-trigger{min-height:44px}
+.lesson-answer input{min-height:44px;font-size:max(12px,3cqw)}
+.lesson-answer .a-button{min-width:44px;min-height:44px;font-size:max(12px,2.5cqw);padding:3px 5px;white-space:nowrap;overflow-wrap:normal}
+@media(max-width:300px){.compact-lesson nav{grid-template-columns:repeat(2,minmax(0,1fr))}.compact-lesson header{gap:6px}.compact-lesson h1{font-size:18px}.compact-home .home-personalize-trigger{font-size:12px}}
+@media(max-width:400px){
+  .compact-lesson{padding:14px 12px 28px}
+  .compact-lesson header{gap:8px}.compact-lesson h1{font-size:20px}.compact-lesson h1 small{font-size:13px;line-height:1.5}
+  .compact-lesson nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .compact-lesson .a-button{font-size:15px;min-height:48px;padding:9px 10px;overflow-wrap:normal}
+  .compact-lesson .compact-board{padding:18px 12px;margin:18px 0}
+  .compact-board h2{font-size:28px;overflow-wrap:anywhere}.compact-board p{font-size:16px;line-height:1.5}
+  .compact-board input{min-height:48px}.compact-board form{margin:14px 0}
+  .compact-lesson::after{content:"";display:block;width:116px;aspect-ratio:841 / 1870;margin:22px auto 0;background:url('/assets/archie-approved/lesson.png') center / contain no-repeat;border-radius:14px}
+}
+
+/* Use the whole tablet or computer window for the home activity choices. */
+@media(min-width:600px){
+  .compact-home{--home-pad:clamp(24px,4vw,64px);width:100%;max-width:none;min-height:100dvh;gap:clamp(24px,4vw,64px);padding:var(--home-pad);justify-content:center;align-items:center}
+  .compact-home>img{box-sizing:border-box;width:min(32vw,390px);max-width:34%;height:auto;max-height:calc(100dvh - 2 * var(--home-pad));object-fit:contain;box-shadow:0 16px 44px #12396c2b;border:4px solid white;border-radius:26px}
+  .compact-home>section{max-width:880px;min-width:0}
+  .compact-home h1{font-size:clamp(36px,4vw,60px);color:#0751b9;margin:18px 0 24px;text-shadow:0 2px white}
+  .compact-home h1 small{font-size:clamp(16px,1.6vw,22px);line-height:1.5;margin-top:8px}
+  .compact-home .home-personalize-bar{min-height:56px;padding:8px 12px;font-size:16px;gap:10px;margin-bottom:20px}
+  .compact-home .home-personalize-trigger{font-size:15px;padding:8px 14px}
+  .compact-home nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+  .compact-home .a-button{min-height:76px;padding:16px 12px;border-radius:22px;font-size:clamp(17px,1.6vw,22px);overflow-wrap:normal}
+  .compact-home nav .a-button:first-child{grid-column:span 2;background:linear-gradient(#30b954,#0f8233)}
+  .compact-home nav .a-button:nth-child(3){background:linear-gradient(#ffe451,#ffc800);color:#173268}
+}
+@media(min-width:600px) and (max-width:1000px){.compact-home{--home-pad:24px;gap:22px}.compact-home nav{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.compact-home .a-button{font-size:18px;min-height:64px}.compact-home .home-personalize-bar{flex-wrap:wrap}}
+@media(min-width:600px) and (max-height:600px){.compact-home{--home-pad:18px;gap:24px}.compact-home h1{font-size:32px;margin:8px 0 12px}.compact-home h1 small{font-size:15px;margin-top:4px}.compact-home .home-personalize-bar{min-height:48px;margin-bottom:10px;padding:2px 10px;font-size:14px}.compact-home nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.compact-home .a-button{min-height:48px;padding:8px 10px;font-size:16px;border-radius:14px}}
+
+/* A spelling whiteboard that uses the computer window, with artwork beside it. */
+@media(min-width:600px){
+  .compact-lesson{--lesson-pad:clamp(24px,3vw,48px);display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,28%);grid-template-rows:auto minmax(240px,1fr) auto;gap:24px;width:100%;min-height:100dvh;padding:var(--lesson-pad);align-content:center}
+  .compact-lesson header{grid-column:1 / -1;gap:18px}
+  .compact-lesson h1{font-size:clamp(26px,3vw,40px);line-height:1.25}.compact-lesson h1 small{font-size:16px;margin-top:6px}
+  .compact-lesson .compact-board{grid-column:1;grid-row:2;margin:0;padding:clamp(24px,3vw,44px);display:flex;flex-direction:column;justify-content:center;align-items:center;box-shadow:0 8px 28px #173c7517;border-radius:26px}
+  .compact-lesson .compact-board h2{font-size:clamp(32px,4vw,54px);overflow-wrap:anywhere}
+  .compact-lesson .compact-board p{font-size:18px;line-height:1.6;max-width:620px}
+  .compact-lesson .compact-board form{width:100%;max-width:600px;margin:20px 0 12px;gap:12px}
+  .compact-lesson .compact-board input{min-height:56px;font-size:22px;padding:12px}
+  .compact-lesson nav{grid-column:1;grid-row:3;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .compact-lesson .a-button{min-height:52px;font-size:17px;padding:12px;overflow-wrap:normal}
+  .compact-lesson header .a-icon{width:48px;min-height:48px;padding:10px;flex-shrink:0}
+  .compact-lesson::after{content:"";grid-column:2;grid-row:2 / 4;display:block;min-height:300px;max-height:calc(100dvh - 2 * var(--lesson-pad) - 96px);border:4px solid white;border-radius:24px;background:url('/assets/archie-approved/lesson.png') center / contain no-repeat;box-shadow:0 12px 32px #12396c25}
+  .compact-lesson>button{grid-column:1;min-height:48px}
+}
+@media(min-width:600px) and (max-height:600px){.compact-lesson{--lesson-pad:18px;grid-template-rows:auto minmax(160px,1fr) auto;gap:14px}.compact-lesson h1{font-size:26px}.compact-lesson .compact-board{padding:18px}.compact-lesson .compact-board h2{font-size:32px}.compact-lesson .compact-board p{font-size:16px}.compact-lesson .compact-board form{margin:10px 0}.compact-lesson nav{gap:8px}.compact-lesson .a-button{min-height:44px;padding:8px;font-size:15px}.compact-lesson::after{min-height:180px}}
+
+/* Keep Ask Archie's conversation compact and its input within the scrolling dialog. */
+.archie-dialog{box-sizing:border-box;width:min(600px,calc(100vw - 24px));max-width:600px;max-height:calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));font-size:17px;overscroll-behavior:contain;scroll-padding-bottom:88px}
+.archie-dialog header{padding:12px 14px;gap:12px}.archie-dialog header::before{width:40px;height:50px;flex-basis:40px;border-radius:13px}
+.archie-dialog header>div{min-width:0}.archie-dialog header h2{font-size:22px;line-height:1.2}.archie-dialog header p{font-size:14px;line-height:1.4;margin:4px 0 0;overflow-wrap:anywhere}
+.archie-dialog header button{width:44px;height:44px;min-width:44px;min-height:44px;flex:0 0 44px;padding:10px}
+.archie-chat-history{min-height:96px;max-height:32dvh;padding:12px;font-size:17px;line-height:1.5}.archie-chat-history p{margin:6px 0;padding:12px}
+.archie-dialog .archie-quick{min-height:44px;max-width:calc(100% - 24px);margin:5px 12px;padding:8px 12px;font-size:15px;line-height:1.35;white-space:normal}
+.archie-dialog .archie-notice{font-size:13px;line-height:1.4;padding:6px 14px;min-height:24px;margin:0}
+.archie-dialog form{position:sticky;bottom:0;z-index:2;padding:12px;gap:8px;background:white;border-top:2px solid #cee2f5;box-shadow:0 -6px 16px #16397812}
+.archie-dialog input{font-size:16px;min-height:48px;padding:10px}.archie-dialog form button{width:44px;min-width:44px;min-height:48px;flex-shrink:0}
+@media(max-height:550px){.archie-dialog header{padding:8px 12px}.archie-dialog header::before{display:none}.archie-dialog header h2{font-size:20px}.archie-chat-history{min-height:60px;max-height:24dvh;padding:8px 12px}.archie-dialog form{padding:8px 12px}.archie-dialog .archie-quick{min-height:44px}.archie-dialog .archie-notice{padding:4px 12px}}
+@media(max-width:350px){.archie-dialog header{gap:8px}.archie-dialog header::before{display:none}.archie-dialog header h2{font-size:21px}.archie-dialog header p{font-size:13px}.archie-dialog .archie-quick{font-size:14px}.archie-chat-history{font-size:16px}}
+.lesson-sound .a-button{width:44px;height:44px;min-width:44px;min-height:44px;padding:8px}
+.a-page-help{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:20px 0}.a-page-help .a-button{border-color:#ffdf58}.a-page-help span{font-size:15px;color:#36547c}
+.compact-home>img{background:linear-gradient(#e9faffc9,#cff0f1b0),url(/assets/cartoon/worlds/reading.png) center/cover no-repeat}.compact-lesson::after{background:linear-gradient(#e9faffc9,#cff0f1b0),url(/assets/images/archie-character-v2.png) center/contain no-repeat}.grown-up-gate{max-width:680px;margin:24px auto}.grown-up-gate input{width:100%;max-width:100%;box-sizing:border-box;min-height:48px;padding:12px;border:2px solid #799bc7;border-radius:12px;background:white;font-size:18px;color:#142e65}.grown-up-gate form{display:grid;gap:14px}.grown-up-gate label{font-weight:800}.grown-up-gate:focus-visible{outline:4px solid #ee9f00}.grown-up-unlocked{margin:14px 0}
+.compact-lesson::after{background:url(/assets/images/archie-character-v2.png) center/contain no-repeat,linear-gradient(145deg,#f7fdff,#a7ddfa)}
+.grown-up-gate{font:500 18px/1.55 Nunito,ui-rounded,Arial,sans-serif;color:#173268;width:calc(100% - 32px);box-sizing:border-box}.grown-up-gate h2{font-weight:900;font-size:25px}.a-calm .a-hero{background-image:none!important;background-color:#17466b}.a-calm .a-hero-copy{max-width:100%;padding-right:0}
+.archie-avatar{display:block;aspect-ratio:2/3;background-image:url(/assets/images/archie-ages-v1.png);background-size:300% 100%;background-repeat:no-repeat;background-position:50% center}.archie-age-discoverer{background-position:0% center}.archie-age-navigator{background-position:100% center}.home-age-avatar{width:min(32vw,390px);flex:0 0 auto;max-height:calc(100dvh - 2 * var(--home-pad,24px));border:4px solid white;border-radius:26px;box-shadow:0 16px 44px #12396c2b}.age-navigator{background:linear-gradient(145deg,#e3ebff,#f7fbff 60%,#deecef)}.age-navigator .a-card{border-radius:18px}.age-navigator .a-hero{background-image:none!important;background:linear-gradient(120deg,#153767,#22549b)}.age-navigator .a-eyebrow{letter-spacing:.6px}.age-navigator .a-button{border-radius:14px}.age-navigator .a-hero-archie{border-radius:16px}.age-explorer .a-hero-archie,.age-discoverer .a-hero-archie{border-radius:24px}.a-hero .archie-avatar{background-color:#d9f0ff;flex-shrink:0}.grown-up-unlocked:focus{outline:none}
+@media(max-width:599px){.compact-home{display:grid;grid-template-columns:100px minmax(0,1fr);gap:12px;align-content:center;align-items:center;padding:14px;min-height:100dvh}.compact-home>section{display:contents}.compact-home .home-personalize-bar{grid-column:1/-1;grid-row:1;margin:0;min-height:48px;flex-wrap:wrap;font-size:12px}.compact-home .home-age-avatar{grid-column:1;grid-row:2;width:100%;height:150px;max-width:none;max-height:none;border-width:2px;border-radius:18px}.compact-home h1{grid-column:2;grid-row:2;font-size:clamp(22px,7vw,34px);margin:0}.compact-home h1 small{font-size:14px;line-height:1.6}.compact-home nav{grid-column:1/-1;grid-row:3;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.compact-home nav .a-button{min-height:50px;font-size:15px;padding:9px 8px;border-radius:16px}.compact-home nav .a-button:first-child{grid-column:span 2;background:linear-gradient(#30b954,#0f8233)}.compact-home nav .a-button:nth-child(3){background:linear-gradient(#ffe451,#ffc800);color:#173268}}
+@media(min-width:600px){.home-age-avatar{max-width:34%;max-height:calc(100dvh - 2 * var(--home-pad,24px))}}
+@media(min-width:600px) and (max-height:500px){.compact-home{--home-pad:12px;padding:12px;gap:18px}.compact-home>section{min-width:0}.compact-home .home-personalize-bar{min-height:44px;font-size:11px;margin:0 0 8px;padding:4px 6px}.compact-home .home-personalize-trigger{min-height:44px;padding:6px 8px;font-size:12px}.compact-home h1{font-size:28px;line-height:1.1;margin:0 0 12px}.compact-home h1 small{font-size:14px;line-height:1.4;margin-top:4px}.compact-home nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.compact-home nav .a-button{min-height:44px;font-size:14px;padding:6px 4px}.compact-home .home-age-avatar{width:26vw;max-width:26%;max-height:calc(100dvh - 24px)}}

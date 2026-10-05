@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import GameShell, {
   type GameResult,
   useChildAge,
@@ -14,14 +14,6 @@ interface Question {
   question: string;
   answer: number;
   options: number[];
-}
-
-interface Balloon {
-  id: number;
-  value: number;
-  x: number;
-  color: string;
-  isAnswer: boolean;
 }
 
 interface NumberPopPlayProps {
@@ -96,7 +88,7 @@ function createWrongAnswers(
  * Tier 2: ages 8–10
  * Tier 3: ages 11–13
  */
-function generateQuestion(tier: DifficultyTier): Question {
+export function generateQuestion(tier: DifficultyTier): Question {
   /*
    * TIER 1
    * Simple addition using numbers 1–5.
@@ -207,437 +199,99 @@ function generateQuestion(tier: DifficultyTier): Question {
  * The game keeps a history of previous questions
  * so questions do not repeat during the same game.
  */
-function NumberPopPlay({
-  onComplete,
-  onQuestionChange,
-}: NumberPopPlayProps) {
+export function explainQuestion(question: Question, revealAnswer = false): string {
+  const [a, operation, b] = question.question.split(' ');
+  const strategy = operation === '+'
+    ? 'Start at ' + a + ' and count on ' + b + ' steps. You can draw dots to help.'
+    : operation === '-'
+      ? 'Start at ' + a + ' and count back ' + b + ' steps on a number line.'
+      : 'Make ' + a + ' equal groups of ' + b + '. Add the groups or use your times table.';
+  return revealAnswer ? strategy + ' ' + a + ' ' + operation + ' ' + b + ' = ' + question.answer + '.' : strategy;
+}
+
+export function NumberPopPlay({ onComplete, onQuestionChange }: NumberPopPlayProps) {
   const { tier } = useChildAge();
-
-  const questionHistory = useRef<Set<string>>(new Set());
-
-  const timeoutRef =
-    useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const createUniqueQuestion = (): Question => {
-    let nextQuestion = generateQuestion(tier);
-    let attempts = 0;
-
-    /*
-     * Try several times to find a question which
-     * has not already appeared in this game.
-     */
-    while (
-      questionHistory.current.has(nextQuestion.question) &&
-      attempts < 50
-    ) {
-      nextQuestion = generateQuestion(tier);
-      attempts += 1;
-    }
-
-    questionHistory.current.add(nextQuestion.question);
-
-    return nextQuestion;
-  };
-
+  const reduceMotion = useReducedMotion();
+  const questionHistory = useRef(new Set<string>());
+  const completionSent = useRef(false);
   const [round, setRound] = useState(0);
-
   const [correct, setCorrect] = useState(0);
+  const [question, setQuestion] = useState(() => generateQuestion(tier));
+  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
+  const [hadMistake, setHadMistake] = useState(false);
+  const [hintVisible, setHintVisible] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [finishedResult, setFinishedResult] = useState<GameResult | null>(null);
 
-  const [question, setQuestion] =
-    useState<Question>(() => {
-      const firstQuestion = generateQuestion(tier);
-
-      questionHistory.current.add(firstQuestion.question);
-
-      return firstQuestion;
-    });
-
-  const [balloons, setBalloons] =
-    useState<Balloon[]>([]);
-
-  const [popped, setPopped] =
-    useState<number | null>(null);
-
-  const [feedback, setFeedback] =
-    useState<'correct' | 'wrong' | null>(null);
-
-  const [finishedResult, setFinishedResult] =
-    useState<GameResult | null>(null);
-
-  /**
-   * Tell the parent component whenever
-   * the displayed question changes.
-   */
-  useEffect(() => {
-    onQuestionChange?.(question.question);
-  }, [question.question, onQuestionChange]);
-
-  /**
-   * Build the four balloons whenever
-   * a new question is displayed.
-   */
-  useEffect(() => {
-    setBalloons(
-      question.options.map((value, index) => ({
-        id: index,
-        value,
-        x: 10 + index * 23,
-        color: COLORS[index % COLORS.length],
-        isAnswer: value === question.answer,
-      })),
-    );
-
-    setPopped(null);
-    setFeedback(null);
-  }, [question]);
-
-  /**
-   * If the age tier changes, restart the game
-   * with questions appropriate for the new age.
-   */
-  useEffect(() => {
-    questionHistory.current.clear();
-
-    const newQuestion = generateQuestion(tier);
-
-    questionHistory.current.add(newQuestion.question);
-
-    setRound(0);
-    setCorrect(0);
-    setFinishedResult(null);
-    setQuestion(newQuestion);
-    setPopped(null);
-    setFeedback(null);
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [tier]);
-
-  /**
-   * Handle a balloon being selected.
-   */
-  const popBalloon = (balloon: Balloon) => {
-    /*
-     * Prevent multiple answers being clicked
-     * during the feedback animation.
-     */
-    if (popped !== null) {
-      return;
-    }
-
-    setPopped(balloon.id);
-
-    const isCorrect = balloon.isAnswer;
-
-    setFeedback(
-      isCorrect
-        ? 'correct'
-        : 'wrong',
-    );
-
-    if (isCorrect) {
-      setCorrect(previous => previous + 1);
-    }
-
-    timeoutRef.current = setTimeout(() => {
-      const nextRound = round + 1;
-
-      /*
-       * Finish after question 10.
-       */
-      if (nextRound >= TOTAL_ROUNDS) {
-        const finalCorrect =
-          correct + (isCorrect ? 1 : 0);
-
-        const score = Math.round(
-          (finalCorrect / TOTAL_ROUNDS) * 100,
-        );
-
-        const stars =
-          score >= 90
-            ? 3
-            : score >= 60
-              ? 2
-              : score >= 30
-                ? 1
-                : 0;
-
-        const result: GameResult = {
-          score,
-          correct: finalCorrect,
-          total: TOTAL_ROUNDS,
-          stars,
-        };
-
-        setFinishedResult(result);
-
-        onComplete?.(result);
-
-        return;
-      }
-
-      /*
-       * Move to a new unique question.
-       */
-      const nextQuestion =
-        createUniqueQuestion();
-
-      setRound(nextRound);
-      setQuestion(nextQuestion);
-    }, 900);
-  };
-
-  /**
-   * Restart button used when this component
-   * is running without an external GameShell.
-   */
   const restartGame = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    const first = generateQuestion(tier);
+    questionHistory.current = new Set([first.question]);
+    completionSent.current = false;
+    setRound(0); setCorrect(0); setQuestion(first);
+    setFeedback(null); setHadMistake(false); setHintVisible(false); setPaused(false); setFinishedResult(null);
+  };
+  useEffect(() => { restartGame(); }, [tier]);
+  useEffect(() => { onQuestionChange?.(question.question); }, [question.question, onQuestionChange]);
+
+  const popBalloon = (value: number) => {
+    if (paused || feedback === 'correct' || finishedResult) return;
+    if (value === question.answer) {
+      setFeedback('correct');
+      if (!hadMistake) setCorrect(previous => previous + 1);
+    } else {
+      setHadMistake(true); setFeedback('wrong'); setHintVisible(true);
     }
-
-    questionHistory.current.clear();
-
-    const newQuestion =
-      generateQuestion(tier);
-
-    questionHistory.current.add(
-      newQuestion.question,
-    );
-
-    setRound(0);
-    setCorrect(0);
-    setPopped(null);
-    setFeedback(null);
-    setFinishedResult(null);
-    setQuestion(newQuestion);
   };
 
-  /**
-   * Local result screen.
-   *
-   * If your GameShell supplies onComplete,
-   * it can display its own results screen instead.
-   */
-  if (finishedResult && !onComplete) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-blue-50 to-background">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="w-full max-w-md bg-card rounded-3xl shadow-xl border-2 border-border p-8 text-center"
-        >
-          <div className="text-6xl mb-4">
-            🎈
-          </div>
+  const nextBalloon = () => {
+    if (paused || feedback !== 'correct' || completionSent.current) return;
+    if (round + 1 === TOTAL_ROUNDS) {
+      completionSent.current = true;
+      const score = Math.round(correct / TOTAL_ROUNDS * 100);
+      const result = { score, correct, total: TOTAL_ROUNDS, stars: score >= 90 ? 3 : score >= 60 ? 2 : score >= 30 ? 1 : 0 };
+      setFinishedResult(result); onComplete?.(result); return;
+    }
+    let next = generateQuestion(tier);
+    let attempts = 0;
+    while (questionHistory.current.has(next.question) && attempts++ < 50) next = generateQuestion(tier);
+    questionHistory.current.add(next.question);
+    setRound(previous => previous + 1); setQuestion(next);
+    setFeedback(null); setHadMistake(false); setHintVisible(false);
+  };
 
-          <h2
-            className="text-3xl font-black mb-4"
-            style={{
-              fontFamily: 'var(--font-heading)',
-            }}
-          >
-            Number Pop Complete!
-          </h2>
+  if (finishedResult && !onComplete) return <section className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-blue-50">
+    <h2 className="text-3xl font-black mb-4">Balloon adventure complete!</h2>
+    <p className="text-lg">You solved all {TOTAL_ROUNDS} balloons.</p>
+    <p className="text-lg mb-4">{finishedResult.correct} correct on your first try. Every retry was useful practice.</p>
+    <p className="text-2xl mb-4">{'⭐'.repeat(finishedResult.stars)}</p>
+    <button type="button" className="px-6 py-3 min-h-12 rounded-xl bg-primary text-primary-foreground font-bold" onClick={restartGame}>Play again</button>
+  </section>;
 
-          <p className="text-xl font-bold mb-2">
-            You got {finishedResult.correct} out of{' '}
-            {finishedResult.total} correct.
-          </p>
-
-          <p className="text-2xl font-black text-primary mb-4">
-            Score: {finishedResult.score}%
-          </p>
-
-          <div className="text-4xl mb-6">
-            {'⭐'.repeat(finishedResult.stars)}
-            {'☆'.repeat(
-              Math.max(
-                0,
-                3 - finishedResult.stars,
-              ),
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={restartGame}
-            className="px-8 py-3 rounded-2xl bg-primary text-primary-foreground font-black text-lg shadow-md hover:scale-105 transition-transform"
-          >
-            Play Again
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-blue-50 to-background">
-
-      {/* Progress */}
-      <div className="w-full max-w-md mb-6">
-
-        <div className="flex justify-between text-sm font-bold text-muted-foreground mb-2">
-
-          <span>
-            Question {round + 1} of {TOTAL_ROUNDS}
-          </span>
-
-          <span>
-            ⭐ {correct} correct
-          </span>
-
-        </div>
-
-        <div className="h-3 bg-muted rounded-full overflow-hidden">
-
-          <motion.div
-            className="h-full bg-primary rounded-full"
-            initial={false}
-            animate={{
-              width: `${
-                ((round + 1) /
-                  TOTAL_ROUNDS) *
-                100
-              }%`,
-            }}
-            transition={{
-              duration: 0.35,
-            }}
-          />
-
-        </div>
-      </div>
-
-      {/* Maths question */}
-      <motion.div
-        key={question.question}
-        initial={{
-          scale: 0.8,
-          opacity: 0,
-        }}
-        animate={{
-          scale: 1,
-          opacity: 1,
-        }}
-        className="text-4xl font-black text-foreground mb-8 bg-card rounded-2xl px-8 py-4 shadow-md border-2 border-border"
-        style={{
-          fontFamily: 'var(--font-heading)',
-        }}
-      >
-        {question.question}
-      </motion.div>
-
-      {/* Correct / Wrong feedback */}
-      <div className="h-14 mb-2">
-
-        <AnimatePresence mode="wait">
-
-          {feedback && (
-            <motion.div
-              key={feedback}
-              initial={{
-                scale: 0.5,
-                opacity: 0,
-              }}
-              animate={{
-                scale: 1,
-                opacity: 1,
-              }}
-              exit={{
-                opacity: 0,
-              }}
-              className={`text-3xl font-black ${
-                feedback === 'correct'
-                  ? 'text-green-600'
-                  : 'text-red-500'
-              }`}
-            >
-              {feedback === 'correct'
-                ? '🎉 Correct!'
-                : '❌ Not this one!'}
-            </motion.div>
-          )}
-
-        </AnimatePresence>
-
-      </div>
-
-      {/* Balloons */}
-      <div className="relative w-full max-w-md h-48">
-
-        {balloons.map(balloon => (
-          <motion.button
-            type="button"
-            key={balloon.id}
-            style={{
-              left: `${balloon.x}%`,
-              position: 'absolute',
-              bottom: 0,
-              transform: 'translateX(-50%)',
-            }}
-            animate={
-              popped === balloon.id
-                ? {
-                    scale: 0,
-                    opacity: 0,
-                  }
-                : {
-                    y: [0, -12, 0],
-                  }
-            }
-            transition={
-              popped === balloon.id
-                ? {
-                    duration: 0.3,
-                  }
-                : {
-                    duration:
-                      1.5 +
-                      balloon.id * 0.3,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                  }
-            }
-            whileHover={
-              popped === null
-                ? {
-                    scale: 1.1,
-                  }
-                : undefined
-            }
-            whileTap={
-              popped === null
-                ? {
-                    scale: 0.95,
-                  }
-                : undefined
-            }
-            onClick={() =>
-              popBalloon(balloon)
-            }
-            disabled={popped !== null}
-            className={`w-16 h-16 rounded-full ${balloon.color} text-white font-black text-xl shadow-lg flex items-center justify-center cursor-pointer disabled:cursor-default`}
-            aria-label={`Pop balloon ${balloon.value}`}
-          >
-            {balloon.value}
-          </motion.button>
-        ))}
-
-      </div>
-
-      {/* Instructions */}
-      <p className="mt-6 text-muted-foreground text-sm font-bold text-center">
-        Pop the balloon with the right answer!
-      </p>
-
+  return <section className="flex-1 flex flex-col items-center justify-center p-3 sm:p-6 bg-gradient-to-b from-blue-50 to-background" aria-label="Number Pop adventure">
+    <div className="w-full max-w-md mb-5">
+      <div className="flex justify-between flex-wrap gap-2 text-sm font-bold mb-2"><span>Question {round + 1} of {TOTAL_ROUNDS}</span><span>⭐ {correct} first-try answers</span></div>
+      <progress className="w-full h-4" aria-label="Balloon adventure progress" value={round + (feedback === 'correct' ? 1 : 0)} max={TOTAL_ROUNDS}/>
     </div>
-
-
-  );
+    <h2 className="font-black text-center bg-card rounded-2xl px-4 py-4 mb-4 border-2 border-border" style={{fontSize:'clamp(24px,7vw,36px)', fontFamily:'var(--font-heading)'}}>{question.question}</h2>
+    <p className="text-center text-base mb-4">Take your time. Pop the balloon with the right answer.</p>
+    <div className="flex gap-3 flex-wrap justify-center mb-4">
+      <button type="button" onClick={()=>setHintVisible(value=>!value)} aria-expanded={hintVisible} aria-controls="number-pop-hint" className="min-h-12 px-4 py-3 rounded-xl bg-white border-2 border-blue-300 font-bold">{hintVisible ? 'Hide hint' : 'Show a hint'}</button>
+      <button type="button" onClick={()=>setPaused(value=>!value)} aria-pressed={paused} className="min-h-12 px-4 py-3 rounded-xl bg-white border-2 border-blue-300 font-bold">{paused ? 'Resume adventure' : 'Pause adventure'}</button>
+    </div>
+    {paused ? <div role="status" className="max-w-md w-full p-5 text-center rounded-2xl bg-white mb-4"><h3 className="text-xl font-black">Time for a breather</h3><p>Your balloons are safe. Resume when you are ready.</p></div> : <>
+      <div role="status" aria-live="polite" className="w-full max-w-md text-center mb-4">
+        {feedback === 'wrong' && <p className="font-bold text-blue-900 mb-2">Good try. Use the hint and have another go at this balloon.</p>}
+        {feedback === 'correct' && <><p className="text-xl font-black text-green-700">🎉 Balloon solved!</p><p className="mt-2">{explainQuestion(question, true)}</p><p className="mt-2 text-sm">{hadMistake ? 'You kept trying and solved it. That is useful practice!' : 'Solved on your first try!'}</p></>}
+      </div>
+      {hintVisible && feedback !== 'correct' && <p id="number-pop-hint" className="max-w-md w-full p-4 mb-5 rounded-xl bg-yellow-100 text-base">{explainQuestion(question)}</p>}
+      <div className="grid grid-cols-4 gap-2 w-full max-w-md mb-5" aria-label="Answer balloons">
+        {question.options.map((value,index)=><motion.button type="button" key={value} aria-label={'Pop balloon ' + value} onClick={()=>popBalloon(value)} disabled={feedback === 'correct'}
+          animate={reduceMotion || feedback === 'correct' ? {y:0} : {y:[0,-6,0]}} transition={{duration:2+index*0.3,repeat:reduceMotion || feedback === 'correct' ? 0 : Infinity}}
+          className={'min-w-11 min-h-16 aspect-square rounded-full ' + COLORS[index % COLORS.length] + ' text-blue-950 font-black text-xl shadow-lg border-2 border-white disabled:opacity-70'}>{value}</motion.button>)}
+      </div>
+      {feedback === 'correct' && <button type="button" onClick={nextBalloon} className="min-h-12 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-black mb-4">{round + 1 === TOTAL_ROUNDS ? 'Finish balloon adventure' : 'Next balloon'}</button>}
+    </>}
+  </section>;
 }
 
 export default function NumberPopGame() {

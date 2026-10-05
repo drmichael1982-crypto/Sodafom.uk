@@ -55,6 +55,32 @@ describe('Local Tutoring Engine & Memory', () => {
       expect(res?.text).toContain('Nouns and Verbs');
     });
 
+    it('keeps foundational grammar available as review for an older saved school year', () => {
+      localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({ settings: { year: 8 } }));
+      const res = tryLocalTutor('teach me grammar');
+      expect(res?.text).toContain('Nouns and Verbs');
+      expect(getActivePendingQuestion()?.topic).toBe('grammar');
+    });
+
+    it('prioritises a named English topic over the generic subject', () => {
+      const res = tryLocalTutor('teach me English phonics');
+      expect(res?.text).toContain('Phonics and Sound Blending');
+      expect(getActivePendingQuestion()?.topic).toBe('phonics');
+    });
+
+    it('does not route a younger child to an older-band lesson', () => {
+      localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({ settings: { year: 1 } }));
+      expect(tryLocalTutor('teach me percentages')).toBeNull();
+      expect(tryLocalTutor('teach me grammar')?.text).toContain('Nouns and Verbs');
+    });
+
+    it('recognises British practise as a new lesson request rather than an answer', () => {
+      tryLocalTutor('teach me fractions');
+      const res = tryLocalTutor('practise grammar');
+      expect(res?.text).toContain("Let's practice Nouns and Verbs");
+      expect(getActivePendingQuestion()?.topic).toBe('grammar');
+    });
+
     it('teaches a Geography lesson locally', () => {
       const res = tryLocalTutor('quiz me on geography');
       expect(res).not.toBeNull();

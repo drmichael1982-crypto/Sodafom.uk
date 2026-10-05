@@ -12,6 +12,7 @@ import { ArchieProvider } from '@/contexts/ArchieContext';
 import { ProgressionProvider } from '@/contexts/ProgressionContext';
 import AccessibilityBar from '@/components/AccessibilityBar';
 import ArchieHelper from '@/components/ArchieHelper';
+import SpellingInputPolicy from '@/components/SpellingInputPolicy';
 import MobileTrialBar from '@/components/MobileTrialBar';
 import { usePageView } from '@/hooks/usePageView';
 
@@ -39,13 +40,14 @@ export default function RootLayout({
                   <meta name="description" content="Fun, curriculum-aligned learning for children aged 5–13. Maths, Spelling and Reading games and activities." />
                 </Helmet>
                 <ScrollRestoration />
+                <SpellingInputPolicy />
                 {!hideHeader && <Header />}
                 {children}
                 {!immersiveHome && <Footer />}
                 {/* Floating UI — accessibility toolbar + unified Archie helper + mobile CTA */}
                 {/* Immersive home/cartoon mode already has its own Settings control. */}
                 {!immersiveHome && <AccessibilityBar gameMode={isIndividualGame} />}
-                <ArchieHelper gameMode={isIndividualGame} hideLauncher={location.pathname === '/' || location.pathname === '/lesson'} />
+                <ArchieHelper gameMode={isIndividualGame} hideLauncher={isArchiePage(location.pathname) || isIndividualGame} />
                 {!immersiveHome && <MobileTrialBar />}
               </Website>
             </CartProvider>

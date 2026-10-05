@@ -1,0 +1,27 @@
+import { cleanup, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('@/contexts/ArchieContext',()=>({useArchieContext:()=>({setGameContext:vi.fn(),clearGameContext:vi.fn(),openArchie:vi.fn()})}));
+vi.mock('@/lib/voice-context',()=>({useVoice:()=>({stop:vi.fn(),speak:vi.fn()})}));
+vi.mock('@/pages/CartoonTheatrePage',()=>({EPISODES:[]}));
+import { ArchieParents } from './ArchiePages';
+beforeEach(()=>localStorage.clear());afterEach(cleanup);
+describe('parent controls',()=>{
+  it('hides online-help and memory actions until the grown-up challenge succeeds, then relocks on leaving',async()=>{
+    const user=userEvent.setup();
+    const show=()=>render(<MemoryRouter><ArchieParents/></MemoryRouter>);
+    const view=show();
+    expect(screen.queryByRole('checkbox',{name:'Allow online learning help'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button',{name:'Clear saved Ask Archie memory'})).not.toBeInTheDocument();
+    await user.click(screen.getByRole('textbox'));
+    await user.paste('privacy choose');
+    await user.keyboard('{Enter}');
+    const online=screen.getByRole('checkbox',{name:'Allow online learning help'});
+    expect(online).not.toBeChecked();
+    await user.click(online);expect(online).toBeChecked();
+    expect(screen.getByRole('button',{name:'Clear saved Ask Archie memory'})).toBeInTheDocument();
+    view.unmount();show();
+    expect(screen.queryByRole('checkbox',{name:'Allow online learning help'})).not.toBeInTheDocument();
+  });
+});

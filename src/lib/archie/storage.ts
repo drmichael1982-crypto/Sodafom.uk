@@ -1,10 +1,10 @@
 import { useCallback, useSyncExternalStore } from 'react';
 
-export type Settings = { year: number; sound: boolean; largeText: boolean };
+export type Settings = { year: number; sound: boolean; largeText: boolean; onlineHelp: boolean };
 export type Activity = { id: string; kind: 'lesson' | 'book'; title: string; stars: number; date: string };
 export type SavedData = { settings: Settings; activities: Activity[]; stickers: string[] };
 const KEY = 'sodafom_archie_design_v1';
-const DEFAULT: SavedData = { settings: { year: 4, sound: true, largeText: false }, activities: [], stickers: [] };
+const DEFAULT: SavedData = { settings: { year: 4, sound: true, largeText: false, onlineHelp: false }, activities: [], stickers: [] };
 let cachedRaw: string | null | undefined;
 let cached = DEFAULT;
 let memoryOnly = false;
@@ -18,8 +18,8 @@ function read(): SavedData {
     const data = JSON.parse(raw || 'null');
     cached = data ? {
       settings: { year: [1,2,3,4,5,6,7,8,9].includes(data.settings?.year) ? data.settings.year : 4,
-        sound: data.settings?.sound !== false, largeText: data.settings?.largeText === true },
-      activities: Array.isArray(data.activities) ? data.activities.filter((v: Activity) => v && typeof v.id === 'string' && typeof v.title === 'string' && ['book','lesson'].includes(v.kind) && Number.isFinite(v.stars) && typeof v.date === 'string').slice(-500) : [],
+        sound: data.settings?.sound !== false, largeText: data.settings?.largeText === true, onlineHelp: data.settings?.onlineHelp === true },
+      activities: Array.isArray(data.activities) ? data.activities.filter((v: Activity) => v && typeof v.id === 'string' && typeof v.title === 'string' && ['book','lesson'].includes(v.kind) && Number.isFinite(v.stars) && Number.isInteger(v.stars) && v.stars >= 0 && v.stars <= 3 && typeof v.date === 'string').slice(-5000) : [],
       stickers: Array.isArray(data.stickers) ? data.stickers.filter((s: unknown) => typeof s === 'string') : [],
     } : DEFAULT;
   } catch { cached = DEFAULT; }

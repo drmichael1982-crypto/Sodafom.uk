@@ -1,0 +1,257 @@
+.number-planets {
+  width: 100%;
+  min-width: 0;
+  color: #173268;
+  max-width: 1000px;
+  margin: auto;
+}
+.planet-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.number-planets button,
+.number-planets summary {
+  min-height: 44px;
+}
+.number-planets button {
+  border: 2px solid #7ba8d6;
+  border-radius: 14px;
+  padding: 10px 14px;
+  background: #eef7ff;
+  color: #173268;
+  font-weight: 800;
+}
+.number-planets button:focus-visible,
+.number-planets summary:focus-visible,
+.planet-answer-heading:focus-visible {
+  outline: 4px solid #edab24;
+  outline-offset: 4px;
+}
+.planet-space {
+  width: 100%;
+  min-width: 0;
+  position: relative;
+  aspect-ratio: 1.7;
+  min-height: 240px;
+  overflow: hidden;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 55% 30%, #173f79, #0b1e40 68%);
+  box-shadow: inset 0 0 35px #09172f;
+  border: 3px solid #85afe6;
+}
+.orbit-sun {
+  position: absolute;
+  left: calc(50% - 25px);
+  top: calc(50% - 25px);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #fff5af, #ffd257 50%, #e78018);
+  box-shadow: 0 0 28px #ffd45c88;
+}
+.planet-orbit {
+  position: absolute;
+  inset: var(--orbit);
+  border: 1px solid #d4e6ff2b;
+  border-radius: 50%;
+  animation: planet-orbit var(--speed) linear infinite;
+  transform: rotate(var(--angle));
+}
+.orbit-body {
+  position: absolute;
+  left: 50%;
+  top: -12px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px #0008;
+}
+.planet-equation {
+  position: absolute;
+  inset: 28% 10%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  pointer-events: none;
+}
+.planet-equation strong {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 28% 22%, #78d1ff, #1377bd 45%, #082955);
+  border: 2px solid #a0defd;
+  box-shadow: 5px 9px 18px #0005;
+  color: white;
+  font-size: clamp(24px, 4vw, 40px);
+  text-shadow: 0 2px #002f5e;
+}
+.is-correct .planet-equation strong {
+  background: radial-gradient(circle at 25% 25%, #8ef4af, #128951 55%, #075335);
+}
+.needs-another-look .planet-equation strong {
+  background: radial-gradient(circle at 25% 25%, #ffb2ac, #ba4949 55%, #632536);
+}
+.planet-model-note {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  color: #deebff;
+  text-align: center;
+  font-size: 12px;
+  margin: 0;
+}
+.answer-planets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+.answer-planets button {
+  min-height: 80px;
+  font-size: 28px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 20%,
+    #fff,
+    var(--planet-colour) 55%,
+    #254778
+  );
+  border: 3px solid #80abd4;
+  box-shadow: 0 5px 0 #122f602b;
+}
+.answer-planets .correct-planet {
+  background: radial-gradient(circle at 30% 20%, #ceffdb, #52cb80);
+  border-color: #288854;
+}
+.answer-planets button:disabled {
+  opacity: 1;
+}
+.planet-feedback {
+  min-height: 56px;
+  padding: 16px;
+  background: #fff3b3;
+  border-radius: 16px;
+}
+.planet-action {
+  margin: 8px 12px 12px 0;
+}
+.planet-break {
+  padding: 24px;
+  text-align: center;
+}
+.planet-explorer {
+  margin: 22px 0;
+  background: #eff7ff;
+  border: 2px solid #c6dff2;
+  border-radius: 18px;
+  padding: 18px;
+}
+.planet-explorer summary {
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 900;
+}
+.planet-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0;
+}
+.planet-selector button[aria-pressed="true"] {
+  background: #ffdf61;
+}
+.atom-model {
+  position: relative;
+  max-width: 340px;
+  aspect-ratio: 1;
+  margin: 20px auto;
+  background: #122c56;
+  border-radius: 50%;
+}
+.atom-nucleus {
+  position: absolute;
+  inset: 38%;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ffd258;
+  color: #15316b;
+  font-weight: 900;
+}
+.electron-track {
+  position: absolute;
+  inset: 12%;
+  border: 1px solid #8dbfe088;
+  border-radius: 50%;
+  transform: rotate(var(--angle));
+  animation: planet-orbit var(--speed) linear infinite;
+}
+.electron-track span {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #72d3ff;
+  box-shadow: 0 0 8px #72d3ff;
+}
+.is-still .planet-orbit,
+.is-still .electron-track {
+  animation-play-state: paused;
+}
+@keyframes planet-orbit {
+  from {
+    transform: rotate(var(--angle));
+  }
+  to {
+    transform: rotate(calc(var(--angle) + 360deg));
+  }
+}
+@media (max-width: 500px) {
+  .planet-space {
+    min-height: 240px;
+    aspect-ratio: 1.2;
+  }
+  .planet-equation {
+    inset: 28% 5%;
+    gap: 6px;
+  }
+  .planet-equation strong {
+    width: 56px;
+    font-size: 24px;
+  }
+  .answer-planets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .answer-planets button {
+    min-height: 72px;
+    border-radius: 24px;
+  }
+  .planet-toolbar button {
+    flex: 1;
+    min-width: 0;
+  }
+  .planet-toolbar p {
+    flex-basis: 100%;
+    margin: 0;
+  }
+  .number-planets h2 {
+    font-size: 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .planet-orbit,
+  .electron-track {
+    animation: none !important;
+  }
+}

@@ -1,6 +1,6 @@
 import './lib/i18n';
 import { StrictMode } from 'react';
-import { createRoot, hydrateRoot } from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 
 if (typeof window !== 'undefined') {
   (window as any)._APP_START_TIME = Date.now();
@@ -8,14 +8,7 @@ if (typeof window !== 'undefined') {
 
   window.onerror = function(msg, url, line, col, error) {
     console.error('CRITICAL ERROR:', msg, url, line, col, error);
-    const errDiv = document.createElement('div');
-    errDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:white;color:black;padding:20px;z-index:9999;overflow:auto;font-family:sans-serif;';
-    errDiv.innerHTML = `
-      <h1 style="color:red;font-size:20px;">Sodafom Critical Error</h1>
-      <pre style="white-space:pre-wrap;font-size:12px;margin-top:10px;">${msg}\n\nURL: ${url}\nLine: ${line}\nCol: ${col}\n\nStack: ${error?.stack || 'No stack'}</pre>
-      <button onclick="location.reload()" style="margin-top:20px;padding:10px 20px;background:#0ea5e9;color:white;border:none;border-radius:8px;font-weight:bold;">Reload App</button>
-    `;
-    document.body.appendChild(errDiv);
+    // index.html supplies a safe, child-friendly recovery screen before React loads.
   };
 }
 import { HelmetProvider } from '@dr.pogodin/react-helmet';

@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useVoice } from '@/lib/voice-context';
+import { useArchieData } from '@/lib/archie/storage';
+import { ARCHIE_PREVIEW } from '@/lib/config';
+import { listenForGameAnswer, normaliseVoiceAnswer } from '@/lib/archie/game-voice';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-type Difficulty = 'Easy' | 'Medium' | 'Hard';
+export type Difficulty = 'Easy' | 'Medium' | 'Hard';
 
 interface Fraction {
   label: string;
@@ -57,7 +60,7 @@ const FRACTIONS_HARD: Fraction[] = [
   { label: '11/12', numerator: 11, denominator: 12, slices: 12, fill: 11 },
 ];
 
-const FRACTION_SETS: Record<Difficulty, Fraction[]> = {
+export const FRACTION_SETS: Record<Difficulty, Fraction[]> = {
   'Easy':   FRACTIONS_EASY,
   'Medium': FRACTIONS_MEDIUM,
   'Hard':   FRACTIONS_HARD,
@@ -71,265 +74,69 @@ const DIFFICULTY_COLORS: Record<Difficulty, string> = {
   'Hard':   'bg-red-100 text-red-700 border-red-300',
 };
 
-// ── Pizza slice SVG ───────────────────────────────────────────────────────────
-function PizzaSlice({
-  total, index, selected, onClick,
-}: {
-  total: number; index: number; selected: boolean; onClick: () => void;
-}) {
-  const angle = 360 / total;
-  const startAngle = index * angle - 90;
-  const endAngle = startAngle + angle;
-  const r = 80;
-  const cx = 100; const cy = 100;
-  const x1 = cx + r * Math.cos((startAngle * Math.PI) / 180);
-  const y1 = cy + r * Math.sin((startAngle * Math.PI) / 180);
-  const x2 = cx + r * Math.cos((endAngle * Math.PI) / 180);
-  const y2 = cy + r * Math.sin((endAngle * Math.PI) / 180);
-  const largeArc = angle > 180 ? 1 : 0;
-  const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-
-  return (
-    <path
-      d={d}
-      fill={selected ? '#FFD700' : '#fde68a'}
-      stroke="#92400e"
-      strokeWidth="2"
-      onClick={onClick}
-      className="cursor-pointer hover:opacity-80 transition-opacity"
-    />
-  );
+function PizzaSlice({total,index,selected,onClick}:{total:number;index:number;selected:boolean;onClick:()=>void}) {
+  const angle=360/total;const start=(index*angle-90)*Math.PI/180;const end=start+angle*Math.PI/180;
+  return <path d={'M100 100 L'+(100+80*Math.cos(start))+' '+(100+80*Math.sin(start))+' A80 80 0 '+(angle>180?1:0)+' 1 '+(100+80*Math.cos(end))+' '+(100+80*Math.sin(end))+' Z'} fill={selected?'#f97342':'#ffe5a3'} stroke="#78350f" strokeWidth="2" onClick={onClick} className="cursor-pointer"/>;
+}
+export function fractionExplanation(numerator:number,denominator:number):string {
+  let a=numerator,b=denominator;while(b){const next=a%b;a=b;b=next;}
+  const equivalent=a>1?' That is also '+(numerator/a)+'/'+(denominator/a)+' of the whole.':'';
+  return 'The whole pizza has '+denominator+' equal slices. You shaded '+numerator+', so the fraction is '+numerator+'/'+denominator+'.'+equivalent;
+}
+function DifficultyPicker({onSelect}:{onSelect:(difficulty:Difficulty)=>void}) {
+  return <section className="p-5 w-full max-w-md mx-auto text-center"><h2 className="text-2xl font-black mb-4">Choose your pizza challenge</h2><p className="mb-4">Every recipe has equal slices. Take your time.</p><div className="grid gap-3">{(['Easy','Medium','Hard'] as Difficulty[]).map(value=><button type="button" key={value} onClick={()=>onSelect(value)} className={'min-h-14 p-4 rounded-2xl border-2 font-bold '+DIFFICULTY_COLORS[value]}>{value} · {value==='Easy'?'halves, quarters and thirds':value==='Medium'?'fifths, sixths and eighths':'ninths, tenths and twelfths'}</button>)}</div></section>;
 }
 
-// ── Difficulty picker ─────────────────────────────────────────────────────────
-function DifficultyPicker({ onSelect }: { onSelect: (d: Difficulty) => void }) {
-  return (
-    <div className="flex flex-col items-center gap-6 p-6">
-      <div className="text-5xl">🍕</div>
-      <h2 className="text-2xl font-black text-foreground text-center" style={{ fontFamily: 'var(--font-heading)' }}>
-        Choose Difficulty
-      </h2>
-      <p className="text-muted-foreground text-sm text-center max-w-xs">
-        Shade the correct number of pizza slices to match the fraction shown!
-      </p>
-
-      <div className="flex flex-col gap-3 w-full max-w-xs">
-        {(['Easy', 'Medium', 'Hard'] as Difficulty[]).map(d => (
-          <motion.button
-            key={d}
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => onSelect(d)}
-            className={`py-4 px-5 rounded-2xl font-black text-base border-2 transition-all shadow-sm flex items-center justify-between ${safeGet(DIFFICULTY_COLORS, d, '')}`}
-          >
-            <span>
-              {d === 'Easy' && '😊 '}
-              {d === 'Medium' && '🤔 '}
-              {d === 'Hard' && '🔥 '}
-              {d}
-            </span>
-            <span className="text-xs font-bold opacity-70">
-              {d === 'Easy' && 'Halves, quarters, thirds'}
-              {d === 'Medium' && 'Fifths, sixths, eighths'}
-              {d === 'Hard' && 'Ninths, tenths, twelfths'}
-            </span>
-          </motion.button>
-        ))}
-      </div>
-    </div>
-  );
+export function FractionPizzaPlay({onComplete,difficulty,year,onQuestionChange}:{onComplete:(result:GameResult)=>void;difficulty:Difficulty;year?:number;onQuestionChange?:(question:string,options:string[])=>void}) {
+  const {speak,stop}=useVoice();
+  const pool=difficulty==='Easy'&&year===1?FRACTION_SETS.Easy.filter(item=>item.numerator===1&&(item.denominator===2||item.denominator===4)):FRACTION_SETS[difficulty];
+  const [recipes]=useState(()=>[...pool].sort(()=>Math.random()-0.5));
+  const [round,setRound]=useState(0);const [correct,setCorrect]=useState(0);
+  const [selected,setSelected]=useState<number[]>([]);const [feedback,setFeedback]=useState<'correct'|'wrong'|null>(null);
+  const [hadMistake,setHadMistake]=useState(false);const [hint,setHint]=useState(false);const [paused,setPaused]=useState(false);
+  const completionSent=useRef(false);const frac=recipes[round%recipes.length];
+  const prompt='Make '+frac.numerator+'/'+frac.denominator+' of a pizza with '+frac.denominator+' equal slices.';
+  useEffect(()=>{onQuestionChange?.(prompt,Array.from({length:frac.slices},(_,index)=>'Slice '+(index+1)));},[prompt,frac.slices,onQuestionChange]);
+  useEffect(()=>()=>stop(),[stop]);
+  function toggleSlice(index:number){if(paused||feedback==='correct')return;setSelected(previous=>previous.includes(index)?previous.filter(item=>item!==index):[...previous,index]);setFeedback(null);}
+  function checkAnswer(){if(paused||feedback==='correct')return;if(selected.length===frac.fill){setFeedback('correct');if(!hadMistake)setCorrect(previous=>previous+1);}else{setFeedback('wrong');setHadMistake(true);setHint(true);}}
+  useEffect(()=>listenForGameAnswer('Fraction Pizza',text=>{
+    if(paused||feedback==='correct')return undefined;
+    const match=normaliseVoiceAnswer(text).match(/^slice (.+)$/);if(!match)return undefined;
+    const number=Number(normaliseVoiceAnswer(match[1]));if(!Number.isInteger(number)||number<1||number>frac.slices)return undefined;
+    const removing=selected.includes(number-1);const count=selected.length+(removing?-1:1);toggleSlice(number-1);
+    return 'Slice '+number+' '+(removing?'unshaded':'shaded')+'. '+count+' of '+frac.denominator+' slices are shaded. Choose Serve my pizza when your recipe is ready.';
+  }),[selected,paused,feedback,frac.slices,frac.denominator]);
+  function nextOrder(){if(paused||feedback!=='correct'||completionSent.current)return;stop();if(round+1===TOTAL_ROUNDS){completionSent.current=true;const score=Math.round(correct/TOTAL_ROUNDS*100);onComplete({score,correct,total:TOTAL_ROUNDS,stars:score>=90?3:score>=75?2:1});}else{setRound(previous=>previous+1);setSelected([]);setFeedback(null);setHadMistake(false);setHint(false);}}
+  return <section className="flex-1 w-full max-w-3xl mx-auto p-3 sm:p-6 bg-gradient-to-b from-orange-50 to-background text-center" aria-label="Fraction Pizza kitchen">
+    <div className="flex justify-between flex-wrap gap-2 font-bold text-sm mb-3"><span>Order {round+1} of {TOTAL_ROUNDS} · {difficulty}</span><span>{correct} first-try orders</span></div>
+    <progress className="w-full h-4 mb-4" aria-label="Pizza orders completed" max={TOTAL_ROUNDS} value={round+(feedback==='correct'?1:0)}/>
+    <h2 className="text-2xl font-black mb-2">A pizza for the star picnic</h2><p className="text-base mb-3">Shade this much of the whole pizza. Every slice is equal.</p>
+    <p className="text-4xl font-black mb-1">{frac.label}</p><p className="text-base mb-3">{frac.description||frac.numerator+' out of '+frac.denominator+' equal parts'}</p>
+    <div className="flex justify-center flex-wrap gap-2 mb-4"><button type="button" className="min-h-12 p-3 rounded-xl bg-white border-2 border-orange-300 font-bold" onClick={()=>speak('read:fraction-pizza',prompt)}>Read my order</button><button type="button" className="min-h-12 p-3 rounded-xl bg-white border-2 border-orange-300 font-bold" onClick={()=>setHint(value=>!value)} aria-expanded={hint}>{hint?'Hide recipe hint':'Show recipe hint'}</button><button type="button" className="min-h-12 p-3 rounded-xl bg-white border-2 border-orange-300 font-bold" onClick={()=>{stop();setPaused(value=>!value);}}>{paused?'Resume kitchen':'Take a breather'}</button></div>
+    {paused?<div role="status" className="p-6 bg-white rounded-2xl"><h3 className="text-xl font-black">Your pizza is safe</h3><p>Stretch or look away. Resume when you are ready.</p></div>:<>
+      {hint&&<p className="p-4 bg-yellow-100 rounded-xl text-base mb-4">The bottom number, {frac.denominator}, tells us the total equal slices. The top number, {frac.numerator}, tells us how many to shade.</p>}
+      <svg viewBox="0 0 200 200" role="img" aria-label={'Pizza with '+frac.denominator+' equal slices; '+selected.length+' shaded'} style={{width:'min(100%,280px)',height:'auto',margin:'0 auto'}}><circle cx="100" cy="100" r="85" fill="#d97706"/>{Array.from({length:frac.slices},(_,index)=><PizzaSlice key={index} total={frac.slices} index={index} selected={selected.includes(index)} onClick={()=>toggleSlice(index)}/>)}<circle cx="100" cy="100" r="6" fill="#78350f" pointerEvents="none"/></svg>
+      <p className="font-bold my-3">{selected.length} of {frac.denominator} slices shaded</p>
+      <p className="text-sm mb-3">Tap the pizza or use these large slice buttons.</p><div role="group" aria-label="Choose pizza slices" className="grid grid-cols-4 sm:grid-cols-6 gap-2 max-w-xl mx-auto mb-4">{Array.from({length:frac.slices},(_,index)=><button type="button" key={index} aria-label={'Slice '+(index+1)} aria-pressed={selected.includes(index)} disabled={feedback==='correct'} onClick={()=>toggleSlice(index)} className={'min-w-11 min-h-12 p-2 rounded-xl border-2 font-bold '+(selected.includes(index)?'bg-orange-600 border-orange-800 text-white':'bg-white border-orange-300 text-orange-950')}>{index+1}{selected.includes(index)?' ✓':''}</button>)}</div>
+      <div role="status" aria-live="polite" className="mb-4 text-base">{feedback==='wrong'&&<p className="font-bold text-blue-900">Good try. {selected.length>frac.fill?'Unshade a few slices':'Shade a few more slices'}, then try serving again. Your order is still here.</p>}{feedback==='correct'&&<><p className="text-xl font-black text-green-700">🍕 Picnic pizza ready!</p><p className="mt-2">{fractionExplanation(frac.numerator,frac.denominator)}</p><p className="mt-2 text-sm">{hadMistake?'You adjusted your recipe and solved it. Useful practice!':'You served this order on your first try.'}</p></>}</div>
+      <div className="flex gap-3 flex-wrap justify-center"><button type="button" onClick={()=>{setSelected([]);setFeedback(null);}} disabled={feedback==='correct'} className="min-h-12 px-5 py-3 rounded-xl bg-white border-2 border-orange-300 font-bold disabled:opacity-50">Clear slices</button><button type="button" onClick={checkAnswer} disabled={feedback==='correct'||selected.length===0} className="min-h-12 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-black disabled:opacity-50">Serve my pizza</button>{feedback==='correct'&&<button type="button" onClick={nextOrder} className="min-h-12 px-6 py-3 rounded-xl bg-green-700 text-white font-black">{round+1===TOTAL_ROUNDS?'Finish picnic · see my stars':'Next picnic order'}</button>}</div>
+    </>}
+  </section>;
 }
 
-// ── Game inner ────────────────────────────────────────────────────────────────
-function FractionPizzaPlay({
-  onComplete,
-  difficulty,
-}: {
-  onComplete: (r: GameResult) => void;
-  difficulty: Difficulty;
-}) {
-  const pool = safeGet(FRACTION_SETS as Record<string, Fraction[]>, difficulty, FRACTION_SETS['Easy']);
-  const [shuffled] = useState<Fraction[]>(() => [...pool].sort(() => Math.random() - 0.5));
-  const [round, setRound] = useState(0);
-  const [correct, setCorrect] = useState(0);
-  const [selected, setSelected] = useState<number[]>([]);
-  const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
-
-  const frac = shuffled.at(round % shuffled.length)!;
-
-  const toggleSlice = (i: number) => {
-    if (feedback) return;
-    setSelected(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i]);
-  };
-
-  const checkAnswer = () => {
-    if (feedback) return;
-    const isRight = selected.length === frac.fill;
-    setFeedback(isRight ? 'correct' : 'wrong');
-    const newCorrect = isRight ? correct + 1 : correct;
-    if (isRight) setCorrect(newCorrect);
-    setTimeout(() => {
-      const next = round + 1;
-      if (next >= TOTAL_ROUNDS) {
-        const score = Math.round((newCorrect / TOTAL_ROUNDS) * 100);
-        const stars = score >= 90 ? 3 : score >= 75 ? 2 : score >= 50 ? 1 : 0;
-        onComplete({ score, correct: newCorrect, total: TOTAL_ROUNDS, stars });
-      } else {
-        setRound(next);
-        setSelected([]);
-        setFeedback(null);
-      }
-    }, 1100);
-  };
-
-  // Toppings placed at fixed angles so they don't overlap slice lines
-  const toppingAngles = [30, 150, 270];
-
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-gradient-to-b from-orange-50 to-background">
-      {/* Progress bar */}
-      <div className="w-full max-w-md mb-4">
-        <div className="flex justify-between text-sm font-bold text-muted-foreground mb-2">
-          <span>Round {round + 1} / {TOTAL_ROUNDS}</span>
-          <div className="flex items-center gap-2">
-            <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${safeGet(DIFFICULTY_COLORS, difficulty, '')}`}>
-              {difficulty}
-            </span>
-            <span>⭐ {correct} correct</span>
-          </div>
-        </div>
-        <div className="h-3 bg-muted rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-primary rounded-full"
-            animate={{ width: `${(round / TOTAL_ROUNDS) * 100}%` }}
-            transition={{ duration: 0.4 }}
-          />
-        </div>
-      </div>
-
-      {/* Fraction prompt */}
-      <motion.div
-        key={round}
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-5"
-      >
-        <p className="text-base font-bold text-muted-foreground mb-1">Shade this fraction of the pizza</p>
-        <p className="text-5xl font-black text-foreground" style={{ fontFamily: 'var(--font-heading)' }}>
-          {frac.label}
-        </p>
-        {frac.description && (
-          <p className="text-sm text-muted-foreground mt-1 italic">({frac.description})</p>
-        )}
-        <p className="text-sm text-muted-foreground mt-1">
-          Select <strong>{frac.fill}</strong> slice{frac.fill !== 1 ? 's' : ''} out of <strong>{frac.denominator}</strong>
-        </p>
-      </motion.div>
-
-      {/* Pizza SVG */}
-      <motion.div
-        key={`pizza-${round}`}
-        initial={{ scale: 0.85, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="relative mb-5"
-      >
-        <svg width="210" height="210" viewBox="0 0 200 200">
-          {/* Crust */}
-          <circle cx="100" cy="100" r="84" fill="#d97706" />
-          {/* Base */}
-          <circle cx="100" cy="100" r="80" fill="#fde68a" />
-          {/* Slices */}
-          {Array.from({ length: frac.slices }).map((_, i) => (
-            <PizzaSlice
-              key={i}
-              total={frac.slices}
-              index={i}
-              selected={selected.includes(i)}
-              onClick={() => toggleSlice(i)}
-            />
-          ))}
-          {/* Toppings */}
-          {toppingAngles.map((deg, i) => {
-            const rad = (deg * Math.PI) / 180;
-            return (
-              <text
-                key={i}
-                x={100 + 38 * Math.cos(rad)}
-                y={100 + 38 * Math.sin(rad)}
-                fontSize="13"
-                textAnchor="middle"
-                dominantBaseline="middle"
-              >
-                {['🫑', '🍄', '🫒'].at(i)}
-              </text>
-            );
-          })}
-        </svg>
-      </motion.div>
-
-      {/* Feedback */}
-      <AnimatePresence>
-        {feedback && (
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className={`text-2xl font-black mb-4 ${feedback === 'correct' ? 'text-green-600' : 'text-red-500'}`}
-          >
-            {feedback === 'correct'
-              ? '🎉 Perfect slice!'
-              : `❌ Need ${frac.fill} slice${frac.fill !== 1 ? 's' : ''} — that's ${frac.label}!`}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Buttons */}
-      <div className="flex gap-3">
-        <motion.button
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          onClick={() => setSelected([])}
-          disabled={!!feedback}
-          className="px-5 py-3 rounded-xl font-bold bg-muted text-foreground border border-border disabled:opacity-50"
-        >
-          Clear
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.04 }}
-          whileTap={{ scale: 0.96 }}
-          onClick={checkAnswer}
-          disabled={!!feedback || selected.length === 0}
-          className="px-8 py-3 rounded-xl font-black bg-primary text-primary-foreground disabled:opacity-50 shadow-md"
-        >
-          Serve it! 🍕
-        </motion.button>
-      </div>
-
-      {/* Hint for hard mode */}
-      {difficulty === 'Hard' && (
-        <p className="text-xs text-muted-foreground mt-4 text-center max-w-xs">
-          💡 Tip: Count the total slices first, then shade the right number!
-        </p>
-      )}
-    </div>
-  );
-}
-
-// ── Wrapper with difficulty gate ──────────────────────────────────────────────
-function FractionPizzaWithDifficulty({ onComplete }: { onComplete: (r: GameResult) => void }) {
-  const { tier } = useChildAge();
-  const [difficulty, setDifficulty] = useState<Difficulty | null>(null);
-  useEffect(() => {
-    const auto: Difficulty = tier === 1 ? 'Easy' : tier === 2 ? 'Medium' : 'Hard';
-    setDifficulty(auto);
-  }, [tier]);
-  if (!difficulty) return <DifficultyPicker onSelect={setDifficulty} />;
-  return <FractionPizzaPlay onComplete={onComplete} difficulty={difficulty} />;
+function FractionPizzaWithDifficulty({onComplete,onQuestionChange}:{onComplete:(result:GameResult)=>void;onQuestionChange:(question:string,options:string[])=>void}) {
+  const {tier}=useChildAge();const {settings}=useArchieData();const [difficulty,setDifficulty]=useState<Difficulty|null>(null);
+  useEffect(()=>{setDifficulty(tier===1?'Easy':tier===2?'Medium':'Hard');},[tier]);
+  if(!difficulty)return <DifficultyPicker onSelect={setDifficulty}/>;
+  return <><div className="p-3 text-center"><button type="button" className="min-h-11 px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold" onClick={()=>setDifficulty(null)}>Choose pizza challenge</button></div><FractionPizzaPlay key={difficulty+'-'+settings.year} onComplete={onComplete} difficulty={difficulty} year={ARCHIE_PREVIEW?settings.year:undefined} onQuestionChange={onQuestionChange}/></>;
 }
 
 // ── Page export ───────────────────────────────────────────────────────────────
 export default function FractionPizzaGame() {
+  const [currentQuestion,setCurrentQuestion]=useState('');
+  const [currentOptions,setCurrentOptions]=useState<string[]>([]);
+  const questionChange=useCallback((question:string,options:string[])=>{setCurrentQuestion(question);setCurrentOptions(options);},[]);
   return (
     <>
       <Helmet>
@@ -351,8 +158,8 @@ export default function FractionPizzaGame() {
         Fraction Pizza — Maths Game for Kids — Sodafom
       </h1>
 
-      <GameShell title="Fraction Pizza" emoji="🍕" subject="maths" ageGroups={['5–7', '8–10', '11–13']}>
-        {(onComplete) => <FractionPizzaWithDifficulty onComplete={onComplete} />}
+      <GameShell title="Fraction Pizza" emoji="🍕" subject="maths" ageGroups={['5–7', '8–10', '11–13']} currentQuestion={currentQuestion} currentOptions={currentOptions}>
+        {(onComplete) => <FractionPizzaWithDifficulty onComplete={onComplete} onQuestionChange={questionChange} />}
       </GameShell>
     </>
   );

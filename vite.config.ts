@@ -21,13 +21,40 @@ function extractHostname(value: string): string {
   }
 }
 
-function apiDevPlugin(): Plugin {
+function apiDevPlugin(preview = false): Plugin {
   return {
     name: "api-dev",
     apply: "serve",
     configureServer(server: ViteDevServer) {
       server.middlewares.use(async (req, res, next) => {
         if (!req.url?.startsWith("/api")) return next();
+        if (preview) {
+          res.setHeader("Content-Type", "application/json");
+          res.setHeader("Cache-Control", "no-store");
+          if (req.url === "/api/auth/get-session") return res.end("null");
+          if (req.url === "/api/health")
+            return res.end(JSON.stringify({ ok: true, mode: "archie-test" }));
+          if (req.url === "/api/archie/status")
+            return res.end(
+              JSON.stringify({
+                local: false,
+                cloud: false,
+                message:
+                  "Development preview: built-in help works on this device. Online AI is unavailable here.",
+              }),
+            );
+          if (req.url === "/api/track/pageview") {
+            res.statusCode = 204;
+            return res.end();
+          }
+          res.statusCode = 503;
+          return res.end(
+            JSON.stringify({
+              error:
+                "Accounts, payments and online services are not connected in this development preview.",
+            }),
+          );
+        }
         try {
           const mod = await server.ssrLoadModule("/src/server/entry.ts");
           const handler = mod.default;
@@ -37,7 +64,7 @@ function apiDevPlugin(): Plugin {
           next(err);
         }
       });
-    }
+    },
   };
 }
 
@@ -50,18 +77,23 @@ const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".woff2": "font/woff2",
   ".woff": "font/woff",
-  ".json": "application/json"
+  ".json": "application/json",
 };
 
 function worktreePreviewPlugin(): Plugin {
-  const serverBundleCache = new Map<string, {app: unknown;mtimeMs: number;}>();
+  const serverBundleCache = new Map<
+    string,
+    { app: unknown; mtimeMs: number }
+  >();
 
   return {
     name: "worktree-preview",
     apply: "serve",
     configureServer(server: ViteDevServer) {
       server.middlewares.use(async (req, res, next) => {
-        const worktreeRoot = req.headers["x-worktree-root"] as string | undefined;
+        const worktreeRoot = req.headers["x-worktree-root"] as
+          | string
+          | undefined;
         if (!worktreeRoot) return next();
 
         const clientDir = path.join(worktreeRoot, "dist", "client");
@@ -70,7 +102,11 @@ function worktreePreviewPlugin(): Plugin {
         if (!existsSync(indexPath)) {
           res.setHeader("X-Worktree-Status", "not-built");
           res.statusCode = 503;
-          res.end(JSON.stringify({ error: "Worktree build not found. Run vite build first." }));
+          res.end(
+            JSON.stringify({
+              error: "Worktree build not found. Run vite build first.",
+            }),
+          );
           return;
         }
 
@@ -78,9 +114,18 @@ function worktreePreviewPlugin(): Plugin {
 
         const ext = path.extname(url.split("?")[0] || "");
         if (ext && ext !== ".html") {
-          const assetPath = path.resolve(clientDir, "." + (url.split("?")[0] || ""));
-          if (assetPath.startsWith(clientDir + path.sep) && existsSync(assetPath)) {
-            res.setHeader("Content-Type", MIME_TYPES[ext] || "application/octet-stream");
+          const assetPath = path.resolve(
+            clientDir,
+            "." + (url.split("?")[0] || ""),
+          );
+          if (
+            assetPath.startsWith(clientDir + path.sep) &&
+            existsSync(assetPath)
+          ) {
+            res.setHeader(
+              "Content-Type",
+              MIME_TYPES[ext] || "application/octet-stream",
+            );
             res.end(await readFile(assetPath));
             return;
           }
@@ -98,33 +143,41 @@ function worktreePreviewPlugin(): Plugin {
           let cached = serverBundleCache.get(worktreeRoot);
           if (!cached || cached.mtimeMs < bundleMtime) {
             const cacheBuster: string = `?t=${bundleMtime}`;
-            const mod = await import(/* @vite-ignore */`${bundlePath}${cacheBuster}`);
+            const mod = await import(
+              /* @vite-ignore */ `${bundlePath}${cacheBuster}`
+            );
             cached = { app: mod.default, mtimeMs: bundleMtime };
             serverBundleCache.set(worktreeRoot, cached);
           }
 
           const app = cached.app as (
-          req: IncomingMessage,
-          res: ServerResponse,
-          next: () => void)
-          => void;
+            req: IncomingMessage,
+            res: ServerResponse,
+            next: () => void,
+          ) => void;
 
           app(req, res, () => {
-            readFile(indexPath, "utf-8").then((html) => {
-              res.setHeader("Content-Type", "text/html");
-              res.end(html);
-            }).catch(() => {
-              res.statusCode = 500;
-              res.end("Failed to read index.html");
-            });
+            readFile(indexPath, "utf-8")
+              .then((html) => {
+                res.setHeader("Content-Type", "text/html");
+                res.end(html);
+              })
+              .catch(() => {
+                res.statusCode = 500;
+                res.end("Failed to read index.html");
+              });
           });
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
           res.statusCode = 500;
-          res.end(JSON.stringify({ error: `Worktree server bundle failed: ${message}` }));
+          res.end(
+            JSON.stringify({
+              error: `Worktree server bundle failed: ${message}`,
+            }),
+          );
         }
       });
-    }
+    },
   };
 }
 
@@ -158,37 +211,41 @@ export default defineConfig(({ mode, isSsrBuild }) => {
 
   return {
     envPrefix: ["VITE_", "SITE_"],
-    define: { "import.meta.env.VITE_ARCHIE_PREVIEW": JSON.stringify(mode === "archie-test" ? "true" : "false") },
+    define: {
+      "import.meta.env.VITE_ARCHIE_PREVIEW": JSON.stringify(
+        mode === "archie-test" ? "true" : "false",
+      ),
+    },
     test: {
       environment: "jsdom",
-      setupFiles: ["./src/tests/setup.ts"]
+      setupFiles: ["./src/tests/setup.ts"],
     },
     plugins: [
       react({
         babel: {
-          plugins: []
-        }
+          plugins: [],
+        },
       }),
       worktreePreviewPlugin(),
-      apiDevPlugin(),
+      apiDevPlugin(mode === "archie-test"),
       mediaAssetsPlugin(),
       formatOverridesPlugin(__dirname),
-      contentPlugin()
+      contentPlugin(),
     ],
     resolve: {
       dedupe: ["react", "react-dom", "react-router"],
       alias: {
         nothing: "/src/fallbacks/missingModule.ts",
         "@/api": path.resolve(__dirname, "./src/server/api"),
-        "@": path.resolve(__dirname, "./src")
-      }
+        "@": path.resolve(__dirname, "./src"),
+      },
     },
     optimizeDeps: {
       include: ["react", "react-dom", "react-router", "motion/react"],
-      exclude: ["drizzle-orm", "mysql2"]
+      exclude: ["drizzle-orm", "mysql2"],
     },
     ssr: {
-      noExternal: isSsrBuild ? true : undefined
+      noExternal: isSsrBuild ? true : undefined,
     },
     server: {
       host: process.env.HOST || "0.0.0.0",
@@ -199,17 +256,22 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         origin: corsOrigins,
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization", "Accept", "User-Agent"]
+        allowedHeaders: [
+          "Content-Type",
+          "Authorization",
+          "Accept",
+          "User-Agent",
+        ],
       },
       hmr: {
-        overlay: false
+        overlay: false,
       },
       watch: {
-        ignored: ["**/dist/**"]
+        ignored: ["**/dist/**"],
       },
       warmup: {
-        clientFiles: ["./src/main.tsx", "./src/App.tsx"]
-      }
+        clientFiles: ["./src/main.tsx", "./src/App.tsx"],
+      },
     },
     preview: {
       host: process.env.HOST || "0.0.0.0",
@@ -220,62 +282,70 @@ export default defineConfig(({ mode, isSsrBuild }) => {
         origin: corsOrigins,
         credentials: true,
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization", "Accept", "User-Agent"]
-      }
+        allowedHeaders: [
+          "Content-Type",
+          "Authorization",
+          "Accept",
+          "User-Agent",
+        ],
+      },
     },
-    build: isSsrBuild ? {
-      outDir: "dist",
-      emptyOutDir: false,
-      copyPublicDir: false,
-      ssr: "src/server/entry.ts",
-      rollupOptions: {
-        output: {
-          format: "es",
-          entryFileNames: "server.bundle.mjs",
-          chunkFileNames: "bin/[name]-[hash].js",
-          banner: "import { createRequire } from 'module';\nconst require = createRequire(import.meta.url);"
+    build: isSsrBuild
+      ? {
+          outDir: "dist",
+          emptyOutDir: false,
+          copyPublicDir: false,
+          ssr: "src/server/entry.ts",
+          rollupOptions: {
+            output: {
+              format: "es",
+              entryFileNames: "server.bundle.mjs",
+              chunkFileNames: "bin/[name]-[hash].js",
+              banner:
+                "import { createRequire } from 'module';\nconst require = createRequire(import.meta.url);",
+            },
+          },
         }
-      }
-    } : {
-      outDir: "dist/client",
-      emptyOutDir: true,
-      copyPublicDir: true,
-      rollupOptions: {
-        output: {
-          manualChunks: {
-            "react-vendor": ["react", "react-dom"],
-            "radix-ui": [
-              "@radix-ui/react-accordion",
-              "@radix-ui/react-alert-dialog",
-              "@radix-ui/react-aspect-ratio",
-              "@radix-ui/react-avatar",
-              "@radix-ui/react-checkbox",
-              "@radix-ui/react-collapsible",
-              "@radix-ui/react-context-menu",
-              "@radix-ui/react-dialog",
-              "@radix-ui/react-dropdown-menu",
-              "@radix-ui/react-hover-card",
-              "@radix-ui/react-label",
-              "@radix-ui/react-menubar",
-              "@radix-ui/react-navigation-menu",
-              "@radix-ui/react-popover",
-              "@radix-ui/react-progress",
-              "@radix-ui/react-scroll-area",
-              "@radix-ui/react-select",
-              "@radix-ui/react-separator",
-              "@radix-ui/react-slider",
-              "@radix-ui/react-slot",
-              "@radix-ui/react-switch",
-              "@radix-ui/react-tabs",
-              "@radix-ui/react-toast",
-              "@radix-ui/react-toggle",
-              "@radix-ui/react-toggle-group",
-              "@radix-ui/react-tooltip"
-            ],
-            query: ["@tanstack/react-query"]
-          }
-        }
-      }
-    }
+      : {
+          outDir: "dist/client",
+          emptyOutDir: true,
+          copyPublicDir: true,
+          rollupOptions: {
+            output: {
+              manualChunks: {
+                "react-vendor": ["react", "react-dom"],
+                "radix-ui": [
+                  "@radix-ui/react-accordion",
+                  "@radix-ui/react-alert-dialog",
+                  "@radix-ui/react-aspect-ratio",
+                  "@radix-ui/react-avatar",
+                  "@radix-ui/react-checkbox",
+                  "@radix-ui/react-collapsible",
+                  "@radix-ui/react-context-menu",
+                  "@radix-ui/react-dialog",
+                  "@radix-ui/react-dropdown-menu",
+                  "@radix-ui/react-hover-card",
+                  "@radix-ui/react-label",
+                  "@radix-ui/react-menubar",
+                  "@radix-ui/react-navigation-menu",
+                  "@radix-ui/react-popover",
+                  "@radix-ui/react-progress",
+                  "@radix-ui/react-scroll-area",
+                  "@radix-ui/react-select",
+                  "@radix-ui/react-separator",
+                  "@radix-ui/react-slider",
+                  "@radix-ui/react-slot",
+                  "@radix-ui/react-switch",
+                  "@radix-ui/react-tabs",
+                  "@radix-ui/react-toast",
+                  "@radix-ui/react-toggle",
+                  "@radix-ui/react-toggle-group",
+                  "@radix-ui/react-tooltip",
+                ],
+                query: ["@tanstack/react-query"],
+              },
+            },
+          },
+        },
   };
 });

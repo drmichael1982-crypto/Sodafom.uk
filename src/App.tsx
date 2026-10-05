@@ -1,13 +1,14 @@
 import { Capacitor } from '@capacitor/core';
 import { ARCHIE_PREVIEW } from '@/lib/config';
 import { lazy, Suspense } from 'react';
+import { MotionConfig } from 'motion/react';
 import { Outlet, createBrowserRouter, createHashRouter, type RouteObject } from "react-router";
 import { RouterProvider } from "react-router/dom";
-import AiroErrorBoundary from '../export-plugins/AiroErrorBoundary';
 import CookieBannerErrorBoundary from '@/components/CookieBannerErrorBoundary';
 import RootLayout from './layouts/RootLayout';
 import Spinner from './components/Spinner';
 import { routes } from './routes';
+import LearningErrorBoundary, { LearningRecovery } from './components/LearningErrorBoundary';
 const CookieBanner = lazy(() => import('@/components/CookieBanner').catch(error => {
   console.warn('Failed to load CookieBanner:', error);
   return {
@@ -18,11 +19,11 @@ const SpinnerFallback = () => <div className="flex justify-center py-8 h-screen 
     <Spinner />
   </div>;
 const rootElement = <Suspense fallback={<SpinnerFallback />}>
-    <AiroErrorBoundary captureGlobalErrors={true}>
+    <LearningErrorBoundary>
       <RootLayout>
         <Outlet />
       </RootLayout>
-    </AiroErrorBoundary>
+    </LearningErrorBoundary>
   </Suspense>;
 
 // Wrap the agent-editable flat `routes` array in a layout route so ScrollRestoration
@@ -32,6 +33,7 @@ const rootElement = <Suspense fallback={<SpinnerFallback />}>
 // with its default route error UI before our boundary can catch render errors.
 const routeTree: RouteObject[] = [{
   element: rootElement,
+  errorElement: <LearningRecovery/>,
   children: routes
 }];
 const isCapacitorApp = typeof window !== 'undefined' && Capacitor.isNativePlatform();
@@ -41,7 +43,7 @@ const router = isCapacitorApp ? createHashRouter(routeTree) : createBrowserRoute
 export default function App() {
   console.log('App rendering');
   return <>
-      <RouterProvider router={router} />
+      <MotionConfig reducedMotion="user"><RouterProvider router={router} /></MotionConfig>
       {/*
         CookieBanner reads document.cookie and subscribes to browser events.
         App.tsx is client-only (entry-server.tsx renders the route tree

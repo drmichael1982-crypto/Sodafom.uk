@@ -7,11 +7,13 @@
  * The hub writes 'sodafom_active_child' as JSON when a child is selected.
  * Games read it to auto-set difficulty without a manual picker.
  *
- * If no child is active (guest / no selection), returns null and games
- * fall back to their default difficulty picker.
+ * Archie preview guests use their saved practice year. Outside the preview,
+ * guests return null and retain each game's default difficulty picker.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { ARCHIE_PREVIEW } from '@/lib/config';
+import { useArchieData } from '@/lib/archie/storage';
 
 export type AgeGroup = '5-7' | '8-10' | '11-13';
 
@@ -38,7 +40,12 @@ export function normaliseAge(raw: string | null | undefined): AgeGroup | null {
 export function ageToDifficulty(age: AgeGroup | null): 1 | 2 | 3 {
   if (age === '5-7') return 1;
   if (age === '8-10') return 2;
+  if (age === '11-13') return 3;
   return 2; // sensible middle difficulty when no age has been selected
+}
+
+export function schoolYearToAgeGroup(year: number): AgeGroup {
+  return year <= 3 ? '5-7' : year <= 6 ? '8-10' : '11-13';
 }
 
 export function getActiveChild(): ActiveChild | null {
@@ -64,10 +71,12 @@ export function setActiveChild(child: ActiveChild | null) {
   } else {
     localStorage.removeItem(STORAGE_KEY);
   }
+  window.dispatchEvent(new Event('sodafom:active-child-changed'));
 }
 
 /** React hook — re-renders when the active child changes (cross-tab via storage event) */
 export function useChildAge(): { child: ActiveChild | null; ageGroup: AgeGroup | null; tier: 1 | 2 | 3 } {
+  const { settings } = useArchieData();
   const [child, setChild] = useState<ActiveChild | null>(() => {
     if (typeof window === 'undefined') return null;
     return getActiveChild();
@@ -78,11 +87,13 @@ export function useChildAge(): { child: ActiveChild | null; ageGroup: AgeGroup |
       if (e.key === STORAGE_KEY) setChild(getActiveChild());
     };
     window.addEventListener('storage', onStorage);
+    const refresh = () => setChild(getActiveChild());
+    window.addEventListener('sodafom:active-child-changed', refresh);
     // Also read on mount in case it was set before this component mounted
     setChild(getActiveChild());
-    return () => window.removeEventListener('storage', onStorage);
+    return () => { window.removeEventListener('storage', onStorage); window.removeEventListener('sodafom:active-child-changed', refresh); };
   }, []);
 
-  const ageGroup = child ? normaliseAge(child.ageGroup) : null;
+  const ageGroup = child ? normaliseAge(child.ageGroup) : ARCHIE_PREVIEW ? schoolYearToAgeGroup(settings.year) : null;
   return { child, ageGroup, tier: ageToDifficulty(ageGroup) };
 }

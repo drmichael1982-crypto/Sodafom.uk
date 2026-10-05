@@ -7,25 +7,16 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { Volume2, VolumeX, Star, Lock, Play, ChevronRight, Calculator } from 'lucide-react';
-import { games } from 'virtual:content';
+import catalog from '@/lib/archie/game-catalog.json';
+import GameHubHelp from '@/components/games/GameHubHelp';
 import { isDemoGameId, useSubscription } from '@/hooks/useSubscription';
 
 
-const GAME_ROUTES = new Map<string, string>([
-  ['game-number-pop',          '/games/number-pop'],
-  ['game-times-table-race',    '/games/times-table-race'],
-  ['game-fraction-pizza',      '/games/fraction-pizza'],
-  ['game-shape-sorter',        '/games/shape-sorter'],
-  ['game-sudoku',              '/games/sudoku'],
-  ['game-times-tables-reader', '/games/times-tables-reader'],
-  ['game-number-bonds',        '/games/number-bonds'],
-]);
-
 const ageConfig: Record<string, { badge: string; icon: string }> = {
-  '4–6':  { badge: 'bg-pink-400 text-white',          icon: '🌟' },
+  '4–6':  { badge: 'bg-pink-400 text-slate-950',      icon: '🌟' },
   '5–7':  { badge: 'bg-yellow-400 text-yellow-900',   icon: '⭐' },
-  '8–10': { badge: 'bg-amber-500 text-white',          icon: '🚀' },
-  '11–13':{ badge: 'bg-orange-600 text-white',         icon: '🏆' },
+  '8–10': { badge: 'bg-amber-500 text-slate-950',     icon: '🚀' },
+  '11–13':{ badge: 'bg-orange-600 text-slate-950',    icon: '🏆' },
 };
 
 const difficultyConfig: Record<string, string> = {
@@ -66,7 +57,7 @@ export default function MathsHubPage() {
   const { speak, speakingId } = useReadAloud();
   const { subscribed } = useSubscription();
 
-  const allGames = ((games as unknown) as { games: Array<Record<string, unknown>> }).games ?? [];
+  const allGames = catalog as Array<Record<string, unknown>>;
   const mathsGames = allGames.filter(
     (g) => g.subject === 'maths'
   );
@@ -92,7 +83,7 @@ export default function MathsHubPage() {
       {/* Hero banner — green (accent) */}
       <div className="bg-accent text-accent-foreground">
         <div className="max-w-5xl mx-auto px-4 py-10">
-          <div className="flex items-center gap-2 text-accent-foreground/70 text-sm mb-4">
+          <div className="flex items-center gap-2 text-accent-foreground text-sm mb-4">
             <Link to="/" className="hover:text-accent-foreground transition-colors">Home</Link>
             <ChevronRight size={14} />
             <span className="text-accent-foreground font-bold">Maths</span>
@@ -105,19 +96,19 @@ export default function MathsHubPage() {
               <h1 className="text-3xl md:text-4xl font-black" style={{ fontFamily: 'var(--font-heading)' }}>
                 Maths Games
               </h1>
-              <p className="text-accent-foreground/80 mt-1">
+              <p className="text-accent-foreground mt-1">
                 Numbers, shapes, times tables — all maths games in one place
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-3 mt-6">
-            <span className="px-3 py-1.5 rounded-full bg-black/10 text-sm font-bold">
+            <span className="px-3 py-1.5 rounded-full bg-black/10 text-slate-950 text-sm font-bold">
               🔢 {mathsGames.length} games
             </span>
-            <span className="px-3 py-1.5 rounded-full bg-black/10 text-sm font-bold">
+            <span className="px-3 py-1.5 rounded-full bg-black/10 text-slate-950 text-sm font-bold">
               🎯 Ages 5–13
             </span>
-            <span className="px-3 py-1.5 rounded-full bg-black/10 text-sm font-bold">
+            <span className="px-3 py-1.5 rounded-full bg-black/10 text-slate-950 text-sm font-bold">
               ⭐ Earn stars
             </span>
           </div>
@@ -125,6 +116,7 @@ export default function MathsHubPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+        <GameHubHelp title="Maths game library" subject="maths" />
         {mathsGames.length === 0 ? (
           <p className="text-center text-muted-foreground py-16">No maths games found.</p>
         ) : (
@@ -136,7 +128,7 @@ export default function MathsHubPage() {
           >
             {mathsGames.map((game) => {
               const id = game.id as string;
-              const route = GAME_ROUTES.get(id);
+              const route = typeof game.route === 'string' ? game.route : undefined;
               const isDemo = isDemoGameId(id);
               const locked = !isDemo && !subscribed;
               const ageGroups = (game.ageGroups as string[]) ?? [];
@@ -144,12 +136,8 @@ export default function MathsHubPage() {
 
               return (
                 <motion.div key={id} variants={cardAnim}>
-                  <button
-                    onClick={() => {
-                      if (!route) return;
-                      if (locked) { navigate('/subscribe'); return; }
-                      navigate(route);
-                    }}
+                  <article
+                    aria-labelledby={`${id}-title`}
                     className="w-full text-left rounded-3xl border-2 border-accent/40 bg-card overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col"
                   >
                     <div className="bg-accent/10 px-4 py-3 flex items-center justify-between">
@@ -168,7 +156,7 @@ export default function MathsHubPage() {
                     </div>
 
                     <div className="p-4 flex flex-col gap-2 flex-1">
-                      <h2 className="font-black text-foreground text-base leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
+                      <h2 id={`${id}-title`} className="font-black text-foreground text-base leading-tight" style={{ fontFamily: 'var(--font-heading)' }}>
                         {game.title as string}
                       </h2>
                       <p className="text-muted-foreground text-xs leading-relaxed line-clamp-2">
@@ -177,7 +165,7 @@ export default function MathsHubPage() {
 
                       <div className="flex flex-wrap gap-1 mt-auto pt-2">
                         {ageGroups.map((ag) => {
-                          const cfg = (Object.hasOwn(ageConfig, ag) ? ageConfig[ag as keyof typeof ageConfig] : undefined) ?? { badge: 'bg-amber-400 text-white', icon: '🔢' };
+                          const cfg = (Object.hasOwn(ageConfig, ag) ? ageConfig[ag as keyof typeof ageConfig] : undefined) ?? { badge: 'bg-amber-400 text-slate-950', icon: '🔢' };
                           return (
                             <span key={ag} className={`px-2 py-0.5 rounded-full text-xs font-bold ${cfg.badge}`}>
                               {cfg.icon} {ag}
@@ -199,22 +187,31 @@ export default function MathsHubPage() {
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between mt-2">
+                      <div className="flex items-center justify-between gap-2 mt-2">
                         <button
-                          onClick={(e) => { e.stopPropagation(); speak(id, `${game.title}. ${game.description}`); }}
-                          className="p-1.5 rounded-lg hover:bg-accent/10 transition-colors text-accent-foreground"
-                          aria-label="Read aloud"
+                          type="button"
+                          onClick={() => speak(id, `${game.title}. ${game.description}`)}
+                          className="min-h-11 min-w-11 flex items-center justify-center rounded-lg hover:bg-accent/10 transition-colors text-accent-foreground focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2"
+                          aria-label={`${speakingId === id ? 'Stop reading' : 'Read'} about ${game.title}`}
                         >
-                          {speakingId === id ? <VolumeX size={14} /> : <Volume2 size={14} />}
+                          {speakingId === id ? <VolumeX size={18} aria-hidden="true" /> : <Volume2 size={18} aria-hidden="true" />}
                         </button>
-                        <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-colors ${
+                        <button
+                          type="button"
+                          aria-label={`${locked ? 'Unlock' : 'Play'} ${game.title}`}
+                          onClick={() => {
+                            if (!route) return;
+                            if (locked) { navigate('/subscribe'); return; }
+                            navigate(route);
+                          }}
+                          className={`min-h-11 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-colors focus-visible:ring-2 focus-visible:ring-blue-700 focus-visible:ring-offset-2 ${
                           locked ? 'bg-muted text-muted-foreground' : 'bg-accent text-accent-foreground'
                         }`}>
-                          {locked ? <><Lock size={12} /> Unlock</> : <><Play size={12} /> Play</>}
-                        </span>
+                          {locked ? <><Lock size={12} aria-hidden="true" /> Unlock</> : <><Play size={12} aria-hidden="true" /> Play</>}
+                        </button>
                       </div>
                     </div>
-                  </button>
+                  </article>
                 </motion.div>
               );
             })}

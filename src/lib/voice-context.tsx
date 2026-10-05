@@ -1,4 +1,5 @@
 import { isSoundEnabled } from '@/lib/archie/storage';
+import { getArchieVoice } from '@/lib/archie/age-style';
 /**
  * VoiceContext — manages the child's recorded voice clips.
  *
@@ -188,8 +189,11 @@ function browserTtsSpeak(text: string, onEnd?: () => void) {
   const utt = new SpeechSynthesisUtterance(text);
   utt.lang = 'en-GB';
   // A natural, gentle pace. Avoid artificially extreme pitch, which can sound robotic.
-  utt.rate = 0.96;
-  utt.pitch = 1.34;
+  let year=4;
+  try {year=JSON.parse(localStorage.getItem('sodafom_archie_design_v1')||'{}').settings?.year||4;} catch { /* default gentle pace */ }
+  const voiceStyle=getArchieVoice(year);
+  utt.rate = voiceStyle.rate;
+  utt.pitch = voiceStyle.pitch;
   utt.volume = 1;
 
   const speakNow = () => {

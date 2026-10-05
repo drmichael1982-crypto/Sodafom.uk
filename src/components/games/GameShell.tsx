@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, ArrowRight, Star, Trophy, RotateCcw, Home, Zap, LogIn, LogOut, User, X, Award, Gift } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Star, Trophy, RotateCcw, Home, Zap, LogIn, LogOut, User, X, Award, Gift, MessageCircle } from 'lucide-react';
 import { useNavigate, Link } from "react-router";
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { useSession, signOut } from '@/lib/auth/auth-client';
@@ -16,6 +16,7 @@ export { useChildAge } from '@/hooks/useChildAge';
 export type { AgeGroup } from '@/hooks/useChildAge';
 import { getActiveChild } from '@/hooks/useChildAge';
 import { API_PREFIX, ARCHIE_PREVIEW } from '@/lib/config';
+import { isSoundEnabled } from '@/lib/archie/storage';
 import { games as gamesContent } from 'virtual:content';
 
 export interface GameResult {
@@ -62,7 +63,7 @@ function calcStars(score: number): number {
 export default function GameShell({ title, emoji, subject, ageGroups, children, currentQuestion, currentOptions }: GameShellProps) {
   const navigate = useNavigate();
   const { session } = useSession();
-  const { setGameContext, clearGameContext } = useArchieContext();
+  const { setGameContext, clearGameContext, openArchie } = useArchieContext();
   const { recordGameCompletion } = useProgression();
   const isLoggedIn = !!session?.user;
   const [result, setResult] = useState<GameResult | null>(null);
@@ -244,8 +245,15 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
         </div>
       </div>
 
+      <div role="group" aria-label="Game help" className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100 bg-blue-50 px-3 sm:px-4 py-2">
+        <p className="text-sm font-bold text-blue-950">Need a hint?</p>
+        <button type="button" onClick={() => openArchie()} className="min-h-11 flex items-center gap-2 rounded-xl border-2 border-blue-300 bg-white px-4 py-2 font-black text-blue-900 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
+          <MessageCircle size={20} aria-hidden="true" /> Ask Archie
+        </button>
+      </div>
+
       {/* Game area */}
-      <div className="flex-1 flex flex-col pb-32 sm:pb-28">
+      <div className="flex-1 flex flex-col pb-6">
         <AnimatePresence mode="wait">
           {result
             ? <ResultScreen key="result" result={result} onReplay={handleReplay} onHome={() => navigate('/')} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: `/games/${nextGame.slug}` } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
@@ -301,7 +309,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
 
 // ── Result Screen ──────────────────────────────────────────────────────────────
 
-function ResultScreen({
+export function ResultScreen({
   result, onReplay, onHome, gameTitle, subject, nextGame, isDailyChallenge = false, dailyClaimed = false, isLoggedIn = false, navigate,
 }: {
   result: GameResult;
@@ -320,7 +328,6 @@ function ResultScreen({
   const [confettiActive, setConfettiActive] = useState(false);
   const [starsRevealed, setStarsRevealed] = useState(0);
   const [bannerVisible, setBannerVisible] = useState(false);
-  const [nextRoundIn, setNextRoundIn] = useState(8);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const animatedScore = useCountUp(result.score, 1000, 400);
 
@@ -332,8 +339,8 @@ function ResultScreen({
       timers.push(setTimeout(() => setStarsRevealed(i), i * 280));
     }
 
-    // Confetti for 1+ stars
-    if (result.stars >= 1) {
+    // Respect children who prefer less movement.
+    if (result.stars >= 1 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       timers.push(setTimeout(() => setConfettiActive(true), 900));
       timers.push(setTimeout(() => setConfettiActive(false), result.stars === 3 ? 4500 : 2800));
     }
@@ -345,6 +352,7 @@ function ResultScreen({
 
     // Web Audio tone sequence
     try {
+      if (!isSoundEnabled()) throw new Error('Sound is turned off');
       const ctx = new AudioContext();
       audioCtxRef.current = ctx;
       const notes = result.stars === 3 ? [523, 659, 784, 1047]
@@ -354,6 +362,7 @@ function ResultScreen({
       notes.forEach((freq, i) => {
         timers.push(setTimeout(() => {
           try {
+            if (!isSoundEnabled()) return;
             const osc = ctx.createOscillator();
             const gain = ctx.createGain();
             osc.connect(gain);
@@ -375,20 +384,8 @@ function ResultScreen({
     };
   }, [result.stars]);
 
-  // Keep learning moving: begin a fresh, harder ten-question round automatically.
-  // Opening the certificate pauses the countdown so it never steals a button tap.
-  useEffect(() => {
-    if (showCert) return;
-    if (nextRoundIn <= 0) {
-      onReplay();
-      return;
-    }
-    const timer = window.setTimeout(() => setNextRoundIn(n => n - 1), 1000);
-    return () => window.clearTimeout(timer);
-  }, [nextRoundIn, onReplay, showCert]);
-
   const headlineMap: Record<number, string> = {
-    3: '🎉 Amazing! Perfect score!',
+    3: '🎉 Amazing exploring!',
     2: '🌟 Great job!',
     1: '👍 Good try!',
     0: '💪 Keep practising!',
@@ -429,9 +426,9 @@ function ResultScreen({
                 style={bannerStyle}
               >
                 <p className="font-black text-lg tracking-wide" style={{ fontFamily: 'var(--font-heading)' }}>
-                  ⭐ Perfect Score! ⭐
+                  ⭐ Three stars earned! ⭐
                 </p>
-                <p className="text-sm opacity-90 font-bold">You got every question right!</p>
+                <p className="text-sm opacity-90 font-bold">{result.correct===result.total?'You got every question right!':'Your practice earned three stars!'}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -504,7 +501,7 @@ function ResultScreen({
               >
                 <Trophy size={16} />
                 You earned {result.stars} star{result.stars !== 1 ? 's' : ''}!
-                {result.stars === 3 && <span className="ml-1 text-yellow-600">🏆 Perfect!</span>}
+                {result.score === 100 && <span className="ml-1 text-yellow-600">🏆 All correct!</span>}
               </motion.div>
             )}
 
@@ -516,7 +513,7 @@ function ResultScreen({
                 transition={{ delay: 1.3 }}
                 className="flex items-center justify-center gap-2 bg-primary/5 border border-primary/20 rounded-xl p-2.5 mb-4 text-xs font-bold text-primary"
               >
-                <Zap size={13} /> Streak extended! Come back tomorrow to keep it going.
+                <Zap size={13} /> Well done for practising. Come back whenever you are ready.
               </motion.div>
             )}
 
@@ -634,7 +631,7 @@ function ResultScreen({
                 onClick={onReplay}
                 className="relative z-20 flex-1 min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl font-bold bg-primary text-primary-foreground shadow-sm"
               >
-                <RotateCcw size={16} /> Next 10 ({nextRoundIn}s)
+                <RotateCcw size={16} /> Play another round
               </motion.button>
               <motion.button
                 type="button"

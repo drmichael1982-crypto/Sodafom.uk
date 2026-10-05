@@ -31,15 +31,15 @@ const L2: QuizQuestion[] = [
 ];
 const L3: QuizQuestion[] = [
   { question: '1/2 + 1/4 = ?', options: ['3/4','2/6','1/6','2/4'], answer: '3/4' },
-  { question: '2/3 + 1/6 = ?', options: ['5/6','3/9','1/2','3/6'], answer: '5/6' },
+  { question: '2/3 + 1/6 = ?', options: ['5/6','3/9','1/2','7/6'], answer: '5/6' },
   { question: '3/4 - 1/8 = ?', options: ['5/8','2/4','1/4','6/8'], answer: '5/8' },
-  { question: '1/3 × 3 = ?', options: ['1','3/9','1/9','3/3'], answer: '1' },
-  { question: '2/5 × 5 = ?', options: ['2','10/25','2/25','10/5'], answer: '2' },
-  { question: '3/4 ÷ 3 = ?', options: ['1/4','9/4','3/12','1/3'], answer: '1/4' },
+  { question: '1/3 × 3 = ?', options: ['1','3/9','1/9','2/3'], answer: '1' },
+  { question: '2/5 × 5 = ?', options: ['2','10/25','2/25','5/2'], answer: '2' },
+  { question: '3/4 ÷ 3 = ?', options: ['1/4','9/4','3/8','1/3'], answer: '1/4' },
   { question: '1/2 + 1/3 = ?', options: ['5/6','2/5','2/6','3/5'], answer: '5/6' },
-  { question: '3/5 - 1/10 = ?', options: ['5/10','2/5','4/10','1/2'], answer: '5/10' },
-  { question: '2/3 × 3/4 = ?', options: ['1/2','6/12','5/12','6/7'], answer: '1/2' },
-  { question: '3/4 ÷ 1/2 = ?', options: ['3/2','3/8','6/4','1/2'], answer: '3/2' },
+  { question: '3/5 - 1/10 = ?', options: ['5/10','2/5','3/10','3/4'], answer: '5/10' },
+  { question: '2/3 × 3/4 = ?', options: ['1/2','1/3','5/12','6/7'], answer: '1/2' },
+  { question: '3/4 ÷ 1/2 = ?', options: ['3/2','3/8','4/3','1/2'], answer: '3/2' },
   { question: '5/6 - 1/3 = ?', options: ['1/2','4/3','4/6','1/6'], answer: '1/2' },
   { question: '2/3 + 3/4 = ?', options: ['17/12','5/7','5/12','6/7'], answer: '17/12' },
 ];

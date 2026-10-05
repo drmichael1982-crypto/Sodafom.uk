@@ -45,7 +45,7 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
   const memory = loadTutorMemory();
   const childName = memory.childName ? memory.childName : '';
 
-  const isNewLessonRequest = /\b(?:teach|quiz|practice|explain|learn)\b/i.test(lower);
+  const isNewLessonRequest = /\b(?:teach|quiz|practice|practise|explain|learn|test)\b/i.test(lower);
   if (isNewLessonRequest) {
     activePendingQuestion = null;
   }
@@ -113,21 +113,27 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
 
   // 4. Match topic / subject lesson query
   // Subjects: Maths, English, Science, Geography, RE, Technology, Computing, General Knowledge
-  let matchedLesson: TopicLesson | null = null;
-
   const activeAgeGroup = getActiveAgeGroup();
-  for (const lesson of CURRICULUM_LESSONS) {
-    if (lesson.ageGroup !== activeAgeGroup) continue;
+  const ageOrder: TopicLesson['ageGroup'][] = ['5-7', '8-10', '11-13'];
+  // Prefer the child's current band, but keep earlier foundations available for
+  // review. For example, an older child asking for grammar can still learn nouns
+  // and verbs. Never promote a younger child to a lesson from an older band.
+  const eligibleLessons = CURRICULUM_LESSONS.filter(lesson =>
+    ageOrder.indexOf(lesson.ageGroup) <= ageOrder.indexOf(activeAgeGroup)
+  ).sort((a, b) => ageOrder.indexOf(b.ageGroup) - ageOrder.indexOf(a.ageGroup));
+  const matchesTopic = (lesson: TopicLesson) => {
     const topicPattern = new RegExp(`\\b${lesson.topic}\\b`, 'i');
-    const subjectPattern = new RegExp(`\\b${lesson.subject}\\b`, 'i');
-    if (topicPattern.test(lower) || (subjectPattern.test(lower) && /\b(?:teach|quiz|practice|explain|learn)\b/i.test(lower))) {
-      matchedLesson = lesson;
-      break;
-    }
-  }
+    return topicPattern.test(lower);
+  };
+  // A named topic is more specific than a subject: "teach English phonics"
+  // should not stop at the first English lesson in the catalogue.
+  const matchedLesson = eligibleLessons.find(matchesTopic) ??
+    (isNewLessonRequest ? eligibleLessons.find(lesson =>
+      new RegExp(`\\b${lesson.subject}\\b`, 'i').test(lower)
+    ) : undefined);
 
   if (matchedLesson) {
-    const isQuizMode = /\b(?:quiz|practice|test)\b/i.test(lower);
+    const isQuizMode = /\b(?:quiz|practice|practise|test)\b/i.test(lower);
     const greeting = childName ? `Hi ${childName}! ` : '';
 
     if (isQuizMode && matchedLesson.questions.length > 0) {

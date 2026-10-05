@@ -36,9 +36,10 @@ export const isCapacitor = detectCapacitor();
 // The production backend URL (Railway)
 export const PRODUCTION_URL = 'https://sodafomuk-production.up.railway.app';
 
-// Phone builds use the hosted backend by default, or VITE_API_BASE_URL when specified for local testing.
+// Native production builds default to the hosted backend; Archie previews use their own origin.
+export const ARCHIE_PREVIEW = import.meta.env.VITE_ARCHIE_PREVIEW === 'true';
 const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-export const API_BASE_URL = (configuredApiUrl || (isCapacitor ? PRODUCTION_URL : '')).replace(/\/$/, '');
+export const API_BASE_URL = (configuredApiUrl || (isCapacitor && !ARCHIE_PREVIEW ? PRODUCTION_URL : '')).replace(/\/$/, '');
 
 export const API_PREFIX = `${API_BASE_URL}/api`;
 
@@ -48,5 +49,3 @@ if (typeof window !== 'undefined') {
 
 // Archie must use the real Sodafom API in production and phone builds.
 export const ARCHIE_TEST_MODE = false;
-
-export const ARCHIE_PREVIEW = import.meta.env.VITE_ARCHIE_PREVIEW === 'true';
