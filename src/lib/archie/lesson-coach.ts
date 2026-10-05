@@ -39,7 +39,7 @@ const ANSWER_REQUEST =
   /\b(what(?:'s| is) the (?:right |correct )?answer|tell me the answer|give me the answer|show me the answer|just tell me|answer please|which (?:one|answer|option|choice) is (?:it|right|correct)|is it\b|is the answer|the answer is what|reveal)/i;
 const HELP_REQUEST =
   /\b(hint|help|stuck|clue|instructions|what do i do|how do i|don'?t (?:get|understand)|confused)\b/i;
-const EXPLAIN_REQUEST = /\b(why|explain|how does|how do we know|what does|meaning|mean)\b/i;
+const EXPLAIN_REQUEST = /\b(why|explain|how does|how do we know|what does|meaning|mean|simpler|simply|break it down)\b/i;
 const NEXT_REQUEST = /\b(what next|what now|next lesson|what should i do next)\b/i;
 
 export function isAnswerRequest(text: string): boolean {
@@ -149,6 +149,15 @@ export function coachLessonReply(
     return null;
   switch (context.phase) {
     case "discover":
+      if (asksExplain || /\b(don['’]?t understand|don['’]?t get|confused|stuck)\b/i.test(text)) {
+        const topic = `${context.objective || ""} ${context.keyPoint || ""}`;
+        if (context.subject === "maths" && /place[ -]value/i.test(topic)) {
+          return "Let's use a number you can see: 2,305. Read its places from left to right: thousands, hundreds, tens, ones. The 2 means 2,000, the 3 means 300, the 0 means no tens, and the 5 means 5 ones. Together: 2,000 + 300 + 5 = 2,305. Draw four boxes with those place names and put one digit in each box. What does the 3 stand for? When you are ready, press Let's try together.";
+        }
+        if (context.workedExample) {
+          return "Let's look at one example together. " + context.workedExample.prompt + " " + context.workedExample.explanation + " Take one step at a time. Which part of that example would you like help with?";
+        }
+      }
       return [
         context.objective ? "Today's goal: " + context.objective + "." : "",
         context.keyPoint,

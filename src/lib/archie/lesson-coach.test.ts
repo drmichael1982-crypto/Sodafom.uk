@@ -22,6 +22,18 @@ const practice: LessonCoachContext = {
 };
 
 describe("Archie lesson coach", () => {
+  it("explains place value with a concrete model instead of repeating the goal", () => {
+    for (const ask of ["I don't understand place value. Explain it simply.", "make it simpler", "I'm confused"]) {
+      const reply = coachLessonReply(ask, { ...practice, phase: "discover", objective: "Place value to ten thousand" })!;
+      expect(reply).toContain("2,000 + 300 + 5 = 2,305");
+      expect(reply).toContain("Draw four boxes");
+      expect(reply).not.toContain("Today's goal:");
+    }
+  });
+  it("uses the supplied example for other discovery explanations", () => {
+    expect(coachLessonReply("explain it simply", { ...practice, phase: "discover" })).toContain("One counter and one more make two counters.");
+    expect(revealsAnswer(coachLessonReply("explain it simply", practice)!, "7")).toBe(false);
+  });
   it("never gives the correct choice for answer requests during practice", () => {
     for (const ask of ["What is the answer?", "just tell me", "is it 7?", "which one is correct"]) {
       const reply = coachLessonReply(ask, practice)!;
