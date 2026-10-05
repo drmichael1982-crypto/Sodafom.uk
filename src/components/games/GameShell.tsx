@@ -28,12 +28,20 @@ export interface GameResult {
   durationSeconds?: number; // optional — GameShell fills it in if not provided
 }
 
+export interface GameShellControls {
+  /**
+   * Record a finished round (stars, progression, saved progress, badges) while
+   * the game keeps showing its own results screen, e.g. between sets of ten.
+   */
+  recordCompletion: (result: GameResult) => void;
+}
+
 interface GameShellProps {
   title: string;
   emoji: string;
   subject: 'maths' | 'spelling' | 'reading' | 'science' | 'art';
   ageGroups: string[];
-  children: (onComplete: (result: GameResult) => void) => React.ReactNode;
+  children: (onComplete: (result: GameResult) => void, controls: GameShellControls) => React.ReactNode;
   currentQuestion?: string;
   currentOptions?: string[];
 }
@@ -122,9 +130,14 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   const handleComplete = (r: GameResult) => {
     const focused = document.activeElement;
     resultFocusOriginRef.current = gameAreaRef.current?.contains(focused) ? focused : null;
+    setResult(recordCompletion(r));
+  };
+
+  const recordCompletion = (r: GameResult): GameResult => {
     const stars = calcStars(r.score);
     const durationSeconds = r.durationSeconds ?? Math.round((Date.now() - startTimeRef.current) / 1000);
-    setResult({ ...r, stars, durationSeconds });
+    // Each recorded round is timed from its own start.
+    startTimeRef.current = Date.now();
 
     // Record progression
     const slug = title.toLowerCase().replace(/\s+/g, '-');
@@ -172,6 +185,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
         })
         .catch(() => { /* silent — rewards are non-critical */ });
     }
+    return { ...r, stars, durationSeconds };
   };
 
   const handleReplay = () => {
@@ -276,7 +290,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
           {result
             ? <ResultScreen key="result" result={result} focusOrigin={resultFocusOriginRef.current} onReplay={handleReplay} onHome={() => navigate('/')} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: `/games/${nextGame.slug}` } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
             : <motion.div ref={handleGamePanelMount} key={`game-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
-                {children(handleComplete)}
+                {children(handleComplete, { recordCompletion })}
               </motion.div>
           }
         </AnimatePresence>

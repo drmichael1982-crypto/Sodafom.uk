@@ -18,20 +18,27 @@ export function ChildProfileManager({ onComplete, onCancel, isEditing = false }:
   const [readAloud, setReadAloud] = useState<boolean>(profile.readAloudPreference ?? true);
   const [parentPin, setParentPin] = useState<string>(profile.parentPin ?? '');
 
+  const buildProfile = (childName?: string): ChildTutorProfile => ({
+    ...profile,
+    childName,
+    ageGroup,
+    schoolYear,
+    preferredTutor: tutor,
+    readAloudPreference: readAloud,
+    parentPin: parentPin.trim() ? parentPin.trim() : undefined,
+    profileSetupComplete: true,
+  });
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    // A name is optional: a nickname, or nothing at all, is fine.
+    const updated = buildProfile(name.trim() || undefined);
+    saveTutorMemory(updated);
+    onComplete(updated);
+  };
 
-    const updated: ChildTutorProfile = {
-      ...profile,
-      childName: name.trim(),
-      ageGroup,
-      schoolYear,
-      preferredTutor: tutor,
-      readAloudPreference: readAloud,
-      parentPin: parentPin.trim() ? parentPin.trim() : undefined,
-    };
-
+  const handleSkip = () => {
+    const updated = buildProfile(profile.childName);
     saveTutorMemory(updated);
     onComplete(updated);
   };
@@ -59,20 +66,26 @@ export function ChildProfileManager({ onComplete, onCancel, isEditing = false }:
       <form onSubmit={handleSave} className="space-y-5">
         {/* Child Name */}
         <div>
-          <label className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider mb-2">
-            Child's First Name
+          <label htmlFor="tutor-nickname" className="block text-xs font-extrabold text-gray-700 uppercase tracking-wider mb-2">
+            Nickname (optional)
           </label>
           <div className="relative">
             <User className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-500" size={18} />
             <input
+              id="tutor-nickname"
               type="text"
-              required
               value={name}
+              maxLength={30}
+              autoComplete="off"
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Sophie"
+              placeholder="e.g. Star Learner"
+              aria-describedby="tutor-nickname-privacy"
               className="w-full pl-11 pr-4 py-3 bg-amber-50 border-2 border-amber-200 rounded-2xl text-sm font-bold text-gray-900 focus:outline-none focus:border-amber-400"
             />
           </div>
+          <p id="tutor-nickname-privacy" className="mt-2 text-[11px] font-bold text-gray-600">
+            You do not need a real name. A nickname, or leaving this blank, works just as well. It is only kept on this device.
+          </p>
         </div>
 
         {/* Age Group */}
@@ -155,6 +168,15 @@ export function ChildProfileManager({ onComplete, onCancel, isEditing = false }:
               className="flex-1 py-3 bg-gray-100 text-gray-600 font-black text-xs rounded-2xl border border-gray-300 hover:bg-gray-200"
             >
               Cancel
+            </button>
+          )}
+          {!isEditing && !onCancel && (
+            <button
+              type="button"
+              onClick={handleSkip}
+              className="flex-1 py-3 bg-gray-100 text-gray-700 font-black text-xs rounded-2xl border border-gray-300 hover:bg-gray-200"
+            >
+              Skip for now
             </button>
           )}
           <button

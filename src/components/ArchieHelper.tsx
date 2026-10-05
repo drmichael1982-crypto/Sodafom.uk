@@ -13,6 +13,7 @@ import { useArchieData } from '@/lib/archie/storage';
 import '@/pages/archie/archie.css';
 import { blockedLearningText, FRIENDLY_REDIRECT, safeLearningReply } from '@/lib/archie/learning-safety';
 import { submitGameVoiceAnswer } from '@/lib/archie/game-voice';
+import { coachLessonReply, guardPracticeReply, lessonContextForService, subjectMethod } from '@/lib/archie/lesson-coach';
 
 type Message = { role: 'user' | 'assistant'; content: string };
 function cleanTutorText(text: string) {
@@ -52,7 +53,7 @@ export function destinationFor(text: string): string | undefined {
   return game?.route ?? DESTINATIONS.find(([pattern]) => pattern.test(text))?.[1];
 }
 export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: boolean; gameMode?: boolean }) {
-  const { isOpen, draft, voiceOnOpen, openArchie, closeArchie, gameTitle, subject, currentQuestion, currentOptions } = useArchieContext();
+  const { isOpen, draft, voiceOnOpen, openArchie, closeArchie, gameTitle, subject, currentQuestion, currentOptions, lesson } = useArchieContext();
   const { speak, stop, playing } = useVoice();
   const { settings } = useArchieData();
   const navigate = useNavigate();
@@ -145,13 +146,15 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
       const destination = destinationFor(question);
       if (destination) { navigate(destination); close(); return; }
       const gameAnswer=submitGameVoiceAnswer(gameTitle||'',question);
-      const deviceAnswer = gameAnswer || answerFromDevice(question, getLearnerAge());
+      // Lesson-aware coaching from the supplied lesson content (works offline).
+      const coachAnswer = gameAnswer ? null : coachLessonReply(question, lesson);
+      const deviceAnswer = gameAnswer || coachAnswer || answerFromDevice(question, getLearnerAge());
       const lessonAnswer = answerLessonReply(question, currentQuestion || '', subject);
       if (lessonAnswer?.startsWith('Brilliant!')) window.dispatchEvent(new Event('archie-spelling-correct'));
       const local = deviceAnswer ? { text: deviceAnswer } : lessonAnswer ? { text: lessonAnswer } : tryLocalArchieResponse(question);
       const hint = /\b(hint|help|instructions|what do i do)\b/i.test(question);
       let reply = local?.text;
-      let rememberReply = true;
+      let rememberReply = !gameAnswer && !coachAnswer;
       if (!reply && hint && gameTitle) {
         reply = currentQuestion
           ? `Let's work on ${gameTitle}. ${currentQuestion} Try one small step first. What do you notice?${currentOptions?.length ? ` Your choices are ${currentOptions.join(', ')}.` : ''}`
@@ -160,16 +163,23 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
       if (reply) { const childName = getRememberedChildName(); if (childName && !reply.toLowerCase().includes(childName.toLowerCase())) reply = `${childName}, ${reply}`; setNotice('Answered on this device.'); }
       else if (!settings.onlineHelp) {
         rememberReply = false;
-        reply = 'Online learning help is off. I can still help with maths, spelling and finding a game. Ask a grown-up about wider questions, or try a learning quest.';
+        reply = lesson
+          ? `Online learning help is off, but I can still help with this lesson. Ask me for a hint, or ask me to explain the worked example. ${subjectMethod(lesson.subject)}`
+          : 'Online learning help is off. I can still help with maths, spelling and finding a game. Ask a grown-up about wider questions, or try a learning quest.';
         setNotice('Online learning help is off on this device.');
       } else {
         const response = await fetch(`${API_PREFIX}/chat`, { method: 'POST', credentials: 'include', signal: controller.signal,
           headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: history.slice(-12), learnerAge:getLearnerAge(),
-            systemExtra: `Learning activity: ${gameTitle || 'Sodafom home'}. Subject: ${subject || 'general learning'}. Current question: ${currentQuestion || 'none'}. Choices: ${currentOptions?.join(', ') || 'none'}.` }) });
+            systemExtra: `Learning activity: ${gameTitle || 'Sodafom home'}. Subject: ${subject || 'general learning'}. Current question: ${currentQuestion || 'none'}. Choices: ${currentOptions?.join(', ') || 'none'}. ${lessonContextForService(lesson)}`.trim() }) });
         if (!response.ok) throw new Error('Learning service unavailable');
         reply = (await response.text()).trim();
         if (!reply) throw new Error('Empty reply');
         setNotice('Answered by the learning service.');
+      }
+      if (!gameAnswer) {
+        // During independent practice, never give away the correct choice before the child finds it.
+        const guarded = guardPracticeReply(reply, lesson);
+        if (guarded !== reply) { reply = guarded; rememberReply = false; }
       }
       if (!controller.signal.aborted) { const checkedReply=safeLearningReply(reply);if (rememberReply && checkedReply===reply) saveLearningTurn(question, reply, getLearnerAge()); setMessages([...history, { role: 'assistant', content: cleanTutorText(checkedReply) }]); readReply(checkedReply); }
     } catch {
@@ -240,7 +250,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   return <>
     {!hideLauncher && !isOpen && <button className="archie-launcher" onClick={() => openArchie()} aria-label="Ask Archie"><MessageCircle size={23} aria-hidden="true"/> Ask Archie</button>}
     <dialog ref={dialog} className="archie-dialog" onCancel={close} onClose={close} aria-labelledby="archie-title">
-      <header><div><h2 id="archie-title">Ask Archie</h2><p>{gameTitle ? `Helping with ${gameTitle}` : 'Your learning helper'}</p></div><button aria-label="Close Ask Archie" onClick={close}><X /></button></header>
+      <header><div><h2 id="archie-title">Ask Archie</h2><p>{gameTitle ? `Helping with ${gameTitle}${lesson?.phaseLabel ? ` · ${lesson.phaseLabel}` : ''}` : 'Your learning helper'}</p></div><button aria-label="Close Ask Archie" onClick={close}><X /></button></header>
       <div className="archie-chat-history" role="log" aria-live="polite">
         {!messages.length && <p>Hi! Ask me about this game or lesson. You can type or tap the microphone.</p>}
         {messages.map((m,i) => <p key={i} className={`chat-${m.role}`}><strong>{m.role === 'user' ? 'You' : 'Archie'}: </strong>{m.role === 'assistant' && /\b(correct|spot on|brilliant|well done|excellent|right answer)\b/i.test(m.content) && <span className="archie-correct-tick" aria-label="Correct">✓</span>}{m.role === 'assistant' ? <>{m.content.split(/(\s+)/).map((part,wordIndex) => /^\s+$/.test(part) ? part : <span className="archie-word" style={{ animationDelay: `${Math.min(wordIndex, 24) * 22}ms` }} key={wordIndex}>{part}</span>)}<button type="button" className="archie-quick" aria-label="Listen to Archie" onClick={() => read(m.content)}><Volume2 size={18}/> Listen</button></> : m.content.replace(/\[PLAY:[^\]]+\]/g, '')}</p>)}

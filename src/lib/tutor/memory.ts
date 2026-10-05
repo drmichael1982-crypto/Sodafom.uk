@@ -29,6 +29,8 @@ export interface ChildTutorProfile {
   recentSubject?: string;
   recentTopic?: string;
   recentLessonTime?: string;
+  /** True once a grown-up has finished or skipped setup; a name is optional. */
+  profileSetupComplete?: boolean;
 }
 
 const MEMORY_KEY = 'sodafom_tutor_memory';
@@ -41,8 +43,9 @@ export function loadTutorMemory(): ChildTutorProfile {
     const raw = localStorage.getItem(MEMORY_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      const setupComplete = parsed.profileSetupComplete === true;
       return {
-        childName: parsed.childName ?? localStorage.getItem('sodafom_child_name') ?? undefined,
+        childName: parsed.childName || (setupComplete ? undefined : localStorage.getItem('sodafom_child_name') ?? undefined),
         ageGroup: parsed.ageGroup ?? '8-10',
         schoolYear: parsed.schoolYear ?? 'Year 4',
         preferredTutor: parsed.preferredTutor ?? 'archie',
@@ -51,7 +54,8 @@ export function loadTutorMemory(): ChildTutorProfile {
         topics: parsed.topics ?? {},
         recentSubject: parsed.recentSubject,
         recentTopic: parsed.recentTopic,
-        recentLessonTime: parsed.recentLessonTime
+        recentLessonTime: parsed.recentLessonTime,
+        profileSetupComplete: setupComplete || undefined,
       };
     }
   } catch { /* ignore */ }

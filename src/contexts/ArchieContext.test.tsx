@@ -18,4 +18,13 @@ describe('one shared Archie',()=>{
     expect(result.current.isOpen).toBe(true);expect(result.current.draft).toBe('What is half of 12?');
     act(()=>result.current.closeArchie());expect(result.current.isOpen).toBe(false);
   });
+  it('shares optional lesson phase and subject details, and clears them with the old activity',()=>{
+    const {result}=renderHook(()=>useArchieContext(),{wrapper:ArchieProvider});
+    act(()=>result.current.setGameContext('Fractions','Maths','1/2 of 8?',['2','4'],{phase:'practice',subject:'maths',hint:'Share into 2 groups.'}));
+    expect(result.current.lesson).toMatchObject({phase:'practice',subject:'maths',hint:'Share into 2 groups.'});
+    act(()=>result.current.setGameContext('Number Pop','Maths','2 + 2?',['3','4']));
+    expect(result.current.lesson).toBeNull();
+    act(()=>result.current.clearGameContext());
+    expect(result.current.lesson).toBeNull();expect(result.current.gameTitle).toBeNull();
+  });
 });

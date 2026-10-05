@@ -1,0 +1,29 @@
+/* Teacher and class lesson views (Archie preview). */
+.tc-notice ul { margin: 0; padding-left: 1.2em; line-height: 1.5; }
+.tc-picker { flex-wrap: wrap; }
+.tc-tabs { flex-wrap: wrap; }
+.tc-tabs .a-button,
+.tc-detail .a-button { min-height: 44px; }
+.tc-list { min-width: 0; }
+.tc-heading { overflow-wrap: anywhere; }
+.tc-unit { margin: 0 0 12px; min-width: 0; }
+.tc-unit > summary,
+.tc-lesson > summary {
+  min-height: 44px;
+  cursor: pointer;
+  display: list-item;
+  padding: 8px 4px;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+.tc-meta { font-weight: 600; font-size: .9em; color: #35486e; }
+.tc-lessons { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+.tc-lessons .course-lesson-link { min-height: 44px; min-width: 0; overflow-wrap: anywhere; }
+.tc-lesson { border-top: 1px solid #c9d6ec; padding-top: 4px; }
+.tc-objective { display: block; font-weight: 400; font-size: .92em; color: #2b3b5c; }
+.tc-detail { padding: 8px 4px 12px; min-width: 0; overflow-wrap: anywhere; }
+.tc-detail h4 { font-size: 1.05em; font-weight: 800; margin: 14px 0 4px; }
+.tc-questions > li { margin-bottom: 12px; }
+.tc-options { padding-left: 1.2em; }
+.tc-correct { font-weight: 700; color: #0b5a1f; }
+.tc-detail svg, .tc-detail img { max-width: 100%; height: auto; }

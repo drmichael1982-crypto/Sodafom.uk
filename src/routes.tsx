@@ -74,9 +74,13 @@ const MockExamsPage = lazy(() => import('./pages/mock-exams/index'));
 const AdminPortal = lazy(() => import('./pages/admin/AdminPortal'));
 const SodafomBotPage = lazy(() => import('./pages/chatbot/SodafomBotPage'));
 const AdminPanelPage = lazy(() => import('./pages/admin-panel'));
-const TeacherHubDashboard = lazy(() => import('./pages/teacher-hub/index'));
-const TeacherHubLoginPage = lazy(() => import('./pages/teacher-hub/login'));
-const StudentDetailPage = lazy(() => import('./pages/teacher-hub/student/[studentId]'));
+// Teacher hub: backend dashboard normally; in the local Archie preview these
+// entry points lead to the real lesson bank at /teacher (see TeacherHubEntry).
+const TeacherHubDashboard = lazy(() => import('./pages/teacher-hub/TeacherHubEntry').then(m => ({ default: m.TeacherHubEntry })));
+const TeacherHubLoginPage = lazy(() => import('./pages/teacher-hub/TeacherHubEntry').then(m => ({ default: m.TeacherHubLoginEntry })));
+const StudentDetailPage = lazy(() => import('./pages/teacher-hub/TeacherHubEntry').then(m => ({ default: m.TeacherHubStudentEntry })));
+const TeacherLessons = lazy(() => import('@/pages/archie/ArchieTeacherClass').then(m => ({ default: m.TeacherLessons })));
+const ClassLessons = lazy(() => import('@/pages/archie/ArchieTeacherClass').then(m => ({ default: m.ClassLessons })));
 const ProfilePage = lazy(() => import('./pages/hub/profile'));
 const HubNotificationsPage = lazy(() => import('./pages/hub/notifications'));
 const HubSubscriptionPage = lazy(() => import('./pages/hub/subscription'));
@@ -210,6 +214,8 @@ export const routes: RouteObject[] = [
   { path: '/privacy', element: <ArchiePrivacy /> },
   { path: '/courses', element: <ArchieCourses /> },
   { path: '/courses/:lessonId', element: <ArchieCourses /> },
+  { path: '/teacher', element: <TeacherLessons /> },
+  { path: '/class', element: <ClassLessons /> },
   { path: '/lesson', element: <ArchieLesson /> },
   { path: '/library', element: <ArchieLibrary /> },
   { path: '/reader/:bookId', element: <ArchieReader /> },

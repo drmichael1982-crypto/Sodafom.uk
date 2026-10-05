@@ -251,3 +251,12 @@ export const CURRICULUM_LESSONS: TopicLesson[] = [
     ]
   }
 ];
+
+/**
+ * Lessons for the configured age group. Falls back to every lesson when the
+ * small tutor bank has none for that age (for example ages 11-13).
+ */
+export function tutorLessonsFor(ageGroup: TopicLesson['ageGroup'] | undefined): { lessons: TopicLesson[]; matched: boolean } {
+  const matching = ageGroup ? CURRICULUM_LESSONS.filter(lesson => lesson.ageGroup === ageGroup) : [];
+  return matching.length ? { lessons: matching, matched: true } : { lessons: CURRICULUM_LESSONS, matched: false };
+}
