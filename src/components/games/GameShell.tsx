@@ -1,3 +1,4 @@
+import AppScreenPager from '@/components/AppScreenPager';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, ArrowRight, Star, Trophy, RotateCcw, Home, Zap, LogIn, LogOut, User, X, Award, Gift, MessageCircle } from 'lucide-react';
@@ -307,12 +308,12 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
       <section className="game-scene-banner" aria-label="Your learning adventure"><div className="game-scene-copy"><strong>Archie is here to help</strong><p>Take your time. Try a clue, ask for a hint and celebrate each small step.</p></div><SceneArtwork scene={sceneForSubject(subject,title)} title={title} compact/></section>
 
       {/* Game area */}
-      <div ref={gameAreaRef} className="flex-1 flex flex-col pb-6">
+      <div ref={gameAreaRef} className="game-app-area flex-1 flex flex-col pb-6">
         <AnimatePresence mode="wait">
           {result
             ? <ResultScreen key="result" result={result} focusOrigin={resultFocusOriginRef.current} onReplay={handleReplay} onHome={() => navigate('/')} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: `/games/${nextGame.slug}` } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
             : <motion.div ref={handleGamePanelMount} key={`game-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
-                {children(handleComplete, { recordCompletion })}
+                <AppScreenPager>{children(handleComplete, { recordCompletion })}</AppScreenPager>
               </motion.div>
           }
         </AnimatePresence>

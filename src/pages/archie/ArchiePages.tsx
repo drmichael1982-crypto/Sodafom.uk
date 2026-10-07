@@ -18,6 +18,7 @@ import { getArchieStage } from '@/lib/archie/age-style';
 import SceneArtwork, { sceneForSubject, type LearningScene } from '@/components/SceneArtwork';
 import OrbitHome from '@/components/OrbitHome';
 import LearningJigsaw from '@/components/LearningJigsaw';
+import AppScreenPager from '@/components/AppScreenPager';
 import ParentAIResources from '@/components/ParentAIResources';
 import ParentAccountPanel from '@/components/ParentAccountPanel';
 import ParentAIConnection from '@/components/ParentAIConnection';
@@ -52,7 +53,7 @@ export function Page({ title, intro, children, back = '/world', calm = false, sc
       {!calm && <SceneArtwork scene={scene ?? sceneForSubject(title)} title={title} compact/>}
     </section>
     <div className="a-page-help"><button className="a-button" onClick={() => openArchie()}>Ask Archie</button><span>Help with this game or lesson</span></div>
-    {children}
+    <AppScreenPager>{children}</AppScreenPager>
     <nav className="a-bottom" aria-label="Main navigation"><Link to="/">Home</Link><Link to="/world">My world</Link><Link to="/games">Games</Link><Link to="/courses">Lessons</Link><Link to="/lesson">Spelling</Link><Link to="/privacy">Privacy</Link></nav>
   </div></main>;
 }
@@ -68,6 +69,7 @@ function useCompactLandscape(readableWidth = 400, expandedHome = false) {
 }
 export function ArchieHome() {
   useLearning('Home');
+  const [homeScreen,setHomeScreen]=useState('activities');
   const { openArchie } = useArchieContext();
   const { settings } = useArchieData();
   const [interests, setInterests] = useState<string[]>(() => getChildInterests());
@@ -133,12 +135,13 @@ export function ArchieHome() {
     </>
   );
 
-  return <main className={`soda-home puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''}`} style={{...puzzleThemeStyle('Home'), ...(theme ? { backgroundImage: theme.background } : {})}}>
-    <div className="soda-home-inner">
+  return <main className={`soda-home soda-home-whole-puzzle puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''}`} style={{...puzzleThemeStyle('Home'), ...(theme ? { backgroundImage: theme.background } : {})}}>
+    <div className={`soda-home-inner app-home-screen screen-${homeScreen}`}>
       <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><SoundButton/></div></header>
       {homePersonalizer}
+      <nav className="home-screen-tabs" aria-label="Home screens">{[['activities','Explore'],['planets','Planets'],['learning','Puzzles']].map(([id,label])=><button key={id} type="button" aria-pressed={homeScreen===id} onClick={()=>setHomeScreen(id)}>{label}</button>)}</nav>
       <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome/><LearningJigsaw year={settings.year}/>
-      <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap any picture piece to open its activity.</p><PuzzleMenu home/></section>
+      <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap any picture piece to open its activity.</p><AppScreenPager><PuzzleMenu home/></AppScreenPager></section>
       <section className="soda-talk-card"><ArchieAvatar year={settings.year} className="soda-talk-avatar"/><div><h2>Let's work it out together</h2><p>Ask Archie for a hint, listen to a question or talk through one step.</p></div><button className="a-button" onClick={()=>openArchie()}>Ask Archie</button></section>
       <nav className="a-bottom soda-home-more" aria-label="More activities">{[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,to])=><Link key={to} to={to}>{label}</Link>)}</nav>
       <p className="soda-small-note">Try a little, take a break, and come back when you're ready.</p>
