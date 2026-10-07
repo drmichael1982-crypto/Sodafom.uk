@@ -29,6 +29,6 @@ export default function OrbitHome() {
       <ArchieAvatar year={settings.year} className="orbit-archie"/>
       <button type="button" className="orbit-motion" disabled={reduced} aria-pressed={moving && !reduced} onClick={()=>setMoving(v=>!v)}>{moving && !reduced ? <Pause size={16}/> : <Play size={16}/>} {reduced?'Still planets':moving?'Pause planets':'Move planets'}</button>
     </div>
-    <div className="orbit-discovery"><div className="orbit-planet-choices" aria-label="Choose a planet">{PLANETS.map((p,i)=><button type="button" key={p.name} aria-pressed={selected===i} onClick={()=>setSelected(i)}>{p.name}</button>)}</div><p role="status">{PLANETS[selected].fact}</p><p className="orbit-moon-note">The Moon orbits Earth while Earth orbits the Sun.</p><small>A playful model: sizes, distances and orbit speeds are not to scale.</small></div>
+    <div className="orbit-discovery"><div className="orbit-planet-choices" aria-label="Choose a planet">{PLANETS.map((p,i)=><button type="button" key={p.name} aria-pressed={selected===i} onClick={()=>setSelected(i)}><span className={`planet-swatch home-planet-${i}`} aria-hidden="true"/>{p.name}</button>)}</div><p role="status">{PLANETS[selected].fact}</p><p className="orbit-moon-note">The Moon orbits Earth while Earth orbits the Sun.</p><small>A playful model: sizes, distances and orbit speeds are not to scale.</small></div>
   </section>;
 }

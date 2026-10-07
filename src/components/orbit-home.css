@@ -14,3 +14,16 @@
 .orbit-model.is-moving .home-moon-orbit{animation-play-state:running}
 @keyframes home-moon-spin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.home-moon-orbit{animation:none!important}}
+
+/* Larger shaded spheres, with a clear named planet strip beneath the orbits. */
+.orbit-home{grid-template-columns:1fr 1.4fr}.orbit-model{min-height:430px;aspect-ratio:1.1}.home-planet{width:clamp(20px,3.2vw,40px);box-shadow:inset -7px -5px 10px #03142699,inset 3px 2px 5px #ffffff80,0 7px 10px #020b3270}
+.home-planet-0{background:radial-gradient(circle at 35% 25%,#655c5644 0 12%,transparent 13%),radial-gradient(circle at 65% 62%,#554c5370 0 9%,transparent 10%),radial-gradient(circle at 28% 24%,#e1dcd6,#9f958b 55%,#302f39)}
+.home-planet-1{background:repeating-linear-gradient(160deg,#f3d28e 0 5px,#deae62 6px 10px,#edc97b 11px 15px)}
+.home-planet-2{background:radial-gradient(ellipse at 30% 25%,#ffffffc0 0 5%,transparent 7%),radial-gradient(ellipse at 35% 40%,#53ac68 0 17%,transparent 19%),radial-gradient(ellipse at 48% 68%,#579c47 0 12%,transparent 14%),radial-gradient(ellipse at 78% 28%,#a2bd5b 0 20%,transparent 22%),radial-gradient(circle at 30% 25%,#5cccf8,#1274cf 60%,#073657)}
+.home-planet-3{background:radial-gradient(circle at 35% 35%,#82352470 0 13%,transparent 15%),radial-gradient(ellipse at 60% 68%,#873d3277 0 18%,transparent 20%),radial-gradient(ellipse at 50% 3%,#ead7bb 0 12%,transparent 14%),radial-gradient(circle at 28% 22%,#f9bc7d,#cc6740 56%,#69302b)}
+.home-planet-4{width:clamp(28px,4vw,54px);background:radial-gradient(ellipse at 68% 62%,#a2442d 0 8%,transparent 10%),repeating-linear-gradient(5deg,#dfc599 0 7px,#ad775a 8px 12px,#eee0b9 13px 17px)}
+.home-planet-5{background:repeating-linear-gradient(4deg,#efd59b 0 6px,#bf9a65 7px 10px)}.home-planet-5::after{content:'';position:absolute;inset:25% -40%;border:5px solid #dfc69dcc;border-top-color:#fff0cb;border-radius:50%;transform:rotate(-25deg);box-shadow:0 2px 2px #17224366}
+.home-planet-6{background:radial-gradient(circle at 25% 20%,#d7ffff,#76cbd8 60%,#2b637c)}.home-planet-7{background:repeating-linear-gradient(8deg,#286bcd 0 7px,#3b85df 8px 12px,#2964b6 13px 17px)}
+.orbit-planet-choices{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}.orbit-planet-choices button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:115px;padding:14px 5px;font-size:12px}.planet-swatch{position:relative;display:block;width:48px;height:48px;border-radius:50%;box-shadow:inset -12px -8px 13px #07162b99,inset 4px 3px 5px #ffffff70,0 8px 9px #061c3b70;flex-shrink:0}.planet-swatch.home-planet-4{width:54px;height:54px}.orbit-archie{width:28%!important;height:42%!important}
+@media(max-width:850px){.orbit-planet-choices{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:650px){.orbit-home{grid-template-columns:1fr}.orbit-model{width:100%;min-height:360px;aspect-ratio:1}.home-planet{width:26px}.home-planet-4{width:38px}.orbit-archie{height:45%!important;width:28%!important}.orbit-planet-choices button{min-height:108px}.planet-swatch{width:42px;height:42px}.planet-swatch.home-planet-4{width:48px;height:48px}}
