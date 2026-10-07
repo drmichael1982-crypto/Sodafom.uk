@@ -31,6 +31,7 @@
 - Primary Chromium: 11 complete journeys, all 130 linked game routes, zero browser errors and zero live API requests: PASS.
 - Responsive matrix: 550 route/viewport combinations across 320 px phone through tablet and landscape; zero horizontal failures, clipped art findings or browser errors: PASS.
 - Simulated learner suite: 68 phone/tablet journeys: PASS. It covers game filtering and recovery for Years 1–9, Number Pop completion, and Maths Bingo perfect/retry/hint/pause/resume/completion for Years 1–6. It also asserts computed completion-text contrast at or above 4.5:1.
+- GitHub Actions run `37694192679` (`Archie test build` #123) completed SUCCESS on the published head: dependency install, TypeScript, 828 unit tests, build, Chromium install, button/130-route sweep, 68 simulated journeys and artifact upload all passed.
 - Rendered visual review: the live test home retained blue/gold branding, pale yellow-to-blue background, planet art and blond Archie. Local after-captures at 390 × 844 and 820 × 1180 show a legible navy/gold completion banner and result card; the corrected 390 px completion capture keeps the blue game header and Ask Archie visible. Emoji appeared as empty glyph boxes in the temporary Chromium image font, so emoji rendering remains a runtime/font check rather than an app-logic pass.
 
 ## Boundaries and next priority
