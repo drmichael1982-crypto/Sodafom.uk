@@ -27,9 +27,9 @@ afterEach(()=>{cleanup();vi.clearAllMocks();});
 
 describe('selected-year game discovery and difficulty',()=>{
   it.each([
-    {year:3,group:'5-7',tier:1,count:58,present:'/games/number-pop',absent:['/games/spelling-bee','/games/algebra-quest']},
-    {year:6,group:'8-10',tier:2,count:116,present:'/games/spelling-bee',absent:['/games/number-pop','/games/algebra-quest']},
-    {year:9,group:'11-13',tier:3,count:96,present:'/games/algebra-quest',absent:['/games/number-pop','/games/number-bonds']},
+    {year:3,group:'5-7',tier:1,count:81,present:'/games/number-pop',absent:['/games/crossword','/games/algebra-quest']},
+    {year:6,group:'8-10',tier:2,count:118,present:'/games/spelling-bee',absent:['/games/phonics-parrot','/games/algebra-quest']},
+    {year:9,group:'11-13',tier:3,count:86,present:'/games/algebra-quest',absent:['/games/phonics-parrot','/games/number-bonds']},
   ])('Year $year shows its eligible catalogue and matching game tier despite an old profile',({year,group,tier,count,present,absent})=>{
     saveYear(year);const view=show();const routes=gameRoutes(view.container);
     expect(screen.getByRole('combobox',{name:'My learning year'})).toHaveValue(String(year));
@@ -43,14 +43,14 @@ describe('selected-year game discovery and difficulty',()=>{
     saveYear(3);const view=show();
     expect(gameRoutes(view.container)).toContain('/games/number-pop');
     chooseYear(4);
-    expect(gameRoutes(view.container)).not.toContain('/games/number-pop');
+    expect(gameRoutes(view.container)).not.toContain('/games/phonics-parrot');
     expect(gameRoutes(view.container)).toContain('/games/spelling-bee');
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent('8-10 · tier 2');
     chooseYear(6);expect(gameRoutes(view.container)).not.toContain('/games/algebra-quest');
     chooseYear(7);
     expect(gameRoutes(view.container)).toContain('/games/algebra-quest');
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent('11-13 · tier 3');
-    chooseYear(9);expect(gameRoutes(view.container)).toHaveLength(96);
+    chooseYear(9);expect(gameRoutes(view.container)).toHaveLength(86);
     expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year).toBe(9);
     view.unmount();show();
     expect(screen.getByRole('combobox',{name:'My learning year'})).toHaveValue('9');
@@ -65,7 +65,7 @@ describe('selected-year game discovery and difficulty',()=>{
     expect(gameRoutes(view.container)).toHaveLength(0);
     fireEvent.click(screen.getByRole('button',{name:'Show all games'}));
     expect(screen.getByRole('searchbox',{name:'Search games'})).toHaveValue('');
-    expect(gameRoutes(view.container)).toHaveLength(58);
+    expect(gameRoutes(view.container)).toHaveLength(81);
     expect(gameRoutes(view.container)).not.toContain('/games/algebra-quest');
     chooseYear(9);
     fireEvent.click(screen.getByRole('button',{name:'Maths'}));
