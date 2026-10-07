@@ -4,11 +4,12 @@
  * and calls onComplete(stars) when all rounds are done.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { CheckCircle, XCircle, Star } from 'lucide-react';
 import ArchieGameHelper from '@/components/games/ArchieGameHelper';
 import ArchieReadAloudButton from '@/components/games/ArchieReadAloudButton';
 import { useVoice } from '@/lib/voice-context';
+import './answer-snake.css';
 
 export interface QuizQuestion {
   question: string;
@@ -61,6 +62,8 @@ export default function QuizEngine({
   const [done, setDone] = useState(false);
   const { speak } = useVoice();
 
+  const reducedMotion = useReducedMotion();
+  const feeding = selected !== null && selected === pool[idx]?.answer;
   const current = pool[idx];
 
   // Report current question text whenever it changes
@@ -93,8 +96,8 @@ export default function QuizEngine({
         setIdx(i => i + 1);
         setSelected(null);
       }
-    }, 900);
-  }, [selected, current, idx, pool.length, speak]);
+    }, isCorrect && !reducedMotion ? 1900 : 900);
+  }, [selected, current, idx, pool.length, speak, reducedMotion]);
 
   useEffect(() => {
     if (done) {
@@ -139,6 +142,7 @@ export default function QuizEngine({
         />
       </div>
 
+      <div className="quiz-picture-jigsaw" aria-label={`${correct} picture pieces earned`}>{pool.map((_,i)=><span key={i} className={i<correct?'quiz-picture-fit':'quiz-picture-gap'} style={{backgroundSize:`${pool.length*100}% 100%`,backgroundPosition:`${pool.length===1?0:i/(pool.length-1)*100}% center`}}/>)}</div>
       {/* Question */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -165,7 +169,8 @@ export default function QuizEngine({
       </AnimatePresence>
 
       {/* Options */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div key={`answers-${idx}`} className={`answer-snake-board grid grid-cols-1 sm:grid-cols-2 gap-3 ${feeding ? 'is-feeding' : ''}`}>
+        {feeding && <span className="answer-snake" aria-hidden="true">🐍</span>}
         {current.options.map(opt => {
           const isSelected = selected === opt;
           const isCorrect = opt === current.answer;
@@ -181,8 +186,9 @@ export default function QuizEngine({
               key={opt}
               whileHover={selected === null ? { scale: 1.03 } : {}}
               whileTap={selected === null ? { scale: 0.97 } : {}}
+              disabled={selected !== null}
               onClick={() => pick(opt)}
-              className={`flex items-center justify-between gap-2 px-4 py-3 rounded-xl border-2 font-bold text-sm text-left transition-all ${cls}`}
+              className={`flex items-center justify-between gap-2 px-4 py-3 rounded-xl border-2 font-bold text-sm text-left transition-all ${feeding ? isCorrect ? 'snake-right-answer' : 'snake-wrong-answer' : ''} ${cls}`}
             >
               <span>{opt}</span>
               {selected !== null && isSelected && isCorrect && <CheckCircle size={16} className="text-green-600 shrink-0" />}
@@ -191,6 +197,7 @@ export default function QuizEngine({
           );
         })}
       </div>
+      {feeding && <p role="status" className="answer-snake-notice">Correct! The snake is gobbling up the wrong answers.</p>}
     </div>
   );
 }

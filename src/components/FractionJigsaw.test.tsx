@@ -1,0 +1,6 @@
+import {cleanup,fireEvent,render,screen} from '@testing-library/react';
+import {afterEach,expect,it} from 'vitest';
+import FractionJigsaw from './FractionJigsaw';
+afterEach(cleanup);
+it('one eighth needs exactly one of eight equal pieces',()=>{render(<FractionJigsaw/>);expect(screen.getAllByRole('button',{name:/Fraction section/})).toHaveLength(8);fireEvent.click(screen.getByRole('button',{name:'Check the fraction'}));expect(screen.getByText(/You have placed 0 sections/)).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:'Fraction section 3'}));fireEvent.click(screen.getByRole('button',{name:'Check the fraction'}));expect(screen.getByText('It fits! 1 out of 8 equal sections makes 1/8.')).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:'Next fraction'}));expect(screen.getByText('Fit 1/2 into the circle')).toBeTruthy();expect(screen.getAllByRole('button',{name:/Fraction section/})).toHaveLength(2);});
+it('supports keyboard placement and removal',()=>{render(<FractionJigsaw/>);const piece=screen.getByRole('button',{name:'Fraction section 1'});fireEvent.keyDown(piece,{key:'Enter'});expect(piece.getAttribute('aria-pressed')).toBe('true');fireEvent.keyDown(piece,{key:' '});expect(piece.getAttribute('aria-pressed')).toBe('false');});

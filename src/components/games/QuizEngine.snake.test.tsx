@@ -1,0 +1,10 @@
+import {cleanup,fireEvent,render,screen} from '@testing-library/react';
+import {afterEach,expect,it,vi} from 'vitest';
+vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak:vi.fn()})}));
+vi.mock('@/components/games/ArchieGameHelper',()=>({default:()=>null}));
+vi.mock('@/components/games/ArchieReadAloudButton',()=>({default:()=>null}));
+import QuizEngine from './QuizEngine';
+afterEach(()=>{cleanup();localStorage.clear();});
+const questions=[{question:'What is 2 + 2?',options:['4','5'],answer:'4'}];
+it('only feeds the snake after the correct answer and keeps that answer visible',()=>{render(<QuizEngine title="Snake test" emoji="🐍" questions={questions} onComplete={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'4'}));expect(screen.getByRole('status').textContent).toContain('gobbling');expect(screen.getByRole('button',{name:'4'}).className).toContain('snake-right-answer');expect(screen.getByRole('button',{name:'5'}).className).toContain('snake-wrong-answer');});
+it('does not reward a wrong answer',()=>{render(<QuizEngine title="Snake test" emoji="🐍" questions={questions} onComplete={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'5'}));expect(screen.queryByRole('status')).toBeNull();});

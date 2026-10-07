@@ -87,7 +87,7 @@ function LetterTile({
       whileHover={used ? {} : { scale: 1.12, y: -3 }}
       whileTap={used ? {} : { scale: 0.9 }}
       onClick={used ? undefined : onClick}
-      className={`${dim} rounded-xl font-black border-2 flex items-center justify-center select-none transition-all
+      className={`word-jigsaw-piece ${dim} rounded-xl font-black border-2 flex items-center justify-center select-none transition-all
         ${used
           ? 'bg-muted border-border text-muted-foreground/30 cursor-default'
           : 'bg-card border-primary/40 text-foreground shadow-sm hover:border-primary hover:shadow-md cursor-pointer'
@@ -120,7 +120,7 @@ function AnswerSlot({
       initial={filled ? { scale: 0.7, opacity: 0 } : {}}
       animate={{ scale: 1, opacity: 1 }}
       onClick={filled && phase === 'answering' ? onClick : undefined}
-      className={`w-12 h-12 rounded-xl border-2 flex items-center justify-center font-black text-xl transition-all
+      className={`word-jigsaw-piece w-12 h-12 rounded-xl border-2 flex items-center justify-center font-black text-xl transition-all
         ${borderColor}
         ${filled && phase === 'answering' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}
       `}

@@ -40,3 +40,5 @@ describe('Archie offline learning memory', () => {
     expect(loadSavedLearning()).toEqual([]);
   });
 });
+
+it('explains each new jigsaw history topic offline across the child age range',()=>{localStorage.clear();for(const age of [5,8,12])for(const topic of ['Ancient Egypt','1066','Henry VIII','Anglo-Saxons'])expect(answerFromDevice(`Tell me about ${topic}`,age)).toBeTruthy();});

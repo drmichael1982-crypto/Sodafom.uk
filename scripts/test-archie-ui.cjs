@@ -76,15 +76,19 @@ const results=[];
   try{
     await check('Approved home: every navigation button opens its destination',async()=>{
       const homeLinks=[
-        ...[['Explore my world','/world'],['Games','/games'],['Lessons','/courses'],['Adventure Trail','/games/archie-adventure-trail'],['Rewards','/rewards'],['History','/courses?subject=history']].map(([label,route])=>({label,route,area:'Home activities',card:true})),
-        ...[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,route])=>({label,route,area:'More activities'})),
-        {label:'Start a lesson',route:'/courses'}, {label:'Choose a game',route:'/games'},
+        ...[['Explore my world','/world'],['Games','/games'],['Learning adventures','/courses'],['Adventure Trail','/games/archie-adventure-trail'],['Rewards','/rewards'],['History','/history'],['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teacher lessons','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,route])=>({label,route,area:'Home activities',card:true})),
         {label:'Parents and learning settings',route:'/parents'},
       ];
       for(const {label,route,area,card} of homeLinks){
         await goto('/');
         const navigation=area?page.getByRole('navigation',{name:area,exact:true}):page;
-        const destination=card?navigation.getByRole('link').filter({has:page.getByRole('heading',{name:label,exact:true})}):navigation.getByRole('link',{name:label,exact:true});
+        let destination=card?navigation.getByRole('link').filter({has:page.getByRole('heading',{name:label,exact:true})}):navigation.getByRole('link',{name:label,exact:true});
+        for(let screen=0;card&&await destination.count()===0&&screen<20;screen++){
+          const next=page.getByRole('button',{name:'Next →',exact:true});
+          if(await next.count()!==1||await next.isDisabled())break;
+          await next.click();
+          destination=navigation.getByRole('link').filter({has:page.getByRole('heading',{name:label,exact:true})});
+        }
         assert.equal(await destination.count(),1,'Home destination must be unambiguous: '+label);
         await destination.click();await page.waitForURL(base+route);
         if(route==='/settings'||route==='/parents'){
@@ -109,10 +113,10 @@ const results=[];
       await page.getByRole('button',{name:'Personalise my home screen'}).click();
       await page.getByLabel('What are you into?').fill('dinosaurs');
       await page.getByRole('button',{name:'Save',exact:true}).click();
-      await page.getByText('Your jungle learning world').waitFor();
+      await page.getByRole('status').getByText('Saved on this device.',{exact:false}).waitFor();
       assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_child_interests:default')||'[]')),['dinosaurs']);
       await page.getByRole('button',{name:'Remove interest dinosaurs'}).click();
-      await page.getByText('Make your learning world yours').waitFor();
+      await page.getByRole('status').getByText('Interest removed.',{exact:false}).waitFor();
       assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_child_interests:default')||'[]')),[]);
       await page.getByRole('button',{name:'Done',exact:true}).click();
     });
@@ -214,15 +218,15 @@ const results=[];
       await button('All games').click();await assertGameIntersection(1);
       await chooseGameYear(7);await assertGameIntersection(7);
       await chooseGameYear(4);await assertGameIntersection(4);
-      await page.getByLabel('Search games').fill('Number Pop');await assertGameIntersection(4,'all','Number Pop');
-      assert.equal(await page.locator('[data-game-link]').count(),0,'Number Pop must stay hidden for Year 4');
+      await page.getByLabel('Search games').fill('Phonics Parrot');await assertGameIntersection(4,'all','Phonics Parrot');
+      assert.equal(await page.locator('[data-game-link]').count(),0,'Phonics Parrot must stay hidden for Year 4');
       await page.getByText('No games match those filters for Year 4. Try a shorter search or choose another subject.',{exact:true}).waitFor();
       await button('Show Year 4 games').click();await assertGameIntersection(4);
       assert.equal(await page.getByRole('combobox',{name:'My learning year',exact:true}).inputValue(),'4','Reset must preserve the selected year');
       assert.equal(await page.getByLabel('Search games').evaluate(input=>input===document.activeElement),true,'Reset returns keyboard focus to search');
-      await chooseGameYear(3);await page.getByLabel('Search games').fill('Number Pop');await assertGameIntersection(3,'all','Number Pop');
-      await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/number-pop');
-      await button('Ask Archie').waitFor();assert.equal(await button('Ask Archie').count(),1);await button('Ask Archie').click();await page.getByText(/Helping with Number Pop/).waitFor();await button('Close Ask Archie').click();
+      await chooseGameYear(3);await page.getByLabel('Search games').fill('Phonics Parrot');await assertGameIntersection(3,'all','Phonics Parrot');
+      await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/phonics-parrot');
+      await button('Ask Archie').waitFor();assert.equal(await button('Ask Archie').count(),1);await button('Ask Archie').click();await page.getByText(/Helping with Phonics Parrot/).waitFor();await button('Close Ask Archie').click();
     });
     await check(`All ${catalog.length} linked game routes render without a crash or home redirect`,async()=>{
       assert.equal(new Set(catalog.map(game=>game.route)).size,catalog.length,'Game routes must be distinct');

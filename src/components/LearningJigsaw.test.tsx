@@ -1,0 +1,8 @@
+import {cleanup,fireEvent,render,screen} from '@testing-library/react';
+import {afterEach,expect,it,vi} from 'vitest';
+vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak:vi.fn()})}));
+import LearningJigsaw from './LearningJigsaw';
+afterEach(cleanup);
+it('rejects wrong letters and accepts separate repeated letters',()=>{render(<LearningJigsaw text="Moon rises."/>);fireEvent.click(screen.getByRole('button',{name:'Piece 4: N'}));expect(screen.getByText('That piece does not fit yet. Try another answer.')).toBeTruthy();['M','O','O','N'].forEach((letter,i)=>fireEvent.click(screen.getByRole('button',{name:`Piece ${i+1}: ${letter}`})));expect(screen.getByText('Well done! You built the picture.')).toBeTruthy();});
+it('builds the actual book sentence in order',()=>{render(<LearningJigsaw text="Archie found a key. He smiled."/>);fireEvent.click(screen.getByRole('button',{name:'Sentence pieces'}));['Archie','found','a','key'].forEach((word,i)=>fireEvent.click(screen.getByRole('button',{name:`Piece ${i+1}: ${word}`})));expect(screen.getByText('Well done! You built the picture.')).toBeTruthy();});
+it('requires the correct maths answer and resets the picture',()=>{render(<LearningJigsaw year={1}/>);fireEvent.click(screen.getByRole('button',{name:'Maths pieces'}));fireEvent.click(screen.getByRole('button',{name:'Piece 1: 6'}));expect(screen.getByText('That piece does not fit yet. Try another answer.')).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:'Piece 2: 4'}));expect(screen.getByText('Well done! You built the picture.')).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:'Next puzzle'}));expect(screen.getByText('4 + 2 = ?')).toBeTruthy();expect(screen.queryByText('Well done! You built the picture.')).toBeNull();});

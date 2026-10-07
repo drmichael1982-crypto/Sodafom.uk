@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
-import { Home, Volume2, VolumeX, ArrowLeft, ArrowRight, Search, BookOpen, Pause, Play, Calculator, SpellCheck, FlaskConical, Globe, NotebookPen, Film, Star, Trophy, Users, KeyRound, Castle, Rocket, Rainbow, Waves, Flower2, Milestone, Gamepad2, Camera } from 'lucide-react';
+import { Home, Volume2, VolumeX, ArrowLeft, ArrowRight, Search, BookOpen, Pause, Play, Calculator, SpellCheck, FlaskConical, Globe, NotebookPen, Film, Star, Trophy, Users, KeyRound, Castle, Rocket, Rainbow, Waves, Flower2, Milestone, Gamepad2, Camera, MessageCircle } from 'lucide-react';
 import { useArchieContext } from '@/contexts/ArchieContext';
 import { useProgression } from '@/contexts/ProgressionContext';
 import { useVoice } from '@/lib/voice-context';
@@ -17,13 +17,17 @@ import ArchieAvatar from '@/components/ArchieAvatar';
 import { getArchieStage } from '@/lib/archie/age-style';
 import SceneArtwork, { sceneForSubject, type LearningScene } from '@/components/SceneArtwork';
 import OrbitHome from '@/components/OrbitHome';
+import LearningJigsaw from '@/components/LearningJigsaw';
+import AppScreenPager from '@/components/AppScreenPager';
+import HistoryJigsaw from '@/components/HistoryJigsaw';
 import ParentAIResources from '@/components/ParentAIResources';
 import ParentAccountPanel from '@/components/ParentAccountPanel';
 import ParentAIConnection from '@/components/ParentAIConnection';
 import './sodafom-polish.css';
 import { isGameForYear } from '@/lib/archie/game-age';
+import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
 
-export const ARCHIE_PATHS = ['/', '/world', '/quests', '/courses', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons', '/privacy', '/artwork', '/teacher', '/class', '/time-lab', '/preview-admin'];
+export const ARCHIE_PATHS = ['/', '/world', '/quests', '/courses', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons', '/privacy', '/artwork', '/teacher', '/class', '/time-lab', '/preview-admin', '/history', '/device-check'];
 export function isArchiePage(path: string) { return ARCHIE_PATHS.includes(path) || path.startsWith('/reader/') || path.startsWith('/courses/'); }
 function useLearning(title: string, subject = 'Learning', question?: string) {
   const { setGameContext, clearGameContext } = useArchieContext();
@@ -43,14 +47,14 @@ function SoundButton() {
 export function Page({ title, intro, children, back = '/world', calm = false, scene }: { title: string; intro?: string; children: ReactNode; back?: string; calm?: boolean; scene?: LearningScene }) {
   const { settings } = useArchieData();
   const { openArchie } = useArchieContext();
-  return <main className={`archie-app soda-page age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''} ${calm ? 'a-calm' : ''}`}><div className="a-page">
+  return <main style={puzzleThemeStyle(title, scene)} className={`archie-app soda-page puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''} ${calm ? 'a-calm' : ''}`}><div className="a-page">
     <header className="a-top"><Link className="a-button a-icon" to={back} aria-label={back === '/' ? 'Home' : 'Back to my world'}>{back === '/' ? <Home/> : <ArrowLeft/>}</Link><Link className="a-logo" to="/">SODAFOM<small>Learn • Play • Grow</small></Link><SoundButton/></header>
     <section className={`a-hero soda-hero ${calm ? 'soda-hero-calm' : ''}`}>
       <div className="a-hero-copy"><span className="a-eyebrow">{calm ? 'Learning with care' : 'Discover something brilliant'}</span><h1>{title}</h1>{intro && <p className="a-intro">{intro}</p>}</div>
       {!calm && <SceneArtwork scene={scene ?? sceneForSubject(title)} title={title} compact/>}
     </section>
     <div className="a-page-help"><button className="a-button" onClick={() => openArchie()}>Ask Archie</button><span>Help with this game or lesson</span></div>
-    {children}
+    <AppScreenPager>{children}</AppScreenPager>
     <nav className="a-bottom" aria-label="Main navigation"><Link to="/">Home</Link><Link to="/world">My world</Link><Link to="/games">Games</Link><Link to="/courses">Lessons</Link><Link to="/lesson">Spelling</Link><Link to="/privacy">Privacy</Link></nav>
   </div></main>;
 }
@@ -66,6 +70,7 @@ function useCompactLandscape(readableWidth = 400, expandedHome = false) {
 }
 export function ArchieHome() {
   useLearning('Home');
+  const [homeScreen,setHomeScreen]=useState('activities');
   const { openArchie } = useArchieContext();
   const { settings } = useArchieData();
   const [interests, setInterests] = useState<string[]>(() => getChildInterests());
@@ -131,19 +136,13 @@ export function ArchieHome() {
     </>
   );
 
-  return <main className={`soda-home age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''}`} style={theme ? { backgroundImage: theme.background } : undefined}>
-    <div className="soda-home-inner">
-      <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><SoundButton/></div></header>
+  return <main className={`soda-home soda-home-whole-puzzle puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''}`} style={{...puzzleThemeStyle('Home'), ...(theme ? { backgroundImage: theme.background } : {})}}>
+    <div className={`soda-home-inner app-home-screen screen-${homeScreen}`}>
+      <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><button className="a-button a-icon" type="button" aria-label="Ask Archie" onClick={() => openArchie()}><MessageCircle size={19}/></button><button className="a-button a-icon" type="button" aria-label="Personalise my home screen" onClick={() => setPersonalizing(true)}><Camera size={19}/></button><SoundButton/></div></header>
       {homePersonalizer}
-      <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome/>
-      <nav className="soda-home-destinations" aria-label="Home activities">{[
-        ['Explore my world','/world','adventure','A whole world of discoveries'],
-        ['Games','/games','maths','Play, practise and have a go'],
-        ['Lessons','/courses','reading','Your next learning adventure'],
-        ['Adventure Trail','/games/archie-adventure-trail','adventure','Roll a dice. Solve a clue. Explore.'],
-        ['Rewards','/rewards','rewards','Celebrate your small steps'],
-        ['History','/courses?subject=history','history','Investigate stories from the past'],
-      ].map(([label,to,scene,description])=><Link key={to} to={to} className="soda-home-card"><SceneArtwork scene={scene as LearningScene} title={label} compact/><div><h2>{label}</h2><p>{description}</p><span>Explore <ArrowRight size={17}/></span></div></Link>)}</nav>
+      <nav className="home-screen-tabs" aria-label="Home screens">{[['activities','Explore'],['planets','Planets'],['learning','Puzzles']].map(([id,label])=><button key={id} type="button" aria-pressed={homeScreen===id} onClick={()=>setHomeScreen(id)}>{label}</button>)}</nav>
+      <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome/><LearningJigsaw year={settings.year}/>
+      <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap any picture piece to open its activity.</p><AppScreenPager><PuzzleMenu home/></AppScreenPager></section>
       <section className="soda-talk-card"><ArchieAvatar year={settings.year} className="soda-talk-avatar"/><div><h2>Let's work it out together</h2><p>Ask Archie for a hint, listen to a question or talk through one step.</p></div><button className="a-button" onClick={()=>openArchie()}>Ask Archie</button></section>
       <nav className="a-bottom soda-home-more" aria-label="More activities">{[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,to])=><Link key={to} to={to}>{label}</Link>)}</nav>
       <p className="soda-small-note">Try a little, take a break, and come back when you're ready.</p>
@@ -159,10 +158,29 @@ const WORLDS = [
   ['Library','📚','/library'], ['Homework','📝','/homework'], ['Cartoons','🎬','/cartoons'], ['Sticker book','🌟','/stickers'],
   ['Rewards','🏆','/rewards'], ['Parents','👪','/parents'],
   ['Class lessons','📘','/class'], ['Teacher lessons','📝','/teacher'],
+  ['Progress','📈','/progress'], ['Settings','⚙️','/settings'], ['Clock lab','🕰️','/time-lab'],
+  ['Artwork gallery','🎨','/artwork'], ['Privacy','🛡️','/privacy'],
 ];
+const PUZZLE_DESCRIPTIONS: Record<string,string> = {
+  'Learning adventures':'Follow a 30-minute lesson', 'Learning quests':'Try a quick challenge',
+  Maths:'Play with numbers', Reading:'Practise reading', Spelling:'Build and spell words', Science:'Discover how things work',
+  Geography:'Explore our world', 'My lesson':'Practise on the whiteboard', Library:'Read or listen to a story', Homework:'Get help with your work',
+  Cartoons:'Watch a story', 'Sticker book':'Collect your stickers', Rewards:'See your earned stars', Parents:'Learning and AI settings',
+  'Class lessons':'Learn together in class', 'Teacher lessons':'Lesson plans for grown-ups', Games:'Choose a game', History:'Explore the past',
+  Progress:'See your learning journey', Settings:'Choose accessible learning controls', 'Clock lab':'Practise telling the time',
+  'Artwork gallery':'See your saved creations', Privacy:'Learn how your information is protected',
+  'Adventure Trail':'Roll, solve and explore', 'Explore my world':'See every activity',
+};
+function PuzzleMenu({home=false}: {home?:boolean}) {
+  const items = home ? [...WORLDS, ['Games','🎮','/games'], ['History','🏰','/history'], ['Adventure Trail','🎲','/games/archie-adventure-trail'], ['Explore my world','🌍','/world']] : WORLDS;
+  return <nav className={`world-puzzle ${home ? 'home-picture-puzzle' : ''}`} aria-label={home ? 'Home activities' : 'Adventure picture activities'}>{items.map(([label,emoji,to]) => <Link key={to} className="world-puzzle-piece" to={to}>
+    <svg className="world-puzzle-seam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M100 0 V37 C88 32 88 53 100 48 V100 H63 C68 88 47 88 52 100 H0"/></svg>
+    <span className="world-puzzle-label"><h2><span aria-hidden="true">{emoji} </span>{label}</h2><span className="puzzle-description">{PUZZLE_DESCRIPTIONS[label]}</span><span className="puzzle-open">Open →</span></span>
+  </Link>)}</nav>;
+}
 export function ArchieWorld() {
   useLearning('My world');
-  return <Page title="Explore my world" intro="Where shall we go today?" back="/" scene="adventure"><div className="a-grid">{WORLDS.map(([label,emoji,to],i) => <Link key={to} className={`a-card colour-${i%4}`} to={to}><SceneArtwork scene={sceneForSubject(label)} title={label} compact/><h2>{label}</h2><span>Explore →</span></Link>)}</div></Page>;
+  return <Page title="Explore my world" intro="Choose a piece of Archie's adventure picture." back="/" scene="adventure"><PuzzleMenu/><p className="a-note">Every piece opens a game, lesson or activity. The picture stays together as you explore.</p></Page>;
 }
 export function ArchieGames() {
   useLearning('Choose a game');
@@ -198,7 +216,7 @@ export function ArchieLesson() {
   const { openArchie, isOpen, voiceOnOpen } = useArchieContext();
   const { speak,stop,playing } = useVoice();
   const input = useRef<HTMLInputElement>(null);
-  const compact = useCompactLandscape(400, true);
+  const compact = useCompactLandscape(600, true);
   const word = words[step];
   const hideWord = trying && !correct && !feedback.startsWith('Good try.');
   useLearning('My spelling lesson', 'Spelling', `Spell the word ${word}.`);
@@ -220,7 +238,7 @@ export function ArchieLesson() {
   const advanceRef=useRef<()=>void>(()=>{}); advanceRef.current=next;
   useEffect(()=>{if(!isOpen||!voiceOnOpen||!correct||paused||remaining===0||finished)return;const timer=window.setTimeout(()=>advanceRef.current(),playing?8000:900);return()=>window.clearTimeout(timer);},[isOpen,voiceOnOpen,correct,playing,paused,remaining===0,finished,step]);
   if(finished) return <Page title="Brilliant learning!" back="/" intro="You completed all seven words."><div className="a-panel a-celebrate"><ArtIcon symbol="🌟"/><h2>3 stars earned</h2><p>Your lesson is saved on this device.</p><Link className="a-button" to="/rewards">See my rewards</Link><Link className="a-button" to="/games">Choose a game</Link></div></Page>;
-  if(compact) return <main className="compact-lesson"><header><Link className="a-button" to="/" aria-label="Home"><Home/></Link><h1>My spelling lesson <small>Year {year} · Step {step+1} of {words.length} · {Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')} left</small></h1><SoundButton/></header><section className="compact-board" aria-label="Lesson whiteboard"><h2>{paused?'Lesson paused':hideWord?'Listen, then type':word}</h2>{trying && !paused && <form onSubmit={e=>{e.preventDefault();check();}}><input ref={input} aria-label="Your spelling" autoComplete="off" spellCheck={false} autoCapitalize="off" value={attempt} disabled={remaining===0||correct} onChange={e=>setAttempt(e.target.value)}/><button className="a-button" disabled={remaining===0||correct}>Check</button></form>}<p role="status">{correct && <span className="lesson-correct-tick" aria-label="Correct answer">✓</span>}{feedback || (paused?'Tap Resume lesson when you are ready.':'Hear the word, then try spelling it.')}</p></section><nav aria-label="Lesson actions"><button className="a-button" onClick={()=>{if(!paused)speak('read:lesson-word',word);}} aria-label="Hear the word">Hear the word</button><button className="a-button" onClick={()=>{if(!paused&&remaining>0){setTrying(true);setCorrect(false);setFeedback('');speak('read:lesson-word',word);}}}>Try spelling</button><button className="a-button" aria-label="Rubber: clear spelling" onClick={()=>{if(!paused&&remaining>0){setAttempt('');setCorrect(false);setTrying(true);setFeedback('Cleared. Have another go.');input.current?.focus();}}}>Rubber</button><button className="a-button" onClick={()=>openArchie(undefined,true)}>Start spoken lesson</button><button className="a-button" aria-label={paused?'Resume lesson':'Pause lesson'} onClick={()=>{setPaused(p=>!p);stop();}}>{paused?'Resume lesson':'Pause lesson'}</button><button className="a-button" onClick={next}>{step===6?'Finish lesson':'Next word'}</button></nav>{remaining===0 && <button className="a-button" onClick={()=>setRemaining(5*60)}>Practise for 5 more minutes</button>}</main>;
+  if(compact) return <main className="compact-lesson puzzle-themed" style={puzzleThemeStyle("My spelling lesson")}><header><Link className="a-button" to="/" aria-label="Home"><Home/></Link><h1>My spelling lesson <small>Year {year} · Step {step+1} of {words.length} · {Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')} left</small></h1><SoundButton/></header><section className="compact-board" aria-label="Lesson whiteboard"><h2>{paused?'Lesson paused':hideWord?'Listen, then type':word}</h2>{trying && !paused && <form onSubmit={e=>{e.preventDefault();check();}}><input ref={input} aria-label="Your spelling" autoComplete="off" spellCheck={false} autoCapitalize="off" value={attempt} disabled={remaining===0||correct} onChange={e=>setAttempt(e.target.value)}/><button className="a-button" disabled={remaining===0||correct}>Check</button></form>}<p role="status">{correct && <span className="lesson-correct-tick" aria-label="Correct answer">✓</span>}{feedback || (paused?'Tap Resume lesson when you are ready.':'Hear the word, then try spelling it.')}</p></section><nav aria-label="Lesson actions"><button className="a-button" onClick={()=>{if(!paused)speak('read:lesson-word',word);}} aria-label="Hear the word">Hear the word</button><button className="a-button" onClick={()=>{if(!paused&&remaining>0){setTrying(true);setCorrect(false);setFeedback('');speak('read:lesson-word',word);}}}>Try spelling</button><button className="a-button" aria-label="Rubber: clear spelling" onClick={()=>{if(!paused&&remaining>0){setAttempt('');setCorrect(false);setTrying(true);setFeedback('Cleared. Have another go.');input.current?.focus();}}}>Rubber</button><button className="a-button" onClick={()=>openArchie(undefined,true)}>Start spoken lesson</button><button className="a-button" aria-label={paused?'Resume lesson':'Pause lesson'} onClick={()=>{setPaused(p=>!p);stop();}}>{paused?'Resume lesson':'Pause lesson'}</button><button className="a-button" onClick={next}>{step===6?'Finish lesson':'Next word'}</button></nav>{remaining===0 && <button className="a-button" onClick={()=>setRemaining(5*60)}>Practise for 5 more minutes</button>}</main>;
   return <main className="art-stage" aria-label="My spelling lesson"><h1 className="sr-only">My spelling lesson</h1><div className="approved-art lesson-art">
     <img src="/assets/archie-approved/lesson.png" width="841" height="1870" alt="Archie beside a whiteboard in a colourful classroom."/>
     <ArtButton label="Home" x={18} y={58} w={190} h={96} to="/"/>
@@ -255,7 +273,7 @@ export function ArchieReader() {
   useEffect(()=>{setPage(0);return ()=>stop();},[bookId]);
   if(!book) return <Page title="Choose a story"><Link className="a-button" to="/library">Open the library</Link></Page>;
   const finished=activities.some(a=>a.id===`book-${book.id}`);
-  return <Page title={book.title} back="/" scene="reading"><Link className="a-button" to="/library">← All books</Link><article className="a-panel a-reader"><ArtIcon symbol={book.emoji}/><p>{book.pages[currentPage]}</p><small>Page {currentPage+1} of {book.pages.length}</small></article><div className="a-actions">
+  return <Page title={book.title} back="/" scene="reading"><Link className="a-button" to="/library">← All books</Link><LearningJigsaw key={`${book.id}-${currentPage}`} text={book.pages[currentPage]}/><article className="a-panel a-reader"><ArtIcon symbol={book.emoji}/><p>{book.pages[currentPage]}</p><small>Page {currentPage+1} of {book.pages.length}</small></article><div className="a-actions">
     <button className="a-button" disabled={currentPage===0} onClick={()=>{stop();setPage(p=>p-1);}}><ArrowLeft/> Previous</button>
     <button className="a-button" onClick={()=>playing?stop():speak('read:book',book.pages[currentPage])}>{playing?<Pause/>:<Volume2/>}{playing?'Stop reading':'Read aloud'}</button>
     {currentPage<book.pages.length-1?<button className="a-button" onClick={()=>{stop();setPage(p=>p+1);}}>Next page <ArrowRight/></button>:<button className="a-button" disabled={finished} onClick={()=>complete({id:`book-${book.id}`,kind:'book',title:book.title,stars:1})}>{finished?'Book completed ✓':'Finish book • Earn 1 star'}</button>}
@@ -299,13 +317,13 @@ export function ArchieParents({ settingsOnly = false }: { settingsOnly?: boolean
     catch {setConnection('The online learning service is not connected. Built-in maths and spelling help still work.');}
     finally{setChecking(false);}
   }
-  return <GrownUpGate key={settingsOnly?'settings':'parents'} purpose="Choose learning settings, online help and saved memory" cancel={<Link className="a-button" to="/world">Back to learning</Link>}><Page title={settingsOnly?'Settings':'Parents & learning'} back="/" calm intro="Choose how your child learns on this device."><form className="a-panel" onSubmit={e=>{e.preventDefault();setSettings({year});setNotice('Your learning settings are saved. The next lesson will use this year group.');}}>
+  return <GrownUpGate key={settingsOnly?'settings':'parents'} purpose="Choose learning settings, online help and saved memory" cancel={<Link className="a-button" to="/world">Back to learning</Link>}><Page title={settingsOnly?'Settings':'Parents & learning'} back="/" calm intro="Sign in, choose your child’s learning settings and connect optional AI help.">{!settingsOnly && <><nav className="a-actions parent-shortcuts" aria-label="Parent hub sections"><a className="a-button" href="#parent-account">1. Parent sign-in</a><a className="a-button" href="#parent-ai">2. Connect AI</a><a className="a-button" href="#learning-settings">3. Learning settings</a></nav><ParentAccountPanel/><ParentAIConnection/></>}<form id="learning-settings" className="a-panel" onSubmit={e=>{e.preventDefault();setSettings({year});setNotice('Your learning settings are saved. The next lesson will use this year group.');}}>
     <label className="a-field">School year<select value={year} onChange={e=>setYear(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9].map(n=><option key={n} value={n}>Year {n}</option>)}</select></label>
     <p><strong>Lesson length:</strong> 30 minutes, with a pause button whenever you need it.</p><Link className="a-button" to="/privacy">Privacy information</Link>
     <label className="a-check"><input type="checkbox" checked={settings.sound} onChange={e=>setSettings({sound:e.target.checked})}/> Read aloud and sound</label>
     <label className="a-check"><input type="checkbox" checked={settings.largeText} onChange={e=>setSettings({largeText:e.target.checked})}/> Larger text on menus and books</label>
     <button className="a-button">Save learning settings</button><p role="status">{notice}</p>
-  </form><div className="a-panel"><h2>Archie’s learning helper</h2><p>Built-in help works first. Online help is off until a grown-up enables it on this device.</p><label className="a-check"><input type="checkbox" checked={settings.onlineHelp} onChange={e=>setSettings({onlineHelp:e.target.checked})}/> Allow online learning help</label><p className="a-note">When enabled, wider questions, recent chat and activity context may be sent to the app server and its configured AI provider. Do not include names, contact details or private information. AI answers can be wrong; check important learning with a grown-up. Turning this off keeps built-in maths, spelling and quests available.</p><p className="a-note">Microphone input is optional. Your browser or device speech service may process audio online; check its privacy settings before use.</p><button className="a-button" disabled={checking} onClick={checkConnection}>{checking?'Checking…':'Check AI setup'}</button><p role="status">{connection}</p></div>{!settingsOnly && <><ParentAccountPanel/><ParentAIConnection/><ParentAIResources/><Link className="a-button" to="/preview-admin">Preview admin controls</Link></>}<div className="a-panel"><h2>Ask Archie memory on this device</h2><p>{loadSavedLearning().length} saved question-and-answer pairs. These stay in this browser on this device.</p><button className="a-button" onClick={()=>{if(window.confirm('Clear saved Ask Archie questions and answers from this device?')){clearSavedLearning();setNotice('Saved Ask Archie memory has been cleared from this device.');}}}>Clear saved Ask Archie memory</button><p role="status">{notice}</p></div><div className="a-actions"><Link className="a-button" to="/progress">View progress</Link><Link className="a-button" to="/lesson">Try the lesson</Link><Link className="a-button" to="/teacher">Teacher lessons by subject and year (including Maths)</Link><Link className="a-button" to="/class">Class lessons</Link></div><p className="a-note">Learning progress stays in this browser. Parent accounts need the configured account server; cross-device learning syncing and payments are not connected.</p></Page></GrownUpGate>;
+  </form><div className="a-panel"><h2>Archie’s learning helper</h2><p>Built-in help works first. Online help is off until a grown-up enables it on this device.</p><label className="a-check"><input type="checkbox" checked={settings.onlineHelp} onChange={e=>setSettings({onlineHelp:e.target.checked})}/> Allow online learning help</label><p className="a-note">When enabled, wider questions, recent chat and activity context may be sent to the app server and its configured AI provider. Do not include names, contact details or private information. AI answers can be wrong; check important learning with a grown-up. Turning this off keeps built-in maths, spelling and quests available.</p><p className="a-note">Microphone input is optional. Your browser or device speech service may process audio online; check its privacy settings before use.</p><button className="a-button" disabled={checking} onClick={checkConnection}>{checking?'Checking…':'Check AI setup'}</button><p role="status">{connection}</p></div>{!settingsOnly && <><ParentAIResources/><Link className="a-button" to="/preview-admin">Preview admin controls</Link></>}<div className="a-panel"><h2>Ask Archie memory on this device</h2><p>{loadSavedLearning().length} saved question-and-answer pairs. These stay in this browser on this device.</p><button className="a-button" onClick={()=>{if(window.confirm('Clear saved Ask Archie questions and answers from this device?')){clearSavedLearning();setNotice('Saved Ask Archie memory has been cleared from this device.');}}}>Clear saved Ask Archie memory</button><p role="status">{notice}</p></div><div className="a-actions"><Link className="a-button" to="/progress">View progress</Link><Link className="a-button" to="/lesson">Try the lesson</Link><Link className="a-button" to="/teacher">Teacher lessons by subject and year (including Maths)</Link><Link className="a-button" to="/class">Class lessons</Link></div><p className="a-note">Learning progress stays in this browser. Parent accounts need the configured account server; cross-device learning syncing and payments are not connected.</p></Page></GrownUpGate>;
 }
 export function ArchieCartoons() {
   const [episode,setEpisode]=useState<number|null>(null);
@@ -354,3 +372,5 @@ export function ArchieArtworkGallery() {
     <div className="a-grid">{visible.map(game=><Link className="a-card" key={game.id} to={game.route}><SceneArtwork scene={sceneForSubject(game.subject,game.title)} title={game.title} compact/><h2>{game.title}</h2><p>{game.subject} · Ages {game.ageGroups.join(', ')}</p><span className="a-play">Open this game →</span></Link>)}</div>
   </Page>;
 }
+
+export function ArchieHistory(){return <Page title="History picture puzzles" back="/" scene="history"><HistoryJigsaw/></Page>;}

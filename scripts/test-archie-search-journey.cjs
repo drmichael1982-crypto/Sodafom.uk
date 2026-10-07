@@ -11,6 +11,15 @@ const eligible = (game, year) => game.ageGroups.some(range => {
   const [low, high] = range.split(/[–-]/).map(Number);
   return year + 4 >= low && year + 4 <= high;
 });
+const luminance = rgb => rgb.map(value => {
+  const channel = value / 255;
+  return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+}).reduce((total, value, index) => total + value * [0.2126, 0.7152, 0.0722][index], 0);
+const contrast = (foreground, background) => {
+  const [lighter, darker] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+};
+const rgbValues = value => [...value.matchAll(/rgba?\((\d+),\s*(\d+),\s*(\d+)/g)].map(match => match.slice(1, 4).map(Number));
 const results = [];
 (async () => {
   fs.mkdirSync(output, { recursive: true });
@@ -24,7 +33,7 @@ const results = [];
       const goto = async route => { await page.goto(base + route); await page.getByRole('heading').first().waitFor(); };
       const chooseYear = year => page.getByRole('combobox', { name: 'My learning year', exact: true }).selectOption(String(year));
       await goto('/games'); await chooseYear(4);
-      await page.getByLabel('Search games', { exact: true }).fill('Number Pop');
+      await page.getByLabel('Search games', { exact: true }).fill('Phonics Parrot');
       await page.getByText('0 games to explore', { exact: true }).waitFor();
       await page.screenshot({ path: `${output}/empty-${viewport.width}.png`, fullPage: true });
       if (captureOnly) { await page.close(); continue; }
@@ -118,7 +127,36 @@ const results = [];
           });
           const score = Math.round(correct / solved * 100);
           await page.getByText(`${score}%`, { exact: true }).waitFor();
-          if (!retry) await page.getByRole('heading', { name: '🎉 Amazing exploring!', exact: true }).waitFor();
+          if (!retry) {
+            await page.getByRole('heading', { name: '🎉 Amazing exploring!', exact: true }).waitFor();
+            await page.getByText('⭐ Three stars earned! ⭐', { exact: true }).waitFor();
+            await page.waitForTimeout(1700); // inspect settled reward colours, not entrance fades
+            if (year === 1) {
+              const reward = await page.getByText('⭐ Three stars earned! ⭐', { exact: true }).evaluate(element => {
+                const banner = getComputedStyle(element.parentElement);
+                const encouragement = getComputedStyle([...document.querySelectorAll('div')].find(node => node.textContent?.trim() === 'Well done for practising. Come back whenever you are ready.'));
+                const certificate = getComputedStyle([...document.querySelectorAll('button')].find(node => node.textContent?.includes('View Certificate')));
+                return {
+                  bannerText: banner.color,
+                  bannerBackground: banner.backgroundImage,
+                  encouragementText: encouragement.color,
+                  encouragementBackground: encouragement.backgroundColor,
+                  certificateText: certificate.color,
+                  certificateBackground: certificate.backgroundImage,
+                };
+              });
+              const bannerText = rgbValues(reward.bannerText)[0];
+              const bannerBackgrounds = rgbValues(reward.bannerBackground);
+              const encouragementText = rgbValues(reward.encouragementText)[0];
+              const encouragementBackground = rgbValues(reward.encouragementBackground)[0];
+              const certificateText = rgbValues(reward.certificateText)[0];
+              const certificateBackgrounds = rgbValues(reward.certificateBackground);
+              assert.ok(bannerText && bannerBackgrounds.length >= 2 && bannerBackgrounds.every(background => contrast(bannerText, background) >= 4.5), 'Maths reward banner text meets 4.5:1 against both gradient endpoints');
+              assert.ok(certificateText && certificateBackgrounds.length >= 2 && certificateBackgrounds.every(background => contrast(certificateText, background) >= 4.5), 'Maths certificate text meets 4.5:1 against both gradient endpoints');
+              assert.ok(encouragementText && encouragementBackground && contrast(encouragementText, encouragementBackground) >= 4.5, 'Supportive reward text meets 4.5:1');
+              results.push(`Year ${year}, ${viewport.width}px: settled reward contrast ≥ 4.5:1 for banner, encouragement and certificate`);
+            }
+          }
           await page.screenshot({ path: `${output}/bingo-complete-${retry ? 'retry' : 'perfect'}-year-${year}-${viewport.width}.png`, fullPage: true });
           await button('Back to games').click(); await page.waitForURL(base + '/games');
           results.push(`Year ${year}, ${viewport.width}px: Maths Bingo ${retry ? 'retry' : 'perfect'} → hint → pause/resume → completed line → ${correct}/${solved} first-try answers (${score}%) → menu`);
