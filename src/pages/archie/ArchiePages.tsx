@@ -137,14 +137,7 @@ export function ArchieHome() {
       <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><SoundButton/></div></header>
       {homePersonalizer}
       <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome/>
-      <nav className="soda-home-destinations" aria-label="Home activities">{[
-        ['Explore my world','/world','adventure','A whole world of discoveries'],
-        ['Games','/games','maths','Play, practise and have a go'],
-        ['Lessons','/courses','reading','Your next learning adventure'],
-        ['Adventure Trail','/games/archie-adventure-trail','adventure','Roll a dice. Solve a clue. Explore.'],
-        ['Rewards','/rewards','rewards','Celebrate your small steps'],
-        ['History','/courses?subject=history','history','Investigate stories from the past'],
-      ].map(([label,to,scene,description])=><Link key={to} to={to} className="soda-home-card"><SceneArtwork scene={scene as LearningScene} title={label} compact/><div><h2>{label}</h2><p>{description}</p><span>Explore <ArrowRight size={17}/></span></div></Link>)}</nav>
+      <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap any picture piece to open its activity.</p><PuzzleMenu home/></section>
       <section className="soda-talk-card"><ArchieAvatar year={settings.year} className="soda-talk-avatar"/><div><h2>Let's work it out together</h2><p>Ask Archie for a hint, listen to a question or talk through one step.</p></div><button className="a-button" onClick={()=>openArchie()}>Ask Archie</button></section>
       <nav className="a-bottom soda-home-more" aria-label="More activities">{[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,to])=><Link key={to} to={to}>{label}</Link>)}</nav>
       <p className="soda-small-note">Try a little, take a break, and come back when you're ready.</p>
@@ -161,12 +154,24 @@ const WORLDS = [
   ['Rewards','🏆','/rewards'], ['Parents','👪','/parents'],
   ['Class lessons','📘','/class'], ['Teacher lessons','📝','/teacher'],
 ];
+const PUZZLE_DESCRIPTIONS: Record<string,string> = {
+  'Learning adventures':'Follow a 30-minute lesson', 'Learning quests':'Try a quick challenge',
+  Maths:'Play with numbers', Reading:'Practise reading', Spelling:'Build and spell words', Science:'Discover how things work',
+  Geography:'Explore our world', 'My lesson':'Practise on the whiteboard', Library:'Read or listen to a story', Homework:'Get help with your work',
+  Cartoons:'Watch a story', 'Sticker book':'Collect your stickers', Rewards:'See your earned stars', Parents:'Learning and AI settings',
+  'Class lessons':'Learn together in class', 'Teacher lessons':'Lesson plans for grown-ups', Games:'Choose a game', History:'Explore the past',
+  'Adventure Trail':'Roll, solve and explore', 'Explore my world':'See every activity',
+};
+function PuzzleMenu({home=false}: {home?:boolean}) {
+  const items = home ? [...WORLDS, ['Games','🎮','/games'], ['History','🏰','/courses?subject=history'], ['Adventure Trail','🎲','/games/archie-adventure-trail'], ['Explore my world','🌍','/world']] : WORLDS;
+  return <nav className={`world-puzzle ${home ? 'home-picture-puzzle' : ''}`} aria-label={home ? 'Home activities' : 'Adventure picture activities'}>{items.map(([label,emoji,to]) => <Link key={to} className="world-puzzle-piece" to={to}>
+    <svg className="world-puzzle-seam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M100 0 V37 C88 32 88 53 100 48 V100 H63 C68 88 47 88 52 100 H0"/></svg>
+    <span className="world-puzzle-label"><h2><span aria-hidden="true">{emoji} </span>{label}</h2><span className="puzzle-description">{PUZZLE_DESCRIPTIONS[label]}</span><span className="puzzle-open">Open →</span></span>
+  </Link>)}</nav>;
+}
 export function ArchieWorld() {
   useLearning('My world');
-  return <Page title="Explore my world" intro="Choose a piece of Archie's adventure picture." back="/" scene="adventure"><nav className="world-puzzle" aria-label="Adventure picture activities">{WORLDS.map(([label,emoji,to]) => <Link key={to} className="world-puzzle-piece" to={to}>
-    <svg className="world-puzzle-seam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M100 0 V37 C88 32 88 53 100 48 V100 H63 C68 88 47 88 52 100 H0"/></svg>
-    <span className="world-puzzle-label"><span className="world-puzzle-icon" aria-hidden="true">{emoji}</span><h2>{label}</h2><span>Explore →</span></span>
-  </Link>)}</nav><p className="a-note">Every piece opens a game, lesson or activity. The picture stays together as you explore.</p></Page>;
+  return <Page title="Explore my world" intro="Choose a piece of Archie's adventure picture." back="/" scene="adventure"><PuzzleMenu/><p className="a-note">Every piece opens a game, lesson or activity. The picture stays together as you explore.</p></Page>;
 }
 export function ArchieGames() {
   useLearning('Choose a game');
