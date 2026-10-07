@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { Home, Volume2, VolumeX, ArrowLeft, ArrowRight, Search, BookOpen, Pause, Play, Calculator, SpellCheck, FlaskConical, Globe, NotebookPen, Film, Star, Trophy, Users, KeyRound, Castle, Rocket, Rainbow, Waves, Flower2, Milestone, Gamepad2, Camera } from 'lucide-react';
 import { useArchieContext } from '@/contexts/ArchieContext';
@@ -136,13 +136,14 @@ export function ArchieHome() {
     </>
   );
 
-  return <main className={`soda-home soda-home-whole-puzzle puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''}`} style={{...puzzleThemeStyle('Home'), ...(theme ? { backgroundImage: theme.background } : {})}}>
+  return <main className={`soda-home soda-home-whole-puzzle space-jigsaw-home puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''}`} style={{...puzzleThemeStyle('Home'), ...(theme ? { backgroundImage: theme.background } : {})}}>
     <div className={`soda-home-inner app-home-screen screen-${homeScreen}`}>
       <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><SoundButton/></div></header>
       {homePersonalizer}
       <nav className="home-screen-tabs" aria-label="Home screens">{[['activities','Explore'],['planets','Planets'],['learning','Puzzles']].map(([id,label])=><button key={id} type="button" aria-pressed={homeScreen===id} onClick={()=>setHomeScreen(id)}>{label}</button>)}</nav>
+      <div className="space-home-preview" aria-hidden="true"><span className="space-home-sun"/>{[0,1,2,3,4,5,6,7].map(i=><span key={i} className={`space-preview-orbit space-preview-orbit-${i}`} style={{'--space-size':`${22+i*9}%`,'--space-time':`${18+i*8}s`} as CSSProperties}><span className={`planet-swatch home-planet-${i}`}/></span>)}<ArchieAvatar year={settings.year} className="space-home-archie"/></div>
       <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome/><LearningJigsaw year={settings.year}/>
-      <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap any picture piece to open its activity.</p><AppScreenPager><PuzzleMenu home/></AppScreenPager></section>
+      <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap a jigsaw piece. Choose your next adventure.</p><PuzzleMenu home/></section>
       <section className="soda-talk-card"><ArchieAvatar year={settings.year} className="soda-talk-avatar"/><div><h2>Let's work it out together</h2><p>Ask Archie for a hint, listen to a question or talk through one step.</p></div><button className="a-button" onClick={()=>openArchie()}>Ask Archie</button></section>
       <nav className="a-bottom soda-home-more" aria-label="More activities">{[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,to])=><Link key={to} to={to}>{label}</Link>)}</nav>
       <p className="soda-small-note">Try a little, take a break, and come back when you're ready.</p>
