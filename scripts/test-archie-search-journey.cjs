@@ -75,31 +75,54 @@ const results = [];
         results.push(`Year ${year}, ${viewport.width}px: eligible menu → wrong answer/hint → pause/resume → ten answers → completion → menu`);
       }
       for (let year = 1; year <= (lessonsOnly ? 0 : 6); year++) {
-        await goto('/games'); await chooseYear(year);
-        await page.getByLabel('Search games', { exact: true }).fill('Maths Bingo');
-        await page.locator('[data-game-link][href="/games/maths-bingo"]').click();
-        const total = year <= 3 ? 9 : 16;
-        await page.locator('[aria-label="Bingo card"]').waitFor();
-        assert.equal(await page.getByRole('button', { name: /^Bingo number / }).count(), total);
-        assert.equal(await button('Ask Archie').count(), 1, 'Bingo has one shared helper');
-        let solved = 0;
-        while (!(await page.getByText('🎱 BINGO!', { exact: true }).count()) && solved < total) {
-          const question = await page.locator('p.text-4xl').innerText();
-          const parts = question.match(/^(\d+) ([+\-×]) (\d+) = \?$/);
-          assert.ok(parts, 'Bingo presents a readable arithmetic question');
-          const a = Number(parts[1]), b = Number(parts[3]);
-          const answer = parts[2] === '+' ? a + b : parts[2] === '-' ? a - b : a * b;
-          await button(`Bingo number ${answer}`).click(); solved++;
-          await button(`Bingo number ${answer}, marked`).waitFor();
-          await page.waitForFunction(previous => document.body.textContent.includes('🎱 BINGO!') || document.querySelector('p.text-4xl')?.textContent !== previous, question);
+        for (const retry of [false, true]) {
+          await goto('/games'); await chooseYear(year);
+          await page.getByLabel('Search games', { exact: true }).fill('Maths Bingo');
+          await page.locator('[data-game-link][href="/games/maths-bingo"]').click();
+          const total = year <= 3 ? 9 : 16;
+          await page.locator('[aria-label="Bingo card"]').waitFor();
+          assert.equal(await page.getByRole('button', { name: /^Bingo number / }).count(), total);
+          assert.equal(await button('Ask Archie').count(), 1, 'Bingo has one shared helper');
+          let solved = 0;
+          while (!(await page.getByText('🎱 BINGO!', { exact: true }).count()) && solved < total) {
+            const question = await page.locator('p.text-4xl').innerText();
+            const parts = question.match(/^(\d+) ([+\-×]) (\d+) = \?$/);
+            assert.ok(parts, 'Bingo presents a readable arithmetic question');
+            const a = Number(parts[1]), b = Number(parts[3]);
+            const answer = parts[2] === '+' ? a + b : parts[2] === '-' ? a - b : a * b;
+            if (solved === 0) {
+              if (retry) {
+                for (const choice of await page.getByRole('button', { name: /^Bingo number / }).all()) {
+                  if (await choice.getAttribute('aria-label') !== `Bingo number ${answer}`) { await choice.click(); break; }
+                }
+                await page.getByRole('status').filter({ hasText: 'Good try. Use a hint' }).waitFor();
+                assert.equal(await page.locator('p.text-4xl').innerText(), question, 'Wrong answer preserves the question');
+              }
+              await button('Show a hint').click();
+              await page.getByRole('status').filter({ hasText: /Start at|Try \d+ groups/ }).waitFor();
+              await button('Pause Bingo').click();
+              await page.getByText('Paused. Your card and question are saved.', { exact: true }).waitFor();
+              for (const choice of await page.getByRole('button', { name: /^Bingo number / }).all()) assert.equal(await choice.isDisabled(), true);
+              await button('Resume Bingo').click();
+              assert.equal(await page.locator('p.text-4xl').innerText(), question, 'Pause preserves the question');
+              await page.screenshot({ path: `${output}/bingo-practice-${retry ? 'retry' : 'perfect'}-year-${year}-${viewport.width}.png`, fullPage: true });
+            }
+            await button(`Bingo number ${answer}`).click(); solved++;
+            await button(`Bingo number ${answer}, marked`).waitFor();
+            await page.waitForFunction(previous => document.body.textContent.includes('🎱 BINGO!') || document.querySelector('p.text-4xl')?.textContent !== previous, question);
+          }
+          const correct = solved - (retry ? 1 : 0);
+          await page.getByText(`${correct} correct out of ${solved} questions`, { exact: true }).waitFor().catch(async error => {
+            await page.screenshot({ path: `${output}/bingo-failure-${year}-${viewport.width}.png`, fullPage: true });
+            throw error;
+          });
+          const score = Math.round(correct / solved * 100);
+          await page.getByText(`${score}%`, { exact: true }).waitFor();
+          if (!retry) await page.getByRole('heading', { name: '🎉 Amazing exploring!', exact: true }).waitFor();
+          await page.screenshot({ path: `${output}/bingo-complete-${retry ? 'retry' : 'perfect'}-year-${year}-${viewport.width}.png`, fullPage: true });
+          await button('Back to games').click(); await page.waitForURL(base + '/games');
+          results.push(`Year ${year}, ${viewport.width}px: Maths Bingo ${retry ? 'retry' : 'perfect'} → hint → pause/resume → completed line → ${correct}/${solved} first-try answers (${score}%) → menu`);
         }
-        await page.getByText(`${solved} correct out of ${total} questions`, { exact: true }).waitFor().catch(async error => {
-          await page.screenshot({ path: `${output}/bingo-failure-${year}-${viewport.width}.png`, fullPage: true });
-          throw error;
-        });
-        await page.screenshot({ path: `${output}/bingo-complete-year-${year}-${viewport.width}.png`, fullPage: true });
-        await button('Back to games').click(); await page.waitForURL(base + '/games');
-        results.push(`Year ${year}, ${viewport.width}px: Maths Bingo renders ${total} cells, answers lead to a completed line and return to menu`);
       }
       for (let year = 1; year <= 9; year++) {
         await goto('/games'); await chooseYear(year); await goto('/lesson');

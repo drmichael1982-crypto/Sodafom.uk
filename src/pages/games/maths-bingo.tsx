@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
 
@@ -52,8 +52,21 @@ export function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: G
   const [card] = useState(() => generateCard(tier as 1 | 2 | 3));
   const [marked, setMarked] = useState<Set<number>>(new Set());
   const [current, setCurrent] = useState<{ q: string; answer: number } | null>(null);
-  const [bingo, setBingo] = useState(false);
+  const [result, setResult] = useState<GameResult | null>(null);
+  const bingo = result !== null;
   const [round, setRound] = useState(0);
+  const [firstCorrect, setFirstCorrect] = useState(0);
+  const [retried, setRetried] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [showHint, setShowHint] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const reducedMotion = useReducedMotion();
+
+  useEffect(() => {
+    if (!result) return;
+    const timer = setTimeout(() => onComplete(result), 1500);
+    return () => clearTimeout(timer);
+  }, [result, onComplete]);
 
   const nextQuestion = useCallback(() => {
     if (bingo) return;
@@ -68,46 +81,68 @@ export function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: G
       q: qText,
       answer: target
     });
+    setRetried(false);
+    setFeedback('');
+    setShowHint(false);
     onQuestionChange?.(`${qText} = ?`, card.map(String));
   }, [tier, card, marked, bingo, onQuestionChange]);
 
   useEffect(() => { nextQuestion(); }, [nextQuestion]);
 
   function handleMark(num: number) {
-    if (!current || bingo || marked.has(num) || num !== current.answer) return;
+    if (!current || bingo || paused || marked.has(num)) return;
+    if (num !== current.answer) {
+      setRetried(true);
+      setFeedback('Good try. Use a hint or work out the sum, then try another square.');
+      return;
+    }
     const next = new Set(marked);
     next.add(num);
     setMarked(next);
     const newRound = round + 1;
     setRound(newRound);
+    const correct = firstCorrect + (retried ? 0 : 1);
+    setFirstCorrect(correct);
     if (hasBingo(card, next)) {
-      setBingo(true);
-      const score = Math.round((next.size / card.length) * 100);
-      setTimeout(() => onComplete({ score, correct: next.size, total: card.length, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 }), 1500);
-    } else if (newRound >= 20) {
-      const score = Math.round((next.size / card.length) * 100);
-      onComplete({ score, correct: next.size, total: card.length, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 });
+      // Only presented questions count. An unused square is not a missed sum.
+      const score = Math.round((correct / newRound) * 100);
+      setResult({ score, correct, total: newRound, stars: score >= 90 ? 3 : score >= 75 ? 2 : score >= 50 ? 1 : 0 });
     }
   }
 
+  const parts = current?.q.match(/^(\d+) ([+\-×]) (\d+)$/);
+  const hint = parts ? parts[2] === '+'
+    ? `Start at ${parts[1]} and count on ${parts[3]}.`
+    : parts[2] === '-'
+      ? `Start at ${parts[1]} and count back ${parts[3]}.`
+      : `Try ${parts[1]} groups of ${parts[3]}. Count the total.` : 'Work through the sum one step at a time.';
+
   return (
-    <div className="flex flex-col items-center gap-6 p-4 max-w-lg mx-auto">
+    <div className="flex flex-col items-center gap-4 p-4 max-w-lg mx-auto" role="region" aria-label="Bingo practice">
+      <p className="text-center text-blue-950">Solve the sum, then tap its answer. Complete a row or column to make Bingo. Take a break whenever you need one.</p>
       {current && (
-        <motion.div key={current.q} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-          className="bg-primary text-primary-foreground rounded-2xl px-8 py-4 text-center shadow-lg relative">
+        <motion.div key={current.q} initial={reducedMotion ? false : { scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+          className="bg-blue-50 text-blue-950 border-2 border-blue-200 rounded-2xl px-6 py-4 text-center shadow-lg relative">
           <p className="text-xs font-bold opacity-70 mb-1">Solve it — then tap the answer on your card!</p>
           <p className="text-4xl font-black">{current.q} = ?</p>
         </motion.div>
       )}
+      {!bingo && <div className="flex flex-wrap justify-center gap-3">
+        <button className="min-h-12 rounded-xl bg-blue-700 text-white font-bold px-5 py-3" disabled={paused} onClick={() => setShowHint(true)}>Show a hint</button>
+        <button className="min-h-12 rounded-xl border-2 border-blue-700 text-blue-950 bg-white font-bold px-5 py-3" onClick={() => setPaused(value => !value)}>{paused ? 'Resume Bingo' : 'Pause Bingo'}</button>
+      </div>}
+      <div className="w-full text-center text-blue-950" role="status" aria-live="polite">
+        {paused ? <p>Paused. Your card and question are saved.</p> : <>{feedback && <p>{feedback}</p>}{showHint && <p>{hint}</p>}</>}
+      </div>
       <div className="grid gap-2 w-full" style={{ gridTemplateColumns: `repeat(${Math.sqrt(card.length)}, minmax(0, 1fr))` }} aria-label="Bingo card">
         {card.map((num, i) => (
-          <motion.button key={i} whileTap={{ scale: 0.9 }}
+          <motion.button key={i} whileTap={reducedMotion ? undefined : { scale: 0.9 }}
             onClick={() => handleMark(num)}
-            disabled={bingo || marked.has(num)}
+            disabled={bingo || paused || marked.has(num)}
             aria-label={`Bingo number ${num}${marked.has(num) ? ', marked' : ''}`}
             className={`aspect-square rounded-xl text-lg font-black border-2 transition-all ${
               marked.has(num)
-                ? 'bg-primary text-primary-foreground border-primary'
+                ? 'bg-blue-700 text-white border-blue-700'
                 : 'bg-card border-border hover:border-primary'
             }`}>
             {marked.has(num) ? '✓' : num}
@@ -116,12 +151,12 @@ export function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: G
       </div>
       <AnimatePresence>
         {bingo && (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="text-5xl font-black text-primary text-center">
+          <motion.div initial={reducedMotion ? false : { scale: 0 }} animate={{ scale: 1 }} className="text-4xl font-black text-blue-950 text-center">
             🎱 BINGO!
           </motion.div>
         )}
       </AnimatePresence>
-      <p className="text-xs text-muted-foreground">Question {round + 1} of 20</p>
+      <p className="text-sm text-blue-950">{bingo ? `You solved ${round} sums and completed a line.` : `Question ${round + 1} · Complete a row or column`}</p>
     </div>
   );
 }
