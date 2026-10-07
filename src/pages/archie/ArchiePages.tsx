@@ -17,6 +17,7 @@ import ArchieAvatar from '@/components/ArchieAvatar';
 import { getArchieStage } from '@/lib/archie/age-style';
 import SceneArtwork, { sceneForSubject, type LearningScene } from '@/components/SceneArtwork';
 import OrbitHome from '@/components/OrbitHome';
+import LearningJigsaw from '@/components/LearningJigsaw';
 import ParentAIResources from '@/components/ParentAIResources';
 import ParentAccountPanel from '@/components/ParentAccountPanel';
 import ParentAIConnection from '@/components/ParentAIConnection';
@@ -136,7 +137,7 @@ export function ArchieHome() {
     <div className="soda-home-inner">
       <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><SoundButton/></div></header>
       {homePersonalizer}
-      <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome/>
+      <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome/><LearningJigsaw year={settings.year}/>
       <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap any picture piece to open its activity.</p><PuzzleMenu home/></section>
       <section className="soda-talk-card"><ArchieAvatar year={settings.year} className="soda-talk-avatar"/><div><h2>Let's work it out together</h2><p>Ask Archie for a hint, listen to a question or talk through one step.</p></div><button className="a-button" onClick={()=>openArchie()}>Ask Archie</button></section>
       <nav className="a-bottom soda-home-more" aria-label="More activities">{[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,to])=><Link key={to} to={to}>{label}</Link>)}</nav>
@@ -263,7 +264,7 @@ export function ArchieReader() {
   useEffect(()=>{setPage(0);return ()=>stop();},[bookId]);
   if(!book) return <Page title="Choose a story"><Link className="a-button" to="/library">Open the library</Link></Page>;
   const finished=activities.some(a=>a.id===`book-${book.id}`);
-  return <Page title={book.title} back="/" scene="reading"><Link className="a-button" to="/library">← All books</Link><article className="a-panel a-reader"><ArtIcon symbol={book.emoji}/><p>{book.pages[currentPage]}</p><small>Page {currentPage+1} of {book.pages.length}</small></article><div className="a-actions">
+  return <Page title={book.title} back="/" scene="reading"><Link className="a-button" to="/library">← All books</Link><LearningJigsaw key={`${book.id}-${currentPage}`} text={book.pages[currentPage]}/><article className="a-panel a-reader"><ArtIcon symbol={book.emoji}/><p>{book.pages[currentPage]}</p><small>Page {currentPage+1} of {book.pages.length}</small></article><div className="a-actions">
     <button className="a-button" disabled={currentPage===0} onClick={()=>{stop();setPage(p=>p-1);}}><ArrowLeft/> Previous</button>
     <button className="a-button" onClick={()=>playing?stop():speak('read:book',book.pages[currentPage])}>{playing?<Pause/>:<Volume2/>}{playing?'Stop reading':'Read aloud'}</button>
     {currentPage<book.pages.length-1?<button className="a-button" onClick={()=>{stop();setPage(p=>p+1);}}>Next page <ArrowRight/></button>:<button className="a-button" disabled={finished} onClick={()=>complete({id:`book-${book.id}`,kind:'book',title:book.title,stars:1})}>{finished?'Book completed ✓':'Finish book • Earn 1 star'}</button>}

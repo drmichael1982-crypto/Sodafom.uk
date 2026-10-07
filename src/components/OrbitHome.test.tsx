@@ -63,11 +63,35 @@ afterEach(() => {
   vi.restoreAllMocks(); vi.unstubAllGlobals();
 });
 function show() { return render(<MemoryRouter><OrbitHome /></MemoryRouter>); }
+async function completePuzzle(user: ReturnType<typeof userEvent.setup>) {
+  for (let index=0;index<FACTS.length;index++) {
+    await user.click(screen.getByRole('button',{name:`Pick up ${FACTS[index][0]}`,exact:true}));
+    await user.click(screen.getByRole('button',{name:`Place in position ${index+1}: ${FACTS[index][0]}`,exact:true}));
+  }
+  await user.click(screen.getByRole('button',{name:'Earth',exact:true}));
+}
 function model() { return screen.getByLabelText('Explore the eight planets'); }
 
 describe('home planet discovery', () => {
+  it('starts still, rejects a wrong piece, starts orbiting only after completion and resets', async () => {
+    const user=userEvent.setup();show();
+    expect(model()).toHaveClass('is-still');
+    expect(screen.getByRole('button',{name:'Finish the jigsaw to move planets'})).toBeDisabled();
+    await user.click(screen.getByRole('button',{name:'Pick up Mars',exact:true}));
+    await user.click(screen.getByRole('button',{name:'Place in position 1: Mercury',exact:true}));
+    expect(screen.getByText('Mars belongs in position 4 from the Sun. Try another place.')).toBeInTheDocument();
+    expect(screen.getByText('0 / 8')).toBeInTheDocument();
+    await completePuzzle(user);
+    expect(model()).toHaveClass('is-moving');
+    expect(screen.getByText('8 / 8')).toBeInTheDocument();
+    expect(screen.getByRole('button',{name:'Pick up Mars',exact:true})).toBeDisabled();
+    await user.click(screen.getByRole('button',{name:'Start the jigsaw again'}));
+    expect(model()).toHaveClass('is-still');
+    expect(screen.getByText('0 / 8')).toBeInTheDocument();
+    expect(screen.getByRole('button',{name:'Pick up Mars',exact:true})).toBeEnabled();
+  });
   it('places one decorative Moon with Earth, explains the relationship and shares the motion control', async () => {
-    const user = userEvent.setup(); show();
+    const user = userEvent.setup(); show(); await completePuzzle(user);
     const earth = model().querySelector('.home-planet-2');
     const moon = earth?.querySelector('.home-moon-orbit .home-moon');
     expect(moon).not.toBeNull();
@@ -82,7 +106,7 @@ describe('home planet discovery', () => {
     expect(screen.getByRole('button', { name: 'Still planets' })).toBeDisabled();
   });
   it('has eight named native choices with single selected state and a persistent fact status', async () => {
-    const user = userEvent.setup(); show();
+    const user = userEvent.setup(); show(); await completePuzzle(user);
     const status = screen.getByRole('status');
     expect(status).toHaveTextContent('Earth is our home, with oceans and living things.');
     expect(screen.getByRole('button', { name: 'Earth' })).toHaveAttribute('aria-pressed', 'true');
@@ -102,7 +126,7 @@ describe('home planet discovery', () => {
   });
 
   it('toggles pause and resume once per keyboard activation without changing the chosen fact', async () => {
-    const user = userEvent.setup(); show();
+    const user = userEvent.setup(); show(); await completePuzzle(user);
     await user.click(screen.getByRole('button', { name: 'Mars' }));
     const motion = screen.getByRole('button', { name: 'Pause planets' }); motion.focus();
     expect(model()).toHaveClass('is-moving'); expect(motion).toHaveAttribute('aria-pressed', 'true');
@@ -120,7 +144,7 @@ describe('home planet discovery', () => {
 
   it('starts still under reduced motion and keeps planet discovery usable', async () => {
     media = preference(true);
-    const user = userEvent.setup(); show();
+    const user = userEvent.setup(); show(); await completePuzzle(user);
     const motion = screen.getByRole('button', { name: 'Still planets' });
     expect(motion).toBeDisabled(); expect(motion).toHaveAttribute('aria-pressed', 'false');
     expect(model()).toHaveClass('is-still'); expect(model()).not.toHaveClass('is-moving');
@@ -131,7 +155,7 @@ describe('home planet discovery', () => {
   });
 
   it('responds to changed motion preferences, requires opt-in resume and removes its media listener', async () => {
-    const user = userEvent.setup(); const view = show();
+    const user = userEvent.setup(); const view = show(); await completePuzzle(user);
     expect(media.listeners.size).toBe(1); expect(model()).toHaveClass('is-moving');
     media.change(true);
     expect(screen.getByRole('button', { name: 'Still planets' })).toBeDisabled();
@@ -152,7 +176,7 @@ describe('home planet discovery', () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem');
     const removeItem = vi.spyOn(Storage.prototype, 'removeItem');
     const clear = vi.spyOn(Storage.prototype, 'clear');
-    const user = userEvent.setup(); show();
+    const user = userEvent.setup(); show(); await completePuzzle(user);
     for (const [name] of FACTS) await user.click(screen.getByRole('button', { name }));
     await user.click(screen.getByRole('button', { name: 'Pause planets' }));
     await user.click(screen.getByRole('button', { name: 'Move planets' }));
