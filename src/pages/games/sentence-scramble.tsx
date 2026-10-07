@@ -51,7 +51,7 @@ function WordChip({
       whileHover={!placed && phase === 'answering' ? { scale: 1.06, y: -2 } : {}}
       whileTap={!placed && phase === 'answering' ? { scale: 0.94 } : {}}
       onClick={!placed && phase === 'answering' ? onClick : undefined}
-      className={`px-3 py-2 rounded-xl border-2 font-bold text-sm transition-all select-none
+      className={`word-jigsaw-piece px-3 py-2 rounded-xl border-2 font-bold text-sm transition-all select-none
         ${placed
           ? 'bg-muted border-border text-muted-foreground/30 cursor-default'
           : phase === 'answering'
@@ -82,7 +82,7 @@ function AnswerWord({
       initial={filled ? { scale: 0.8, opacity: 0 } : {}}
       animate={{ scale: 1, opacity: 1 }}
       onClick={filled && phase === 'answering' ? onClick : undefined}
-      className={`px-3 py-2 rounded-xl border-2 font-bold text-sm transition-all min-w-[40px] ${base}`}
+      className={`word-jigsaw-piece px-3 py-2 rounded-xl border-2 font-bold text-sm transition-all min-w-[40px] ${base}`}
     >
       {word ?? '—'}
     </motion.button>

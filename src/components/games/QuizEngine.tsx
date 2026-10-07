@@ -142,6 +142,7 @@ export default function QuizEngine({
         />
       </div>
 
+      <div className="quiz-picture-jigsaw" aria-label={`${correct} picture pieces earned`}>{pool.map((_,i)=><span key={i} className={i<correct?'quiz-picture-fit':'quiz-picture-gap'} style={{backgroundSize:`${pool.length*100}% 100%`,backgroundPosition:`${pool.length===1?0:i/(pool.length-1)*100}% center`}}/>)}</div>
       {/* Question */}
       <AnimatePresence mode="wait">
         <motion.div

@@ -19,6 +19,7 @@ import SceneArtwork, { sceneForSubject, type LearningScene } from '@/components/
 import OrbitHome from '@/components/OrbitHome';
 import LearningJigsaw from '@/components/LearningJigsaw';
 import AppScreenPager from '@/components/AppScreenPager';
+import HistoryJigsaw from '@/components/HistoryJigsaw';
 import ParentAIResources from '@/components/ParentAIResources';
 import ParentAccountPanel from '@/components/ParentAccountPanel';
 import ParentAIConnection from '@/components/ParentAIConnection';
@@ -26,7 +27,7 @@ import './sodafom-polish.css';
 import { isGameForYear } from '@/lib/archie/game-age';
 import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
 
-export const ARCHIE_PATHS = ['/', '/world', '/quests', '/courses', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons', '/privacy', '/artwork', '/teacher', '/class', '/time-lab', '/preview-admin'];
+export const ARCHIE_PATHS = ['/', '/world', '/quests', '/courses', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons', '/privacy', '/artwork', '/teacher', '/class', '/time-lab', '/preview-admin', '/history', '/device-check'];
 export function isArchiePage(path: string) { return ARCHIE_PATHS.includes(path) || path.startsWith('/reader/') || path.startsWith('/courses/'); }
 function useLearning(title: string, subject = 'Learning', question?: string) {
   const { setGameContext, clearGameContext } = useArchieContext();
@@ -167,7 +168,7 @@ const PUZZLE_DESCRIPTIONS: Record<string,string> = {
   'Adventure Trail':'Roll, solve and explore', 'Explore my world':'See every activity',
 };
 function PuzzleMenu({home=false}: {home?:boolean}) {
-  const items = home ? [...WORLDS, ['Games','🎮','/games'], ['History','🏰','/courses?subject=history'], ['Adventure Trail','🎲','/games/archie-adventure-trail'], ['Explore my world','🌍','/world']] : WORLDS;
+  const items = home ? [...WORLDS, ['Games','🎮','/games'], ['History','🏰','/history'], ['Adventure Trail','🎲','/games/archie-adventure-trail'], ['Explore my world','🌍','/world']] : WORLDS;
   return <nav className={`world-puzzle ${home ? 'home-picture-puzzle' : ''}`} aria-label={home ? 'Home activities' : 'Adventure picture activities'}>{items.map(([label,emoji,to]) => <Link key={to} className="world-puzzle-piece" to={to}>
     <svg className="world-puzzle-seam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M100 0 V37 C88 32 88 53 100 48 V100 H63 C68 88 47 88 52 100 H0"/></svg>
     <span className="world-puzzle-label"><h2><span aria-hidden="true">{emoji} </span>{label}</h2><span className="puzzle-description">{PUZZLE_DESCRIPTIONS[label]}</span><span className="puzzle-open">Open →</span></span>
@@ -366,3 +367,5 @@ export function ArchieArtworkGallery() {
     <div className="a-grid">{visible.map(game=><Link className="a-card" key={game.id} to={game.route}><SceneArtwork scene={sceneForSubject(game.subject,game.title)} title={game.title} compact/><h2>{game.title}</h2><p>{game.subject} · Ages {game.ageGroups.join(', ')}</p><span className="a-play">Open this game →</span></Link>)}</div>
   </Page>;
 }
+
+export function ArchieHistory(){return <Page title="History picture puzzles" back="/" scene="history"><HistoryJigsaw/></Page>;}

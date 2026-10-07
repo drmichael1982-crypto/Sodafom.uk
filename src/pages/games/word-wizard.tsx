@@ -163,13 +163,13 @@ function WordWizardPlay({ onComplete, onQuestionChange }: { onComplete: (r: Game
             initial={{ scale: 0.5 }}
             animate={{ scale: 1 }}
             onClick={() => removeLetter(l)}
-            className="w-12 h-12 rounded-xl bg-secondary text-secondary-foreground font-black text-xl shadow-md border-2 border-secondary/50 uppercase"
+            className="word-jigsaw-piece w-12 h-12 rounded-xl bg-secondary text-secondary-foreground font-black text-xl shadow-md border-2 border-secondary/50 uppercase"
           >
             {l.char}
           </motion.button>
         ))}
         {[...Array(word.length - placed.length)].map((_, i) => (
-          <div key={i} className="w-12 h-12 rounded-xl border-2 border-dashed border-border bg-muted/50" />
+          <div key={i} className="word-jigsaw-piece w-12 h-12 rounded-xl border-2 border-dashed border-border bg-muted/50" />
         ))}
       </div>
 
@@ -195,7 +195,7 @@ function WordWizardPlay({ onComplete, onQuestionChange }: { onComplete: (r: Game
             whileHover={{ scale: 1.1, y: -4 }}
             whileTap={{ scale: 0.9 }}
             onClick={() => placeLetter(l)}
-            className="w-12 h-12 rounded-xl bg-accent text-accent-foreground font-black text-xl shadow-md border-2 border-accent/50 uppercase"
+            className="word-jigsaw-piece w-12 h-12 rounded-xl bg-accent text-accent-foreground font-black text-xl shadow-md border-2 border-accent/50 uppercase"
           >
             {l.char}
           </motion.button>

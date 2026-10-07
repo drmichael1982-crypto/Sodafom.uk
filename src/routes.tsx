@@ -1,5 +1,5 @@
 import DeviceLayoutPreview from '@/components/DeviceLayoutPreview';
-import { ArchieHome, ArchieWorld, ArchieGames, ArchieLesson, ArchieLibrary, ArchieReader, ArchieHomework, ArchieRewards, ArchieParents, ArchieCartoons, ArchieAskRoute, ArchieArtworkGallery } from '@/pages/archie/ArchiePages';
+import { ArchieHistory, ArchieHome, ArchieWorld, ArchieGames, ArchieLesson, ArchieLibrary, ArchieReader, ArchieHomework, ArchieRewards, ArchieParents, ArchieCartoons, ArchieAskRoute, ArchieArtworkGallery } from '@/pages/archie/ArchiePages';
 import ArchieQuests from '@/pages/archie/ArchieQuests';
 import ArchiePrivacy from '@/pages/archie/ArchiePrivacy';
 import ArchieClockLab from '@/pages/archie/ArchieClockLab';
@@ -213,6 +213,7 @@ const BackToSchoolShopPage = lazy(() => import('./pages/shop/back-to-school'));
 const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
 const NotFoundPage = ProdNotFoundPage;
 export const routes: RouteObject[] = [
+  { path: '/history', element: <ArchieHistory /> },
   { path: '/device-check', element: <DeviceLayoutPreview /> },
   { path: '/world', element: <ArchieWorld /> },
   { path: '/artwork', element: <ArchieArtworkGallery /> },
