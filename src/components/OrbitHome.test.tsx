@@ -63,12 +63,12 @@ afterEach(() => {
   vi.restoreAllMocks(); vi.unstubAllGlobals();
 });
 function show() { return render(<MemoryRouter><OrbitHome /></MemoryRouter>); }
-async function completePuzzle(user: ReturnType<typeof userEvent.setup>) {
+async function completePuzzle(user: ReturnType<typeof userEvent.setup>, selectEarth=true) {
   for (let index=0;index<FACTS.length;index++) {
     await user.click(screen.getByRole('button',{name:new RegExp(`^Pick up ${FACTS[index][0]}$`)}));
     await user.click(screen.getByRole('button',{name:new RegExp(`^Place in position ${index+1}: ${FACTS[index][0]}$`)}));
   }
-  await user.click(screen.getByRole('button',{name:/^Earth$/}));
+  if(selectEarth)await user.click(screen.getByRole('button',{name:/^Earth$/}));
 }
 function model() { return screen.getByLabelText('Explore the eight planets'); }
 
@@ -83,8 +83,8 @@ describe('home planet discovery', () => {
     expect(screen.getByText('0 / 8')).toBeInTheDocument();
     await completePuzzle(user);
     expect(model()).toHaveClass('is-moving');
-    expect(screen.getByText('8 / 8')).toBeInTheDocument();
-    expect(screen.getByRole('button',{name:/^Pick up Mars$/})).toBeDisabled();
+    expect(screen.getByText('8 / 8 pieces fit!')).toBeInTheDocument();
+    expect(screen.getByRole('dialog',{name:'Your solar system is alive!'})).toBeInTheDocument();
     await user.click(screen.getByRole('button',{name:'Start the jigsaw again'}));
     expect(model()).toHaveClass('is-still');
     expect(screen.getByText('0 / 8')).toBeInTheDocument();
@@ -121,6 +121,7 @@ describe('home planet discovery', () => {
         expect(screen.getByRole('button', { name: otherName })).toHaveAttribute('aria-pressed', String(otherName === name));
       }
     }
+    await user.click(screen.getByRole('button', {name:'Back to puzzle'}));
     expect(screen.getByRole('link', { name: 'Start a lesson' })).toHaveAttribute('href', '/courses');
     expect(screen.getByRole('link', { name: 'Choose a game' })).toHaveAttribute('href', '/games');
   });
@@ -186,4 +187,20 @@ describe('home planet discovery', () => {
     expect(saved.setSettings).not.toHaveBeenCalled();
     expect(setItem).not.toHaveBeenCalled(); expect(removeItem).not.toHaveBeenCalled(); expect(clear).not.toHaveBeenCalled();
   });
+  it('opens the full-page reward only after solving, closes with Escape and can reopen it', async()=>{
+    const user=userEvent.setup();show();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await completePuzzle(user,false);
+    const close=screen.getByRole('button',{name:'Back to puzzle'});
+    expect(close).toHaveFocus();expect(document.body.style.overflow).toBe('hidden');
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.body.style.overflow).not.toBe('hidden');
+    await user.click(screen.getByRole('button',{name:'See my full-page solar system'}));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await user.click(screen.getByRole('button',{name:'Start the jigsaw again'}));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('0 / 8')).toBeInTheDocument();
+  });
+
 });
