@@ -211,7 +211,7 @@ export function ArchieLesson() {
   const { openArchie, isOpen, voiceOnOpen } = useArchieContext();
   const { speak,stop,playing } = useVoice();
   const input = useRef<HTMLInputElement>(null);
-  const compact = useCompactLandscape(400, true);
+  const compact = useCompactLandscape(600, true);
   const word = words[step];
   const hideWord = trying && !correct && !feedback.startsWith('Good try.');
   useLearning('My spelling lesson', 'Spelling', `Spell the word ${word}.`);
