@@ -30,6 +30,7 @@
 - Targeted Vitest (Fraction Jigsaw, History Jigsaw, Learning Jigsaw and Orbit Home): 4 files, 17 tests: PASS.
 - Full Vitest: 84 files, 832 tests: PASS.
 - `npm run build:archie`: PASS. Existing bundle-size and mixed dynamic/static import warnings remain warnings.
+- First published GitHub run #132 passed install, TypeScript, all 832 tests and build, then reproduced a stale browser selector in the route sweep: the test still searched for “Explore my world” after the preserved space-home design renamed that visible piece “My world”. The browser suite, phone-action helper and release helper now use the current compact labels; this is a test repair, not a claim that the skipped simulated suite passed.
 - Live rendered review: approved space branding and 26-piece navigation are present; the pre-change History page has clear large answers and a coherent six-piece scene but lacks the new pause/restart controls, as expected because this candidate is not deployed.
 - Local candidate browser rendering is not claimed: the cloud browser cannot reach the local server, and the local Playwright Chromium download was blocked by the runtime network. GitHub CI browser checks and artifacts must be inspected after publication.
 
