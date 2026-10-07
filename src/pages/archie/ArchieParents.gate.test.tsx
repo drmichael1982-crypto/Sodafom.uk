@@ -14,6 +14,7 @@ describe('parent controls',()=>{
     const view=show();
     expect(screen.queryByRole('checkbox',{name:'Allow online learning help'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button',{name:'Clear saved Ask Archie memory'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('link',{name:'Open ChatGPT / sign up'})).not.toBeInTheDocument();
     await user.click(screen.getByRole('textbox'));
     await user.paste('privacy choose');
     await user.keyboard('{Enter}');
@@ -21,7 +22,9 @@ describe('parent controls',()=>{
     expect(online).not.toBeChecked();
     await user.click(online);expect(online).toBeChecked();
     expect(screen.getByRole('button',{name:'Clear saved Ask Archie memory'})).toBeInTheDocument();
+    expect(screen.getByRole('link',{name:'Open ChatGPT / sign up'})).toHaveAttribute('href','https://chatgpt.com/');
     view.unmount();show();
     expect(screen.queryByRole('checkbox',{name:'Allow online learning help'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('link',{name:'Open ChatGPT / sign up'})).not.toBeInTheDocument();
   });
 });

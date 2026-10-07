@@ -8,6 +8,7 @@ import {
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { LessonTutorContext } from "@/contexts/ArchieContext";
 import type { CourseLesson } from "@/lib/archie/course-types";
 const { lesson, stop, speak } = vi.hoisted(() => ({
   stop: vi.fn(),
@@ -81,6 +82,8 @@ vi.mock("@/contexts/ArchieContext", () => ({
 }));
 import ArchieCourses, { CoursePlayer } from "./ArchieCourses";
 import { submitGameVoiceAnswer } from "@/lib/archie/game-voice";
+const tutorContext = () => setGameContext.mock.calls.at(-1)?.[4] as LessonTutorContext;
+const answerTarget = () => tutorContext().answerTarget!;
 const show = () =>
   render(
     <MemoryRouter>
@@ -148,13 +151,13 @@ describe("child lesson adventure", () => {
     const helperInput = screen.getByRole("textbox", { name: "Ask Archie question" });
     await user.type(helperInput, "one");
     act(() => {
-      expect(submitGameVoiceAnswer(lesson.title, "one")).toContain("Have another go");
+      expect(submitGameVoiceAnswer(answerTarget(), "one")).toContain("Have another go");
     });
     expect(helperInput).toHaveFocus();
     await user.clear(helperInput);
     await user.type(helperInput, "two");
     act(() => {
-      expect(submitGameVoiceAnswer(lesson.title, "two")).toContain("One and one make two");
+      expect(submitGameVoiceAnswer(answerTarget(), "two")).toContain("One and one make two");
     });
     expect(helperInput).toHaveFocus();
     expect(screen.getByRole("button", { name: "Next key" })).not.toHaveFocus();
@@ -174,22 +177,56 @@ describe("child lesson adventure", () => {
     );
     const view = show();
     fireEvent.click(screen.getByText("Take a breather", { exact: true }));
-    expect(submitGameVoiceAnswer(lesson.title, "two")).toBeUndefined();
+    expect(submitGameVoiceAnswer(answerTarget(), "two")).toBeUndefined();
     fireEvent.click(screen.getByText("Resume my adventure", { exact: true }));
     act(() => {
-      expect(submitGameVoiceAnswer(lesson.title, "one")).toContain(
+      expect(submitGameVoiceAnswer(answerTarget(), "one")).toContain(
         "Have another go",
       );
     });
     expect(screen.getByText("Draw two single counters.")).toBeInTheDocument();
     act(() => {
-      expect(submitGameVoiceAnswer(lesson.title, "two")).toContain(
+      expect(submitGameVoiceAnswer(answerTarget(), "two")).toContain(
         "One and one make two",
       );
     });
     expect(screen.getByText("Next key", { exact: true })).toBeInTheDocument();
     view.unmount();
-    expect(submitGameVoiceAnswer(lesson.title, "two")).toBeUndefined();
+    expect(submitGameVoiceAnswer(answerTarget(), "two")).toBeUndefined();
+  });
+  it("publishes authored phase help and scopes answers to the lesson and exact question", () => {
+    show();
+    expect(tutorContext()).toMatchObject({activityId:"test-adventure",questionId:null,stepId:"test-adventure:phase:0",status:"learning"});
+    expect(tutorContext().readText).toContain("Count objects carefully.");
+    expect(submitGameVoiceAnswer(answerTarget(),"two")).toBeUndefined();
+    fireEvent.click(screen.getByRole("button",{name:/Let's try together/}));
+    expect(tutorContext().readText).toContain("One counter and one more make two.");
+    fireEvent.click(screen.getByRole("button",{name:/Ready to find some keys/}));
+    const first=answerTarget();
+    expect(first).toBe("course:test-adventure:phase:2:question:0");
+    expect(tutorContext()).toMatchObject({questionId:"test-adventure:question:0",status:"answering",hintText:"Draw two single counters."});
+    expect(submitGameVoiceAnswer(lesson.title,"two")).toBeUndefined();
+    act(()=>{expect(submitGameVoiceAnswer(first,"two")).toContain("One and one make two.");});
+    expect(tutorContext().status).toBe("answered");
+    expect(submitGameVoiceAnswer(first,"two")).toBeUndefined();
+    expect(screen.getByRole("heading",{name:"What is 1 + 1?"})).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button",{name:"Next key"}));
+    expect(answerTarget()).toBe("course:test-adventure:phase:2:question:1");
+    expect(submitGameVoiceAnswer(first,"three")).toBeUndefined();
+    expect(screen.queryByRole("button",{name:"All keys found · mission time"})).not.toBeInTheDocument();
+    expect(tutorContext().hintText).toBe("Count on one from two.");
+    fireEvent.click(screen.getByRole("button",{name:"Take a breather"}));
+    expect(tutorContext().status).toBe("paused");
+    expect(submitGameVoiceAnswer(answerTarget(),"three")).toBeUndefined();
+  });
+  it("does not guess when two visible choices normalise to the same spoken answer", () => {
+    localStorage.setItem("sodafom_course_resume:test-adventure",JSON.stringify({phase:2,question:0,answers:[],missions:[],reflection:""}));
+    const ambiguous={...lesson,questions:[{...lesson.questions[0],options:["two","2","3"]},lesson.questions[1]]} as CourseLesson;
+    render(<MemoryRouter><CoursePlayer lesson={ambiguous}/></MemoryRouter>);
+    act(()=>{expect(submitGameVoiceAnswer(answerTarget(),"two")).toBeUndefined();});
+    expect(screen.queryByRole("button",{name:"Next key"})).not.toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem("sodafom_course_resume:test-adventure")!).answers).toEqual([]);
+    expect(screen.getByRole("button",{name:"2"})).toBeEnabled();
   });
   it("gives a hint, resumes after a reload, completes a mission and saves two stars once", () => {
     let view = show();

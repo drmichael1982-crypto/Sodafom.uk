@@ -1,4 +1,4 @@
-import { ArchieHome, ArchieWorld, ArchieGames, ArchieLesson, ArchieLibrary, ArchieReader, ArchieHomework, ArchieRewards, ArchieParents, ArchieCartoons, ArchieAskRoute } from '@/pages/archie/ArchiePages';
+import { ArchieHome, ArchieWorld, ArchieGames, ArchieLesson, ArchieLibrary, ArchieReader, ArchieHomework, ArchieRewards, ArchieParents, ArchieCartoons, ArchieAskRoute, ArchieArtworkGallery } from '@/pages/archie/ArchiePages';
 import ArchieQuests from '@/pages/archie/ArchieQuests';
 import ArchiePrivacy from '@/pages/archie/ArchiePrivacy';
 import { RouteObject } from "react-router";
@@ -38,6 +38,7 @@ const ProdNotFoundPage = lazy(() => import('./pages/_404'));
 const NumberPopGame = lazy(() => import('./pages/games/number-pop'));
 const NumberPlanetsGame = lazy(() => import('./pages/games/number-planets'));
 const StarTrailGame = lazy(() => import('./pages/games/star-trail'));
+const ArchieAdventureTrailGame = lazy(() => import('./pages/games/archie-adventure-trail'));
 const TimesTableRaceGame = lazy(() => import('./pages/games/times-table-race'));
 const FractionPizzaGame = lazy(() => import('./pages/games/fraction-pizza'));
 const WordScrambleGame = lazy(() => import('./pages/games/word-scramble'));
@@ -206,6 +207,7 @@ const ChatbotPage = lazy(() => import('./pages/chatbot/ChatbotPage'));
 const NotFoundPage = ProdNotFoundPage;
 export const routes: RouteObject[] = [
   { path: '/world', element: <ArchieWorld /> },
+  { path: '/artwork', element: <ArchieArtworkGallery /> },
   { path: '/quests', element: <ArchieQuests /> },
   { path: '/privacy', element: <ArchiePrivacy /> },
   { path: '/courses', element: <ArchieCourses /> },
@@ -286,6 +288,9 @@ export const routes: RouteObject[] = [
 }, {
   path: '/games/star-trail',
   element: <StarTrailGame />
+}, {
+  path: '/games/archie-adventure-trail',
+  element: <ArchieAdventureTrailGame />
 }, {
   path: '/games/times-table-race',
   element: <TimesTableRaceGame />

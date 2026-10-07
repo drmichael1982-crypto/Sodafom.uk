@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, type MouseEvent } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
 import GameShell, { type GameResult } from '@/components/games/GameShell';
@@ -230,7 +230,7 @@ function SeqItem({ value, isBlank, size = 52 }: { value: PatternItem | string | 
       <motion.div
         animate={{ scale: [1, 1.06, 1], opacity: [0.6, 1, 0.6] }}
         transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' as const }}
-        className="rounded-xl border-4 border-dashed border-primary/60 bg-primary/10 flex items-center justify-center font-black text-primary text-2xl"
+        className="rounded-xl border-4 border-dashed border-primary/60 bg-primary/10 flex items-center justify-center font-black text-primary text-2xl motion-reduce:!opacity-100 motion-reduce:!transform-none"
         style={{ width: size + 8, height: size + 8 }}
         aria-label="blank — what goes here?"
       >
@@ -264,7 +264,7 @@ function OptionBtn({
   correct: boolean;
   wrong: boolean;
   disabled: boolean;
-  onClick: () => void;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   const base = 'relative rounded-2xl border-4 flex flex-col items-center justify-center gap-1 p-3 cursor-pointer transition-all select-none';
   const state = correct
@@ -280,6 +280,7 @@ function OptionBtn({
       whileHover={disabled ? {} : { scale: 1.06 }}
       whileTap={disabled ? {} : { scale: 0.94 }}
       onClick={disabled ? undefined : onClick}
+      aria-disabled={disabled}
       className={`${base} ${state}`}
       style={{ width: 80, height: 80 }}
       aria-label={typeof value === 'string' ? value : value.label}
@@ -296,6 +297,14 @@ function OptionBtn({
 }
 
 // ── Main game inner ───────────────────────────────────────────────────────────
+function continuePatternFocus(origin: HTMLButtonElement, target: HTMLElement) {
+  const active = document.activeElement;
+  if (document.querySelector('dialog[open], [role="dialog"], [role="alertdialog"]')) return;
+  if (active !== origin && !(active === document.body && !origin.isConnected)) return;
+  target.focus({ preventScroll: true });
+  target.scrollIntoView?.({ behavior: 'instant', block: 'center' });
+}
+
 function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
   const questions = ALL_QUESTIONS;
   const TOTAL = questions.length;
@@ -309,7 +318,24 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
   const [hintsUsed, setHintsUsed] = useState(0);
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const nextPattern = useRef<HTMLButtonElement>(null);
+  const answerFocus = useRef<HTMLButtonElement | null>(null);
+  const questionFocus = useRef<{ origin: HTMLButtonElement; index: number } | null>(null);
+  const advancedFrom = useRef(-1);
+
+  useEffect(() => {
+    const origin = answerFocus.current;
+    answerFocus.current = null;
+    if (origin && nextPattern.current) continuePatternFocus(origin, nextPattern.current);
+  }, [phase]);
+
+  // Wait mode mounts the next heading after the previous card exits.
+  const focusQuestion = useCallback((node: HTMLHeadingElement | null) => {
+    const pending = questionFocus.current;
+    if (!node || pending?.index !== qIdx) return;
+    questionFocus.current = null;
+    continuePatternFocus(pending.origin, node);
+  }, [qIdx]);
 
   const q = questions[qIdx];
 
@@ -321,8 +347,9 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
     speak(`Pattern ${qIdx + 1}. The sequence is: ${seqText}. What comes next?`);
   }, [qIdx]);
 
-  const handleAnswer = useCallback((opt: PatternItem | string) => {
+  const handleAnswer = useCallback((opt: PatternItem | string, event: MouseEvent<HTMLButtonElement>) => {
     if (phase !== 'answering') return;
+    if (event.currentTarget === document.activeElement) answerFocus.current = event.currentTarget;
     setSelected(opt);
     const isCorrect = itemsMatch(opt, q.answer);
 
@@ -335,29 +362,37 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
       if (newStreak > bestStreak) setBestStreak(newStreak);
       setPhase('correct');
       speak('Correct! Well done!');
-      timerRef.current = setTimeout(() => advance(), 1400);
     } else {
       setStreak(0);
       setPhase('wrong');
       speak(`Not quite. The answer is ${typeof q.answer === 'string' ? q.answer : q.answer.label}.`);
-      timerRef.current = setTimeout(() => advance(), 1800);
     }
-  }, [phase, q, showHint, streak, bestStreak]);
+  }, [phase, q, showHint, streak, bestStreak, score, correct]);
 
-  function advance() {
-    setSelected(null);
-    setPhase('answering');
-    setShowHint(false);
+  function handleNext(event: MouseEvent<HTMLButtonElement>) {
+    if ((phase !== 'correct' && phase !== 'wrong') || advancedFrom.current === qIdx) return;
+    if (qIdx + 1 < TOTAL && event.currentTarget === document.activeElement) {
+      questionFocus.current = { origin: event.currentTarget, index: qIdx + 1 };
+    }
+    advance();
+  }
+
+  function advance(finalScore = score, finalCorrect = correct) {
+    if (advancedFrom.current === qIdx) return;
+    advancedFrom.current = qIdx;
     if (qIdx + 1 >= TOTAL) {
-      finish();
+      finish(finalScore, finalCorrect);
     } else {
+      setSelected(null);
+      setPhase('answering');
+      setShowHint(false);
       setQIdx(i => i + 1);
     }
   }
 
-  function finish() {
-    const stars = correct >= TOTAL * 0.9 ? 3 : correct >= TOTAL * 0.6 ? 2 : correct >= TOTAL * 0.3 ? 1 : 0;
-    onComplete({ score, correct, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
+  function finish(finalScore: number, finalCorrect: number) {
+    const stars = finalCorrect >= TOTAL * 0.9 ? 3 : finalCorrect >= TOTAL * 0.6 ? 2 : finalCorrect >= TOTAL * 0.3 ? 1 : 0;
+    onComplete({ score: Math.round(finalScore / (TOTAL * 10) * 100), correct: finalCorrect, total: TOTAL, stars, maxScore: 100, durationSeconds: 0 });
   }
 
   function handleHint() {
@@ -365,8 +400,6 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
     setHintsUsed(h => h + 1);
     speak(q.hint);
   }
-
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
   const progress = (qIdx / TOTAL) * 100;
 
@@ -403,7 +436,7 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -24 }}
           transition={{ duration: 0.35 }}
-          className="w-full bg-card rounded-3xl border-2 border-border shadow-lg overflow-hidden"
+          className="w-full bg-card rounded-3xl border-2 border-border shadow-lg overflow-hidden focus-within:!opacity-100"
         >
           {/* Header */}
           <div className="hero-bg px-5 py-4 flex items-center justify-between">
@@ -411,7 +444,7 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
               <p className="text-white/70 text-xs font-bold uppercase tracking-wide">
                 {q.type === 'number' ? 'Number Pattern' : q.type === 'emoji' ? 'Colour Pattern' : 'Shape Pattern'}
               </p>
-              <h2 className="text-white font-black text-lg leading-tight hero-title-shadow">
+              <h2 ref={focusQuestion} tabIndex={-1} className="text-white font-black text-lg leading-tight hero-title-shadow focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                 What comes next?
               </h2>
             </div>
@@ -424,7 +457,7 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
                     .join(', ');
                   speak(`The sequence is: ${seqText}. What comes next?`);
                 }}
-                className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                className="w-11 h-11 shrink-0 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                 aria-label="Read aloud"
               >
                 <Volume2 size={16} className="text-white" />
@@ -433,7 +466,7 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
                 <motion.button
                   whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                   onClick={handleHint}
-                  className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                  className="w-11 h-11 shrink-0 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                   aria-label="Show hint"
                 >
                   <Lightbulb size={16} className="text-white" />
@@ -475,37 +508,39 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
             </AnimatePresence>
 
             {/* Feedback banner */}
-            <AnimatePresence>
-              {phase === 'correct' && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="mt-3 flex items-center gap-2 bg-green-100 border border-green-300 rounded-xl px-4 py-2.5"
-                >
-                  <CheckCircle2 size={18} className="text-green-600 shrink-0" />
-                  <p className="font-black text-green-800 text-sm">
-                    {showHint ? 'Correct! (+5 points)' : streak >= 3 ? `🔥 ${streak} in a row! (+10 points)` : 'Correct! Well done! (+10 points)'}
-                  </p>
-                </motion.div>
-              )}
-              {phase === 'wrong' && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="mt-3 flex items-center gap-2 bg-red-100 border border-red-300 rounded-xl px-4 py-2.5"
-                >
-                  <XCircle size={18} className="text-red-500 shrink-0" />
-                  <p className="font-black text-red-800 text-sm">
-                    Not quite! The answer was{' '}
-                    <span className="text-red-700">
-                      {typeof q.answer === 'string' ? q.answer : q.answer.label}
-                    </span>
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div role="status" aria-atomic="true">
+              <AnimatePresence>
+                {phase === 'correct' && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-3 flex items-center gap-2 bg-green-100 border border-green-300 rounded-xl px-4 py-2.5"
+                  >
+                    <CheckCircle2 size={18} className="text-green-600 shrink-0" />
+                    <p className="font-black text-green-800 text-sm">
+                      {showHint ? 'Correct! (+5 points)' : streak >= 3 ? `🔥 ${streak} in a row! (+10 points)` : 'Correct! Well done! (+10 points)'}
+                    </p>
+                  </motion.div>
+                )}
+                {phase === 'wrong' && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="mt-3 flex items-center gap-2 bg-red-100 border border-red-300 rounded-xl px-4 py-2.5"
+                  >
+                    <XCircle size={18} className="text-red-500 shrink-0" />
+                    <p className="font-black text-red-800 text-sm">
+                      Not quite! The answer was{' '}
+                      <span className="text-red-700">
+                        {typeof q.answer === 'string' ? q.answer : q.answer.label}
+                      </span>
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* Options */}
@@ -526,7 +561,7 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
                     correct={isCorrectOpt}
                     wrong={isWrongOpt}
                     disabled={phase !== 'answering'}
-                    onClick={() => handleAnswer(opt)}
+                    onClick={event => handleAnswer(opt, event)}
                   />
                 );
               })}
@@ -535,12 +570,19 @@ function PatternMakerInner({ onComplete }: { onComplete: (r: GameResult) => void
         </motion.div>
       </AnimatePresence>
 
+      {(phase === 'correct' || phase === 'wrong') && (
+        <button ref={nextPattern} type="button" onClick={handleNext}
+          className="w-full min-h-12 px-4 py-3 rounded-2xl bg-green-700 text-white font-black focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          {qIdx === TOTAL - 1 ? 'See my stars' : 'Next pattern'}
+        </button>
+      )}
+
       {/* Skip / restart */}
       <div className="flex items-center gap-3">
         {phase === 'answering' && (
           <button
             onClick={() => { setStreak(0); advance(); }}
-            className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-muted"
+            className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors min-h-11 px-3 py-1.5 rounded-lg hover:bg-muted"
           >
             <RotateCcw size={13} /> Skip
           </button>

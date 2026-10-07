@@ -22,6 +22,7 @@ import {
   useContext,
   useState,
   useCallback,
+  useEffect,
   useRef,
   type ReactNode,
 } from 'react';
@@ -87,8 +88,8 @@ function pickChildVoice(): SpeechSynthesisVoice | null {
   // Voice names differ by device, so this remains best-effort.
   const preferred = [
     (v: SpeechSynthesisVoice) => v.lang === 'en-GB' && /(boy|young|male|child)/i.test(v.name),
-    (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && /(boy|young|male|child)/i.test(v.name),
     (v: SpeechSynthesisVoice) => v.lang === 'en-GB',
+    (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && /(boy|young|male|child)/i.test(v.name),
     (v: SpeechSynthesisVoice) => v.lang.startsWith('en'),
   ];
   for (const test of preferred) {
@@ -143,7 +144,13 @@ function getNativeArchieSpeech(): any | null {
  * TextToSpeech engine because speechSynthesis in WebView has been unreliable.
  * Falls back to the browser Web Speech API on desktop/web.
  */
+let speechGeneration = 0;
+let cancelVoiceWait: (() => void) | null = null;
+
 function ttsSpeak(text: string, onEnd?: () => void) {
+  const generation = ++speechGeneration;
+  cancelVoiceWait?.(); cancelVoiceWait = null;
+  const ended = () => { if (generation === speechGeneration) onEnd?.(); };
   if (!isSoundEnabled()) { onEnd?.(); return; }
   if (typeof window === 'undefined') {
     onEnd?.();
@@ -164,21 +171,22 @@ function ttsSpeak(text: string, onEnd?: () => void) {
     native.speak({ text: speakable })
       .then((res: any) => {
         console.info('ARCHIE_TTS_SUCCESS', { engine: 'android-native', response: res });
-        onEnd?.();
+        ended();
       })
       .catch((err: unknown) => {
         console.error('ARCHIE_TTS_ERROR', err);
         // If native speech fails, make one browser fallback attempt.
-        browserTtsSpeak(speakable, onEnd);
+        if (generation === speechGeneration) browserTtsSpeak(speakable, ended, generation);
       });
     return;
   }
 
   console.log('ttsSpeak: Falling back to browser TTS');
-  browserTtsSpeak(speakable, onEnd);
+  browserTtsSpeak(speakable, ended, generation);
 }
 
-function browserTtsSpeak(text: string, onEnd?: () => void) {
+function browserTtsSpeak(text: string, onEnd: (() => void) | undefined, generation: number) {
+  if (generation !== speechGeneration) return;
   if (!window.speechSynthesis) {
     console.warn('ARCHIE_TTS_UNAVAILABLE');
     onEnd?.();
@@ -197,6 +205,8 @@ function browserTtsSpeak(text: string, onEnd?: () => void) {
   utt.volume = 1;
 
   const speakNow = () => {
+    if (generation !== speechGeneration) return;
+    if (!isSoundEnabled()) { onEnd?.(); return; }
     const voice = pickChildVoice();
     if (voice) utt.voice = voice;
     utt.onend = () => {
@@ -213,25 +223,33 @@ function browserTtsSpeak(text: string, onEnd?: () => void) {
 
   if (window.speechSynthesis.getVoices().length === 0) {
     let fired = false;
-    const fallbackTimer = window.setTimeout(() => {
-      if (fired) return;
-      fired = true;
-      window.speechSynthesis.onvoiceschanged = null;
-      speakNow();
-    }, 700);
-    window.speechSynthesis.onvoiceschanged = () => {
-      if (fired) return;
+    const cleanup = () => {
       fired = true;
       window.clearTimeout(fallbackTimer);
-      window.speechSynthesis.onvoiceschanged = null;
+      if (window.speechSynthesis.onvoiceschanged === voicesReady)
+        window.speechSynthesis.onvoiceschanged = null;
+      if (cancelVoiceWait === cleanup) cancelVoiceWait = null;
+    };
+    const fallbackTimer = window.setTimeout(() => {
+      if (fired) return;
+      cleanup();
+      speakNow();
+    }, 700);
+    const voicesReady = () => {
+      if (fired) return;
+      cleanup();
       speakNow();
     };
+    cancelVoiceWait = cleanup;
+    window.speechSynthesis.onvoiceschanged = voicesReady;
   } else {
     speakNow();
   }
 }
 
 function stopTts() {
+  speechGeneration++;
+  cancelVoiceWait?.(); cancelVoiceWait = null;
   if (typeof window === 'undefined') return;
   const native = getNativeArchieSpeech();
   if (native?.stop) {
@@ -278,6 +296,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   const [clips, setClips] = useState<Record<ClipKey, VoiceClip>>({});
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackGeneration = useRef(0);
 
   const setChildId = useCallback((id: string | null) => {
     setChildIdState(id);
@@ -313,17 +332,24 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   );
 
   const stop = useCallback(() => {
+    playbackGeneration.current++;
     if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
       audioRef.current.pause();
       audioRef.current = null;
     }
     stopTts();
     setPlaying(false);
   }, []);
+  useEffect(() => () => stop(), [stop]);
 
   const speak = useCallback(
     (key: ClipKey, fallbackText?: string) => {
       stop();
+      const playback = playbackGeneration.current;
+      const current = () => playback === playbackGeneration.current;
+      const ended = () => { if (current()) setPlaying(false); };
       if (!isSoundEnabled()) return;
       const clip = Object.hasOwn(clips, key) ? clips[key as keyof typeof clips] : undefined;
       if (clip?.dataUrl) {
@@ -331,21 +357,22 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
         const audio = new Audio(clip.dataUrl);
         audioRef.current = audio;
         setPlaying(true);
-        audio.onended = () => setPlaying(false);
-        audio.onerror = () => {
+        audio.onended = ended;
+        let fallbackStarted = false;
+        const fallback = () => {
+          if (!current() || fallbackStarted) return;
+          fallbackStarted = true;
           // Fallback to TTS if audio fails
           setPlaying(true);
-          ttsSpeak(fallbackText ?? key, () => setPlaying(false));
+          ttsSpeak(fallbackText ?? key, ended);
         };
-        audio.play().catch(() => {
-          setPlaying(true);
-          ttsSpeak(fallbackText ?? key, () => setPlaying(false));
-        });
+        audio.onerror = fallback;
+        audio.play().catch(fallback);
       } else {
         // No recording — use TTS
         const text = fallbackText ?? key;
         setPlaying(true);
-        ttsSpeak(text, () => setPlaying(false));
+        ttsSpeak(text, ended);
       }
     },
     [clips, stop]

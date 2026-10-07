@@ -1,8 +1,12 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import type { LessonTutorContext } from '@/contexts/ArchieContext';
+import { listenForGameAnswer } from '@/lib/archie/game-voice';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const state = vi.hoisted(() => ({
   playing:false,isOpen:true,pathname:'/',search:'',voiceOnOpen:false,
+  lessonTutor:null as LessonTutorContext|null,currentOptions:null as string[]|null,
+  gameTitle:null as string|null,
   listeners:new Set<()=>void>(),speak:vi.fn(),stop:vi.fn(),navigate:vi.fn(),closeArchie:vi.fn(),
 }));
 vi.mock('@/lib/voice-context', async()=>{
@@ -23,7 +27,8 @@ vi.mock('@/contexts/ArchieContext',async()=>{
   const React = await import('react');
   return {useArchieContext:()=>{
     const isOpen = React.useSyncExternalStore(listener=>{state.listeners.add(listener);return()=>{state.listeners.delete(listener);};},()=>state.isOpen);
-    return {isOpen,draft:'',voiceOnOpen:state.voiceOnOpen,openArchie:vi.fn(),closeArchie:state.closeArchie,gameTitle:null,subject:null,currentQuestion:null,currentOptions:null};
+    React.useSyncExternalStore(listener=>{state.listeners.add(listener);return()=>{state.listeners.delete(listener);};},()=>JSON.stringify([state.lessonTutor,state.currentOptions,state.gameTitle]));
+    return {isOpen,draft:'',voiceOnOpen:state.voiceOnOpen,openArchie:vi.fn(),closeArchie:state.closeArchie,gameTitle:state.gameTitle||(state.lessonTutor?'River lesson':null),subject:state.lessonTutor?'History':null,currentQuestion:state.lessonTutor?.readText||null,currentOptions:state.currentOptions,lessonTutor:state.lessonTutor};
   }};
 });
 import ArchieHelper from './ArchieHelper';
@@ -51,7 +56,7 @@ async function start(){fireEvent.click(screen.getByRole('button',{name:'Start vo
 beforeEach(()=>{
   vi.useFakeTimers();
   localStorage.clear();FakeRecognition.instances=[];
-  state.playing=false;state.isOpen=true;state.pathname='/';state.search='';state.voiceOnOpen=false;
+  state.playing=false;state.isOpen=true;state.pathname='/';state.search='';state.voiceOnOpen=false;state.lessonTutor=null;state.currentOptions=null;state.gameTitle=null;
   state.speak.mockImplementation(()=>{state.playing=true;notify();});
   state.stop.mockImplementation(()=>{state.playing=false;notify();});
   state.closeArchie.mockImplementation(()=>{state.isOpen=false;notify();});
@@ -164,5 +169,94 @@ describe('press-once voice conversation',()=>{
     expect(screen.getByRole('status')).toHaveTextContent('You can still type to Archie');
     expect(screen.getByRole('textbox',{name:'Your question for Archie'})).toBeEnabled();
     expect(FakeRecognition.instances).toHaveLength(0);
+  });
+});
+
+
+const riverLesson = ():LessonTutorContext => ({activityId:'history-y3-w01-s1',questionId:'history-y3-w01-s1:question:0',
+  stepId:'history-y3-w01-s1:phase:2',status:'answering',readText:'Which river supported farming? Nile. Thames.',
+  teachingText:'The Nile supported farming in ancient Egypt.',hintText:'Think of the river in Egypt.',
+  answerTarget:'course:history-y3-w01-s1:phase:2:question:0'});
+async function typeToArchie(text:string){
+  fireEvent.change(screen.getByRole('textbox',{name:'Your question for Archie'}),{target:{value:text}});
+  await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Send question'}));});
+}
+describe('authored lesson conversation',()=>{
+  it('reads the actual lesson part, gives authored Egypt help and never asks an online service',async()=>{
+    state.lessonTutor=riverLesson();state.currentOptions=['Nile','Thames'];
+    render(<ArchieHelper/>);await start();
+    expect(state.speak.mock.calls[0][1]).toBe(state.lessonTutor.readText);
+    await act(async()=>{latest().result('Why was this river useful in Egypt?');});
+    expect(state.speak.mock.calls.at(-1)?.[1]).toContain('The Nile supported farming in ancient Egypt.');
+    expect(fetch).not.toHaveBeenCalled();
+    expect(localStorage.getItem('sodafom_archie_learning_v1')).toBeNull();
+    await finishSpeech();await letArchieListen();
+    await act(async()=>{latest().result('Give me a hint');});
+    expect(state.speak.mock.calls.at(-1)?.[1]).toBe('Think of the river in Egypt.');
+  });
+  it('sends a real choice to its exact handler rather than treating its help word as a command or caching its grade',async()=>{
+    state.lessonTutor=riverLesson();state.currentOptions=['Help a neighbour','Leave quietly'];
+    const handler=vi.fn(()=> 'Well done. The story says the child helped a neighbour.');
+    const remove=listenForGameAnswer(state.lessonTutor.answerTarget!,handler);
+    try{
+      render(<ArchieHelper/>);await typeToArchie('Help a neighbour');
+      expect(handler).toHaveBeenCalledExactlyOnceWith('Help a neighbour');
+      expect(state.speak.mock.calls.at(-1)?.[1]).toContain('The story says the child helped a neighbour.');
+      expect(localStorage.getItem('sodafom_archie_learning_v1')).toBeNull();
+      expect(fetch).not.toHaveBeenCalled();
+    }finally{remove();}
+  });
+  it.each(['question','phase','paused'] as const)('retires recognition after a same-route %s change and ignores a delayed answer',async(change)=>{
+    state.lessonTutor=riverLesson();state.currentOptions=['Nile','Thames'];
+    const handler=vi.fn(()=> 'Well done.');const remove=listenForGameAnswer(state.lessonTutor.answerTarget!,handler);
+    try{
+      render(<ArchieHelper/>);await start();const old=latest();
+      await act(async()=>{state.lessonTutor={...state.lessonTutor!,
+        ...(change==='question'?{questionId:'history-y3-w01-s1:question:1',answerTarget:'new-target'}:
+          change==='phase'?{stepId:'history-y3-w01-s1:phase:3',status:'learning' as const}:
+          {status:'paused' as const})};notify();});
+      expect(old.abort).toHaveBeenCalledOnce();
+      await act(async()=>{old.result('Nile');old.end();});await letArchieListen();
+      expect(handler).not.toHaveBeenCalled();expect(FakeRecognition.instances).toHaveLength(1);
+      expect(screen.getByRole('button',{name:'Start voice conversation'})).toBeEnabled();
+    }finally{remove();}
+  });
+  it('keeps its conversation after a correct reply without moving the question, then obeys a spoken Stop',async()=>{
+    state.lessonTutor=riverLesson();state.currentOptions=['Nile','Thames'];
+    const handler=vi.fn(()=>{state.lessonTutor={...state.lessonTutor!,status:'answered',hintText:'The Nile supported farming.'};notify();return 'Well done. The Nile supported farming.';});
+    const remove=listenForGameAnswer(state.lessonTutor.answerTarget!,handler);
+    try{
+      render(<ArchieHelper/>);await start();await act(async()=>{latest().result('Nile');});
+      expect(handler).toHaveBeenCalledOnce();
+      expect(screen.getByRole('button',{name:'Stop voice conversation'})).toBeEnabled();
+      await finishSpeech();await letArchieListen();
+      const active=latest();await act(async()=>{active.result('Stop');});await letArchieListen();
+      expect(active.abort).toHaveBeenCalledOnce();expect(FakeRecognition.instances).toHaveLength(2);
+      expect(state.speak).toHaveBeenCalledTimes(2);
+      expect(state.lessonTutor?.questionId).toBe('history-y3-w01-s1:question:0');
+      expect(localStorage.getItem('sodafom_archie_learning_v1')).toBeNull();
+    }finally{remove();}
+  });
+  it('does not submit answers while paused or advance for a Next request',async()=>{
+    state.lessonTutor={...riverLesson(),status:'paused'};state.currentOptions=['Nile','Thames'];
+    const handler=vi.fn(()=> 'Well done.');const remove=listenForGameAnswer(state.lessonTutor.answerTarget!,handler);
+    try{
+      render(<ArchieHelper/>);await typeToArchie('Nile');
+      expect(handler).not.toHaveBeenCalled();expect(state.speak.mock.calls.at(-1)?.[1]).toContain('lesson is paused');
+      await act(async()=>{state.lessonTutor={...state.lessonTutor!,status:'answering'};notify();});
+      await typeToArchie('Next');
+      expect(handler).not.toHaveBeenCalled();expect(state.speak.mock.calls.at(-1)?.[1]).toContain('next or finish button');
+    }finally{remove();}
+  });
+  it('keeps an existing game handler compatible and does not store its bare-answer grade',async()=>{
+    state.gameTitle='Number Planets';
+    const handler=vi.fn(()=> 'Well done. Six is correct for this planet.');
+    const remove=listenForGameAnswer('Number Planets',handler);
+    try{
+      render(<ArchieHelper/>);await typeToArchie('six');
+      expect(handler).toHaveBeenCalledExactlyOnceWith('six');
+      expect(state.speak.mock.calls.at(-1)?.[1]).toContain('Six is correct for this planet.');
+      expect(localStorage.getItem('sodafom_archie_learning_v1')).toBeNull();
+    }finally{remove();}
   });
 });

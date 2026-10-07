@@ -103,6 +103,7 @@ function CourseLibrary() {
   return (
     <Page
       title="Your learning adventures"
+      scene={subject === 'english' ? 'reading' : subject}
       intro="A little discovery, a little practice, and a mission of your own. Archie is ready when you are."
     >
       <div className="course-picker">
@@ -340,6 +341,17 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
     (activity) => activity.id === savedId(lesson.id),
   );
   const back = "/courses?year=" + lesson.year + "&subject=" + lesson.subject;
+  const answerTarget = `course:${lesson.id}:phase:${phase}:question:${progress.question}`;
+  const narration =
+    phase === 0
+      ? lesson.objective + ". " + lesson.teaching.join(" ")
+      : phase === 1
+        ? lesson.example.prompt + ". " + lesson.example.explanation
+        : phase === 2
+          ? question.prompt + ". " + question.options.join(". ")
+          : phase === 3
+            ? lesson.mission.title + ". " + lesson.mission.instructions.join(". ")
+            : lesson.reflection;
   useEffect(() => {
     setStorageOkay(saveCourseProgress(lesson.id, progress));
   }, [lesson.id, progress]);
@@ -349,9 +361,19 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
       SUBJECTS[lesson.subject],
       phase === 2 && !finished ? question.prompt : lesson.objective,
       phase === 2 && !finished ? question.options : [],
+      {
+        activityId: lesson.id,
+        questionId: phase === 2 && !finished ? `${lesson.id}:question:${progress.question}` : null,
+        stepId: `${lesson.id}:phase:${progress.phase}`,
+        status: finished ? "finished" : paused ? "paused" : phase === 2 ? correct ? "answered" : "answering" : "learning",
+        readText: narration,
+        teachingText: lesson.teaching.join(" ") + (phase === 1 ? " " + lesson.example.explanation : ""),
+        hintText: phase === 2 ? correct ? question.explanation : question.hint : narration,
+        answerTarget,
+      },
     );
     return clearGameContext;
-  }, [lesson, phase, finished, question, setGameContext, clearGameContext]);
+  }, [lesson, phase, progress.phase, progress.question, finished, paused, correct, question, narration, answerTarget, setGameContext, clearGameContext]);
   useEffect(() => () => stop(), [stop]);
   useEffect(() => {
     titleRef.current?.focus();
@@ -410,19 +432,20 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
   }
   useEffect(
     () =>
-      listenForGameAnswer(lesson.title, (text) => {
+      listenForGameAnswer(answerTarget, (text) => {
         if (phase !== 2 || finished || paused || correct) return;
         const answer = normaliseVoiceAnswer(text);
-        const index = question.options.findIndex(
-          (option) => normaliseVoiceAnswer(option) === answer,
-        );
+        const matches = question.options.map((option, index) => ({ option, index }))
+          .filter(({ option }) => normaliseVoiceAnswer(option) === answer);
+        // A transcript must identify exactly one real choice, never a guessed match.
+        const index = matches.length === 1 ? matches[0].index : -1;
         if (index < 0) return;
         chooseAnswer(index);
         return index === question.answer
           ? "Well done. " + question.explanation
           : "Have another go. " + question.hint;
       }),
-    [lesson.title, phase, finished, paused, correct, question],
+    [answerTarget, phase, finished, paused, correct, question],
   );
   function finish() {
     complete({
@@ -440,21 +463,10 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
     setHint(false);
     setFeedback("");
   }
-  const narration =
-    phase === 0
-      ? lesson.objective + ". " + lesson.teaching.join(" ")
-      : phase === 1
-        ? lesson.example.prompt + ". " + lesson.example.explanation
-        : phase === 2
-          ? question.prompt + ". " + question.options.join(". ")
-          : phase === 3
-            ? lesson.mission.title +
-              ". " +
-              lesson.mission.instructions.join(". ")
-            : lesson.reflection;
   return (
     <Page
       title={lesson.title}
+      scene={lesson.subject === 'english' ? 'reading' : lesson.subject}
       calm={sensitive}
       intro={
         "Year " +

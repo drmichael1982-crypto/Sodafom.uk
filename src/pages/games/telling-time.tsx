@@ -2,7 +2,7 @@
  * /games/telling-time — read analogue and digital clocks (maths, ages 5–10)
  * Ages 5–10 · Maths subject
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef, type MouseEvent } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
 import GameShell, { type GameResult } from '@/components/games/GameShell';
@@ -41,7 +41,11 @@ function buildQuestions(): TimeQ[] {
 }
 
 // SVG analogue clock face
-function AnalogClock({ hours, minutes }: { hours: number; minutes: number }) {
+export function AnalogClock({ hours, minutes }: { hours: number; minutes: number }) {
+  const hourNumber = hours % 12 || 12;
+  const nextHourNumber = hourNumber % 12 + 1;
+  const minuteNumber = minutes === 0 ? 12 : minutes / 5;
+  const description = `Analogue clock. The short hour hand ${minutes === 0 ? `points to ${hourNumber}` : `is between ${hourNumber} and ${nextHourNumber}`}. The long minute hand points to ${minuteNumber}.`;
   const cx = 80, cy = 80, r = 72;
   // Minute hand angle: 0 min = 12 o'clock = -90deg
   const minAngle = (minutes / 60) * 360 - 90;
@@ -66,7 +70,7 @@ function AnalogClock({ hours, minutes }: { hours: number; minutes: number }) {
   });
 
   return (
-    <svg width="160" height="160" viewBox="0 0 160 160" className="drop-shadow-lg">
+    <svg role="img" aria-label={description} width="160" height="160" viewBox="0 0 160 160" className="drop-shadow-lg">
       {/* Face */}
       <circle cx={cx} cy={cy} r={r} fill="white" stroke="hsl(var(--border))" strokeWidth="3" />
       {/* Hour markers */}
@@ -100,6 +104,14 @@ function AnalogClock({ hours, minutes }: { hours: number; minutes: number }) {
 
 const TOTAL = 10;
 
+function continueKeyboardFocus(origin: HTMLButtonElement, target: HTMLElement) {
+  const active = document.activeElement;
+  if (document.querySelector('dialog[open], [role="dialog"], [role="alertdialog"]')) return;
+  if (active !== origin && !(active === document.body && (!origin.isConnected || origin.disabled))) return;
+  target.focus({ preventScroll: true });
+  target.scrollIntoView?.({ behavior: 'instant', block: 'center' });
+}
+
 function TellingTimeInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
   const [questions] = useState<TimeQ[]>(() => {
     const all = buildQuestions();
@@ -112,28 +124,51 @@ function TellingTimeInner({ onComplete }: { onComplete: (r: GameResult) => void 
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
+  const nextClock = useRef<HTMLButtonElement>(null);
+  const answerFocus = useRef<HTMLButtonElement | null>(null);
+  const questionFocus = useRef<{ origin: HTMLButtonElement; index: number } | null>(null);
+  const advancedFrom = useRef(-1);
+
+  useEffect(() => {
+    const origin = answerFocus.current;
+    answerFocus.current = null;
+    if (origin && nextClock.current) continueKeyboardFocus(origin, nextClock.current);
+  }, [selected]);
+
+  // The incoming card mounts after the old card exits in AnimatePresence's wait mode.
+  const focusQuestion = useCallback((node: HTMLParagraphElement | null) => {
+    const pending = questionFocus.current;
+    if (!node || pending?.index !== qIdx) return;
+    questionFocus.current = null;
+    continueKeyboardFocus(pending.origin, node);
+  }, [qIdx]);
 
   const q = questions[qIdx];
 
-  const handleAnswer = useCallback((choice: string) => {
+  const handleAnswer = useCallback((choice: string, event: MouseEvent<HTMLButtonElement>) => {
     if (selected !== null) return;
+    if (event.currentTarget === document.activeElement) answerFocus.current = event.currentTarget;
     setSelected(choice);
     const isRight = choice === q.answer;
     const newScore = isRight ? score + 10 : score;
     const newCorrect = isRight ? correct + 1 : correct;
     if (isRight) { setScore(newScore); setCorrect(newCorrect); }
 
-    setTimeout(() => {
-      const next = qIdx + 1;
-      if (next >= TOTAL) {
-        const stars = newCorrect >= 9 ? 3 : newCorrect >= 6 ? 2 : newCorrect >= 3 ? 1 : 0;
-        onComplete({ score: newScore, correct: newCorrect, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
-      } else {
-        setQIdx(next);
-        setSelected(null);
-      }
-    }, 1800);
-  }, [selected, q.answer, score, correct, qIdx, onComplete]);
+  }, [selected, q.answer, score, correct]);
+
+  const handleNext = (event: MouseEvent<HTMLButtonElement>) => {
+    if (selected === null || advancedFrom.current === qIdx) return;
+    advancedFrom.current = qIdx;
+    const next = qIdx + 1;
+    if (next >= TOTAL) {
+      const stars = correct >= 9 ? 3 : correct >= 6 ? 2 : correct >= 3 ? 1 : 0;
+      onComplete({ score, correct, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
+    } else {
+      if (event.currentTarget === document.activeElement) questionFocus.current = { origin: event.currentTarget, index: next };
+      setQIdx(next);
+      setSelected(null);
+    }
+  };
 
   const progress = (qIdx / TOTAL) * 100;
   const phase = selected === null ? 'answering' : selected === q.answer ? 'correct' : 'wrong';
@@ -161,14 +196,14 @@ function TellingTimeInner({ onComplete }: { onComplete: (r: GameResult) => void 
           key={qIdx}
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.25 }}
-          className="w-full bg-card rounded-3xl border-2 border-border shadow-lg overflow-hidden"
+          className="w-full bg-card rounded-3xl border-2 border-border shadow-lg overflow-hidden focus-within:!opacity-100"
         >
           {/* Header */}
           <div className="bg-gradient-to-br from-sky-500 to-blue-600 px-6 py-4 flex items-center gap-3">
             <Clock size={20} className="text-white shrink-0" />
             <div className="flex-1">
               <p className="text-white/70 text-xs font-bold uppercase tracking-wide">Telling the Time</p>
-              <p className="text-white font-black text-sm">What time does the clock show?</p>
+              <p ref={focusQuestion} tabIndex={-1} className="text-white font-black text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">What time does the clock show?</p>
             </div>
             <span className={`text-xs font-black px-2.5 py-1 rounded-full ${diffColour}`}>{q.difficulty}</span>
           </div>
@@ -206,7 +241,7 @@ function TellingTimeInner({ onComplete }: { onComplete: (r: GameResult) => void 
                     key={c}
                     whileHover={selected === null ? { scale: 1.04 } : {}}
                     whileTap={selected === null ? { scale: 0.96 } : {}}
-                    onClick={() => handleAnswer(c)}
+                    onClick={(event) => handleAnswer(c, event)}
                     disabled={selected !== null}
                     className={`py-3.5 px-3 rounded-2xl border-2 font-bold text-sm transition-all flex items-center justify-center gap-1.5 text-center ${style}`}
                   >
@@ -222,6 +257,7 @@ function TellingTimeInner({ onComplete }: { onComplete: (r: GameResult) => void 
             <AnimatePresence>
               {selected !== null && (
                 <motion.div
+                  role="status" aria-atomic="true"
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
                   className={`w-full flex items-start gap-2 rounded-2xl px-4 py-3 ${phase === 'correct' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}
                 >
@@ -234,6 +270,12 @@ function TellingTimeInner({ onComplete }: { onComplete: (r: GameResult) => void 
                 </motion.div>
               )}
             </AnimatePresence>
+            {selected !== null && (
+              <button ref={nextClock} type="button" onClick={handleNext}
+                className="min-h-12 w-full rounded-2xl px-4 py-3 bg-primary text-primary-foreground font-black focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-blue-700">
+                {qIdx === TOTAL - 1 ? 'See my stars' : 'Next clock'}
+              </button>
+            )}
           </div>
         </motion.div>
       </AnimatePresence>

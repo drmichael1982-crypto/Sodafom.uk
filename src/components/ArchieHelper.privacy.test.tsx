@@ -47,3 +47,23 @@ describe('Archie online-help privacy default',()=>{
     expect(fetch).not.toHaveBeenCalled();
   });
 });
+
+describe('Archie reply feedback',()=>{
+  it.each([
+    'That is not correct. Try again.',
+    'This is the wrong answer. Read the hint to find the correct answer.',
+    'Well done!',
+  ])('does not infer an answer grade from reply text: %s',async(reply)=>{
+    localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:4,sound:false,onlineHelp:true},activities:[],stickers:[]}));
+    const fetch=vi.fn().mockResolvedValue({ok:true,text:async()=>reply});
+    vi.stubGlobal('fetch',fetch);
+    await ask('Explain the history of the telescope');
+    await screen.findByText('Answered by the learning service.');
+    expect(screen.getByRole('log').textContent).toContain(reply);
+    expect(screen.queryByLabelText('Correct')).not.toBeInTheDocument();
+    speak.mockClear();
+    fireEvent.click(screen.getByRole('button',{name:'Listen to Archie'}));
+    expect(speak).toHaveBeenCalledWith('read:archie-ai',reply);
+    expect(screen.getByLabelText('Your question for Archie')).toBeEnabled();
+  });
+});

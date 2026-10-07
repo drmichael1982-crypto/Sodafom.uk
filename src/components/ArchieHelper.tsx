@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Mic, Send, Volume2, X, MessageCircle } from 'lucide-react';
 import { API_PREFIX } from '@/lib/config';
-import { useArchieContext } from '@/contexts/ArchieContext';
+import { useArchieContext, type LessonTutorContext } from '@/contexts/ArchieContext';
 import { useVoice } from '@/lib/voice-context';
 import { getRememberedChildName, tryLocalArchieResponse } from '@/lib/archie-local';
 import { tryRememberChildInterest } from '@/lib/interest-themes';
@@ -12,9 +12,24 @@ import catalog from '@/lib/archie/game-catalog.json';
 import { useArchieData } from '@/lib/archie/storage';
 import '@/pages/archie/archie.css';
 import { blockedLearningText, FRIENDLY_REDIRECT, safeLearningReply } from '@/lib/archie/learning-safety';
-import { submitGameVoiceAnswer } from '@/lib/archie/game-voice';
+import { normaliseVoiceAnswer, submitGameVoiceAnswer } from '@/lib/archie/game-voice';
 
 type Message = { role: 'user' | 'assistant'; content: string };
+/** Lesson help uses the authored source; only the lesson's handler can grade an answer. */
+export function authoredLessonReply(text: string, lesson: LessonTutorContext, unmatched = false): string | null {
+  if (lesson.status === 'paused') return 'Your lesson is paused. Resume it when you are ready; your place is kept.';
+  if (lesson.status === 'finished') return 'This lesson is finished. Choose another lesson or practise it again when you are ready.';
+  if (/\b(hint|help|instructions|what do i do)\b/i.test(text)) return lesson.hintText || lesson.readText;
+  if (/\b(repeat|read this|read the|say it again)\b/i.test(text)) return lesson.readText;
+  if (/^(?:next|continue|finish)(?:\s+(?:question|lesson|key))?[.!?]*$/i.test(text.trim()))
+    return 'Use the lesson’s next or finish button when you are ready. I will keep your place here.';
+  const asksQuestion = /^(?:why|what|how|when|where|who|can|could|please|explain|tell|describe)\b/i.test(text.trim()) || text.includes('?');
+  if (asksQuestion || lesson.status === 'learning')
+    return 'Here is what this lesson explains. ' + lesson.teachingText +
+      (lesson.hintText && lesson.hintText !== lesson.readText ? ' ' + lesson.hintText : '');
+  if (lesson.status === 'answered') return 'This answer has already been checked. ' + (lesson.hintText || '') + ' Continue with the lesson button when you are ready.';
+  return unmatched ? 'I could not match that to one answer choice. Say the full choice, or choose its button. You can ask for a hint.' : null;
+}
 function cleanTutorText(text: string) {
   return text.replaceAll('**', '').replaceAll('__', '').replaceAll('~~', '')
     .replaceAll('`', '').replace(/\\[PLAY:[^\\]]+\\]/g, '').trim();
@@ -52,7 +67,7 @@ export function destinationFor(text: string): string | undefined {
   return game?.route ?? DESTINATIONS.find(([pattern]) => pattern.test(text))?.[1];
 }
 export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: boolean; gameMode?: boolean }) {
-  const { isOpen, draft, voiceOnOpen, openArchie, closeArchie, gameTitle, subject, currentQuestion, currentOptions } = useArchieContext();
+  const { isOpen, draft, voiceOnOpen, openArchie, closeArchie, gameTitle, subject, currentQuestion, currentOptions, lessonTutor } = useArchieContext();
   const { speak, stop, playing } = useVoice();
   const { settings } = useArchieData();
   const navigate = useNavigate();
@@ -72,6 +87,12 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   const openRef = useRef(isOpen);
   const restartTimer = useRef<number | null>(null);
   const previousRoute = useRef(`${location.pathname}${location.search || ''}`);
+  const contextKey = JSON.stringify([gameTitle, subject, currentQuestion, currentOptions,
+    lessonTutor?.activityId, lessonTutor?.questionId, lessonTutor?.stepId,
+    lessonTutor?.status === 'paused', lessonTutor?.status === 'finished']);
+  const contextKeyRef = useRef(contextKey);
+  const previousContext = useRef(contextKey);
+  contextKeyRef.current = contextKey;
   const sendRef = useRef<(text: string) => Promise<void>>(async () => {});
   const [notice, setNotice] = useState('');
   const end = useRef<HTMLDivElement>(null);
@@ -107,6 +128,14 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     stopVoiceConversation(conversationRef.current || recognition.current ? 'Voice conversation stopped after changing activity.' : '');
     pending.current?.abort(); pending.current = null; busyRef.current = false; setBusy(false); setMessages([]);
   }, [location.pathname, location.search]);
+  useEffect(() => {
+    if (previousContext.current === contextKey) return;
+    previousContext.current = contextKey;
+    if (conversationRef.current || recognition.current)
+      stopVoiceConversation('The lesson step changed. Start voice conversation again when you are ready.');
+    pending.current?.abort(); pending.current = null;
+    busyRef.current = false; setBusy(false);
+  }, [contextKey]);
   useEffect(() => () => {
     conversationRef.current = false;
     openRef.current = false;
@@ -121,6 +150,9 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   const close = () => { stopVoiceConversation(''); pending.current?.abort(); pending.current = null; closeArchie(); };
   async function send(text: string) {
     const question = text.trim();
+    if (/^(?:stop|stop listening|stop voice conversation|stop talking)[.!?]*$/i.test(question)) {
+      stopVoiceConversation(); setInput(''); return;
+    }
     if (!question || busyRef.current || !openRef.current) return;
     const conversationTurn = conversationRef.current;
     const readReply = (reply:string) => { if (!conversationTurn || conversationRef.current) read(reply); };
@@ -135,23 +167,31 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     const controller = new AbortController(); pending.current = controller;
     const timeout = window.setTimeout(() => controller.abort(), 15000);
     try {
-      const interestReply = tryRememberChildInterest(question);
+      // A real answer choice takes priority over words such as “help” or “show”.
+      const isLessonChoice = lessonTutor?.status === 'answering' && currentOptions?.some(
+        option => normaliseVoiceAnswer(option) === normaliseVoiceAnswer(question),
+      );
+      const interestReply = isLessonChoice ? null : tryRememberChildInterest(question);
       if (interestReply) {
         setNotice('Handled on this device.');
         setMessages([...history, { role: 'assistant', content: cleanTutorText(interestReply) }]);
         readReply(interestReply);
         return;
       }
-      const destination = destinationFor(question);
+      const destination = isLessonChoice ? undefined : destinationFor(question);
       if (destination) { navigate(destination); close(); return; }
-      const gameAnswer=submitGameVoiceAnswer(gameTitle||'',question);
-      const deviceAnswer = gameAnswer || answerFromDevice(question, getLearnerAge());
-      const lessonAnswer = answerLessonReply(question, currentQuestion || '', subject);
+      const authored = lessonTutor && !isLessonChoice ? authoredLessonReply(question, lessonTutor) : null;
+      const gameAnswer = !authored && (!lessonTutor || lessonTutor.status === 'answering')
+        ? submitGameVoiceAnswer(lessonTutor?.answerTarget || gameTitle || '', question) : undefined;
+      const courseAnswer = lessonTutor ? gameAnswer || authored || authoredLessonReply(question, lessonTutor, true) : null;
+      const deviceAnswer = lessonTutor ? null : gameAnswer || answerFromDevice(question, getLearnerAge());
+      const lessonAnswer = lessonTutor ? null : answerLessonReply(question, currentQuestion || '', subject);
       if (lessonAnswer?.startsWith('Brilliant!')) window.dispatchEvent(new Event('archie-spelling-correct'));
-      const local = deviceAnswer ? { text: deviceAnswer } : lessonAnswer ? { text: lessonAnswer } : tryLocalArchieResponse(question);
+      const local = courseAnswer ? { text: courseAnswer } : deviceAnswer ? { text: deviceAnswer } : lessonAnswer ? { text: lessonAnswer } : tryLocalArchieResponse(question);
       const hint = /\b(hint|help|instructions|what do i do)\b/i.test(question);
       let reply = local?.text;
-      let rememberReply = true;
+      // A bare answer such as “six” must never become a reusable general grading reply.
+      let rememberReply = !gameAnswer && !lessonAnswer && !lessonTutor;
       if (!reply && hint && gameTitle) {
         reply = currentQuestion
           ? `Let's work on ${gameTitle}. ${currentQuestion} Try one small step first. What do you notice?${currentOptions?.length ? ` Your choices are ${currentOptions.join(', ')}.` : ''}`
@@ -186,9 +226,10 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     if (!SpeechRecognition) { stopVoiceConversation('Voice conversation is not supported here. You can still type to Archie.'); return; }
     if (!conversationRef.current || busyRef.current || playingRef.current || recognition.current || !openRef.current) return;
     const listener = new SpeechRecognition(); recognition.current = listener;
+    const listeningContext = contextKeyRef.current;
     listener.lang = 'en-GB'; listener.interimResults = false; listener.continuous = false;
     listener.onresult = (event: any) => {
-      if (recognition.current !== listener || !conversationRef.current || busyRef.current || playingRef.current || !openRef.current) return;
+      if (recognition.current !== listener || listeningContext !== contextKeyRef.current || !conversationRef.current || busyRef.current || playingRef.current || !openRef.current) return;
       const words = String(event.results?.[0]?.[0]?.transcript || '').trim();
       if (words) { setInput(words); void sendRef.current(words); }
     };
@@ -221,7 +262,9 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     clearRestartTimer(); retireMicrophone();
     conversationRef.current = true; setVoiceConversation(true);
     setNotice(settings.sound ? 'Voice conversation started. Archie listens again after each reply.' : 'Voice conversation started. Sound is off, so replies appear as text. Turn sound on to hear Archie.');
-    read(currentQuestion ? `${currentQuestion} ${currentOptions?.join('. ') || ''}` : 'Hi! What would you like to learn? Ask your question after I finish speaking.');
+    const lessonRead = lessonTutor && (lessonTutor.status === 'paused' || lessonTutor.status === 'finished')
+      ? authoredLessonReply('', lessonTutor) : lessonTutor?.readText;
+    read(lessonRead || (currentQuestion ? `${currentQuestion} ${currentOptions?.join('. ') || ''}` : 'Hi! What would you like to learn? Ask your question after I finish speaking.'));
   }
   function listen() {
     if (conversationRef.current) { stopVoiceConversation(); return; }
@@ -231,8 +274,9 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     if (!SpeechRecognition) { setNotice('This browser does not support voice input. Please type your question.'); inputRef.current?.focus(); return; }
     stop();
     const listener = new SpeechRecognition(); recognition.current = listener;
+    const listeningContext = contextKeyRef.current;
     listener.lang = 'en-GB'; listener.interimResults = false; listener.continuous = false;
-    listener.onresult = (e: any) => { if (recognition.current !== listener || !openRef.current) return; setInput(e.results?.[0]?.[0]?.transcript || ''); setNotice('Check your words, then tap Send.'); };
+    listener.onresult = (e: any) => { if (recognition.current !== listener || listeningContext !== contextKeyRef.current || !openRef.current) return; setInput(e.results?.[0]?.[0]?.transcript || ''); setNotice('Check your words, then tap Send.'); };
     listener.onend = () => { if (recognition.current !== listener) return; recognition.current = null; setListening(false); };
     listener.onerror = () => { if (recognition.current !== listener) return; retireMicrophone(); setNotice('I could not hear you. You can type your question instead.'); };
     try { listener.start(); setListening(true); } catch { retireMicrophone(); setNotice('The microphone is busy. Try typing your question.'); }
@@ -243,12 +287,12 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
       <header><div><h2 id="archie-title">Ask Archie</h2><p>{gameTitle ? `Helping with ${gameTitle}` : 'Your learning helper'}</p></div><button aria-label="Close Ask Archie" onClick={close}><X /></button></header>
       <div className="archie-chat-history" role="log" aria-live="polite">
         {!messages.length && <p>Hi! Ask me about this game or lesson. You can type or tap the microphone.</p>}
-        {messages.map((m,i) => <p key={i} className={`chat-${m.role}`}><strong>{m.role === 'user' ? 'You' : 'Archie'}: </strong>{m.role === 'assistant' && /\b(correct|spot on|brilliant|well done|excellent|right answer)\b/i.test(m.content) && <span className="archie-correct-tick" aria-label="Correct">✓</span>}{m.role === 'assistant' ? <>{m.content.split(/(\s+)/).map((part,wordIndex) => /^\s+$/.test(part) ? part : <span className="archie-word" style={{ animationDelay: `${Math.min(wordIndex, 24) * 22}ms` }} key={wordIndex}>{part}</span>)}<button type="button" className="archie-quick" aria-label="Listen to Archie" onClick={() => read(m.content)}><Volume2 size={18}/> Listen</button></> : m.content.replace(/\[PLAY:[^\]]+\]/g, '')}</p>)}
+        {messages.map((m,i) => <p key={i} className={`chat-${m.role}`}><strong>{m.role === 'user' ? 'You' : 'Archie'}: </strong>{m.role === 'assistant' ? <>{m.content.split(/(\s+)/).map((part,wordIndex) => /^\s+$/.test(part) ? part : <span className="archie-word" style={{ animationDelay: `${Math.min(wordIndex, 24) * 22}ms` }} key={wordIndex}>{part}</span>)}<button type="button" className="archie-quick" aria-label="Listen to Archie" onClick={() => read(m.content)}><Volume2 size={18}/> Listen</button></> : m.content.replace(/\[PLAY:[^\]]+\]/g, '')}</p>)}
         {busy && <p>Archie is thinking…</p>}<div ref={end}/>
       </div>
       <button className="archie-quick" disabled={!voiceConversation && busy} onClick={voiceConversation ? () => stopVoiceConversation() : startVoiceConversation}>{voiceConversation ? 'Stop voice conversation' : 'Start voice conversation'}</button>
       <p className="archie-notice">Press Start once to talk back and forth. Archie waits until he finishes speaking before listening again. Your browser may process speech online. You can stop at any time.</p>
-      {currentQuestion && <button className="archie-quick" onClick={() => read(`${currentQuestion} ${currentOptions?.join('. ') || ''}`)}><Volume2 size={18}/> Read the question</button>}
+      {currentQuestion && <button className="archie-quick" onClick={() => read(lessonTutor?.readText || `${currentQuestion} ${currentOptions?.join('. ') || ''}`)}><Volume2 size={18}/> {lessonTutor ? 'Read this lesson part' : 'Read the question'}</button>}
       {gameTitle && <button className="archie-quick" disabled={busy} onClick={() => send('Give me a hint please')}>Give me a hint</button>}
       <p className="archie-notice" role="status">{listening ? 'Listening…' : voiceConversation && playing ? 'Archie is speaking. He will listen again after his reply.' : notice}</p>
       <form onSubmit={e => { e.preventDefault(); void send(input); }}>

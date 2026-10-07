@@ -1,5 +1,15 @@
 [
   {
+    "id": "game-archie-adventure-trail",
+    "title": "Archie’s Adventure Trail",
+    "subject": "maths",
+    "emoji": "🎲",
+    "description": "Roll, solve eight maths clues and explore a colourful trail at your own pace. Use hints, retry safely and pause whenever you need.",
+    "ageGroups": ["5–7", "8–10", "11–13"],
+    "slug": "archie-adventure-trail",
+    "route": "/games/archie-adventure-trail"
+  },
+  {
     "id": "game-star-trail",
     "title": "Star Trail",
     "subject": "maths",

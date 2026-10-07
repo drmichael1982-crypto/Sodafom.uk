@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 vi.mock('@/components/games/GameShell',()=>({default:()=>null,useChildAge:()=>({tier:1})}));
 vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak:vi.fn(),stop:vi.fn()})}));
@@ -6,7 +7,8 @@ import { moveAlongTrail, StarTrailPlay, TRAIL_END, TRAIL_QUESTIONS } from './sta
 import { submitGameVoiceAnswer } from '@/lib/archie/game-voice';
 
 describe('Star Trail friendly board',()=>{
-  it('keeps keyboard focus with the revealed clue, next route and final heading',()=>{
+  it('keeps keyboard focus with the revealed clue, move button, next route and final heading',async()=>{
+    const user=userEvent.setup();
     render(<StarTrailPlay onComplete={vi.fn()}/>);
     const steps=[2,3,1,3,2,3,1,2];
     for(let round=0;round<8;round++){
@@ -16,11 +18,13 @@ describe('Star Trail friendly board',()=>{
       expect(screen.getByRole('heading',{name:question.prompt})).toHaveFocus();
       if(round===0){
         const retry=screen.getByRole('button',{name:question.options.find(option=>option.id!==question.answerId)!.label});
-        retry.focus();fireEvent.click(retry);expect(retry).toHaveFocus();
+        retry.focus();await user.keyboard('{Enter}');expect(retry).toHaveFocus();
       }
-      fireEvent.click(screen.getByRole('button',{name:question.options.find(option=>option.id===question.answerId)!.label}));
+      const correct=screen.getByRole('button',{name:question.options.find(option=>option.id===question.answerId)!.label});
+      correct.focus();await user.keyboard('{Enter}');
       const move=screen.getByRole('button',{name:'Move '+steps[round]+' '+(steps[round]===1?'space':'spaces')});
-      move.focus();fireEvent.click(move);
+      expect(move).toHaveFocus();
+      await user.keyboard('{Enter}');
       expect(round===7?screen.getByRole('heading',{name:'Star garden discovered!'}):screen.getByRole('button',{name:'Reveal my star die'})).toHaveFocus();
     }
   });

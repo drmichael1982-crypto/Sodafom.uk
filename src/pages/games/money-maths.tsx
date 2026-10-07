@@ -2,7 +2,7 @@
  * /games/money-maths — UK coins and notes, making change, counting money
  * Ages 5–13 · Maths subject
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef, type MouseEvent } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
 import GameShell, { type GameResult } from '@/components/games/GameShell';
@@ -43,6 +43,14 @@ const QUESTIONS: MoneyQ[] = [
 
 const TOTAL = 10;
 
+function continueKeyboardFocus(origin: HTMLButtonElement, target: HTMLElement) {
+  const active = document.activeElement;
+  if (document.querySelector('dialog[open], [role="dialog"], [role="alertdialog"]')) return;
+  if (active !== origin && !(active === document.body && (!origin.isConnected || origin.disabled))) return;
+  target.focus({ preventScroll: true });
+  target.scrollIntoView?.({ behavior: 'instant', block: 'center' });
+}
+
 function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string, opts?: string[]) => void }) {
   const [questions] = useState<MoneyQ[]>(() => {
     const easy = QUESTIONS.filter(q => q.difficulty === 'easy').sort(() => Math.random() - 0.5).slice(0, 3);
@@ -54,6 +62,24 @@ function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: Gam
   const [selected, setSelected] = useState<string | null>(null);
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
+  const nextMoney = useRef<HTMLButtonElement>(null);
+  const answerFocus = useRef<HTMLButtonElement | null>(null);
+  const questionFocus = useRef<{ origin: HTMLButtonElement; index: number } | null>(null);
+  const advancedFrom = useRef(-1);
+
+  useEffect(() => {
+    const origin = answerFocus.current;
+    answerFocus.current = null;
+    if (origin && nextMoney.current) continueKeyboardFocus(origin, nextMoney.current);
+  }, [selected]);
+
+  // Wait mode mounts this paragraph after the previous card exits.
+  const focusQuestion = useCallback((node: HTMLParagraphElement | null) => {
+    const pending = questionFocus.current;
+    if (!node || pending?.index !== qIdx) return;
+    questionFocus.current = null;
+    continueKeyboardFocus(pending.origin, node);
+  }, [qIdx]);
 
   const q = questions[qIdx];
 
@@ -62,24 +88,29 @@ function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: Gam
     onQuestionChange?.(q.question, q.choices);
   }, [qIdx, q, onQuestionChange]);
 
-  const handleAnswer = (choice: string) => {
+  const handleAnswer = (choice: string, event: MouseEvent<HTMLButtonElement>) => {
     if (selected !== null) return;
+    if (event.currentTarget === document.activeElement) answerFocus.current = event.currentTarget;
     setSelected(choice);
     const isRight = choice === q.answer;
     const newScore = isRight ? score + 10 : score;
     const newCorrect = isRight ? correct + 1 : correct;
     if (isRight) { setScore(newScore); setCorrect(newCorrect); }
 
-    setTimeout(() => {
-      const next = qIdx + 1;
-      if (next >= TOTAL) {
-        const stars = newCorrect >= 9 ? 3 : newCorrect >= 6 ? 2 : newCorrect >= 3 ? 1 : 0;
-        onComplete({ score: newScore, correct: newCorrect, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
-      } else {
-        setQIdx(next);
-        setSelected(null);
-      }
-    }, 1800);
+  };
+
+  const handleNext = (event: MouseEvent<HTMLButtonElement>) => {
+    if (selected === null || advancedFrom.current === qIdx) return;
+    advancedFrom.current = qIdx;
+    const next = qIdx + 1;
+    if (next >= TOTAL) {
+      const stars = correct >= 9 ? 3 : correct >= 6 ? 2 : correct >= 3 ? 1 : 0;
+      onComplete({ score, correct, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
+    } else {
+      if (event.currentTarget === document.activeElement) questionFocus.current = { origin: event.currentTarget, index: next };
+      setQIdx(next);
+      setSelected(null);
+    }
   };
 
   const progress = (qIdx / TOTAL) * 100;
@@ -105,7 +136,7 @@ function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: Gam
           key={qIdx}
           initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.25 }}
-          className="w-full bg-card rounded-3xl border-2 border-border shadow-lg overflow-hidden"
+          className="w-full bg-card rounded-3xl border-2 border-border shadow-lg overflow-hidden focus-within:!opacity-100"
         >
           {/* Header */}
           <div className="bg-gradient-to-br from-emerald-600 to-green-700 px-6 py-4 flex items-center gap-3">
@@ -125,7 +156,7 @@ function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: Gam
 
             {/* Question */}
             <div className="flex items-center gap-4">
-              <p className="flex-1 text-base font-black text-foreground text-center" style={{ fontFamily: 'var(--font-heading)' }}>
+              <p ref={focusQuestion} tabIndex={-1} className="flex-1 text-base font-black text-foreground text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" style={{ fontFamily: 'var(--font-heading)' }}>
                 {q.question}
               </p>
               <ArchieGameHelper />
@@ -145,7 +176,7 @@ function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: Gam
                     key={c}
                     whileHover={selected === null ? { scale: 1.04 } : {}}
                     whileTap={selected === null ? { scale: 0.96 } : {}}
-                    onClick={() => handleAnswer(c)}
+                    onClick={event => handleAnswer(c, event)}
                     disabled={selected !== null}
                     className={`py-3.5 px-3 rounded-2xl border-2 font-black text-base transition-all flex items-center justify-center gap-1.5 ${style}`}
                   >
@@ -158,21 +189,29 @@ function MoneyMathsInner({ onComplete, onQuestionChange }: { onComplete: (r: Gam
             </div>
 
             {/* Feedback */}
-            <AnimatePresence>
-              {selected !== null && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className={`flex items-start gap-2 rounded-2xl px-4 py-3 ${phase === 'correct' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}
-                >
-                  {phase === 'correct'
-                    ? <CheckCircle2 size={16} className="text-green-600 shrink-0 mt-0.5" />
-                    : <XCircle size={16} className="text-red-500 shrink-0 mt-0.5" />}
-                  <p className={`font-bold text-sm ${phase === 'correct' ? 'text-green-800' : 'text-red-800'}`}>
-                    {phase === 'correct' ? '✓ Correct! ' : `The answer is ${q.answer}. `}{q.explanation}
-                  </p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <div role="status" aria-atomic="true" className={selected === null ? 'sr-only' : undefined}>
+              <AnimatePresence>
+                {selected !== null && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                    className={`flex items-start gap-2 rounded-2xl px-4 py-3 ${phase === 'correct' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}
+                  >
+                    {phase === 'correct'
+                      ? <CheckCircle2 size={16} className="text-green-600 shrink-0 mt-0.5" />
+                      : <XCircle size={16} className="text-red-500 shrink-0 mt-0.5" />}
+                    <p className={`font-bold text-sm ${phase === 'correct' ? 'text-green-800' : 'text-red-800'}`}>
+                      {phase === 'correct' ? '✓ Correct! ' : `The answer is ${q.answer}. `}{q.explanation}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {selected !== null && (
+              <button ref={nextMoney} type="button" onClick={handleNext}
+                className="min-h-12 px-4 py-3 rounded-2xl bg-green-700 text-white font-black focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                {qIdx === TOTAL - 1 ? 'See my stars' : 'Next money question'}
+              </button>
+            )}
           </div>
         </motion.div>
       </AnimatePresence>

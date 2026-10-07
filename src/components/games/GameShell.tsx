@@ -18,6 +18,8 @@ import { getActiveChild } from '@/hooks/useChildAge';
 import { API_PREFIX, ARCHIE_PREVIEW } from '@/lib/config';
 import { isSoundEnabled } from '@/lib/archie/storage';
 import { games as gamesContent } from 'virtual:content';
+import SceneArtwork, { sceneForSubject } from '@/components/SceneArtwork';
+import '@/pages/archie/sodafom-polish.css';
 
 export interface GameResult {
   score: number; // 0–100
@@ -61,6 +63,8 @@ function calcStars(score: number): number {
 }
 
 export default function GameShell({ title, emoji, subject, ageGroups, children, currentQuestion, currentOptions }: GameShellProps) {
+  // Preserve existing saved game IDs; the new title has a typographic apostrophe.
+  const gameSlug = title === 'Archie’s Adventure Trail' ? 'archie-adventure-trail' : title.toLowerCase().replace(/\s+/g, '-');
   const navigate = useNavigate();
   const { session } = useSession();
   const { setGameContext, clearGameContext, openArchie } = useArchieContext();
@@ -90,7 +94,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
 
   // Check if this game is today's daily challenge
   useEffect(() => {
-    const slug = title.toLowerCase().replace(/\s+/g, '-');
+    const slug = gameSlug;
     fetch(`${API_PREFIX}/daily-challenge`, { credentials: 'include' })
       .then(r => r.json())
       .then((d: { game: { slug: string }; claimed: boolean }) => {
@@ -112,7 +116,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   // Record this game as last-played on mount
   useEffect(() => {
     try {
-      const slug = title.toLowerCase().replace(/\s+/g, '-');
+      const slug = gameSlug;
       const id = `game-${slug}`;
       localStorage.setItem('sodafom_last_played', JSON.stringify({ id, title, emoji, slug, subject }));
     } catch { /* ignore */ }
@@ -127,11 +131,11 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
     setResult({ ...r, stars, durationSeconds });
 
     // Record progression
-    const slug = title.toLowerCase().replace(/\s+/g, '-');
+    const slug = gameSlug;
     recordGameCompletion(subject, slug);
 
     try {
-      const k = `game-${title.toLowerCase().replace(/\s+/g, '-')}`;
+      const k = `game-${gameSlug}`;
       const raw = localStorage.getItem('sodafom_game_stars');
       const map: Record<string, number> = raw ? (JSON.parse(raw) as Record<string, number>) : {};
       if ((map[k] ?? 0) < stars) {
@@ -148,7 +152,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          activityId: title.toLowerCase().replace(/\s+/g, '-'),
+          activityId: gameSlug,
           activityTitle: title,
           subject,
           score: r.score,
@@ -189,7 +193,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
     : null;
 
   const gameContent = (
-    <div className="archie-game-shell min-h-screen bg-background flex flex-col">
+    <div className="archie-game-shell soda-game-shell min-h-screen bg-background flex flex-col">
       <Helmet>
         <title>{title} — Sodafom Games</title>
         <meta name="description" content={`Play ${title} on Sodafom — a fun educational game for children ages ${ageGroups.join(', ')}.`} />
@@ -218,7 +222,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
         </div>
         <div className="min-w-0 flex items-center justify-center gap-1.5 sm:gap-2">
           <span className="shrink-0 text-xl sm:text-2xl">{emoji}</span>
-          <h1 ref={gameTitleRef} tabIndex={-1} className="truncate text-center font-black text-sm sm:text-lg rounded-md focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-current" style={{ fontFamily: 'var(--font-heading)' }}>{title}</h1>
+          <h1 ref={gameTitleRef} tabIndex={-1} className="break-words text-center font-black text-sm sm:text-lg rounded-md focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-current" style={{ fontFamily: 'var(--font-heading)' }}>{title}</h1>
         </div>
         <div className="flex items-center gap-2">
           {/* Age badges — desktop only */}
@@ -269,6 +273,8 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
           <MessageCircle size={20} aria-hidden="true" /> Ask Archie
         </button>
       </div>
+
+      <section className="game-scene-banner" aria-label="Your learning adventure"><div className="game-scene-copy"><strong>Archie is here to help</strong><p>Take your time. Try a clue, ask for a hint and celebrate each small step.</p></div><SceneArtwork scene={sceneForSubject(subject,title)} title={title} compact/></section>
 
       {/* Game area */}
       <div ref={gameAreaRef} className="flex-1 flex flex-col pb-6">
