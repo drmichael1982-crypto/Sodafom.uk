@@ -1,14 +1,37 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-vi.mock('@/components/games/GameShell',()=>({default:()=>null,useChildAge:()=>({tier:1})}));
-vi.mock('@/lib/config',()=>({ARCHIE_PREVIEW:true}));
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+const mode=vi.hoisted(()=>({preview:true,tier:1}));
+vi.mock('@/components/games/GameShell',()=>({default:()=>null,useChildAge:()=>({tier:mode.tier})}));
+vi.mock('@/lib/config',()=>({get ARCHIE_PREVIEW(){return mode.preview;}}));
 vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak:vi.fn(),stop:vi.fn()})}));
-import { FRACTION_SETS, fractionExplanation, FractionPizzaPlay } from './fraction-pizza';
+import { FRACTION_SETS, fractionExplanation, FractionPizzaPlay, FractionPizzaWithDifficulty } from './fraction-pizza';
 import { submitGameVoiceAnswer } from '@/lib/archie/game-voice';
+import { updateSavedData } from '@/lib/archie/storage';
+
+beforeEach(()=>{localStorage.clear();mode.preview=true;mode.tier=1;});
 afterEach(()=>{vi.restoreAllMocks();vi.useRealTimers();});
 
 describe('Fraction Pizza picnic',()=>{
+  it.each([{year:1,tier:1,difficulty:'Easy',slices:2},{year:4,tier:2,difficulty:'Medium',slices:8},{year:7,tier:3,difficulty:'Hard',slices:9}])('preview Year $year keeps its selected-tier recipe with no manual override',({year,tier,difficulty,slices})=>{
+    mode.tier=tier;vi.spyOn(Math,'random').mockReturnValue(0.5);
+    updateSavedData(data=>({...data,settings:{...data.settings,year}}));
+    render(<FractionPizzaWithDifficulty onComplete={vi.fn()} onQuestionChange={vi.fn()}/>);
+    expect(screen.getByText('Order 1 of 8 · '+difficulty)).toBeInTheDocument();
+    expect(screen.getByRole('group',{name:'Choose pizza slices'}).querySelectorAll('button')).toHaveLength(slices);
+    expect(screen.queryByRole('button',{name:'Choose pizza challenge'})).not.toBeInTheDocument();
+    expect(screen.queryByRole('button',{name:/Hard ·/})).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading',{name:'Choose your pizza challenge'})).not.toBeInTheDocument();
+  });
+  it('preserves the manual difficulty picker outside the preview',()=>{
+    mode.preview=false;vi.spyOn(Math,'random').mockReturnValue(0.5);
+    render(<FractionPizzaWithDifficulty onComplete={vi.fn()} onQuestionChange={vi.fn()}/>);
+    fireEvent.click(screen.getByRole('button',{name:'Choose pizza challenge'}));
+    expect(screen.getByRole('heading',{name:'Choose your pizza challenge'})).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button',{name:/Hard ·/}));
+    expect(screen.getByText('Order 1 of 8 · Hard')).toBeInTheDocument();
+    expect(screen.getByRole('group',{name:'Choose pizza slices'}).querySelectorAll('button')).toHaveLength(9);
+  });
   it('updates the complete slice-count status without moving keyboard focus',async()=>{
     vi.spyOn(Math,'random').mockReturnValue(0.5);
     const user=userEvent.setup();

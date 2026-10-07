@@ -3,6 +3,8 @@ import { MemoryRouter } from 'react-router';
 import { HelmetProvider } from '@dr.pogodin/react-helmet';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const { speak, stop } = vi.hoisted(() => ({ speak: vi.fn(), stop: vi.fn() }));
+// These existing help/focus contracts exercise unrestricted account-mode games.
+vi.mock('@/lib/config', () => ({ ARCHIE_PREVIEW: false, API_PREFIX: '' }));
 vi.mock('@/lib/auth/auth-client', () => ({ useSession: () => ({ session: null }), signOut: vi.fn() }));
 vi.mock('@/contexts/ProgressionContext', () => ({ useProgression: () => ({ recordGameCompletion: vi.fn() }) }));
 vi.mock('@/lib/voice-context', () => ({ useVoice: () => ({ speak, stop, playing: false }) }));

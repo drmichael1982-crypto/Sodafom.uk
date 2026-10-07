@@ -25,12 +25,36 @@ describe('child game difficulty',()=>{
     act(()=>saveYear(9));
     expect(result.current.ageGroup).toBe('11-13');expect(result.current.tier).toBe(3);
   });
-  it('prioritises an active child and responds to same-tab child selection',()=>{
+  it('prioritises an active child outside preview and responds to same-tab child selection',()=>{
+    preview.enabled=false;
     saveYear(9);const {result}=renderHook(()=>useChildAge());
     act(()=>setActiveChild({id:1,name:'Test learner',ageGroup:'5-7',avatarEmoji:'⭐'}));
     expect(result.current.tier).toBe(1);
     act(()=>saveYear(7));expect(result.current.tier).toBe(1);
-    act(()=>setActiveChild(null));expect(result.current.tier).toBe(3);
+    act(()=>setActiveChild(null));expect(result.current.ageGroup).toBeNull();expect(result.current.tier).toBe(2);
+  });
+  it.each([
+    {year:3,ageGroup:'5-7',tier:1,stale:'11-13'},
+    {year:6,ageGroup:'8-10',tier:2,stale:'5-7'},
+    {year:9,ageGroup:'11-13',tier:3,stale:'8-10'},
+  ] as const)('uses preview Year $year difficulty rather than a stale profile selection',({year,ageGroup,tier,stale})=>{
+    const profile={id:1,name:'Test learner',ageGroup:stale,avatarEmoji:'⭐'};
+    setActiveChild(profile);saveYear(year);
+    const {result}=renderHook(()=>useChildAge());
+    expect(result.current.ageGroup).toBe(ageGroup);expect(result.current.tier).toBe(tier);
+    expect(result.current.child).toEqual(profile);
+    expect(JSON.parse(localStorage.getItem('sodafom_active_child')!)).toEqual(profile);
+  });
+  it('responds to saved preview year changes across both age boundaries while preserving profile selection',()=>{
+    const profile={id:2,name:'Test learner',ageGroup:'11-13' as const,avatarEmoji:'⭐'};
+    setActiveChild(profile);saveYear(3);
+    const {result}=renderHook(()=>useChildAge());
+    expect(result.current.tier).toBe(1);
+    act(()=>saveYear(4));expect(result.current.ageGroup).toBe('8-10');expect(result.current.tier).toBe(2);
+    act(()=>saveYear(6));expect(result.current.tier).toBe(2);
+    act(()=>saveYear(7));expect(result.current.ageGroup).toBe('11-13');expect(result.current.tier).toBe(3);
+    act(()=>saveYear(1));expect(result.current.tier).toBe(1);
+    expect(result.current.child).toEqual(profile);
   });
   it('keeps the existing guest default outside the Archie preview',()=>{
     preview.enabled=false;saveYear(1);

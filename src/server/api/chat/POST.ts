@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { answerWithArchie, validateMessages } from "../../lib/archie-brain";
+import { getParentAIEnv } from "../../lib/archie-parent-ai";
 
 const requests = new Map<string, { count: number; reset: number }>();
 export default async function handler(req: Request, res: Response) {
@@ -20,7 +21,7 @@ export default async function handler(req: Request, res: Response) {
     const text = await answerWithArchie(
       messages,
       typeof req.body?.systemExtra === "string" ? req.body.systemExtra : "",
-      process.env,
+      await getParentAIEnv(req) ?? process.env,
       req.body?.learnerAge,
     );
     return res.type("text/plain").send(text);

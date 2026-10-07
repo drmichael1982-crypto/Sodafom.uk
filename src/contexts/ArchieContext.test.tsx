@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { ArchieProvider, useArchieContext, type LessonTutorContext } from './ArchieContext';
 describe('one shared Archie',()=>{
   it('keeps callbacks stable and clears old questions when a new activity starts',()=>{
@@ -35,5 +35,60 @@ describe('one shared Archie',()=>{
     act(()=>callbacks.clear());
     expect(result.current.lessonTutor).toBeNull();
     expect(result.current.currentQuestion).toBeNull();
+  });
+  it('shares optional lesson phase and subject details, and clears them with the old activity',()=>{
+    const {result}=renderHook(()=>useArchieContext(),{wrapper:ArchieProvider});
+    act(()=>result.current.setGameContext('Fractions','Maths','1/2 of 8?',['2','4'],{phase:'practice',subject:'maths',hint:'Share into 2 groups.'}));
+    expect(result.current.lesson).toMatchObject({phase:'practice',subject:'maths',hint:'Share into 2 groups.'});
+    act(()=>result.current.setGameContext('Number Pop','Maths','2 + 2?',['3','4']));
+    expect(result.current.lesson).toBeNull();
+    act(()=>result.current.clearGameContext());
+    expect(result.current.lesson).toBeNull();expect(result.current.gameTitle).toBeNull();
+  });
+  it('shares scoped voice metadata and phase coaching together without replacing either',()=>{
+    const {result}=renderHook(()=>useArchieContext(),{wrapper:ArchieProvider});
+    const tutor:LessonTutorContext={activityId:'maths-y2-w01-s1',questionId:'q0',stepId:'phase2',status:'answering',
+      readText:'Which number?',teachingText:'Count on one.',answerTarget:'scoped-q0'};
+    act(()=>result.current.setGameContext('Adding','Maths','Which number?',['3','4'],tutor,
+      {phase:'practice',subject:'maths',hint:'Count on one.',correctOption:'4',answeredCorrectly:false}));
+    expect(result.current.lessonTutor).toEqual(tutor);
+    expect(result.current.lesson).toMatchObject({phase:'practice',hint:'Count on one.'});
+    act(()=>result.current.clearGameContext());
+    expect(result.current.lessonTutor).toBeNull();expect(result.current.lesson).toBeNull();
+  });
+});
+
+describe('explicit lesson voice handoff',()=>{
+  it('opens one requested lesson once, after authored context is mounted, without saving permission',()=>{
+    const {result}=renderHook(()=>useArchieContext(),{wrapper:ArchieProvider});
+    const saved=localStorage.length;
+    act(()=>result.current.requestLessonVoice('maths-y1-w01-s1'));
+    expect(result.current.isOpen).toBe(false);
+    act(()=>{
+      result.current.setGameContext('Adding','Maths','Add two groups.',[],{
+        activityId:'maths-y1-w01-s1',questionId:null,stepId:'phase0',status:'learning',readText:'Add two groups.',teachingText:'Add two groups.'});
+      result.current.consumeLessonVoice('maths-y1-w01-s1');
+    });
+    expect(result.current.isOpen).toBe(true);expect(result.current.voiceOnOpen).toBe(true);
+    act(()=>result.current.closeArchie());
+    act(()=>result.current.consumeLessonVoice('maths-y1-w01-s1'));
+    expect(result.current.isOpen).toBe(false);expect(localStorage.length).toBe(saved);
+  });
+  it('does not start another lesson, a cancelled handoff, or an expired request',()=>{
+    const now=vi.spyOn(Date,'now').mockReturnValue(1000);
+    try {
+      const {result}=renderHook(()=>useArchieContext(),{wrapper:ArchieProvider});
+      act(()=>result.current.requestLessonVoice('history-y3-w01-s1'));
+      act(()=>result.current.consumeLessonVoice('history-y4-w01-s1'));
+      expect(result.current.isOpen).toBe(false);
+      act(()=>result.current.requestLessonVoice('history-y3-w01-s1'));
+      act(()=>result.current.requestLessonVoice(null));
+      act(()=>result.current.consumeLessonVoice('history-y3-w01-s1'));
+      expect(result.current.isOpen).toBe(false);
+      act(()=>result.current.requestLessonVoice('history-y3-w01-s1'));
+      now.mockReturnValue(11001);
+      act(()=>result.current.consumeLessonVoice('history-y3-w01-s1'));
+      expect(result.current.isOpen).toBe(false);
+    } finally { now.mockRestore(); }
   });
 });

@@ -9,3 +9,8 @@
 @media(prefers-reduced-motion:reduce){.home-orbit{animation:none!important}}
 .orbit-model .home-orbit{animation:home-orbit-spin var(--orbit-time) linear infinite;animation-play-state:paused}
 .orbit-model.is-moving .home-orbit{animation-play-state:running}
+.home-moon-orbit{position:absolute;left:50%;top:50%;width:250%;aspect-ratio:1;border:1px solid #e8f3ff88;border-radius:50%;transform:translate(-50%,-50%);animation:home-moon-spin 8s linear infinite;animation-play-state:paused;pointer-events:none}
+.home-moon{position:absolute;left:50%;top:-3px;width:clamp(4px,.6vw,7px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 30% 25%,#fff,#c4cad7 65%,#69788e);box-shadow:0 0 4px #ffffff60}
+.orbit-model.is-moving .home-moon-orbit{animation-play-state:running}
+@keyframes home-moon-spin{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.home-moon-orbit{animation:none!important}}

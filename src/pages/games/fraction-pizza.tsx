@@ -125,9 +125,13 @@ export function FractionPizzaPlay({onComplete,difficulty,year,onQuestionChange}:
   </section>;
 }
 
-function FractionPizzaWithDifficulty({onComplete,onQuestionChange}:{onComplete:(result:GameResult)=>void;onQuestionChange:(question:string,options:string[])=>void}) {
+export function FractionPizzaWithDifficulty({onComplete,onQuestionChange}:{onComplete:(result:GameResult)=>void;onQuestionChange:(question:string,options:string[])=>void}) {
   const {tier}=useChildAge();const {settings}=useArchieData();const [difficulty,setDifficulty]=useState<Difficulty|null>(null);
   useEffect(()=>{setDifficulty(tier===1?'Easy':tier===2?'Medium':'Hard');},[tier]);
+  if(ARCHIE_PREVIEW){
+    const selected=tier===1?'Easy':tier===2?'Medium':'Hard';
+    return <FractionPizzaPlay key={selected+'-'+settings.year} onComplete={onComplete} difficulty={selected} year={settings.year} onQuestionChange={onQuestionChange}/>;
+  }
   if(!difficulty)return <DifficultyPicker onSelect={setDifficulty}/>;
   return <><div className="p-3 text-center"><button type="button" className="min-h-11 px-4 py-2 rounded-xl bg-white border-2 border-orange-300 font-bold" onClick={()=>setDifficulty(null)}>Choose pizza challenge</button></div><FractionPizzaPlay key={difficulty+'-'+settings.year} onComplete={onComplete} difficulty={difficulty} year={ARCHIE_PREVIEW?settings.year:undefined} onQuestionChange={onQuestionChange}/></>;
 }

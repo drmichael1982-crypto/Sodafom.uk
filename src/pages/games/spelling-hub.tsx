@@ -10,6 +10,10 @@ import { Volume2, VolumeX, Star, Lock, Play, ChevronRight, Pencil } from 'lucide
 import catalog from '@/lib/archie/game-catalog.json';
 import GameHubHelp from '@/components/games/GameHubHelp';
 import { isDemoGameId, useSubscription } from '@/hooks/useSubscription';
+import { ARCHIE_PREVIEW } from '@/lib/config';
+import { useArchieData } from '@/lib/archie/storage';
+import { isGameForYear } from '@/lib/archie/game-age';
+import SceneArtwork, { sceneForSubject } from '@/components/SceneArtwork';
 
 
 const ageConfig: Record<string, { badge: string; icon: string }> = {
@@ -56,14 +60,15 @@ export default function SpellingHubPage() {
   const navigate = useNavigate();
   const { speak, speakingId } = useReadAloud();
   const { subscribed } = useSubscription();
+  const { settings } = useArchieData();
 
   const allGames = catalog as Array<Record<string, unknown>>;
   const spellingGames = allGames.filter(
-    (g) => g.subject === 'spelling'
+    (g) => g.subject === 'spelling' && (!ARCHIE_PREVIEW || isGameForYear(settings.year, (g.ageGroups as string[]) ?? []))
   );
 
   return (
-    <main className="min-h-screen bg-background pb-20">
+    <main className={`min-h-screen bg-background pb-20 ${ARCHIE_PREVIEW ? 'soda-gamehub' : ''}`}>
       <Helmet>
         <title>Spelling Hub — Sodafom | Fun Learning Games for Kids</title>
         <meta name="description" content="Your spelling learning hub on Sodafom. Browse all spelling and vocabulary games for ages 5–13." />
@@ -106,7 +111,7 @@ export default function SpellingHubPage() {
               ✏️ {spellingGames.length} games
             </span>
             <span className="px-3 py-1.5 rounded-full bg-white/20 text-sm font-bold">
-              🎯 Ages 5–13
+              🎯 {ARCHIE_PREVIEW ? `Year ${settings.year}` : 'Ages 5–13'}
             </span>
             <span className="px-3 py-1.5 rounded-full bg-white/20 text-sm font-bold">
               ⭐ Earn stars
@@ -116,6 +121,7 @@ export default function SpellingHubPage() {
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-8">
+        {ARCHIE_PREVIEW && <section className="soda-gamehub-age" aria-label="Your practice level"><p>Games for Year {settings.year} · Chosen for your current practice level.</p><Link to="/parents" className="a-button">Change practice year with a grown-up</Link></section>}
         <GameHubHelp title="Spelling game library" subject="spelling" />
         {spellingGames.length === 0 ? (
           <p className="text-center text-muted-foreground py-16">No spelling games found.</p>
@@ -140,6 +146,7 @@ export default function SpellingHubPage() {
                     aria-labelledby={`${id}-title`}
                     className="w-full text-left rounded-3xl border-2 border-secondary/40 bg-card overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 flex flex-col"
                   >
+                    {ARCHIE_PREVIEW && <SceneArtwork scene={sceneForSubject('spelling', game.title as string)} title={game.title as string} compact />}
                     <div className="bg-secondary/10 px-4 py-3 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl">{game.emoji as string}</span>

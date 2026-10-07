@@ -73,12 +73,14 @@ vi.mock("@/lib/archie/history-course", () => ({ HISTORY_LESSONS: [] }));
 vi.mock("@/lib/archie/english-course", () => ({ ENGLISH_LESSONS: [] }));
 vi.mock("@/lib/archie/science-course", () => ({ SCIENCE_LESSONS: [] }));
 vi.mock("@/lib/voice-context", () => ({ useVoice: () => ({ stop, speak }) }));
-const { setGameContext, clearGameContext } = vi.hoisted(() => ({
+const { setGameContext, clearGameContext, openArchie, consumeLessonVoice } = vi.hoisted(() => ({
   setGameContext: vi.fn(),
   clearGameContext: vi.fn(),
+  openArchie: vi.fn(),
+  consumeLessonVoice: vi.fn(),
 }));
 vi.mock("@/contexts/ArchieContext", () => ({
-  useArchieContext: () => ({ setGameContext, clearGameContext }),
+  useArchieContext: () => ({ setGameContext, clearGameContext, openArchie, consumeLessonVoice }),
 }));
 import ArchieCourses, { CoursePlayer } from "./ArchieCourses";
 import { submitGameVoiceAnswer } from "@/lib/archie/game-voice";
@@ -392,5 +394,32 @@ describe("child lesson adventure", () => {
         name: "Read the curriculum or evidence source for this unit",
       }),
     ).toHaveAttribute("href", lesson.source);
+  });
+});
+
+describe('authored talking whiteboard',()=>{
+  it('offers an explicit spoken start and changes the board and narration with the authored phase',()=>{
+    show();
+    expect(consumeLessonVoice).toHaveBeenCalledWith('test-adventure');
+    const board=screen.getByRole('region',{name:'Lesson whiteboard'});
+    expect(board).toHaveAttribute('data-phase','0');
+    expect(board).toHaveTextContent('Count objects carefully.');
+    fireEvent.click(screen.getByRole('button',{name:'Talk through this lesson'}));
+    expect(openArchie).toHaveBeenCalledWith('',true);
+    fireEvent.click(screen.getByRole('button',{name:'Read this part'}));
+    expect(speak).toHaveBeenLastCalledWith('read:course',tutorContext().readText);
+    fireEvent.click(screen.getByRole('button',{name:/Let.s try together/}));
+    expect(board).toHaveAttribute('data-phase','1');
+    expect(board).toHaveTextContent('One counter and one more make two.');
+    fireEvent.click(screen.getByRole('button',{name:/Ready to find some keys/}));
+    expect(board).toHaveAttribute('data-phase','2');expect(board).toHaveAttribute('data-question','0');
+    expect(board).not.toHaveTextContent('One counter and one more make two.');
+    expect(board).not.toHaveTextContent('One and one make two.');
+    expect(tutorContext().readText).toBe('What is 1 + 1?. 1. 2. 3');
+    fireEvent.click(screen.getByRole('button',{name:'2'}));
+    expect(board).toHaveTextContent('One and one make two.');
+    fireEvent.click(screen.getByRole('button',{name:'Next key'}));
+    expect(board).toHaveAttribute('data-question','1');expect(board).toHaveTextContent('What is 2 + 1?');
+    expect(board).not.toHaveTextContent('Two and one make three.');
   });
 });

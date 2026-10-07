@@ -9,7 +9,7 @@ import { createAuthClient } from 'better-auth/react';
 import { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useLocation } from "react-router";
 import { SESSION_RECOVERY_URL, claimSessionRecovery, clearSessionRecovery } from './session-recovery';
-import { API_BASE_URL, API_PREFIX } from '../config';
+import { API_BASE_URL, API_PREFIX, ARCHIE_PREVIEW } from '../config';
 
 // Auth client - baseURL must be the full origin for BetterAuth's URL construction.
 const _authClient = createAuthClient({
@@ -105,7 +105,7 @@ export function useSession() {
   useStaleSessionRecovery(error, isPending, isAuthenticated);
 
   // MOCK SESSION FOR FREE ACCESS (1182 code)
-  const hasFreeAccess = typeof window !== 'undefined' && localStorage.getItem('sodafom_free_access') === 'true';
+  const hasFreeAccess = !ARCHIE_PREVIEW && typeof window !== 'undefined' && localStorage.getItem('sodafom_free_access') === 'true';
   if (hasFreeAccess) {
     return {
       session: { user: { id: 'free-user', name: 'Archie Friend', email: '1182@sodafom.uk', isAdmin: true } } as any,

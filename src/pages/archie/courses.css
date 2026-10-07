@@ -6,3 +6,26 @@
 .learning-model{padding:16px;margin:18px 0;border:2px solid #b1d6ee;border-radius:16px;background:#f0f8ff}.learning-model figcaption{font-weight:900;margin-bottom:12px}.place-value-picture{display:flex;flex-wrap:wrap;gap:8px}.place-value-picture>div{flex:1 1 76px;min-width:0;padding:12px 4px;border:2px solid #7eb3dd;border-radius:12px;background:white;text-align:center}.place-value-picture strong{display:block;font-size:32px}.place-value-picture span{font-size:13px}.dot-picture{display:flex;gap:10px;flex-wrap:wrap;max-width:350px}.dot-picture>span{width:24px;height:24px;background:#0868ca;border:2px solid #064b9b;border-radius:50%}.dot-picture>span.gold{background:#ffce3f;border-color:#986500}.dot-picture>span.crossed{background:#d8e3f2;position:relative}.dot-picture>span.crossed:after{content:"×";position:absolute;inset:0;text-align:center;line-height:18px;color:#344564;font-size:25px}.fraction-picture{display:flex;gap:2px;min-height:48px}.fraction-picture>span{flex:1;border:2px solid #125ca2;background:white}.fraction-picture>span.shaded{background:#ffdb54}
 .sequence-picture{display:flex;gap:16px;flex-wrap:wrap}.sequence-picture>div{flex:1 1 90px;padding:12px;border:2px solid #7eb3dd;border-radius:14px;background:white}.sequence-picture strong{display:block;font-size:28px;margin-bottom:10px}.sequence-picture .dot-picture{display:flex}
 .course-board-heading .a-eyebrow,.course-next .a-eyebrow{color:#36547c;font-size:1em}
+
+/* One phase at a time: authored teaching stays readable beside the existing learning models. */
+.course-whiteboard { min-width: 0; padding: clamp(1rem, 3vw, 1.75rem); background: #fffef8; color: #173b67; border: 3px solid #2f6091; border-top: 6px solid #ddb44b; border-radius: 1rem; box-shadow: 0 4px 0 #173b6718; overflow-wrap: anywhere; }
+.course-whiteboard > p, .course-whiteboard > h3, .course-whiteboard .quest-hint { max-width: 66ch; line-height: 1.65; }
+.course-whiteboard .quest-options { width: 100%; }
+@media (max-width: 480px) { .course-whiteboard { padding: .9rem; } .course-board-heading > button { width: 100%; } }
+
+/* Colour marks the five lesson steps; the board itself stays clear for reading. */
+.soda-page:not(.a-calm) .course-trail li:nth-child(5n+1){background:#fff4c6;border-color:#d5aa34}
+.soda-page:not(.a-calm) .course-trail li:nth-child(5n+2){background:#daf6eb;border-color:#439c84}
+.soda-page:not(.a-calm) .course-trail li:nth-child(5n+3){background:#eee5ff;border-color:#9c78cd}
+.soda-page:not(.a-calm) .course-trail li:nth-child(5n+4){background:#ffe5ed;border-color:#ce7793}
+.soda-page:not(.a-calm) .course-trail li:nth-child(5n+5){background:#dff2ff;border-color:#649dcd}
+.soda-page:not(.a-calm) .course-trail li.current{border:3px solid #144f9c;box-shadow:0 4px 0 #144f9c24}
+.soda-page:not(.a-calm) .course-trail li.complete{background:#d7f5e3;border-color:#2d8054}
+.soda-page:not(.a-calm) .course-board{border-top-color:#279688;background:linear-gradient(135deg,#f0fbff,#fffaf1)}
+.soda-page:not(.a-calm) .course-whiteboard{border-color:#2a8279;border-top-color:#ffcb49;box-shadow:0 5px 0 #1f675322,0 12px 28px #21545b0a;position:relative}
+.soda-page:not(.a-calm) .course-board-heading{padding:16px;border-radius:18px;background:linear-gradient(110deg,#e1f7ef,#e6f1ff);border:1px solid #b4d9dc}
+.soda-page:not(.a-calm) .course-board-heading h2{color:#134d5b;margin-bottom:0}
+.soda-page:not(.a-calm) .course-board-heading .a-button{box-shadow:0 3px 0 #19556b20}
+.soda-page:not(.a-calm) .course-vocabulary>div:nth-child(3n+1){background:#e6f6ed}
+.soda-page:not(.a-calm) .course-vocabulary>div:nth-child(3n+2){background:#fff1c7}
+.soda-page:not(.a-calm) .course-vocabulary>div:nth-child(3n+3){background:#eee8ff}

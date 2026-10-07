@@ -66,6 +66,21 @@ function show() { return render(<MemoryRouter><OrbitHome /></MemoryRouter>); }
 function model() { return screen.getByLabelText('Explore the eight planets'); }
 
 describe('home planet discovery', () => {
+  it('places one decorative Moon with Earth, explains the relationship and shares the motion control', async () => {
+    const user = userEvent.setup(); show();
+    const earth = model().querySelector('.home-planet-2');
+    const moon = earth?.querySelector('.home-moon-orbit .home-moon');
+    expect(moon).not.toBeNull();
+    expect(model().querySelectorAll('.home-moon')).toHaveLength(1);
+    expect(earth).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByText('The Moon orbits Earth while Earth orbits the Sun.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Pause planets' }));
+    expect(model()).toHaveClass('is-still'); expect(moon).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Move planets' }));
+    expect(model()).toHaveClass('is-moving');
+    media.change(true); expect(model()).toHaveClass('is-still');
+    expect(screen.getByRole('button', { name: 'Still planets' })).toBeDisabled();
+  });
   it('has eight named native choices with single selected state and a persistent fact status', async () => {
     const user = userEvent.setup(); show();
     const status = screen.getByRole('status');

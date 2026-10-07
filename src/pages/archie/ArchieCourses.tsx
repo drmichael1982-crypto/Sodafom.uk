@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router";
 import {
   BookOpen,
@@ -40,6 +40,13 @@ import {
   listenForGameAnswer,
   normaliseVoiceAnswer,
 } from "@/lib/archie/game-voice";
+import { nextLessonInPath } from "@/lib/archie/course-sequence";
+import {
+  revealsAnswer,
+  subjectMethod,
+  type LessonCoachContext,
+  type LessonPhase,
+} from "@/lib/archie/lesson-coach";
 
 export const COURSE_LESSONS = [
   ...MATHS_LESSONS,
@@ -54,6 +61,13 @@ const SUBJECTS = {
   science: "Science",
 };
 const savedId = (id: string) => "course-" + id;
+const PHASE_KEYS: LessonPhase[] = [
+  "discover",
+  "example",
+  "practice",
+  "mission",
+  "reflection",
+];
 export default function ArchieCourses() {
   const { lessonId } = useParams();
   const lesson = lessonId
@@ -317,7 +331,7 @@ export function CoursePlayer({ lesson }: { lesson: CourseLesson }) {
 }
 function CourseSession({ lesson }: { lesson: CourseLesson }) {
   const { complete, activities } = useArchieData();
-  const { setGameContext, clearGameContext } = useArchieContext();
+  const { setGameContext, clearGameContext, openArchie, consumeLessonVoice } = useArchieContext();
   const { speak, stop } = useVoice();
   const [progress, setProgress] = useState(() =>
     readCourseProgress(lesson.id, lesson.questions.length),
@@ -352,10 +366,46 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
           : phase === 3
             ? lesson.mission.title + ". " + lesson.mission.instructions.join(". ")
             : lesson.reflection;
+  const nextLesson = useMemo(
+    () => nextLessonInPath(COURSE_LESSONS, lesson),
+    [lesson],
+  );
+  const [wrongAttempts, setWrongAttempts] = useState(0);
+  const wrongAttemptsRef = useRef(0);
+  function resetAttempts() {
+    wrongAttemptsRef.current = 0;
+    setWrongAttempts(0);
+  }
   useEffect(() => {
     setStorageOkay(saveCourseProgress(lesson.id, progress));
   }, [lesson.id, progress]);
   useEffect(() => {
+    const practising = phase === 2 && !finished;
+    const phaseKey: LessonPhase = finished ? "complete" : PHASE_KEYS[phase];
+    const details: LessonCoachContext = {
+      phase: phaseKey,
+      phaseLabel: finished ? "Lesson complete" : COURSE_PHASES[phase].name,
+      subject: lesson.subject,
+      year: lesson.year,
+      objective: lesson.objective,
+      keyPoint: lesson.teaching[0],
+      vocabulary: lesson.vocabulary.map((item) => item.word),
+      workedExample: lesson.example,
+      ...(practising
+        ? {
+            hint: question.hint,
+            correctOption: question.options[question.answer],
+            answeredCorrectly: correct,
+            wrongAttempts,
+            ...(correct ? { explanation: question.explanation } : {}),
+          }
+        : {}),
+      ...(phase === 3 && !finished
+        ? { missionSteps: lesson.mission.instructions }
+        : {}),
+      ...(phase === 4 && !finished ? { reflection: lesson.reflection } : {}),
+      ...(finished ? { nextLessonTitle: nextLesson?.title ?? null } : {}),
+    };
     setGameContext(
       lesson.title,
       SUBJECTS[lesson.subject],
@@ -371,9 +421,27 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
         hintText: phase === 2 ? correct ? question.explanation : question.hint : narration,
         answerTarget,
       },
+      details,
     );
+    consumeLessonVoice?.(lesson.id);
     return clearGameContext;
-  }, [lesson, phase, progress.phase, progress.question, finished, paused, correct, question, narration, answerTarget, setGameContext, clearGameContext]);
+  }, [
+    lesson,
+    phase,
+    progress.phase,
+    progress.question,
+    finished,
+    paused,
+    question,
+    correct,
+    narration,
+    answerTarget,
+    wrongAttempts,
+    nextLesson,
+    setGameContext,
+    clearGameContext,
+    consumeLessonVoice,
+  ]);
   useEffect(() => () => stop(), [stop]);
   useEffect(() => {
     titleRef.current?.focus();
@@ -397,6 +465,23 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
     setProgress((previous) => ({ ...previous, phase: nextPhase }));
     setFeedback("");
     setHint(false);
+    resetAttempts();
+  }
+  /** Kind retry feedback. After two tries, point back to the worked method, never the answer. */
+  function methodNudge(attempts: number) {
+    if (attempts < 2) return "";
+    const example =
+      lesson.example.prompt + " " + lesson.example.explanation;
+    const correctOption = question.options[question.answer];
+    return (
+      " " +
+      subjectMethod(lesson.subject) +
+      (revealsAnswer(example, correctOption)
+        ? ""
+        : " Look back at the worked example: " +
+          example +
+          " Use the same method here.")
+    );
   }
   function chooseAnswer(index: number, answerButton?: HTMLButtonElement) {
     if (correct) return;
@@ -415,14 +500,21 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
           question.explanation,
       );
     } else {
+      const attempts = wrongAttemptsRef.current + 1;
+      wrongAttemptsRef.current = attempts;
+      setWrongAttempts(attempts);
       setHint(true);
-      setFeedback("Take another look at the hint, then have another go.");
+      setFeedback(
+        "Not quite yet, and that is okay. Take another look at the hint, then have another go." +
+          methodNudge(attempts),
+      );
     }
   }
   function nextQuestion() {
     stop();
     setHint(false);
     setFeedback("");
+    resetAttempts();
     if (progress.question + 1 === lesson.questions.length) movePhase(3);
     else
       setProgress((previous) => ({
@@ -443,7 +535,9 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
         chooseAnswer(index);
         return index === question.answer
           ? "Well done. " + question.explanation
-          : "Have another go. " + question.hint;
+          : "Not quite yet. Have another go. " +
+              question.hint +
+              methodNudge(wrongAttemptsRef.current);
       }),
     [answerTarget, phase, finished, paused, correct, question],
   );
@@ -462,7 +556,17 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
     setProgress(blankCourseProgress());
     setHint(false);
     setFeedback("");
+    resetAttempts();
   }
+  const recapNarration =
+    "Recap. Today's goal: " +
+    lesson.objective +
+    ". " +
+    lesson.vocabulary
+      .slice(0, 3)
+      .map((item) => item.word + ": " + item.meaning)
+      .join(". ") +
+    (lesson.teaching[0] ? ". " + lesson.teaching[0] : "");
   return (
     <Page
       title={lesson.title}
@@ -559,11 +663,75 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
                   : "Well done for exploring and trying."}
             </p>
             <p>Tell someone one new thing you learned.</p>
+            <section className="quest-hint course-recap" aria-label="Lesson recap">
+              <h3>Recap</h3>
+              <p>
+                <strong>Today's goal:</strong> {lesson.objective}
+              </p>
+              {lesson.vocabulary.length > 0 && (
+                <ul>
+                  {lesson.vocabulary.slice(0, 3).map((item) => (
+                    <li key={item.word}>
+                      <strong>{item.word}</strong>: {item.meaning}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {lesson.teaching[0] && (
+                <p>
+                  <strong>Key point:</strong> {lesson.teaching[0]}
+                </p>
+              )}
+              <button
+                className="a-button"
+                onClick={() => speak("read:course", recapNarration)}
+              >
+                <Volume2 size={20} /> Read the recap
+              </button>
+            </section>
+            {nextLesson ? (
+              <div className="a-actions">
+                <Link
+                  className="a-button"
+                  to={"/courses/" + nextLesson.id}
+                  onClick={() => stop()}
+                >
+                  Next lesson: {nextLesson.title} <ChevronRight size={20} />
+                </Link>
+              </div>
+            ) : (
+              <div className="a-panel" role="note" aria-label="End of this path">
+                <p>
+                  <strong>
+                    You have reached the end of the Year {lesson.year}{" "}
+                    {SUBJECTS[lesson.subject]} path.
+                  </strong>{" "}
+                  You can review any lesson from this year, or choose another
+                  subject.
+                </p>
+                <div className="a-actions">
+                  <Link className="a-button" to={back}>
+                    Review this year's lessons
+                  </Link>
+                  {(Object.keys(SUBJECTS) as CourseSubject[])
+                    .filter((item) => item !== lesson.subject)
+                    .map((item) => (
+                      <Link
+                        className="a-button"
+                        key={item}
+                        to={"/courses?year=" + lesson.year + "&subject=" + item}
+                      >
+                        Choose {SUBJECTS[item]}
+                      </Link>
+                    ))}
+                </div>
+              </div>
+            )}
             <div className="a-actions">
               <Link className="a-button" to={back}>
                 {sensitive
                   ? "Back to my learning path"
-                  : "Choose my next adventure"}
+                  : "Choose a different adventure"}
               </Link>
               {!sensitive && (
                 <Link className="a-button" to="/rewards">
@@ -593,7 +761,11 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
               >
                 <Volume2 size={20} /> Read this part
               </button>
+              <button className="a-button" onClick={() => openArchie?.('', true)}>
+                Talk through this lesson
+              </button>
             </div>
+            <section className="course-whiteboard" aria-label="Lesson whiteboard" data-phase={phase} data-question={phase === 2 ? progress.question : undefined}>
             {phase === 0 && (
               <>
                 <p className="course-goal">
@@ -841,6 +1013,7 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
                 </div>
               </>
             )}
+            </section>
           </>
         )}
       </section>

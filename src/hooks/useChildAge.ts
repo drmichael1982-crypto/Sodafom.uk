@@ -7,7 +7,8 @@
  * The hub writes 'sodafom_active_child' as JSON when a child is selected.
  * Games read it to auto-set difficulty without a manual picker.
  *
- * Archie preview guests use their saved practice year. Outside the preview,
+ * Archie preview learners use their saved practice year, including when an
+ * older active-profile selection remains in this browser. Outside the preview,
  * guests return null and retain each game's default difficulty picker.
  */
 
@@ -94,6 +95,6 @@ export function useChildAge(): { child: ActiveChild | null; ageGroup: AgeGroup |
     return () => { window.removeEventListener('storage', onStorage); window.removeEventListener('sodafom:active-child-changed', refresh); };
   }, []);
 
-  const ageGroup = child ? normaliseAge(child.ageGroup) : ARCHIE_PREVIEW ? schoolYearToAgeGroup(settings.year) : null;
+  const ageGroup = ARCHIE_PREVIEW ? schoolYearToAgeGroup(settings.year) : child ? normaliseAge(child.ageGroup) : null;
   return { child, ageGroup, tier: ageToDifficulty(ageGroup) };
 }

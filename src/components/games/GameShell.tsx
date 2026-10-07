@@ -16,7 +16,8 @@ export { useChildAge } from '@/hooks/useChildAge';
 export type { AgeGroup } from '@/hooks/useChildAge';
 import { getActiveChild } from '@/hooks/useChildAge';
 import { API_PREFIX, ARCHIE_PREVIEW } from '@/lib/config';
-import { isSoundEnabled } from '@/lib/archie/storage';
+import { isSoundEnabled, useArchieData } from '@/lib/archie/storage';
+import { isGameForYear } from '@/lib/archie/game-age';
 import { games as gamesContent } from 'virtual:content';
 import SceneArtwork, { sceneForSubject } from '@/components/SceneArtwork';
 import '@/pages/archie/sodafom-polish.css';
@@ -30,12 +31,17 @@ export interface GameResult {
   durationSeconds?: number; // optional — GameShell fills it in if not provided
 }
 
+export interface GameShellControls {
+  /** Record a round while retaining the game’s own between-set screen. */
+  recordCompletion: (result: GameResult) => void;
+}
+
 interface GameShellProps {
   title: string;
   emoji: string;
   subject: 'maths' | 'spelling' | 'reading' | 'science' | 'art';
   ageGroups: string[];
-  children: (onComplete: (result: GameResult) => void) => React.ReactNode;
+  children: (onComplete: (result: GameResult) => void, controls: GameShellControls) => React.ReactNode;
   currentQuestion?: string;
   currentOptions?: string[];
 }
@@ -69,6 +75,10 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   const { session } = useSession();
   const { setGameContext, clearGameContext, openArchie } = useArchieContext();
   const { recordGameCompletion } = useProgression();
+  const { settings } = useArchieData();
+  const blocked = ARCHIE_PREVIEW && !isGameForYear(settings.year, ageGroups);
+  const playable = useRef(!blocked);
+  playable.current = !blocked;
   const isLoggedIn = !!session?.user;
   const [result, setResult] = useState<GameResult | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -92,8 +102,9 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   const [dailyClaimed, setDailyClaimed] = useState(false);
   const cfg = (Object.hasOwn(subjectColors, subject) ? subjectColors[subject as keyof typeof subjectColors] : undefined) ?? subjectColors['maths'];
 
-  // Check if this game is today's daily challenge
+  // Legacy daily challenges belong to the account app, not device-only preview practice.
   useEffect(() => {
+    if (ARCHIE_PREVIEW || blocked) return;
     const slug = gameSlug;
     fetch(`${API_PREFIX}/daily-challenge`, { credentials: 'include' })
       .then(r => r.json())
@@ -105,30 +116,39 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
       })
       .catch(() => { /* silent */ });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [blocked]);
 
   // Update Archie context when game info changes
   useEffect(() => {
+    if (blocked) { clearGameContext(); return; }
     setGameContext(title, subject, currentQuestion, currentOptions);
     return () => clearGameContext();
-  }, [title, subject, currentQuestion, currentOptions, setGameContext, clearGameContext]);
+  }, [blocked, title, subject, currentQuestion, currentOptions, setGameContext, clearGameContext]);
 
   // Record this game as last-played on mount
   useEffect(() => {
+    if (blocked) { setResult(null); return; }
     try {
       const slug = gameSlug;
       const id = `game-${slug}`;
       localStorage.setItem('sodafom_last_played', JSON.stringify({ id, title, emoji, slug, subject }));
     } catch { /* ignore */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [blocked]);
 
   const handleComplete = (r: GameResult) => {
+    if (!playable.current) return;
     const focused = document.activeElement;
     resultFocusOriginRef.current = gameAreaRef.current?.contains(focused) ? focused : null;
+    setResult(recordCompletion(r));
+  };
+
+  const recordCompletion = (r: GameResult): GameResult => {
+    // A retired game's delayed callback cannot record progress after an age guard.
+    if (!playable.current) return r;
     const stars = calcStars(r.score);
     const durationSeconds = r.durationSeconds ?? Math.round((Date.now() - startTimeRef.current) / 1000);
-    setResult({ ...r, stars, durationSeconds });
+    startTimeRef.current = Date.now();
 
     // Record progression
     const slug = gameSlug;
@@ -145,7 +165,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
     } catch { /* ignore */ }
 
     const activeChild = getActiveChild();
-    if (activeChild?.id) {
+    if (!ARCHIE_PREVIEW && activeChild?.id) {
       // ── Save game play to DB (progress, stars, leaderboard) ──────────────
       fetch(`${API_PREFIX}/children/${activeChild.id}/progress`, {
         method: 'POST',
@@ -176,6 +196,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
         })
         .catch(() => { /* silent — rewards are non-critical */ });
     }
+    return { ...r, stars, durationSeconds };
   };
 
   const handleReplay = () => {
@@ -186,7 +207,15 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
     startTimeRef.current = Date.now();
   };
 
-  const subjectGames = gamesContent.games.filter((game) => game.subject === subject);
+  if (blocked) return <main className="archie-game-shell soda-game-shell min-h-screen bg-background p-6 flex items-center justify-center">
+    <section className="max-w-md rounded-2xl border-2 border-blue-200 bg-white p-6 text-center text-blue-950">
+      <h1 className="text-2xl font-black mb-3">Let’s find a game for your year</h1>
+      <p className="mb-4">{title} has a different age range. Your learning year is Year {settings.year}. Choose one of your games to keep exploring.</p>
+      <Link to="/games" className="min-h-12 inline-flex items-center justify-center rounded-xl bg-blue-700 px-5 py-3 font-black text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700">Choose a game for my year</Link>
+    </section>
+  </main>;
+
+  const subjectGames = gamesContent.games.filter((game) => game.subject === subject && (!ARCHIE_PREVIEW || isGameForYear(settings.year, game.ageGroups)));
   const currentGameIndex = subjectGames.findIndex((game) => game.title === title);
   const nextGame = subjectGames.length > 1
     ? subjectGames[(currentGameIndex >= 0 ? currentGameIndex + 1 : 0) % subjectGames.length]
@@ -282,7 +311,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
           {result
             ? <ResultScreen key="result" result={result} focusOrigin={resultFocusOriginRef.current} onReplay={handleReplay} onHome={() => navigate('/')} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: `/games/${nextGame.slug}` } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
             : <motion.div ref={handleGamePanelMount} key={`game-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
-                {children(handleComplete)}
+                {children(handleComplete, { recordCompletion })}
               </motion.div>
           }
         </AnimatePresence>

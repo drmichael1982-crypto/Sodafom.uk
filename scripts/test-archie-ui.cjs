@@ -41,11 +41,52 @@ const results=[];
     await page.waitForFunction(count=>document.querySelectorAll('[data-game-link]').length===count,expected);
     assert.equal(await page.locator('[data-game-link]').count(),expected);
   };
+  const isEligible=(game,year)=>game.ageGroups.some(group=>{
+    const match=group.trim().match(/^(\d+)\s*[–-]\s*(\d+)$/);
+    assert.ok(match,'Catalogue must advertise a clear age range: '+game.title);
+    return year+4>=Number(match[1])&&year+4<=Number(match[2]);
+  });
+  const assertGameIntersection=async(year,subject='all',query='')=>{
+    const expected=catalog.filter(game=>isEligible(game,year)&&(subject==='all'||game.subject===subject)&&
+      `${game.title} ${game.description}`.toLowerCase().includes(query.toLowerCase()));
+    await waitForGameCount(expected.length);
+    assert.deepEqual(await page.locator('[data-game-link]').evaluateAll(items=>items.map(item=>item.getAttribute('href'))),expected.map(game=>game.route),
+      'Rendered games must match year, subject and search together');
+    return expected;
+  };
+  const chooseGameYear=async year=>{
+    await page.getByRole('combobox',{name:'My learning year',exact:true}).selectOption(String(year));
+    assert.equal(await page.getByRole('combobox',{name:'My learning year',exact:true}).inputValue(),String(year));
+  };
+  const studyWord=async()=>{
+    const board=page.getByRole('region',{name:'Lesson whiteboard',exact:true});
+    const word=await (await board.locator('.lesson-word').count()?board.locator('.lesson-word'):board.getByRole('heading',{level:2})).innerText();
+    assert.match(word.trim(),/^[a-z]+(?:['’\-][a-z]+)*$/i,'Read the visible study word before independent spelling hides it');
+    assert.ok(!/^(?:listen|paused)$/i.test(word.trim()),'A lesson instruction is not the study word');
+    return word.trim();
+  };
+  const escapeRegex=text=>text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  const unlockPreviewControls=async()=>{
+    await page.getByLabel('Preview code',{exact:true}).fill('1182');
+    await button('Open preview controls').click();
+    await page.getByRole('heading',{name:'Stripe and pricing preparation',exact:true}).waitFor();
+    await page.getByText('Payments are off in this school preview.',{exact:true}).waitFor();
+  };
   fs.mkdirSync('test-results',{recursive:true});
   try{
     await check('Approved home: every navigation button opens its destination',async()=>{
-      for(const [label,route] of [['Settings','/settings'],['Explore my world','/world'],['Games','/games'],['Lessons','/courses'],['Parents','/parents'],['Rewards','/rewards'],['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress']]){
-        await goto('/');await link(label).click();await page.waitForURL(base+route);
+      const homeLinks=[
+        ...[['Explore my world','/world'],['Games','/games'],['Lessons','/courses'],['Adventure Trail','/games/archie-adventure-trail'],['Rewards','/rewards'],['History','/courses?subject=history']].map(([label,route])=>({label,route,area:'Home activities',card:true})),
+        ...[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,route])=>({label,route,area:'More activities'})),
+        {label:'Start a lesson',route:'/courses'}, {label:'Choose a game',route:'/games'},
+        {label:'Parents and learning settings',route:'/parents'},
+      ];
+      for(const {label,route,area,card} of homeLinks){
+        await goto('/');
+        const navigation=area?page.getByRole('navigation',{name:area,exact:true}):page;
+        const destination=card?navigation.getByRole('link').filter({has:page.getByRole('heading',{name:label,exact:true})}):navigation.getByRole('link',{name:label,exact:true});
+        assert.equal(await destination.count(),1,'Home destination must be unambiguous: '+label);
+        await destination.click();await page.waitForURL(base+route);
         if(route==='/settings'||route==='/parents'){
           await unlockGrownUpArea({rejectWrongAnswer:route==='/settings'});
           await page.getByRole('heading',{level:1,name:route==='/settings'?'Settings':'Parents & learning',exact:true}).waitFor();
@@ -55,7 +96,8 @@ const results=[];
             assert.equal(await checkbox('Read aloud and sound').isChecked(),true);
           }
         }
-        assert.equal(await page.getByRole('main').count(),1);
+        if(route.startsWith('/games/')) await button('Back to games').waitFor({state:'visible'});
+        else assert.equal(await page.getByRole('main').count(),1);
       }
       await goto('/');await button('Turn sound off').click();await button('Turn sound on').click();
       await page.screenshot({path:'test-results/home-mobile.png',fullPage:true});
@@ -77,12 +119,12 @@ const results=[];
     await check('One shared Ask Archie: local maths, close, context and navigation',async()=>{
       await button('Ask Archie').click();assert.equal(await page.getByRole('dialog').count(),1);
       await page.getByLabel('Your question for Archie').fill('What is 8 plus 4?');await button('Send question').click();await page.getByRole('log').getByText(/8 plus 4 is 12/i).waitFor();await button('Listen to Archie').waitFor({state:'visible'});await button('Listen to Archie').click();
-      await button('Close Ask Archie').click();await goto('/lesson');await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
+      await button('Close Ask Archie').click();await goto('/lesson');const spokenWord=await studyWord();await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
       // This exercises the typed fallback in the spoken-lesson UI, not microphone recognition.
-      await page.getByLabel('Your question for Archie').fill('Wednesday');await button('Send question').click();await page.getByRole('log').getByText(/spelled Wednesday correctly/i).waitFor();
+      await page.getByLabel('Your question for Archie').fill(spokenWord);await button('Send question').click();await page.getByRole('log').getByText(new RegExp('spelled '+escapeRegex(spokenWord)+' correctly','i')).waitFor();
       await button('Close Ask Archie').click();
       await page.getByRole('heading',{level:1,name:/Step 1 of 7/}).waitFor();
-      assert.equal(await page.getByLabel('Your spelling').inputValue(),'Wednesday');
+      assert.equal(await page.getByLabel('Your spelling').inputValue(),spokenWord);
       assert.equal(await page.getByLabel('Your spelling').isDisabled(),true);
       await button('Next word').click();await page.getByRole('heading',{level:1,name:/Step 2 of 7/}).waitFor();
       await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
@@ -90,16 +132,35 @@ const results=[];
       await button('Ask Archie').waitFor({state:'visible'});assert.equal(await button('Ask Archie').count(),1);
     });
     await check('Spelling whiteboard: wrong answer, seven correct answers, pause and saved reward',async()=>{
-      await goto('/lesson');await button('Hear the word').click();await button('Try spelling').click();await page.getByLabel('Your spelling').fill('wrong');await button('Check').click();await page.getByText('Good try.',{exact:false}).waitFor();
+      await goto('/lesson');
+      const firstWord=await studyWord();
+      await button('Hear the word').click();await button('Try spelling').click();await page.getByLabel('Your spelling').fill('wrong');await button('Check').click();await page.getByText('Good try.',{exact:false}).waitFor();
       await page.getByRole('heading',{level:1,name:/Step 1 of 7/}).waitFor();
       assert.equal(await page.getByLabel('Your spelling').isDisabled(),false);
       await button('Rubber: clear spelling').click();await page.getByText('Cleared. Have another go.',{exact:true}).waitFor();
       assert.equal(await page.getByLabel('Your spelling').inputValue(),'');
       await button('Pause lesson').click();await page.getByRole('heading',{name:'Lesson paused'}).waitFor();await button('Resume lesson').last().click();
-      const words=['Wednesday','beautiful','because','different','important','remember','question'];
-      for(let i=0;i<words.length;i++){
-        if(i)await button('Try spelling').click();await page.getByLabel('Your spelling').fill(words[i]);await button('Check').click();await page.getByText('Brilliant! You spelled it correctly.').waitFor();await button(i===6?'Finish lesson':'Next word').click();
+      const studied=[];
+      for(let i=0;i<7;i++){
+        await page.getByRole('heading',{level:1,name:new RegExp('Step '+(i+1)+' of 7')}).waitFor();
+        const word=i===0?firstWord:await studyWord();studied.push(word);
+        if(i){
+          await button('Try spelling').click();
+          await page.getByLabel('Your spelling').fill('wrong');await button('Check').click();
+          await page.getByText('Good try.',{exact:false}).waitFor();
+          assert.equal(await page.getByLabel('Your spelling').isDisabled(),false);
+          await page.getByRole('heading',{level:1,name:new RegExp('Step '+(i+1)+' of 7')}).waitFor();
+          await button('Rubber: clear spelling').click();
+          assert.equal(await page.getByLabel('Your spelling').inputValue(),'');
+        }
+        await page.getByLabel('Your spelling').fill(word);await button('Check').click();
+        await page.getByText('Brilliant! You spelled it correctly.').waitFor();
+        assert.equal(await page.getByLabel('Your spelling').inputValue(),word);
+        assert.equal(await page.getByLabel('Your spelling').isDisabled(),true);
+        await button(i===6?'Finish lesson':'Next word').click();
       }
+      assert.equal(studied.length,7,'All seven displayed study words were attempted');
+      assert.equal(new Set(studied.map(word=>word.toLowerCase())).size,7,'Each spelling step has its own study word');
       await page.getByRole('heading',{name:'3 stars earned'}).waitFor();await link('See my rewards').click();await button('Collect sticker').first().click();await button('Collected ✓').first().waitFor();await page.reload();await button('Collected ✓').first().waitFor();
     });
     await check('Books: reader pagination, read aloud and completion saved once',async()=>{
@@ -140,27 +201,45 @@ const results=[];
       await goto('/cartoons');await page.getByRole('button',{name:/The Number Island/}).click();await button('Pause').click();await button('Play').click();await button('Next scene').click();await page.getByText('Scene 2 of 3',{exact:true}).waitFor();await button('Restart').click();await page.getByText('Scene 1 of 3',{exact:true}).waitFor();await button('Read this scene').click();await page.getByRole('button',{name:/All episodes/}).click();
     });
     await check('Games menu: filter, search and existing game launches',async()=>{
-      await goto('/games');await button('My year · Year 4').waitFor();
-      const forYear4=catalog.filter(g=>g.ageGroups.some(group=>{
-        const [minimum,maximum]=group.split(/[–-]/).map(Number);
-        return 8>=minimum&&8<=maximum;
-      })).length;
-      await waitForGameCount(forYear4);assert.equal(await button('My year · Year 4').getAttribute('aria-pressed'),'true');
-      await button('Browse all ages').click();await waitForGameCount(catalog.length);
-      assert.equal(await button('Browse all ages').getAttribute('aria-pressed'),'true');
+      await goto('/games');await chooseGameYear(4);
+      await assertGameIntersection(4);
+      assert.equal(await button('Browse all ages').count(),0,'Age bypass must not return');
+      assert.equal(await page.getByRole('combobox',{name:'My learning year',exact:true}).locator('option').count(),9,'All nine school years remain selectable');
       for(const route of ['/games/star-trail','/games/number-planets'])assert.equal(await page.locator(`[data-game-link][href="${route}"]`).count(),1);
-      await button('Spelling').click();await page.waitForURL(base+'/games?subject=spelling');await waitForGameCount(catalog.filter(g=>g.subject==='spelling').length);
-      await button('All games').click();await waitForGameCount(catalog.length);
-      await page.getByLabel('Search games').fill('Number Pop');await waitForGameCount(1);await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/number-pop');
+      await button('Spelling').click();await page.waitForURL(base+'/games?subject=spelling');
+      await assertGameIntersection(4,'spelling');
+      await page.getByLabel('Search games').fill('word');await assertGameIntersection(4,'spelling','word');
+      await chooseGameYear(1);await assertGameIntersection(1,'spelling','word');
+      await page.getByLabel('Search games').fill('');
+      await button('All games').click();await assertGameIntersection(1);
+      await chooseGameYear(7);await assertGameIntersection(7);
+      await chooseGameYear(4);await assertGameIntersection(4);
+      await page.getByLabel('Search games').fill('Number Pop');await assertGameIntersection(4,'all','Number Pop');
+      await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/number-pop');
       await button('Ask Archie').waitFor();assert.equal(await button('Ask Archie').count(),1);await button('Ask Archie').click();await page.getByText(/Helping with Number Pop/).waitFor();await button('Close Ask Archie').click();
     });
     await check(`All ${catalog.length} linked game routes render without a crash or home redirect`,async()=>{
       assert.equal(new Set(catalog.map(game=>game.route)).size,catalog.length,'Game routes must be distinct');
-      for(const game of catalog){await goto(game.route);await page.getByRole('heading',{level:1}).first().waitFor();console.log('ROUTE '+game.route);assert.equal(new URL(page.url()).pathname,game.route);assert.equal(await page.getByText('Something went wrong',{exact:false}).count(),0);}
+      assert.equal(catalog.length,130,'The existing complete game-route inventory must remain covered');
+      for(const game of catalog){
+        const year=[1,2,3,4,5,6,7,8,9].find(year=>isEligible(game,year));
+        assert.ok(year,'Every linked game must have an eligible school year: '+game.route);
+        await goto('/games');await chooseGameYear(year);await assertGameIntersection(year);
+        const gameLink=page.locator(`[data-game-link][href="${game.route}"]`);
+        assert.equal(await gameLink.count(),1,'The eligible game must appear in the actual menu');
+        await gameLink.click();await page.waitForURL(base+game.route);
+        await page.getByRole('heading',{level:1}).first().waitFor();
+        await button('Back to games').waitFor({state:'visible'});
+        assert.equal(await page.getByRole('heading',{name:'Let’s find a game for your year',exact:true}).count(),0,'A guard is not a rendered game');
+        assert.equal(await button('Ask Archie').count(),1,'The real game helper must mount exactly once');
+        console.log('ROUTE '+game.route+' YEAR '+year);assert.equal(new URL(page.url()).pathname,game.route);
+        assert.equal(await page.getByText('Something went wrong',{exact:false}).count(),0);
+      }
     });
     await check('Phone, foldable, tablet and landscape layouts: no horizontal overflow',async()=>{
-      const routes=['/','/world','/games','/courses','/lesson','/library','/reader/lost-key','/homework','/cartoons','/stickers','/rewards','/progress','/parents','/settings'];
+      const routes=['/','/world','/games','/courses','/lesson','/library','/reader/lost-key','/homework','/cartoons','/stickers','/rewards','/progress','/parents','/settings','/teacher','/class','/time-lab','/preview-admin','/artwork','/privacy'];
       const viewports=[
+        {width:280,height:653,label:'narrow phone'},
         {width:320,height:640,label:'small phone'},
         {width:360,height:740,label:'compact phone'},
         {width:375,height:812,label:'phone'},
@@ -183,6 +262,11 @@ const results=[];
           await goto(route);
           const dimensions=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
           assert.ok(dimensions.document<=dimensions.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' overflows: '+JSON.stringify(dimensions));
+          if(route==='/preview-admin'){
+            await unlockPreviewControls();
+            const unlocked=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
+            assert.ok(unlocked.document<=unlocked.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' unlocked overflows: '+JSON.stringify(unlocked));
+          }
           if(route==='/parents'||route==='/settings'){
             await unlockGrownUpArea();
             const unlocked=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));

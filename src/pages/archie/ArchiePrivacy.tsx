@@ -67,6 +67,12 @@ export default function ArchiePrivacy() {
         </p>
       </section>
       <section className="a-panel">
+        <h2>Optional parent accounts and individual AI keys</h2>
+        <p>When the account server is configured, a grown-up can create an account with their own email address and password. The server stores the parent email, a protected password hash and account/session records. Children do not need an email address. The account setup status in Parents shows whether this service is connected.</p>
+        <p>An authenticated parent can temporarily send their own OpenAI API key to this app’s server. The key stays only in server memory for up to 30 minutes, expires on server restart, and can be disconnected in Parents. It is not saved in browser storage or source backups. Connecting a key does not enable online learning help automatically. If you choose to enable it, questions and context may be processed by OpenAI using that API account; review the provider’s current data and billing terms.</p>
+        <p>Parent email verification, account recovery, retention/deletion arrangements and school consent processes must be configured and reviewed before inviting real families to sign up. The 1182 preview-control code only opens device preferences and a pricing draft. It is not online administrator authentication.</p>
+      </section>
+      <section className="a-panel">
         <h2>Microphone and read-aloud</h2>
         <p>
           Microphone input is optional and needs browser permission. Your
@@ -115,8 +121,9 @@ export default function ArchiePrivacy() {
       <section className="a-panel">
         <h2>Preview and release status</h2>
         <p>
-          Accounts, cloud progress syncing and payments are not connected in
-          this school preview. A website server still receives ordinary requests
+          Parent accounts require a separately configured account server; check
+          the status in Parents before signing up. Cloud progress syncing and
+          payments remain off in this school preview. A website server still receives ordinary requests
           needed to load the app; this page does not establish hosting-log
           retention.
         </p>

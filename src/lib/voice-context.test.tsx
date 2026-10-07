@@ -98,3 +98,23 @@ describe('speech cancellation ownership',()=>{
     expect(synthesis.speak).not.toHaveBeenCalled();expect(result.current.playing).toBe(false);
   });
 });
+
+describe('speech-engine failure fallback',()=>{
+  it('makes one browser attempt when the native bridge throws synchronously',()=>{
+    native.enabled=true;voices=[ukVoice];native.speak.mockImplementationOnce(()=>{throw new Error('Bridge unavailable');});
+    ttsSpeak('Read the lesson');
+    expect(synthesis.speak).toHaveBeenCalledOnce();
+    expect(synthesis.speak.mock.calls[0][0]).toMatchObject({text:'Read the lesson',lang:'en-GB',voice:ukVoice});
+  });
+  it('returns to a text-ready provider state when browser speech cannot start',()=>{
+    voices=[ukVoice];synthesis.speak.mockImplementationOnce(()=>{throw new Error('Speech unavailable');});
+    const {result}=renderHook(()=>useVoice(),{wrapper:VoiceProvider});
+    act(()=>result.current.speak('lesson','Read the lesson'));
+    expect(result.current.playing).toBe(false);expect(synthesis.speak).toHaveBeenCalledOnce();
+  });
+  it('finishes cleanly when the utterance API is missing',()=>{
+    vi.stubGlobal('SpeechSynthesisUtterance',undefined);
+    const ended=vi.fn();ttsSpeak('Read the lesson',ended);
+    expect(ended).toHaveBeenCalledOnce();expect(synthesis.speak).not.toHaveBeenCalled();
+  });
+});

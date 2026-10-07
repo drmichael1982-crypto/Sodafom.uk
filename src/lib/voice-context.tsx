@@ -158,7 +158,7 @@ function ttsSpeak(text: string, onEnd?: () => void) {
   }
 
   const speakable = cleanSpeakableText(text);
-  console.log('ttsSpeak starting:', { text, speakable });
+  console.log('ttsSpeak starting:', { characters: speakable.length });
   if (!speakable) {
     console.warn('ttsSpeak: Nothing speakable');
     onEnd?.();
@@ -168,7 +168,8 @@ function ttsSpeak(text: string, onEnd?: () => void) {
   const native = getNativeArchieSpeech();
   if (native?.speak) {
     console.info('ARCHIE_TTS_START', { engine: 'android-native' });
-    native.speak({ text: speakable })
+    try {
+    Promise.resolve(native.speak({ text: speakable }))
       .then((res: any) => {
         console.info('ARCHIE_TTS_SUCCESS', { engine: 'android-native', response: res });
         ended();
@@ -178,6 +179,9 @@ function ttsSpeak(text: string, onEnd?: () => void) {
         // If native speech fails, make one browser fallback attempt.
         if (generation === speechGeneration) browserTtsSpeak(speakable, ended, generation);
       });
+    } catch {
+      if (generation === speechGeneration) browserTtsSpeak(speakable, ended, generation);
+    }
     return;
   }
 
@@ -193,8 +197,11 @@ function browserTtsSpeak(text: string, onEnd: (() => void) | undefined, generati
     return;
   }
 
-  window.speechSynthesis.cancel();
-  const utt = new SpeechSynthesisUtterance(text);
+  let utt: SpeechSynthesisUtterance;
+  try {
+    window.speechSynthesis.cancel();
+    utt = new SpeechSynthesisUtterance(text);
+  } catch { onEnd?.(); return; }
   utt.lang = 'en-GB';
   // A natural, gentle pace. Avoid artificially extreme pitch, which can sound robotic.
   let year=4;
@@ -218,7 +225,8 @@ function browserTtsSpeak(text: string, onEnd: (() => void) | undefined, generati
       onEnd?.();
     };
     console.info('ARCHIE_TTS_START', { engine: 'browser', voice: voice?.name ?? 'default' });
-    window.speechSynthesis.speak(utt);
+    try { window.speechSynthesis.speak(utt); }
+    catch { onEnd?.(); }
   };
 
   if (window.speechSynthesis.getVoices().length === 0) {
