@@ -76,7 +76,7 @@ const results=[];
   try{
     await check('Approved home: every navigation button opens its destination',async()=>{
       const homeLinks=[
-        ...[['My world','/world'],['Games','/games'],['Lessons','/courses'],['Trail','/games/archie-adventure-trail'],['Rewards','/rewards'],['History','/history'],['Stickers','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork','/artwork'],['Privacy','/privacy']].map(([label,route])=>({label,route,area:'Home activities',card:true})),
+        ...[['My world','/world'],['Games','/games'],['Lessons','/courses'],['Trail','/games/archie-adventure-trail'],['Rewards','/rewards'],['History','/history'],['Stickers','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,route])=>({label,route,area:'Home activities',card:true})),
         {label:'Parents and learning settings',route:'/parents'},
       ];
       for(const {label,route,area,card} of homeLinks){
