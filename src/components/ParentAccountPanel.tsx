@@ -59,7 +59,7 @@ export default function ParentAccountPanel() {
     } catch { setNotice('Sign-out is unavailable. Please try again.'); }
     finally { setBusy(false); setPassword(''); }
   }
-  return <section className="a-panel" aria-labelledby={id}>
+  return <section id="parent-account" className="a-panel parent-account-panel" aria-labelledby={id}>
     <h2 id={id}>Your parent account</h2>
     <p>Use your own email address and password. Children do not need an email address.</p>
     <p role="status">{status?.message ?? 'Checking parent account setup…'}</p>

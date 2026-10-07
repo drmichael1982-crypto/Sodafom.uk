@@ -19,7 +19,7 @@ export default function ParentAIConnection() {
     } catch { setNotice('AI setup is unavailable. Built-in help still works.'); }
     finally { setKey(''); setBusy(false); }
   }
-  return <section className="a-panel" aria-labelledby={id}>
+  return <section id="parent-ai" className="a-panel parent-ai-panel" aria-labelledby={id}>
     <h2 id={id}>Choose how Archie helps</h2>
     <h3>Free built-in help</h3><p>Authored lessons, worked examples, hints and supported device speech work without buying AI credits. Speech recognition depends on your device and may use its online speech service.</p>
     <button className="a-button" type="button" onClick={() => { updateSavedData(data => { data.settings.onlineHelp = false; return data; }); setNotice('Built-in help selected. Online learning help is off on this device.'); }}>Use free built-in help</button>
