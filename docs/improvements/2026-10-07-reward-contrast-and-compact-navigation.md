@@ -5,6 +5,7 @@
 - Dedicated candidate branch: `improve/archie-learning-20261007`; draft PR #81 targets `test/archie-2026-10-02`.
 - The run first merged test commit `7a78440ce57b8dc9f02403984fd36977ba832828`, then discovered newer deployment evidence and explicitly fetched and merged current test lineage `61146b73fcd6bc86b11761b78285fd0fbeaee6c9` (`6d476dd` → `9f82824` → `bd73137` → `61146b7`). No concurrent history, fraction, lesson, parent or age-range change was overwritten.
 - Candidate reconciliation commits are `962ff7deb551a7130ef1f25a5a9182a6243ec297` and `242b61680821bd515b8a3179fa634f913a587b2e`.
+- The tested tree was published to the draft-PR branch through the connected GitHub account as merge commit `9fabd837ca00fead1e4b015d5b6a69483add87f9` after command-line push authentication was unavailable.
 - Railway read-only evidence: deployment `0439d23c-63c5-4473-a77b-23d19ff0017d`, SUCCESS, created 2026-10-07T21:37:56.796Z and updated 2026-10-07T21:40:06.060Z, branch `test/archie-2026-10-02`, commit `61146b73fcd6bc86b11761b78285fd0fbeaee6c9`. This candidate has not been deployed.
 
 ## Current failures reproduced and fixed
