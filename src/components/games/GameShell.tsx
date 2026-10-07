@@ -21,6 +21,7 @@ import { isGameForYear } from '@/lib/archie/game-age';
 import { games as gamesContent } from 'virtual:content';
 import SceneArtwork, { sceneForSubject } from '@/components/SceneArtwork';
 import '@/pages/archie/sodafom-polish.css';
+import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
 
 export interface GameResult {
   score: number; // 0–100
@@ -222,7 +223,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
     : null;
 
   const gameContent = (
-    <div className="archie-game-shell soda-game-shell min-h-screen bg-background flex flex-col">
+    <div style={puzzleThemeStyle(title, subject)} className="archie-game-shell soda-game-shell puzzle-themed min-h-screen bg-background flex flex-col">
       <Helmet>
         <title>{title} — Sodafom Games</title>
         <meta name="description" content={`Play ${title} on Sodafom — a fun educational game for children ages ${ageGroups.join(', ')}.`} />
