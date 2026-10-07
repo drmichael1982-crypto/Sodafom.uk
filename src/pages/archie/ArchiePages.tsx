@@ -169,16 +169,17 @@ export function ArchieGames() {
   const { settings } = useArchieData();
   const [params,setParams] = useSearchParams();
   const [query,setQuery] = useState('');
+  const searchInput = useRef<HTMLInputElement>(null);
   const subject = params.get('subject') || 'all';
   const filtered = catalog.filter(g => isGameForYear(settings.year,g.ageGroups) && (subject === 'all' || g.subject === subject) && `${g.title} ${g.description}`.toLowerCase().includes(query.toLowerCase()));
   return <Page title="Choose a game" intro="Your favourite games, all in one place.">
     <div className="a-actions"><Link className="a-button" to="/courses">Start a learning adventure</Link><Link className="a-button" to="/quests">Try a quick quest</Link></div>
     <div className="a-panel soda-year-choice"><label className="a-field">My learning year<select value={settings.year} onChange={e=>updateSavedData(d=>({...d,settings:{...d.settings,year:Number(e.target.value)}}))}>{[1,2,3,4,5,6,7,8,9].map(year=><option key={year} value={year}>Year {year} · ages {year+4}–{year+5}</option>)}</select></label><p>Games and lesson practice follow your chosen year. Choose with a grown-up if you are unsure.</p></div>
-    <label className="a-search"><Search/><input type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+    <label className="a-search"><Search/><input ref={searchInput} type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
     <div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
     <p role="status">{filtered.length} games to explore</p>
     <div className="a-grid">{filtered.map((g,i)=><Link key={g.id} to={g.route} className={`a-card colour-${i%4}`} data-game-link><SceneArtwork scene={sceneForSubject(g.subject,g.title)} title={g.title} compact/><h2>{g.title}</h2><p>{g.description}</p><small>Ages {g.ageGroups.join(', ')}</small><span className="a-play">Play game →</span></Link>)}</div>
-    {!filtered.length && <div className="a-panel"><p>No games match that search.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});}}>Show all games</button></div>}
+    {!filtered.length && <section className="a-panel" aria-labelledby="game-search-help"><h2 id="game-search-help">Let's find another game</h2><p>No games match those filters for Year {settings.year}. Try a shorter search or choose another subject.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});searchInput.current?.focus();}}>Show Year {settings.year} games</button></section>}
   </Page>;
 }
 export function ArchieLesson() {

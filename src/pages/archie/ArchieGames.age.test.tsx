@@ -27,9 +27,9 @@ afterEach(()=>{cleanup();vi.clearAllMocks();});
 
 describe('selected-year game discovery and difficulty',()=>{
   it.each([
-    {year:3,group:'5-7',tier:1,count:58,present:'/games/number-pop',absent:['/games/spelling-bee','/games/algebra-quest']},
-    {year:6,group:'8-10',tier:2,count:116,present:'/games/spelling-bee',absent:['/games/number-pop','/games/algebra-quest']},
-    {year:9,group:'11-13',tier:3,count:96,present:'/games/algebra-quest',absent:['/games/number-pop','/games/number-bonds']},
+    {year:3,group:'5-7',tier:1,count:57,present:'/games/number-pop',absent:['/games/spelling-bee','/games/algebra-quest']},
+    {year:6,group:'8-10',tier:2,count:111,present:'/games/spelling-bee',absent:['/games/number-pop','/games/algebra-quest']},
+    {year:9,group:'11-13',tier:3,count:76,present:'/games/algebra-quest',absent:['/games/number-pop','/games/number-bonds']},
   ])('Year $year shows its eligible catalogue and matching game tier despite an old profile',({year,group,tier,count,present,absent})=>{
     saveYear(year);const view=show();const routes=gameRoutes(view.container);
     expect(screen.getByRole('combobox',{name:'My learning year'})).toHaveValue(String(year));
@@ -50,7 +50,7 @@ describe('selected-year game discovery and difficulty',()=>{
     chooseYear(7);
     expect(gameRoutes(view.container)).toContain('/games/algebra-quest');
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent('11-13 · tier 3');
-    chooseYear(9);expect(gameRoutes(view.container)).toHaveLength(96);
+    chooseYear(9);expect(gameRoutes(view.container)).toHaveLength(76);
     expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year).toBe(9);
     view.unmount();show();
     expect(screen.getByRole('combobox',{name:'My learning year'})).toHaveValue('9');
@@ -63,14 +63,36 @@ describe('selected-year game discovery and difficulty',()=>{
     expect(gameRoutes(view.container)).not.toContain('/games/spelling-bee');
     fireEvent.change(screen.getByRole('searchbox',{name:'Search games'}),{target:{value:'Algebra Quest'}});
     expect(gameRoutes(view.container)).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button',{name:'Show all games'}));
+    expect(screen.getByText('No games match those filters for Year 3. Try a shorter search or choose another subject.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button',{name:'Show Year 3 games'}));
     expect(screen.getByRole('searchbox',{name:'Search games'})).toHaveValue('');
-    expect(gameRoutes(view.container)).toHaveLength(58);
+    expect(screen.getByRole('searchbox',{name:'Search games'})).toHaveFocus();
+    expect(screen.getByRole('combobox',{name:'My learning year'})).toHaveValue('3');
+    expect(gameRoutes(view.container)).toHaveLength(57);
     expect(gameRoutes(view.container)).not.toContain('/games/algebra-quest');
     chooseYear(9);
     fireEvent.click(screen.getByRole('button',{name:'Maths'}));
     fireEvent.change(screen.getByRole('searchbox',{name:'Search games'}),{target:{value:'Algebra Quest'}});
     expect(gameRoutes(view.container)).toEqual(['/games/algebra-quest']);
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent('11-13 · tier 3');
+  });
+  it.each([1,2,3,4,5,6,7,8,9])('Year %i empty filters recover to that year without changing a saved profile',year=>{
+    saveYear(year);const view=show('/games?subject=spelling');
+    fireEvent.change(screen.getByRole('searchbox',{name:'Search games'}),{target:{value:'no such game'}});
+    expect(gameRoutes(view.container)).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button',{name:`Show Year ${year} games`}));
+    expect(screen.getByRole('searchbox',{name:'Search games'})).toHaveValue('');
+    expect(screen.getByRole('searchbox',{name:'Search games'})).toHaveFocus();
+    expect(screen.getByRole('button',{name:'All games'})).toHaveAttribute('aria-pressed','true');
+    expect(gameRoutes(view.container)).toHaveLength([47,49,57,100,115,111,93,76,76][year-1]);
+    expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year).toBe(year);
+    expect(JSON.parse(localStorage.getItem('sodafom_active_child')!)).toEqual(staleProfile);
+  });
+  it('does not offer a game for a year its entry screen rejects',()=>{
+    saveYear(4);const view=show();
+    for(const route of ['/games/angle-explorer','/games/area-adventure','/games/data-detective'])expect(gameRoutes(view.container)).not.toContain(route);
+    chooseYear(5);
+    for(const route of ['/games/angle-explorer','/games/area-adventure','/games/data-detective'])expect(gameRoutes(view.container)).toContain(route);
+    chooseYear(8);expect(gameRoutes(view.container)).not.toContain('/games/place-value');
   });
 });

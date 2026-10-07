@@ -5,7 +5,11 @@
     "subject": "maths",
     "emoji": "🎲",
     "description": "Roll, solve eight maths clues and explore a colourful trail at your own pace. Use hints, retry safely and pause whenever you need.",
-    "ageGroups": ["5–7", "8–10", "11–13"],
+    "ageGroups": [
+      "5–7",
+      "8–10",
+      "11–13"
+    ],
     "slug": "archie-adventure-trail",
     "route": "/games/archie-adventure-trail"
   },
@@ -500,8 +504,7 @@
     "emoji": "💯",
     "description": "Pop the balloon that shows the correct hundreds, tens or units digit. Master place value with this fun game!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–10"
     ],
     "slug": "place-value",
     "route": "/games/place-value"
@@ -579,8 +582,7 @@
     "emoji": "📐",
     "description": "Identify acute, obtuse and right angles hidden in shapes and real-world objects. Become an angle expert!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "angle-explorer",
     "route": "/games/angle-explorer"
@@ -605,8 +607,7 @@
     "emoji": "🗺️",
     "description": "Count the squares to find the area of each shape. Then use the formula to calculate bigger areas!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "area-adventure",
     "route": "/games/area-adventure"
@@ -618,8 +619,7 @@
     "emoji": "📊",
     "description": "Read bar charts, pictograms and tally charts to answer questions. Become a data detective!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "data-detective",
     "route": "/games/data-detective"
@@ -695,9 +695,7 @@
     "emoji": "🪞",
     "description": "Complete the symmetrical pattern by reflecting shapes across the mirror line. Create beautiful symmetrical art!",
     "ageGroups": [
-      "5–7",
-      "8–10",
-      "11–13"
+      "7–11"
     ],
     "slug": "symmetry-studio",
     "route": "/games/symmetry-studio"
@@ -736,9 +734,7 @@
     "emoji": "🔢",
     "description": "Drag the numbers into the correct order from smallest to largest. Whole numbers, decimals and fractions!",
     "ageGroups": [
-      "5–7",
-      "8–10",
-      "11–13"
+      "5–9"
     ],
     "slug": "ordering-numbers",
     "route": "/games/ordering-numbers"
@@ -750,8 +746,7 @@
     "emoji": "❓",
     "description": "Find the missing number in each equation. Inverse operations, algebra basics and number puzzles!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "missing-numbers",
     "route": "/games/missing-numbers"
@@ -763,8 +758,7 @@
     "emoji": "👏",
     "description": "Snap when two cards show the same answer! Quick mental maths in a classic card game format.",
     "ageGroups": [
-      "5–7",
-      "8–10"
+      "7–10"
     ],
     "slug": "maths-snap",
     "route": "/games/maths-snap"
@@ -812,8 +806,7 @@
     "emoji": "🏆",
     "description": "A mixed bag of maths questions across all topics. The ultimate maths challenge for top mathematicians!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "10–13"
     ],
     "slug": "maths-challenge",
     "route": "/games/maths-challenge"
@@ -903,8 +896,7 @@
     "emoji": "🔗",
     "description": "Join two words together to make a compound word! Sunshine, football, rainbow — how many can you make?",
     "ageGroups": [
-      "5–7",
-      "8–10"
+      "7–10"
     ],
     "slug": "compound-words",
     "route": "/games/compound-words"
@@ -982,8 +974,7 @@
     "emoji": "✌️",
     "description": "Decide if the word needs a double letter or not — rabbit or rabit? Butter or buter? Spell it right!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "double-letters",
     "route": "/games/double-letters"
@@ -1008,7 +999,6 @@
     "emoji": "👏",
     "description": "Snap when you see a correctly spelled word! Quick-fire spelling in a classic card game format.",
     "ageGroups": [
-      "5–7",
       "8–10"
     ],
     "slug": "spelling-snap",
@@ -1021,8 +1011,7 @@
     "emoji": "🧱",
     "description": "Use the letter tiles to build as many words as possible. Score points for longer words!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–10"
     ],
     "slug": "word-builder",
     "route": "/games/word-builder"
@@ -1047,8 +1036,7 @@
     "emoji": "🚉",
     "description": "Match the contraction to the two words it comes from — can't = can not, I'm = I am. All aboard!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "contraction-station",
     "route": "/games/contraction-station"
@@ -1060,9 +1048,7 @@
     "emoji": "📝",
     "description": "Make the word plural using the right rule — add s, es, ies or change the word entirely!",
     "ageGroups": [
-      "5–7",
-      "8–10",
-      "11–13"
+      "6–11"
     ],
     "slug": "plural-rules",
     "route": "/games/plural-rules"
@@ -1074,8 +1060,7 @@
     "emoji": "🃏",
     "description": "Match the word to its picture in this memory card game. Flip, remember and match!",
     "ageGroups": [
-      "4–6",
-      "5–7"
+      "6–7"
     ],
     "slug": "word-match",
     "route": "/games/word-match"
@@ -1127,8 +1112,7 @@
     "emoji": "🔍",
     "description": "Find the clues in the text to answer the detective questions. Inference and deduction skills!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "reading-detective",
     "route": "/games/reading-detective"
@@ -1180,8 +1164,7 @@
     "emoji": "🌈",
     "description": "Describe the pictures using adjectives! Colour, size, shape and feeling words to bring stories to life.",
     "ageGroups": [
-      "5–7",
-      "8–10"
+      "7–10"
     ],
     "slug": "adjective-adventure",
     "route": "/games/adjective-adventure"
@@ -1219,8 +1202,7 @@
     "emoji": "💨",
     "description": "Read the passage as fast as you can, then answer questions to check you understood it. Build reading fluency!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "reading-speed",
     "route": "/games/reading-speed"
@@ -1232,8 +1214,7 @@
     "emoji": "🎭",
     "description": "Read the poem and answer questions about rhyme, rhythm and meaning. Explore different types of poetry!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "poetry-corner",
     "route": "/games/poetry-corner"
@@ -1245,8 +1226,7 @@
     "emoji": "📄",
     "description": "Identify the text type — is it a letter, a recipe, a newspaper article or a story? Sort them correctly!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "text-types",
     "route": "/games/text-types"
@@ -1258,8 +1238,7 @@
     "emoji": "🗺️",
     "description": "Follow the reading map through a non-fiction text. Answer questions at each checkpoint to move forward!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "reading-map",
     "route": "/games/reading-map"
@@ -1284,8 +1263,7 @@
     "emoji": "💬",
     "description": "Add the speech marks in the right places. Who is saying what? Direct speech made easy!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "speech-marks",
     "route": "/games/speech-marks"
@@ -1310,8 +1288,7 @@
     "emoji": "📻",
     "description": "Read the passage aloud at the right pace. Tap the words as you read to build fluency and confidence!",
     "ageGroups": [
-      "5–7",
-      "8–10"
+      "7–10"
     ],
     "slug": "reading-fluency",
     "route": "/games/reading-fluency"
@@ -1323,8 +1300,7 @@
     "emoji": "⭐",
     "description": "Read a short extract and write a mini book review. What did you like? Who would you recommend it to?",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "book-review",
     "route": "/games/book-review"
@@ -1349,9 +1325,7 @@
     "emoji": "🗺️",
     "description": "Map out the beginning, middle and end of the story. Identify characters, setting and plot!",
     "ageGroups": [
-      "5–7",
-      "8–10",
-      "11–13"
+      "7–11"
     ],
     "slug": "story-map",
     "route": "/games/story-map"
@@ -1363,8 +1337,7 @@
     "emoji": "🏆",
     "description": "The ultimate reading challenge! Mixed comprehension, grammar and vocabulary questions across all levels.",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "reading-challenge",
     "route": "/games/reading-challenge"
@@ -1429,8 +1402,7 @@
     "emoji": "🪐",
     "description": "Explore the planets of our solar system! Order them from the Sun and learn amazing facts about each one.",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "solar-system",
     "route": "/games/solar-system"
@@ -1442,8 +1414,7 @@
     "emoji": "🌿",
     "description": "Build food chains by connecting producers, consumers and predators. Who eats who in the wild?",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "food-chains",
     "route": "/games/food-chains"
@@ -1455,8 +1426,7 @@
     "emoji": "💧",
     "description": "Sort materials into solid, liquid and gas. Then explore what happens when they change state!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "states-of-matter",
     "route": "/games/states-of-matter"
@@ -1468,8 +1438,7 @@
     "emoji": "🔬",
     "description": "Investigate push, pull, gravity and friction in the virtual forces lab. Predict and test!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "forces-lab",
     "route": "/games/forces-lab"
@@ -1481,8 +1450,7 @@
     "emoji": "⚡",
     "description": "Build a working circuit! Connect the battery, bulb and switch to light up the room.",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "electricity-circuit",
     "route": "/games/electricity-circuit"
@@ -1494,8 +1462,7 @@
     "emoji": "🌱",
     "description": "Label the parts of a plant and learn what each part does. Roots, stem, leaves, flower and seed!",
     "ageGroups": [
-      "5–7",
-      "8–10"
+      "5–9"
     ],
     "slug": "plant-parts",
     "route": "/games/plant-parts"
@@ -1507,9 +1474,7 @@
     "emoji": "🦋",
     "description": "Put the life cycle stages in the right order — butterfly, frog, plant and human life cycles!",
     "ageGroups": [
-      "5–7",
-      "8–10",
-      "11–13"
+      "7–11"
     ],
     "slug": "life-cycles",
     "route": "/games/life-cycles"
@@ -1521,8 +1486,7 @@
     "emoji": "⛅",
     "description": "Identify weather types, read weather maps and predict tomorrow's weather. Become a meteorologist!",
     "ageGroups": [
-      "5–7",
-      "8–10"
+      "5–9"
     ],
     "slug": "weather-watch",
     "route": "/games/weather-watch"
@@ -1534,8 +1498,7 @@
     "emoji": "🪨",
     "description": "Identify igneous, sedimentary and metamorphic rocks. Use the clues to classify each rock sample!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "rock-detective",
     "route": "/games/rock-detective"
@@ -1547,8 +1510,7 @@
     "emoji": "💡",
     "description": "Explore how light travels and creates shadows. Predict shadow shapes and learn about reflection!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "light-shadows",
     "route": "/games/light-shadows"
@@ -1560,8 +1522,7 @@
     "emoji": "🔊",
     "description": "Investigate how sound travels, what makes sounds louder and how we hear. A sonic science adventure!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "sound-science",
     "route": "/games/sound-science"
@@ -1573,8 +1534,7 @@
     "emoji": "🧪",
     "description": "Sort materials by their properties — hard or soft, magnetic or not, transparent or opaque!",
     "ageGroups": [
-      "5–7",
-      "8–10"
+      "5–9"
     ],
     "slug": "materials-sort",
     "route": "/games/materials-sort"
@@ -1586,8 +1546,7 @@
     "emoji": "💀",
     "description": "Drag the bones into the right place to build a human skeleton. Learn the names of major bones!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "skeleton-builder",
     "route": "/games/skeleton-builder"
@@ -1599,8 +1558,7 @@
     "emoji": "🥗",
     "description": "Sort foods into the right food groups and build a balanced meal. Learn about nutrition and healthy choices!",
     "ageGroups": [
-      "5–7",
-      "8–10"
+      "5–9"
     ],
     "slug": "healthy-eating",
     "route": "/games/healthy-eating"
@@ -1612,8 +1570,7 @@
     "emoji": "🐛",
     "description": "Explore minibeasts and their microhabitats. Where does each creature live and why?",
     "ageGroups": [
-      "5–7",
-      "8–10"
+      "7–10"
     ],
     "slug": "microhabitats",
     "route": "/games/microhabitats"
@@ -1625,8 +1582,7 @@
     "emoji": "🧲",
     "description": "Test which materials are magnetic and which are not. Explore north and south poles and magnetic fields!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "magnets-magic",
     "route": "/games/magnets-magic"
@@ -1638,8 +1594,7 @@
     "emoji": "🌊",
     "description": "Follow a water droplet through evaporation, condensation and precipitation. Label the water cycle!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "8–11"
     ],
     "slug": "water-cycle",
     "route": "/games/water-cycle"
@@ -1651,8 +1606,7 @@
     "emoji": "🔑",
     "description": "Use branching keys to classify animals and plants. Answer yes/no questions to identify each organism!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "classification-keys",
     "route": "/games/classification-keys"
@@ -1664,8 +1618,7 @@
     "emoji": "🌍",
     "description": "Explore the Earth, Moon and Sun system. Day and night, seasons and the phases of the Moon!",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "earth-space",
     "route": "/games/earth-space"
@@ -1689,8 +1642,7 @@
     "emoji": "🏆",
     "description": "The ultimate science quiz! Questions across biology, chemistry, physics and earth science for all levels.",
     "ageGroups": [
-      "8–10",
-      "11–13"
+      "9–13"
     ],
     "slug": "science-quiz",
     "route": "/games/science-quiz"

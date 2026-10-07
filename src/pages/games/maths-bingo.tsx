@@ -2,13 +2,27 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
-import ArchieGameHelper from '@/components/games/ArchieGameHelper';
 
-function generateCard(tier: 1 | 2 | 3): number[] {
-  const nums = new Set<number>();
+export function generateCard(tier: 1 | 2 | 3): number[] {
   const max = tier === 1 ? 10 : tier === 2 ? 25 : 64;
-  while (nums.size < 16) nums.add(Math.floor(Math.random() * max) + 1);
-  return [...nums].sort((a, b) => a - b);
+  // A 3×3 card keeps young learners within 10. Shuffle a finite pool so
+  // generation also finishes when random values repeat.
+  const size = tier === 1 ? 9 : 16;
+  const pool = Array.from({ length: max }, (_, index) => index + 1);
+  for (let index = pool.length - 1; index > 0; index--) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [pool[index], pool[other]] = [pool[other], pool[index]];
+  }
+  return pool.slice(0, size).sort((a, b) => a - b);
+}
+
+export function hasBingo(card: number[], marked: Set<number>): boolean {
+  const side = Math.sqrt(card.length);
+  const rows = Array.from({ length: side }, (_, row) =>
+    Array.from({ length: side }, (_, column) => row * side + column));
+  const columns = Array.from({ length: side }, (_, column) =>
+    Array.from({ length: side }, (_, row) => row * side + column));
+  return [...rows, ...columns].some(line => line.every(index => marked.has(card[index])));
 }
 
 function generateQuestionForAnswer(answer: number, tier: 1 | 2 | 3): string {
@@ -33,7 +47,7 @@ function generateQuestionForAnswer(answer: number, tier: 1 | 2 | 3): string {
   return Math.random() < 0.5 ? `${answer + b} - ${b}` : `${answer - b} + ${b}`;
 }
 
-function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string, opts?: string[]) => void }) {
+export function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string, opts?: string[]) => void }) {
   const { tier } = useChildAge();
   const [card] = useState(() => generateCard(tier as 1 | 2 | 3));
   const [marked, setMarked] = useState<Set<number>>(new Set());
@@ -42,6 +56,7 @@ function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResu
   const [round, setRound] = useState(0);
 
   const nextQuestion = useCallback(() => {
+    if (bingo) return;
     // Pick an unmarked number from the card to ensure it exists!
     const unmarked = card.filter(n => !marked.has(n));
     const target = unmarked.length > 0
@@ -54,32 +69,24 @@ function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResu
       answer: target
     });
     onQuestionChange?.(`${qText} = ?`, card.map(String));
-  }, [tier, card, marked, onQuestionChange]);
+  }, [tier, card, marked, bingo, onQuestionChange]);
 
   useEffect(() => { nextQuestion(); }, [nextQuestion]);
 
-  function checkBingo(m: Set<number>): boolean {
-    const rows = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]];
-    const cols = [[0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15]];
-    return [...rows, ...cols].some(line => line.every(i => m.has(card[i])));
-  }
-
   function handleMark(num: number) {
-    if (!current || num !== current.answer) return;
+    if (!current || bingo || marked.has(num) || num !== current.answer) return;
     const next = new Set(marked);
     next.add(num);
     setMarked(next);
     const newRound = round + 1;
     setRound(newRound);
-    if (checkBingo(next)) {
+    if (hasBingo(card, next)) {
       setBingo(true);
-      const score = Math.round((next.size / 16) * 100);
-      setTimeout(() => onComplete({ score, correct: next.size, total: 16, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 }), 1500);
+      const score = Math.round((next.size / card.length) * 100);
+      setTimeout(() => onComplete({ score, correct: next.size, total: card.length, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 }), 1500);
     } else if (newRound >= 20) {
-      const score = Math.round((next.size / 16) * 100);
-      onComplete({ score, correct: next.size, total: 16, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 });
-    } else {
-      nextQuestion();
+      const score = Math.round((next.size / card.length) * 100);
+      onComplete({ score, correct: next.size, total: card.length, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 });
     }
   }
 
@@ -90,13 +97,14 @@ function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResu
           className="bg-primary text-primary-foreground rounded-2xl px-8 py-4 text-center shadow-lg relative">
           <p className="text-xs font-bold opacity-70 mb-1">Solve it — then tap the answer on your card!</p>
           <p className="text-4xl font-black">{current.q} = ?</p>
-          <ArchieGameHelper className="absolute -right-4 -top-4" />
         </motion.div>
       )}
-      <div className="grid grid-cols-4 gap-2 w-full">
+      <div className="grid gap-2 w-full" style={{ gridTemplateColumns: `repeat(${Math.sqrt(card.length)}, minmax(0, 1fr))` }} aria-label="Bingo card">
         {card.map((num, i) => (
           <motion.button key={i} whileTap={{ scale: 0.9 }}
             onClick={() => handleMark(num)}
+            disabled={bingo || marked.has(num)}
+            aria-label={`Bingo number ${num}${marked.has(num) ? ', marked' : ''}`}
             className={`aspect-square rounded-xl text-lg font-black border-2 transition-all ${
               marked.has(num)
                 ? 'bg-primary text-primary-foreground border-primary'
