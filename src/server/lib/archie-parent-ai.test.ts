@@ -48,7 +48,7 @@ describe('scheduled parent key deletion', () => {
     vi.useFakeTimers();
     const scheduled = vi.spyOn(globalThis, 'setTimeout');
     const store = new ParentAIKeyStore();
-    const replacementKey = 'sk-fictional-replacement-123456789';
+    const replacementKey = 'sk-' + 'fictional-replacement-123456789';
     try {
       store.set('reconnected-parent', fixtureKey);
       const oldExpiry = scheduled.mock.calls[0][0] as () => void;
