@@ -4,11 +4,15 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
 import ArchieGameHelper from '@/components/games/ArchieGameHelper';
 
-function generateCard(tier: 1 | 2 | 3): number[] {
-  const nums = new Set<number>();
-  const max = tier === 1 ? 10 : tier === 2 ? 25 : 64;
-  while (nums.size < 16) nums.add(Math.floor(Math.random() * max) + 1);
-  return [...nums].sort((a, b) => a - b);
+export function generateCard(tier: 1 | 2 | 3): number[] {
+  const max = tier === 1 ? 20 : tier === 2 ? 25 : 64;
+  // A finite shuffle guarantees 16 distinct answers even with repeated random values.
+  const pool = Array.from({ length: max }, (_, i) => i + 1);
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 16).sort((a, b) => a - b);
 }
 
 function generateQuestionForAnswer(answer: number, tier: 1 | 2 | 3): string {
@@ -78,8 +82,6 @@ function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResu
     } else if (newRound >= 20) {
       const score = Math.round((next.size / 16) * 100);
       onComplete({ score, correct: next.size, total: 16, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 });
-    } else {
-      nextQuestion();
     }
   }
 
