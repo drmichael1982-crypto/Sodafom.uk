@@ -83,6 +83,53 @@ const results = [];
         await button('Back to games').click(); await page.waitForURL(base + '/games');
         results.push(`Year ${year}, ${viewport.width}px: eligible menu → wrong answer/hint → pause/resume → ten answers → completion → menu`);
       }
+      if (!lessonsOnly) {
+        await goto('/games'); await chooseYear(4);
+        await page.getByLabel('Search games', { exact: true }).fill('Number Planets');
+        await page.locator('[data-game-link][href="/games/number-planets"]').click();
+        await page.getByText('Mission 1 of 8 · 0 first-try discoveries', { exact: true }).waitFor();
+        for (let round = 0; round < 8; round++) {
+          const equation = await page.locator('.planet-equation').getAttribute('aria-label');
+          const parts = equation?.match(/^(\d+) ([+×÷]) (\d+) = \?$/);
+          assert.ok(parts, 'Number Planets presents a readable arithmetic question');
+          const left = Number(parts[1]), right = Number(parts[3]);
+          const answer = parts[2] === '+' ? left + right : parts[2] === '×' ? left * right : left / right;
+          const hint = parts[2] === '+'
+            ? `Start at ${left}, then count on ${right}.`
+            : parts[2] === '÷'
+              ? `How many groups of ${right} make ${left}?`
+              : `Draw ${left} equal groups of ${right}.`;
+          if (round === 0) {
+            const choices = await page.getByRole('button', { name: /^Answer / }).all();
+            for (const choice of choices) {
+              if (await choice.getAttribute('aria-label') !== `Answer ${answer}`) { await choice.click(); break; }
+            }
+            await page.getByRole('status').filter({ hasText: `Try another planet. ${hint}` }).waitFor();
+            await page.getByText('Mission 1 of 8 · 0 first-try discoveries', { exact: true }).waitFor();
+            assert.equal(await button('Next space mission').count(), 0, 'Wrong answer cannot advance the mission');
+            await button('Show a hint').click();
+            await page.getByRole('status').getByText(hint, { exact: true }).waitFor();
+            await page.screenshot({ path: `${output}/number-planets-retry-year-4-${viewport.width}.png`, fullPage: true });
+          }
+          await button(`Answer ${answer}`).click();
+          await page.getByRole('status').filter({ hasText: 'Correct!' }).waitFor();
+          assert.equal(await button(`Answer ${answer}`).evaluate(element => element.classList.contains('correct-planet')), true, 'Correct planet is visually identified');
+          for (const choice of await page.getByRole('button', { name: /^Answer / }).all()) {
+            if (await choice.getAttribute('aria-label') !== `Answer ${answer}`)
+              assert.equal(await choice.evaluate(element => element.classList.contains('other-planet')), true, 'Other planets are visually de-emphasised');
+          }
+          await button(round === 7 ? 'Finish space mission' : 'Next space mission').click();
+        }
+        await page.getByText('Final score: 88%', { exact: true }).waitFor();
+        await page.getByText('7 correct out of 8 questions', { exact: true }).waitFor();
+        await page.getByRole('heading', { name: '🌟 Great job!', exact: true }).waitFor();
+        await page.getByText('You earned 2 stars!', { exact: true }).waitFor();
+        await page.waitForTimeout(1700);
+        await page.getByText('88%', { exact: true }).waitFor();
+        await page.screenshot({ path: `${output}/number-planets-complete-year-4-${viewport.width}.png`, fullPage: true });
+        await button('Back to games').click(); await page.waitForURL(base + '/games');
+        results.push(`Year 4, ${viewport.width}px: Number Planets → wrong answer → explicit hint → retry → 7/8 first-try answers (88%, two stars) → menu`);
+      }
       for (let year = 1; year <= (lessonsOnly ? 0 : 6); year++) {
         for (const retry of [false, true]) {
           await goto('/games'); await chooseYear(year);
