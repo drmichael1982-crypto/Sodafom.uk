@@ -228,10 +228,14 @@ const results=[];
       assert.equal(savedIds.filter(id=>id==='history-jigsaw-egypt').length,1,'History completion must be stored once');
       assert.equal(savedIds.filter(id=>id==='fraction-jigsaw-year-1').length,1,'Fraction completion must be stored once');
       const pager=page.getByRole('navigation',{name:'Page screens',exact:true});
-      await pager.getByRole('button',{name:'Next →',exact:true}).click();await page.waitForTimeout(180);
-      await page.screenshot({path:'test-results/teacher-puzzle-learning-390.png',fullPage:true});
-      await page.setViewportSize({width:820,height:1180});
       const previous=pager.getByRole('button',{name:'← Previous',exact:true});
+      const next=pager.getByRole('button',{name:'Next →',exact:true});
+      while(!await previous.isDisabled()){await previous.click();await page.waitForTimeout(180);}
+      await next.click();await page.waitForTimeout(180);
+      await page.screenshot({path:'test-results/teacher-puzzle-learning-390.png',fullPage:true});
+      await next.click();await page.waitForTimeout(180);
+      await page.screenshot({path:'test-results/teacher-puzzle-learning-history-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});
       while(!await previous.isDisabled()){await previous.click();await page.waitForTimeout(180);}
       await page.screenshot({path:'test-results/teacher-puzzle-learning-820.png',fullPage:true});
     });
