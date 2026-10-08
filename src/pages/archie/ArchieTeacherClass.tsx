@@ -74,7 +74,7 @@ function DevicePuzzleLearning() {
   );
   return (
     <section className="a-panel" aria-labelledby="teacher-puzzle-learning">
-      <h2 id="teacher-puzzle-learning">Recent puzzle learning on this device</h2>
+      <h2 id="teacher-puzzle-learning" tabIndex={-1}>Recent puzzle learning on this device</h2>
       <p className="a-note">This reuses the child’s on-device progress record. It does not create a pupil profile, send data online or award the puzzle twice.</p>
       {puzzles.length ? puzzles.map((activity) => (
         <div className="a-activity" key={activity.id}>

@@ -218,14 +218,14 @@ const results=[];
       await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/fraction-complete-820.png',fullPage:true});
 
       await page.setViewportSize({width:390,height:844});await goto('/teacher');await unlockGrownUpArea();
-      await page.getByRole('heading',{name:'Recent puzzle learning on this device',exact:true}).waitFor();
+      const puzzleSummary=page.getByRole('heading',{name:'Recent puzzle learning on this device',exact:true});await puzzleSummary.waitFor();await puzzleSummary.focus();await page.waitForTimeout(250);
       await page.getByText('Ancient Egypt history picture puzzle',{exact:true}).waitFor();
       await page.getByText('Year 1 fraction picture puzzles',{exact:true}).waitFor();
       const savedIds=await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_archie_design_v1')||'{"activities":[]}').activities.map(activity=>activity.id));
       assert.equal(savedIds.filter(id=>id==='history-jigsaw-egypt').length,1,'History completion must be stored once');
       assert.equal(savedIds.filter(id=>id==='fraction-jigsaw-year-1').length,1,'Fraction completion must be stored once');
       await page.screenshot({path:'test-results/teacher-puzzle-learning-390.png',fullPage:true});
-      await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/teacher-puzzle-learning-820.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});await puzzleSummary.focus();await page.waitForTimeout(250);await page.screenshot({path:'test-results/teacher-puzzle-learning-820.png',fullPage:true});
     });
     await check('Cartoons: selection, play/pause, next, restart and return',async()=>{
       await goto('/cartoons');await page.getByRole('button',{name:/The Number Island/}).click();await button('Pause').click();await button('Play').click();await button('Next scene').click();await page.getByText('Scene 2 of 3',{exact:true}).waitFor();await button('Restart').click();await page.getByText('Scene 1 of 3',{exact:true}).waitFor();await button('Read this scene').click();await page.getByRole('button',{name:/All episodes/}).click();
