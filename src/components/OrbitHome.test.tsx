@@ -65,25 +65,45 @@ afterEach(() => {
 function show() { return render(<MemoryRouter><OrbitHome /></MemoryRouter>); }
 async function completePuzzle(user: ReturnType<typeof userEvent.setup>, selectEarth=true) {
   for (let index=0;index<FACTS.length;index++) {
-    await user.click(screen.getByRole('button',{name:`Pick up ${FACTS[index][0]}`,exact:true}));
-    await user.click(screen.getByRole('button',{name:`Place in position ${index+1}: ${FACTS[index][0]}`,exact:true}));
+    await user.click(screen.getByRole('button',{name:`Pick up ${FACTS[index][0]}`}));
+    await user.click(screen.getByRole('button',{name:`Place in position ${index+1}: ${FACTS[index][0]}`}));
   }
-  if(selectEarth)await user.click(screen.getByRole('button',{name:'Earth',exact:true}));
+  if(selectEarth)await user.click(screen.getByRole('button',{name:'Earth'}));
 }
 function model() { return screen.getByLabelText('Explore the eight planets'); }
 
 describe('home planet discovery', () => {
+  it('moves all eight home planets and the Earth moon before completing the puzzle, and can pause', async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><OrbitHome autoStart /></MemoryRouter>);
+    expect(model()).toHaveClass('is-moving');
+    expect(model().querySelectorAll('.home-orbit')).toHaveLength(8);
+    expect(model().querySelector('.home-orbit-2 .home-moon-orbit')).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Pause planets' }));
+    expect(model()).toHaveClass('is-still');
+    await user.click(screen.getByRole('button', { name: 'Move planets' }));
+    await user.click(screen.getByRole('button', { name: 'Start the jigsaw again' }));
+    expect(model()).toHaveClass('is-moving');
+  });
+  it('keeps automatic home motion off for reduced motion', () => {
+    media = preference(true);
+    vi.stubGlobal('matchMedia', vi.fn(() => media.query));
+    render(<MemoryRouter><OrbitHome autoStart /></MemoryRouter>);
+    expect(model()).toHaveClass('is-still');
+    expect(screen.getByRole('button', { name: 'Still planets' })).toBeDisabled();
+  });
+
   it('lets a child change a chosen piece without losing planets already placed', async () => {
     const user=userEvent.setup();show();
-    await user.click(screen.getByRole('button',{name:'Pick up Mercury',exact:true}));
-    await user.click(screen.getByRole('button',{name:'Place in position 1: Mercury',exact:true}));
-    await user.click(screen.getByRole('button',{name:'Pick up Mars',exact:true}));
-    await user.click(screen.getByRole('button',{name:'Choose a different piece',exact:true}));
+    await user.click(screen.getByRole('button',{name:'Pick up Mercury'}));
+    await user.click(screen.getByRole('button',{name:'Place in position 1: Mercury'}));
+    await user.click(screen.getByRole('button',{name:'Pick up Mars'}));
+    await user.click(screen.getByRole('button',{name:'Choose a different piece'}));
     expect(screen.getByText('1 / 8')).toBeInTheDocument();
-    expect(screen.getByRole('button',{name:'Pick up Mercury',exact:true})).toBeDisabled();
-    expect(screen.getByRole('button',{name:'Pick up Mars',exact:true})).toHaveAttribute('aria-pressed','false');
-    await user.click(screen.getByRole('button',{name:'Pick up Venus',exact:true}));
-    await user.click(screen.getByRole('button',{name:'Place in position 2: Venus',exact:true}));
+    expect(screen.getByRole('button',{name:'Pick up Mercury'})).toBeDisabled();
+    expect(screen.getByRole('button',{name:'Pick up Mars'})).toHaveAttribute('aria-pressed','false');
+    await user.click(screen.getByRole('button',{name:'Pick up Venus'}));
+    await user.click(screen.getByRole('button',{name:'Place in position 2: Venus'}));
     expect(screen.getByText('2 / 8')).toBeInTheDocument();
     expect(screen.getByText(/Venus fits!.*Venus has a very hot surface/)).toBeInTheDocument();
   });
@@ -91,8 +111,8 @@ describe('home planet discovery', () => {
     const user=userEvent.setup();show();
     expect(model()).toHaveClass('is-still');
     expect(screen.getByRole('button',{name:'Finish the jigsaw to move planets'})).toBeDisabled();
-    await user.click(screen.getByRole('button',{name:'Pick up Mars',exact:true}));
-    await user.click(screen.getByRole('button',{name:'Place in position 1: Mercury',exact:true}));
+    await user.click(screen.getByRole('button',{name:'Pick up Mars'}));
+    await user.click(screen.getByRole('button',{name:'Place in position 1: Mercury'}));
     expect(screen.getByText('Mars belongs in position 4 from the Sun. Try another place.')).toBeInTheDocument();
     expect(screen.getByText('0 / 8')).toBeInTheDocument();
     await completePuzzle(user);
@@ -102,7 +122,7 @@ describe('home planet discovery', () => {
     await user.click(screen.getByRole('button',{name:'Start the jigsaw again'}));
     expect(model()).toHaveClass('is-still');
     expect(screen.getByText('0 / 8')).toBeInTheDocument();
-    expect(screen.getByRole('button',{name:'Pick up Mars',exact:true})).toBeEnabled();
+    expect(screen.getByRole('button',{name:'Pick up Mars'})).toBeEnabled();
   });
   it('places one decorative Moon with Earth, explains the relationship and shares the motion control', async () => {
     const user = userEvent.setup(); show(); await completePuzzle(user);

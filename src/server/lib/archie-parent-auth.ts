@@ -11,7 +11,7 @@ export type ParentAccountStatus = {
   emailVerification: false; cloudProgress: false; payments: false;
 };
 export type ParentAuthConfiguration = {
-  secret: string; origin: string; secure: boolean;
+  secret: string; origin: string; secure: boolean; sqlitePath?: string;
   database: { host: string; port: number; user: string; password: string; name: string; tls: boolean };
 };
 export interface ParentAuthRuntime {
@@ -39,6 +39,14 @@ export function readParentAuthConfiguration(env: Environment): { configuration: 
       !(url.protocol === 'https:' || (url.protocol === 'http:' && loopback && env.NODE_ENV !== 'production'))) throw new Error();
     origin = url.origin; secure = url.protocol === 'https:';
   } catch { missing.push('explicit_same_origin_url'); }
+  if (env.ARCHIE_PARENT_SQLITE_PATH) {
+    const path = env.ARCHIE_PARENT_SQLITE_PATH;
+    const mount = env.RAILWAY_VOLUME_MOUNT_PATH;
+    if (!path.startsWith('/') || path.includes('/../') || path.endsWith('/') ||
+      (env.NODE_ENV === 'production' && (!mount || !path.startsWith(mount.replace(/\/$/, '') + '/')))) missing.push('persistent_database_configuration');
+    return { configuration: missing.length ? null : { secret, origin, secure, sqlitePath: path,
+      database: { host: '', port: 0, user: '', password: '', name: '', tls: false } }, missing };
+  }
   const host = env.DB_HOST || env.MYSQL_HOST || '';
   const user = env.DB_USER || env.MYSQL_USER || '';
   const password = env.DB_PASSWORD || env.MYSQL_PASSWORD || '';
@@ -92,6 +100,36 @@ export async function verifyParentAccountTables(query: (sql: string) => Promise<
 }
 
 async function loadParentAuth(configuration: ParentAuthConfiguration): Promise<ParentAuthRuntime> {
+  if (configuration.sqlitePath) {
+    const [{ betterAuth }, { getMigrations }, { DatabaseSync }, fs, path] = await Promise.all([
+      import('better-auth'), import('better-auth/db/migration'), import('node:sqlite'), import('node:fs'), import('node:path'),
+    ]);
+    fs.mkdirSync(path.dirname(configuration.sqlitePath), { recursive: true, mode: 0o700 });
+    const database = new DatabaseSync(configuration.sqlitePath);
+    fs.chmodSync(configuration.sqlitePath, 0o600);
+    try {
+      database.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;');
+      const options = parentAuthOptions(configuration, database);
+      const migrations = await getMigrations(options);
+      const existing = database.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='user'").get();
+      // Initialize this dedicated account database once. Never alter existing account tables automatically.
+      if (!existing) await migrations.runMigrations();
+      else if (migrations.toBeCreated.length || migrations.toBeAdded.length) throw new Error('Parent account migration required');
+      const auth = betterAuth(options);
+      await auth.$context;
+      return {
+        handle: request => auth.handler(request),
+        getSession: async headers => {
+          const result = await auth.api.getSession({ headers });
+          if (!result?.user?.id) return null;
+          const user = result.user as typeof result.user & { isAdmin?: boolean };
+          return { user: { id: user.id, email: user.email, isAdmin: user.isAdmin === true } };
+        },
+        close: async () => { database.close(); },
+      };
+    } catch (error) { database.close(); throw error; }
+  }
+
   const [{ betterAuth }, { drizzleAdapter }, mysql, { drizzle }, schema, core] = await Promise.all([
     import('better-auth'), import('better-auth/adapters/drizzle'), import('mysql2/promise'),
     import('drizzle-orm/mysql2'), import('../db/schema'), import('drizzle-orm/mysql-core'),

@@ -75,10 +75,8 @@ const results=[];
   fs.mkdirSync('test-results',{recursive:true});
   try{
     await check('Approved home: every navigation button opens its destination',async()=>{
-      const homeLinks=[
-        ...[['Explore my world','/world'],['Games','/games'],['Lessons','/courses'],['Adventure Trail','/games/archie-adventure-trail'],['Rewards','/rewards'],['History','/courses?subject=history']].map(([label,route])=>({label,route,area:'Home activities',card:true})),
-        ...[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,route])=>({label,route,area:'More activities'})),
-        {label:'Start a lesson',route:'/courses'}, {label:'Choose a game',route:'/games'},
+      const homeLinks = [
+        ...[['Lessons','/courses'],['Quests','/quests'],['Maths','/games?subject=maths'],['Reading','/games?subject=reading'],['Spelling','/games?subject=spelling'],['Science','/games?subject=science'],['Geography','/games/geography-quiz'],['Whiteboard','/lesson'],['Library','/library'],['Homework','/homework'],['Cartoons','/cartoons'],['Stickers','/stickers'],['Rewards','/rewards'],['Parents','/parents'],['Class','/class'],['Teachers','/teacher'],['Games','/games'],['History','/history'],['Trail','/games/archie-adventure-trail'],['My world','/world'],['Ask Archie','/ask-archie'],['Clock lab','/time-lab'],['Progress','/progress'],['Artwork','/artwork'],['Settings','/settings'],['Privacy','/privacy']].map(([label,route])=>({label,route,area:'Home activities',card:true})),
         {label:'Parents and learning settings',route:'/parents'},
       ];
       for(const {label,route,area,card} of homeLinks){
@@ -109,10 +107,10 @@ const results=[];
       await page.getByRole('button',{name:'Personalise my home screen'}).click();
       await page.getByLabel('What are you into?').fill('dinosaurs');
       await page.getByRole('button',{name:'Save',exact:true}).click();
-      await page.getByText('Your jungle learning world').waitFor();
+      await page.getByText('Saved on this device. Archie uses an original colour palette and abstract shapes.',{exact:true}).waitFor();
       assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_child_interests:default')||'[]')),['dinosaurs']);
       await page.getByRole('button',{name:'Remove interest dinosaurs'}).click();
-      await page.getByText('Make your learning world yours').waitFor();
+      await page.getByText('Interest removed. Your home screen colours have been updated.',{exact:true}).waitFor();
       assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_child_interests:default')||'[]')),[]);
       await page.getByRole('button',{name:'Done',exact:true}).click();
     });

@@ -17,10 +17,10 @@ const PLANETS = [
   {name:'Uranus',colour:'#92dce4',fact:'Uranus rotates on its side compared with most planets.'},
   {name:'Neptune',colour:'#537be7',fact:'Neptune is the farthest planet from the Sun.'},
 ];
-export default function OrbitHome() {
+export default function OrbitHome({ autoStart = false }: { autoStart?: boolean }) {
   const { settings } = useArchieData();
   const [reduced,setReduced]=useState(()=>window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const [moving,setMoving]=useState(false);
+  const [moving,setMoving]=useState(()=>autoStart&&!reduced);
   const [expanded,setExpanded]=useState(false);
   const closeRef=useRef<HTMLButtonElement>(null);
   useEffect(()=>{if(!expanded)return;const previous=document.activeElement as HTMLElement|null;const overflow=document.body.style.overflow;document.body.style.overflow='hidden';closeRef.current?.focus();const key=(event:KeyboardEvent)=>{if(event.key==='Escape')setExpanded(false);if(event.key==='Tab'){const buttons=Array.from(document.querySelectorAll<HTMLButtonElement>('.orbit-completion button:not(:disabled)'));const first=buttons[0],last=buttons.at(-1);if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}}};document.addEventListener('keydown',key);return()=>{document.body.style.overflow=overflow;document.removeEventListener('keydown',key);previous?.isConnected&&previous.focus();};},[expanded]);
@@ -35,14 +35,14 @@ export default function OrbitHome() {
     if(next.every((planet,i)=>planet===i)){setMoving(!reduced);setExpanded(true);setPuzzleNotice(reduced?'Brilliant! You completed the solar system. Your motion preference keeps the picture still.':'Brilliant! All eight planets fit. Watch your solar system come to life!');}
     else setPuzzleNotice(`${PLANETS[index].name} fits! ${next.filter(value=>value>=0).length} of 8 pieces placed. ${PLANETS[index].fact}`);
   }
-  function resetPuzzle(){setExpanded(false);setPlaced(Array(8).fill(-1));setPiece(null);setMoving(false);setPuzzleNotice('Choose a planet piece, then tap its place in the picture.');}
+  function resetPuzzle(){setExpanded(false);setPlaced(Array(8).fill(-1));setPiece(null);setMoving(autoStart&&!reduced);setPuzzleNotice('Choose a planet piece, then tap its place in the picture.');}
   const [selected,setSelected]=useState(2);
   useEffect(()=>{const q=window.matchMedia('(prefers-reduced-motion: reduce)');const update=()=>{setReduced(q.matches);if(q.matches)setMoving(false);};q.addEventListener('change',update);return()=>q.removeEventListener('change',update);},[]);
   const planetModel = <div className={`orbit-model ${moving && !reduced ? 'is-moving' : 'is-still'}`} aria-label="Explore the eight planets">
       <div className="orbit-stars" aria-hidden="true"/><div className="orbit-sun" aria-hidden="true"/>
       {PLANETS.map((p,i)=><div className={`home-orbit home-orbit-${i}`} key={p.name} style={{'--orbit-size':`${28+i*8}%`,'--orbit-time':`${20+i*7}s`,'--planet-colour':p.colour} as CSSProperties}><div className="home-orbit-track" aria-hidden="true"/><span className={`home-planet home-planet-${i}`} aria-hidden="true"><PlanetGlobe index={i} moving={moving&&!reduced}/>{i === 2 && <span className="home-moon-orbit"><span className="home-moon"/></span>}{expanded&&<span className="home-planet-name">{p.name}</span>}</span></div>)}
       {!expanded&&<ArchieAvatar year={settings.year} className="orbit-archie"/>}
-      <button type="button" className="orbit-motion" disabled={reduced||!solved} aria-pressed={moving && !reduced} onClick={()=>setMoving(v=>!v)}>{moving && !reduced ? <Pause size={16}/> : <Play size={16}/>} {reduced?'Still planets':!solved?'Finish the jigsaw to move planets':moving?'Pause planets':'Move planets'}</button>
+      <button type="button" className="orbit-motion" disabled={reduced||(!autoStart&&!solved)} aria-pressed={moving && !reduced} onClick={()=>setMoving(v=>!v)}>{moving && !reduced ? <Pause size={16}/> : <Play size={16}/>} {reduced?'Still planets':!autoStart&&!solved?'Finish the jigsaw to move planets':moving?'Pause planets':'Move planets'}</button>
     </div>;
   const planetDiscovery = <div className="orbit-discovery"><div className="orbit-planet-choices" aria-label="Choose a planet">{PLANETS.map((p,i)=><button type="button" key={p.name} aria-pressed={selected===i} onClick={()=>setSelected(i)}><span className={`planet-swatch home-planet-${i}`} aria-hidden="true"><PlanetGlobe index={i}/></span>{p.name}</button>)}</div><p role="status">{PLANETS[selected].fact}</p><p className="orbit-moon-note">The Moon orbits Earth while Earth orbits the Sun.</p><small>A playful model: sizes, distances and orbit speeds are not to scale.</small></div>;
   if(expanded)return createPortal(<section className="orbit-completion" role="dialog" aria-modal="true" aria-labelledby="solar-reward-title">
