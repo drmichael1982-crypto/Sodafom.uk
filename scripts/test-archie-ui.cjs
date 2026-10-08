@@ -232,8 +232,10 @@ const results=[];
       const next=pager.getByRole('button',{name:'Next →',exact:true});
       while(!await previous.isDisabled()){await previous.click();await page.waitForTimeout(180);}
       await next.click();await page.waitForTimeout(180);
+      await page.evaluate(()=>window.scrollTo(0,0));
       await page.screenshot({path:'test-results/teacher-puzzle-learning-390.png',fullPage:true});
       await next.click();await page.waitForTimeout(180);
+      await page.evaluate(()=>window.scrollTo(0,0));
       await page.screenshot({path:'test-results/teacher-puzzle-learning-history-390.png',fullPage:true});
       await page.setViewportSize({width:820,height:1180});
       while(!await previous.isDisabled()){await previous.click();await page.waitForTimeout(180);}
