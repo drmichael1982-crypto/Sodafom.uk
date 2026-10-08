@@ -88,6 +88,7 @@ const results = [];
         // These are simulated learner journeys, not claims about real children.
         const retryYears = new Set([2, 4, 7]);
         for (let year = 1; year <= 7; year++) {
+          const retryRound = year === 7 ? 1 : 0;
           await goto('/games'); await chooseYear(year);
           await page.getByLabel('Search games', { exact: true }).fill('Number Planets');
           await page.locator('[data-game-link][href="/games/number-planets"]').click();
@@ -105,13 +106,17 @@ const results = [];
               : parts[2] === '÷'
                 ? `How many groups of ${right} make ${left}?`
                 : `Draw ${left} equal groups of ${right}.`;
-            if (round === 0 && retryYears.has(year)) {
+            if (round === retryRound && retryYears.has(year)) {
+              if (year === 7) assert.equal(parts[2], '÷', 'Year 7 recovery exercises a division mission');
               const choices = await page.getByRole('button', { name: /^Answer / }).all();
               for (const choice of choices) {
                 if (await choice.getAttribute('aria-label') !== `Answer ${answer}`) { await choice.click(); break; }
               }
               await page.getByRole('status').filter({ hasText: `Try another planet. ${hint}` }).waitFor();
-              await page.getByText('Mission 1 of 8 · 0 first-try discoveries', { exact: true }).waitFor();
+              const missionStatus = year === 7
+                ? 'Mission 2 of 8 · 1 first-try discoveries'
+                : 'Mission 1 of 8 · 0 first-try discoveries';
+              await page.getByText(missionStatus, { exact: true }).waitFor();
               assert.equal(await button('Next space mission').count(), 0, 'Wrong answer cannot advance the mission');
               await button('Show a hint').click();
               await page.getByRole('status').getByText(hint, { exact: true }).waitFor();
@@ -159,7 +164,7 @@ const results = [];
           await button('Back to games').click(); await page.waitForURL(base + '/games');
           const tierLabel = year <= 3 ? 'addition' : year <= 6 ? 'multiplication' : 'multiplication and division';
           const journey = retried
-            ? `wrong answer → explicit hint${year === 4 ? '' : ' → pause/resume with retained hint'} → retry → ${tierLabel} → 7/8 first-try answers (88%, two stars)`
+            ? `wrong answer${year === 7 ? ' on division' : ''} → explicit hint${year === 4 ? '' : ' → pause/resume with retained hint'} → retry → ${tierLabel} → 7/8 first-try answers (88%, two stars)`
             : `pause/resume → ${tierLabel} → 8/8 first-try answers (100%, three stars)`;
           results.push(`Year ${year}, ${viewport.width}px: Number Planets → ${journey} → menu`);
         }
