@@ -170,7 +170,9 @@ const results = [];
           const board = page.getByRole('region', { name: 'Lesson whiteboard', exact: true });
           const word = (await (await board.locator('.lesson-word').count() ? board.locator('.lesson-word') : board.getByRole('heading', { level: 2 })).innerText()).trim();
           studied.push(word);
+          if (step === 1) await page.getByText('Look at the word. Tap Hear the word, then Try spelling. The word will hide.', { exact: true }).waitFor();
           await button('Try spelling').click();
+          if (step === 1) await page.getByText('Type the word you heard, then press Check.', { exact: true }).waitFor();
           if (step === 1) {
             await page.getByLabel('Your spelling').fill('wrong'); await button('Check').click();
             await page.getByText('Good try.', { exact: false }).waitFor();
