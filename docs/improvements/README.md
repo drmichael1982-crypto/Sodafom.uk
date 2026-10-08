@@ -18,4 +18,4 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 
 Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `c173a256`; candidate pushes do not imply deployment.
 
-Next bounded priority: run the new Number Planets wrong-answer → hint → retry → 7/8 browser journey in hosted Chromium, inspect the phone/tablet screenshots and fix only a reproduced defect. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: extend Number Planets browser coverage to its younger addition and older multiplication/division tiers, including pause/resume retention, without duplicating the verified Year 4 journey. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
