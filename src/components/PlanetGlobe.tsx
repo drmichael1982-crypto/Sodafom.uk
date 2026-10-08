@@ -26,6 +26,7 @@ export default function PlanetGlobe({ index, moving = false }: { index: number; 
     if (!canvas || typeof CanvasRenderingContext2D === 'undefined') return;
     const context = canvas.getContext('2d');
     if (!context) return;
+    const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let disposed = false, frame = 0, last = 0, visible = true;
     const observer = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(entries => { visible = entries.some(entry => entry.isIntersecting); });
     observer?.observe(canvas);
@@ -58,7 +59,7 @@ export default function PlanetGlobe({ index, moving = false }: { index: number; 
       draw();
       const animate = (time: number) => {
         if (disposed) return;
-        if (visible && !document.hidden && time - last > 90) {
+        if (visible && !document.hidden && !motionPreference.matches && time - last > 90) {
           angle.current += Math.min(time - (last || time), 150) * .00023 * (index === 1 ? -1 : 1);
           last = time; draw();
         }

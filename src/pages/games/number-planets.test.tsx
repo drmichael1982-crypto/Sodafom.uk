@@ -81,6 +81,11 @@ describe("Number Planets", () => {
     );
     expect(screen.getByText(/Mission 1 of 8/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Answer 2" }));
+    expect(screen.getByRole("button", { name: "Answer 2" })).toHaveClass("correct-planet");
+    for (const value of [1, 3, 5]) {
+      expect(screen.getByRole("button", { name: "Answer " + value })).toHaveClass("other-planet");
+      expect(screen.getByRole("button", { name: "Answer " + value })).not.toHaveClass("correct-planet");
+    }
     expect(screen.getByRole("status")).toHaveTextContent("1 + 1 = 2");
     expect(screen.getByText(/0 first-try discoveries/)).toBeInTheDocument();
     expect(onComplete).not.toHaveBeenCalled();

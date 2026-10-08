@@ -8,6 +8,8 @@ import {
   normaliseVoiceAnswer,
 } from "@/lib/archie/game-voice";
 import "./number-planets.css";
+import PlanetGlobe from "@/components/PlanetGlobe";
+import "@/components/orbit-home.css";
 
 export function makePlanetQuestion(tier: number, index: number) {
   const a = tier === 1 ? index + 1 : 2 + index;
@@ -168,7 +170,7 @@ export function NumberPlanetsPlay({
         }
       >
         <div className="orbit-sun" aria-hidden="true" />
-        {PLANETS.map(([name, colour], i) => (
+        {PLANETS.map(([name], i) => (
           <div
             className="planet-orbit"
             key={name}
@@ -181,12 +183,7 @@ export function NumberPlanetsPlay({
             }
             aria-hidden="true"
           >
-            <span
-              className="orbit-body"
-              style={{
-                background: `radial-gradient(circle at 30% 25%,white,${colour} 40%,#17284b)`,
-              }}
-            />
+            <span className="orbit-body"><PlanetGlobe index={i} moving={motion&&!paused}/></span>
           </div>
         ))}
         <div id={questionId} className="planet-equation" aria-label={question.prompt}>
@@ -223,14 +220,14 @@ export function NumberPlanetsPlay({
               <button
                 key={value}
                 disabled={correct}
-                className={correct ? "correct-planet" : ""}
+                className={correct ? value===question.answer ? "correct-planet" : "other-planet" : ""}
                 style={
                   { "--planet-colour": PLANETS[i + 2][1] } as CSSProperties
                 }
                 onClick={(event) => choose(value, event.currentTarget)}
                 aria-label={"Answer " + value}
               >
-                {value}
+                <PlanetGlobe index={i+2} moving={motion&&!paused&&!correct}/><strong>{value}</strong>
               </button>
             ))}
           </div>

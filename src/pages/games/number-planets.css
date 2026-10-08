@@ -43,7 +43,7 @@
   box-shadow: inset 0 0 35px #09172f;
   border: 3px solid #85afe6;
 }
-.orbit-sun {
+.number-planets .orbit-sun {
   position: absolute;
   left: calc(50% - 25px);
   top: calc(50% - 25px);
@@ -255,3 +255,10 @@
     animation: none !important;
   }
 }
+
+/* Picture answer pieces with independently turning spherical surfaces. */
+.number-planets .orbit-body{background:none;box-shadow:none;animation:number-sphere-counter var(--speed) linear infinite;transform:rotate(calc(-1 * var(--angle)))}
+.number-planets .is-still .orbit-body{animation-play-state:paused}
+@keyframes number-sphere-counter{from{transform:rotate(calc(-1 * var(--angle)))}to{transform:rotate(calc(-1 * var(--angle) - 360deg))}}
+.number-planets .answer-planets{gap:8px;margin:12px 0}.number-planets .answer-planets button{display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;background:linear-gradient(140deg,#173e67,#102746);color:#fff;min-height:84px;padding:10px;box-shadow:0 3px 0 #071a36;position:relative}.number-planets .answer-planets button::after{content:'';position:absolute;right:-5px;top:33%;width:12px;height:20px;background:#254e77;border:2px solid #80abd4;border-left:0;border-radius:0 50% 50% 0}.number-planets .answer-planets .planet-globe{width:42px;height:42px;flex-shrink:0}.number-planets .answer-planets strong{background:#fff0c8;border-radius:8px;padding:4px 8px;color:#173b62;font-size:25px;min-width:36px}.number-planets .answer-planets .correct-planet{border-color:#51c38a;background:#0b6249}.number-planets .answer-planets .other-planet{opacity:.35}.number-planets .orbit-body .planet-real-rings,.number-planets .orbit-body .planet-kind-5::before{border-width:3px}
+@media(prefers-reduced-motion:reduce){.number-planets .orbit-body{animation:none!important}}
