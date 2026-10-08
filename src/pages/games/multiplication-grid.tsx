@@ -1,3 +1,4 @@
+import {usePicturePuzzlePause} from '@/lib/archie/picture-pause';
 /**
  * /games/multiplication-grid — fill in a times table grid against the clock (maths, ages 8–13)
  */
@@ -30,6 +31,7 @@ function buildGrid(): GridCell[] {
 
 function MultiplicationGridInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
   const [cells, setCells] = useState<GridCell[]>(() => buildGrid());
+  const picturePaused = usePicturePuzzlePause();
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
   const [submitted, setSubmitted] = useState(false);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
@@ -37,6 +39,7 @@ function MultiplicationGridInner({ onComplete }: { onComplete: (r: GameResult) =
   const startRef = useRef(Date.now());
 
   useEffect(() => {
+    if (picturePaused) return;
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
         if (t <= 1) {
@@ -49,7 +52,7 @@ function MultiplicationGridInner({ onComplete }: { onComplete: (r: GameResult) =
     }, 1000);
     return () => clearInterval(timerRef.current!);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [picturePaused]);
 
   const handleSubmit = useCallback(() => {
     if (submitted) return;

@@ -335,6 +335,7 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
     readCourseProgress(lesson.id, lesson.questions.length),
   );
   const [paused, setPaused] = useState(false);
+  useEffect(() => { const pause = () => setPaused(true); window.addEventListener('sodafom:picture-puzzle-open', pause); return () => window.removeEventListener('sodafom:picture-puzzle-open', pause); }, []);
   const [hint, setHint] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [storageOkay, setStorageOkay] = useState(true);

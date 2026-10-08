@@ -1,3 +1,4 @@
+import {usePicturePuzzlePause} from '@/lib/archie/picture-pause';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
@@ -69,6 +70,7 @@ function TimesTablePlay({ onComplete, level, onLevelChange, onQuestionChange }: 
   });
   const { q, options } = state;
 
+  const picturePaused = usePicturePuzzlePause();
   const [timeLeft, setTimeLeft] = useState(timePerQ);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | 'timeout' | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
@@ -103,6 +105,7 @@ function TimesTablePlay({ onComplete, level, onLevelChange, onQuestionChange }: 
   };
 
   useEffect(() => {
+    if (picturePaused) return;
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
         if (t <= 1) {
@@ -115,7 +118,7 @@ function TimesTablePlay({ onComplete, level, onLevelChange, onQuestionChange }: 
     }, 1000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [round, correct]);
+  }, [round, correct, picturePaused]);
 
   const handlePick = (opt: number) => {
     if (feedback) return;

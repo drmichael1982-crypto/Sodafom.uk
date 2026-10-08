@@ -1,3 +1,4 @@
+import {usePicturePuzzlePause} from '@/lib/archie/picture-pause';
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
@@ -32,9 +33,10 @@ function SpeedInner({ onComplete, level, onLevelChange, onQuestionChange }: {
   onLevelChange: (stars: number) => void;
   onQuestionChange?: (q: string) => void;
 }) {
+  const picturePaused = usePicturePuzzlePause();
   const [timeLeft, setTimeLeft] = useState(60);
   const [q, setQ] = useState(() => gen(level));
-  const [options, setOptions] = useState(() => makeOptions(gen(level).answer));
+  const [options, setOptions] = useState(() => makeOptions(q.answer));
   const [correct, setCorrect] = useState(0);
   const [total, setTotal] = useState(0);
   const [flash, setFlash] = useState<'correct' | 'wrong' | null>(null);
@@ -43,6 +45,7 @@ function SpeedInner({ onComplete, level, onLevelChange, onQuestionChange }: {
   useEffect(() => { onQuestionChange?.(`${q.a} × ${q.b} = ?`); }, [q, onQuestionChange]);
 
   useEffect(() => {
+    if (picturePaused) return;
     if (timeLeft <= 0) {
       const score = Math.min(100, Math.round((correct / Math.max(total, 1)) * 100));
       const stars = score >= 90 ? 3 : score >= 60 ? 2 : 1;
@@ -52,7 +55,7 @@ function SpeedInner({ onComplete, level, onLevelChange, onQuestionChange }: {
     }
     const t = setTimeout(() => setTimeLeft(t => t - 1), 1000);
     return () => clearTimeout(t);
-  }, [timeLeft, correct, total, onComplete, onLevelChange]);
+  }, [timeLeft, correct, total, onComplete, onLevelChange, picturePaused]);
 
   const pick = useCallback((opt: number) => {
     if (flash) return;

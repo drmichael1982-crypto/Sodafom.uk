@@ -3,16 +3,16 @@
 ## Repository, CI and deployment checked first
 
 - Rechecked draft PR #81 and found its head at `8a44d885dc704407c5d6bdb41d280dc84114df46`; documentation run #197 had passed. The PR had become non-mergeable because the children’s test branch advanced after the preceding run.
-- Verified the current test branch from GitHub as `test/archie-2026-10-02` commit `36072ef42e197dd48332711acd4e5263f99fd49d`, two commits newer than the previously reconciled base. The newer work adds continuous jigsaw artwork, live home-orbit checks and opt-in persistent parent-account storage.
+- Initially verified `test/archie-2026-10-02` at `36072ef42e197dd48332711acd4e5263f99fd49d`. While hosted checks were running, it advanced again to `4b2c53329e8d0a289cc3397de5a808e494d055dd`; that is the final base reconciled here. The newer work adds playable whole-page picture jigsaws, fixed navigation icons, responsive lesson breaks, continuous home artwork, live home-orbit checks and opt-in persistent parent-account storage.
 - Railway deployment `a1bc87cf-8a5c-4e8c-8dda-b8759c3d62a1` is healthy on that exact `36072ef` commit, created 8 October 2026 at 18:37:10 UTC. There is no staged or applying Railway work.
 - Leonard/sodafom797 remains a separate service and repository queue. No Leonard file, deployment or setting was changed.
 
 ## Reconciliation and current failure repaired
 
-1. Merged the two current test-branch commits into `improve/archie-learning-20261007` instead of continuing from a stale base.
+1. Merged the current test-branch lineage through `4b2c533` into `improve/archie-learning-20261007` instead of continuing from a stale base. The later reconciliation keeps the new `All activities` dialog and its exact-link route checks.
 2. Preserved the new continuous artwork positioning and all 26 unique home destinations while retaining the existing duplicate-route filter, accessibility announcements, Teacher reporting, lesson guidance and result accessibility.
 3. The combined full suite exposed a current failure: `SceneArtwork` now exports `sceneArtworkPath`, but the GameShell and Games age-policy test mocks did not provide it. Twenty-two tests failed during render before reaching their assertions.
-4. Added the missing deterministic `sceneArtworkPath` value to those two mocks. Their focused suite then passed 24/24, and the complete suite passed 838/838.
+4. Added the missing deterministic `sceneArtworkPath` value to those two mocks. The subsequent test-branch update independently supplied the production jigsaw artwork path in both mocks; that newer form is retained. The final complete suite passes 846/846.
 
 ## Number Planets age-tier browser coverage
 
@@ -27,10 +27,10 @@
 - Conflict-area tests: PASS, 3 files / 14 tests.
 - Repaired age-policy tests: PASS, 2 files / 24 tests.
 - `npm run type-check`: PASS.
-- `npm test -- --run`: PASS, 85 files / 838 tests.
+- `npm test -- --run`: PASS, 87 files / 846 tests.
 - `npm run build:archie`: PASS with the existing bundle-size and mixed dynamic/static import warnings.
 - Browser-script syntax and `git diff --check`: PASS.
-- GitHub run #201 (`37830311163`) passed installation, type-check, all 838 unit tests, the production build and Chromium setup, then found a current route-check mismatch before the simulated journeys ran: the reconciled script searched for an `Artwork` home heading, while duplicate-route filtering keeps the first current label, `Artwork gallery`. The assertion now follows that rendered label without changing the route or app UI. A replacement hosted run remains required before final browser claims.
+- GitHub run #201 (`37830311163`) passed installation, type-check, all 838 then-current unit tests, the production build and Chromium setup, then found a current home route-check mismatch before the simulated journeys ran. The test branch advanced during that repair and replaced the home cards with an `All activities` dialog; the final reconciliation uses the new exact `Artwork` link in that dialog rather than retaining an assertion for superseded markup. A replacement hosted run on the final base remains required before final browser claims.
 
 ## Direct live visual review
 

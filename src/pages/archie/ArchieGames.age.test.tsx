@@ -7,7 +7,7 @@ vi.mock('@/contexts/ArchieContext',()=>({useArchieContext:()=>callbacks}));
 vi.mock('@/lib/voice-context',()=>({useVoice:()=>({stop:callbacks.stop,playing:false})}));
 vi.mock('@/lib/config',()=>({ARCHIE_PREVIEW:true,API_PREFIX:''}));
 vi.mock('@/pages/CartoonTheatrePage',()=>({EPISODES:[]}));
-vi.mock('@/components/SceneArtwork',()=>({default:()=>null,sceneForSubject:()=> 'maths',sceneArtworkPath:()=>'/assets/scenes/test.webp'}));
+vi.mock('@/components/SceneArtwork',()=>({default:()=>null,sceneForSubject:()=> 'maths',sceneArtworkPath:()=> '/assets/scenes/archie-jigsaw-maths-v2.webp'}));
 vi.mock('@/components/OrbitHome',()=>({default:()=>null}));
 import { ArchieGames } from './ArchiePages';
 import { updateSavedData } from '@/lib/archie/storage';
