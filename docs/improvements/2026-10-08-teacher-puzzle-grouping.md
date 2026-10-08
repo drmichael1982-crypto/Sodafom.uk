@@ -14,6 +14,7 @@
 3. Each group shows a singular/plural completion count and its existing puzzle rows, stars and dates.
 4. The grouping function filters out ordinary lessons/books and does not change storage, create pupil profiles, send data online or add rewards.
 5. Browser checks now require the Maths/History group headings and the transparent missing-year explanation before capturing the Teacher view.
+6. The first published artifact was functionally correct but split the two small groups across phone screens because the explanation used two paragraphs. The final candidate combines that copy and tightens only report-card spacing so both groups can be reviewed together without shrinking controls.
 
 ## Curriculum and comparison basis
 

@@ -116,7 +116,7 @@ describe("Teacher and Class Lessons Views", () => {
     expect(screen.getByRole("heading", { name: "Maths · Year 2" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "History · Year not recorded" })).toBeInTheDocument();
     expect(screen.getByText("2 completed puzzles")).toBeInTheDocument();
-    expect(screen.getByText(/History’s older records do not store a year, so this view does not guess it/i)).toBeInTheDocument();
+    expect(screen.getByText(/History records have no saved year, so none is guessed/i)).toBeInTheDocument();
     expect(screen.getByText("Ancient Egypt history picture puzzle")).toBeInTheDocument();
     expect(screen.getByText("1066 history picture puzzle")).toBeInTheDocument();
     expect(screen.getByText("Year 1 fraction picture puzzles")).toBeInTheDocument();

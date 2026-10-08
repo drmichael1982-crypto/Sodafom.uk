@@ -73,9 +73,8 @@ function DevicePuzzleLearning() {
   return (
     <section className="a-panel" aria-labelledby="teacher-puzzle-learning">
       <h2 id="teacher-puzzle-learning" tabIndex={-1}>Recent puzzle learning on this device</h2>
-      <p className="a-note">This reuses the child’s on-device progress record. It does not create a pupil profile, send data online or award the puzzle twice.</p>
+      <p className="a-note">Uses the child’s on-device record only. Grouped by subject and saved year; History records have no saved year, so none is guessed. No pupil profile, online data or duplicate reward.</p>
       {total ? <>
-        <p className="a-note">Grouped by subject and by school year when the saved completion includes one. History’s older records do not store a year, so this view does not guess it.</p>
         <div className="tc-puzzle-groups">
           {groups.map((group) => (
             <section className="tc-puzzle-group" aria-labelledby={`puzzle-group-${group.key}`} key={group.key}>
