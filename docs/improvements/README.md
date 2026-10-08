@@ -17,4 +17,4 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 
 Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `c173a256`; candidate pushes do not imply deployment.
 
-Next bounded priority: confirm the fresh hosted browser run clears the Games search regression and completes the simulated journeys, then automate the verified Number Planets wrong-answer → hint → retry → 7/8 result journey at phone and tablet widths. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: automate the verified Number Planets wrong-answer → hint → retry → 7/8 result journey at phone and tablet widths. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
