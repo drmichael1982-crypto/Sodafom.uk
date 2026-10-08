@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { sceneForSubject } from '@/components/SceneArtwork';
+import { sceneForSubject, sceneArtworkPath } from '@/components/SceneArtwork';
 
 /** Stable page-specific artwork, position and colour, without changing activities. */
 export function puzzleThemeStyle(title: string, subject = ''): CSSProperties {
@@ -10,7 +10,7 @@ export function puzzleThemeStyle(title: string, subject = ''): CSSProperties {
     ? /geography/.test(key) ? 'geography' : /homework/.test(key) ? 'crossword' : 'spelling'
     : null;
   return {
-    '--puzzle-picture': `url("${world ? `/assets/cartoon/worlds/${world}.png` : `/assets/scenes/${scene}-v1.webp`}")`,
+    '--puzzle-picture': `url("${world ? `/assets/cartoon/worlds/${world}.png` : sceneArtworkPath(scene)}")`,
     '--puzzle-position': `${25 + seed % 55}% ${20 + seed % 60}%`,
     '--puzzle-colour': `hsl(${190 + seed % 75} 70% 92%)`,
   } as CSSProperties;

@@ -73,6 +73,26 @@ async function completePuzzle(user: ReturnType<typeof userEvent.setup>, selectEa
 function model() { return screen.getByLabelText('Explore the eight planets'); }
 
 describe('home planet discovery', () => {
+  it('moves all eight home planets and the Earth moon before completing the puzzle, and can pause', async () => {
+    const user = userEvent.setup();
+    render(<MemoryRouter><OrbitHome autoStart /></MemoryRouter>);
+    expect(model()).toHaveClass('is-moving');
+    expect(model().querySelectorAll('.home-orbit')).toHaveLength(8);
+    expect(model().querySelector('.home-orbit-2 .home-moon-orbit')).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Pause planets' }));
+    expect(model()).toHaveClass('is-still');
+    await user.click(screen.getByRole('button', { name: 'Move planets' }));
+    await user.click(screen.getByRole('button', { name: 'Start the jigsaw again' }));
+    expect(model()).toHaveClass('is-moving');
+  });
+  it('keeps automatic home motion off for reduced motion', () => {
+    media = preference(true);
+    vi.stubGlobal('matchMedia', vi.fn(() => media.query));
+    render(<MemoryRouter><OrbitHome autoStart /></MemoryRouter>);
+    expect(model()).toHaveClass('is-still');
+    expect(screen.getByRole('button', { name: 'Still planets' })).toBeDisabled();
+  });
+
   it('lets a child change a chosen piece without losing planets already placed', async () => {
     const user=userEvent.setup();show();
     await user.click(screen.getByRole('button',{name:'Pick up Mercury'}));

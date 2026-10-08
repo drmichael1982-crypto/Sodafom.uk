@@ -168,3 +168,14 @@ describe('isolated preview parent account backend', () => {
     expect(auth.handle).not.toHaveBeenCalled();
   });
 });
+
+
+describe('persistent account storage', () => {
+  it('requires production SQLite to be inside a mounted volume', () => {
+    const env = { ...configured, NODE_ENV: 'production', BETTER_AUTH_URL: 'https://example.test', ARCHIE_PARENT_SQLITE_PATH: '/data/accounts.sqlite' };
+    expect(readParentAuthConfiguration(env).configuration).toBeNull();
+    expect(readParentAuthConfiguration({ ...env, RAILWAY_VOLUME_MOUNT_PATH: '/data' }).configuration?.sqlitePath).toBe('/data/accounts.sqlite');
+    expect(readParentAuthConfiguration({ ...env, RAILWAY_VOLUME_MOUNT_PATH: '/other' }).configuration).toBeNull();
+    expect(readParentAuthConfiguration({ ...env, RAILWAY_VOLUME_MOUNT_PATH: '/data', ARCHIE_PARENT_SQLITE_PATH: '/data/../tmp/accounts.sqlite' }).configuration).toBeNull();
+  });
+});

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
-import { Home, Volume2, VolumeX, ArrowLeft, ArrowRight, Search, BookOpen, Pause, Play, Calculator, SpellCheck, FlaskConical, Globe, NotebookPen, Film, Star, Trophy, Users, KeyRound, Castle, Rocket, Rainbow, Waves, Flower2, Milestone, Gamepad2, Camera, MessageCircle } from 'lucide-react';
+import { Home, Volume2, VolumeX, ArrowLeft, ArrowRight, Search, BookOpen, Pause, Play, Calculator, SpellCheck, FlaskConical, Globe, NotebookPen, Film, Star, Trophy, Users, KeyRound, Castle, Rocket, Rainbow, Waves, Flower2, Milestone, Gamepad2, Camera } from 'lucide-react';
 import { useArchieContext } from '@/contexts/ArchieContext';
 import { useProgression } from '@/contexts/ProgressionContext';
 import { useVoice } from '@/lib/voice-context';
@@ -31,7 +31,7 @@ import { isGameForYear } from '@/lib/archie/game-age';
 import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
 import LearningYearOptions, { LEARNING_YEAR_SCOPE_NOTE } from '@/components/LearningYearOptions';
 
-export const ARCHIE_PATHS = ['/', '/world', '/quests', '/courses', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons', '/privacy', '/artwork', '/teacher', '/class', '/time-lab', '/preview-admin', '/history', '/device-check'];
+export const ARCHIE_PATHS = ['/', '/world', '/quests', '/courses', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons', '/privacy', '/artwork', '/teacher', '/class', '/time-lab', '/preview-admin', '/history', '/device-check', '/ask-archie', '/chat'];
 export function isArchiePage(path: string) { return ARCHIE_PATHS.includes(path) || path.startsWith('/reader/') || path.startsWith('/courses/'); }
 function useLearning(title: string, subject = 'Learning', question?: string) {
   const { setGameContext, clearGameContext } = useArchieContext();
@@ -120,7 +120,7 @@ export function ArchieHome() {
     <>
       <div className="home-personalize-bar">
         <span>{theme ? <>{theme.emoji} Your {theme.palette} learning world</> : 'Make your learning world yours'}</span>
-        <button className="home-personalize-trigger" type="button" aria-label="Personalise my home screen" onClick={() => setPersonalizing(true)}>🎨 Personalise</button>
+        <button className="home-personalize-trigger" type="button" aria-label="Change my interests" onClick={() => setPersonalizing(true)}>🎨 Personalise</button>
       </div>
       <dialog ref={interestDialog} className="home-interest-dialog" aria-labelledby="home-interest-title" onCancel={() => setPersonalizing(false)} onClose={() => setPersonalizing(false)}>
             <h2 id="home-interest-title">Make your home screen yours</h2>
@@ -143,11 +143,11 @@ export function ArchieHome() {
 
   return <main className={`soda-home soda-home-whole-puzzle space-jigsaw-home puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''}`} style={{...puzzleThemeStyle('Home'), ...(theme ? { backgroundImage: theme.background } : {})}}>
     <div className={`soda-home-inner app-home-screen screen-${homeScreen}`}>
-      <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><button className="a-button a-icon" type="button" aria-label="Ask Archie" onClick={() => openArchie()}><MessageCircle size={19}/></button><button className="a-button a-icon" type="button" aria-label="Personalise my home screen" onClick={() => setPersonalizing(true)}><Camera size={19}/></button><SoundButton/></div></header>
+      <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><button className="a-button a-icon" type="button" aria-label="Personalise my home screen" onClick={()=>setPersonalizing(true)}><NotebookPen size={19}/></button><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><SoundButton/></div></header>
       {homePersonalizer}
       <nav className="home-screen-tabs" aria-label="Home screens">{[['activities','Explore'],['planets','Planets'],['learning','Puzzles']].map(([id,label])=><button key={id} type="button" aria-pressed={homeScreen===id} onClick={()=>setHomeScreen(id)}>{label}</button>)}</nav>
-      <div className="archie-home-welcome"><div><span>Learn · play · discover</span><strong>Pick a picture, start an adventure!</strong></div><button type="button" onClick={()=>setHomeScreen('planets')} aria-label="Play the planet jigsaw"><PlanetGlobe index={2} moving={!window.matchMedia('(prefers-reduced-motion: reduce)').matches}/><span>Planet puzzle →</span></button></div>
-      <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome/><LearningJigsaw year={settings.year}/>
+      <div className="archie-home-welcome"><div><span>Learn · play · discover</span><strong>Pick a picture, start an adventure!</strong></div><button className="home-ask-button" type="button" onClick={()=>openArchie()}>Ask Archie</button><button type="button" onClick={()=>setHomeScreen('planets')} aria-label="Play the planet jigsaw"><PlanetGlobe index={2} moving={!window.matchMedia('(prefers-reduced-motion: reduce)').matches}/><span>Planet puzzle →</span></button></div>
+      <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome autoStart/><LearningJigsaw year={settings.year}/>
       <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap a jigsaw piece. Choose your next adventure.</p><PuzzleMenu home/></section>
       <section className="soda-talk-card"><ArchieAvatar year={settings.year} className="soda-talk-avatar"/><div><h2>Let's work it out together</h2><p>Ask Archie for a hint, listen to a question or talk through one step.</p></div><button className="a-button" onClick={()=>openArchie()}>Ask Archie</button></section>
       <nav className="a-bottom soda-home-more" aria-label="More activities">{[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,to])=><Link key={to} to={to}>{label}</Link>)}</nav>
@@ -178,6 +178,36 @@ const PUZZLE_DESCRIPTIONS: Record<string,string> = {
   'Adventure Trail':'Roll, solve and explore', 'Explore my world':'See every activity',
 };
 function PuzzleMenu({home=false}: {home?:boolean}) {
+  const pictureRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const picture = pictureRef.current;
+    if (!home || !picture) return;
+    const media = window.matchMedia('(max-width: 760px)');
+    let disposed = false;
+    const image = new Image();
+    const align = () => {
+      if (disposed || !image.naturalWidth) return;
+      const bounds = picture.getBoundingClientRect();
+      const scale = Math.max(bounds.width / image.naturalWidth, bounds.height / image.naturalHeight);
+      const width = image.naturalWidth * scale, height = image.naturalHeight * scale;
+      const left = (bounds.width - width) / 2, top = (bounds.height - height) / 2;
+      picture.style.setProperty("--home-picture", `url("${image.src}")`);
+      picture.querySelectorAll<HTMLElement>('.world-puzzle-piece').forEach(piece => {
+        const rect = piece.getBoundingClientRect();
+        piece.style.setProperty('--piece-picture', `url("${image.src}")`);
+        piece.style.setProperty('--piece-size', `${width}px ${height}px`);
+        piece.style.setProperty('--piece-position', `${left - rect.left + bounds.left}px ${top - rect.top + bounds.top}px`);
+      });
+    };
+    const load = () => { image.src = `/assets/scenes/archie-jigsaw-${media.matches ? 'mobile' : 'island'}-v2.webp`; };
+    image.onload = align;
+    const observer = new ResizeObserver(align);
+    observer.observe(picture);
+    media.addEventListener('change', load);
+    load();
+    return () => { disposed = true; observer.disconnect(); media.removeEventListener('change', load); image.onload = null; };
+  }, [home]);
+
   const candidates = home ? [...WORLDS, ['Games','🎮','/games'], ['History','🏰','/history'], ['Adventure Trail','🎲','/games/archie-adventure-trail'], ['Explore my world','🌍','/world'], ['Ask Archie','💬','/ask-archie'], ['Clock lab','🕒','/time-lab'], ['Progress','📈','/progress'], ['Artwork','🎨','/artwork'], ['Settings','⚙️','/settings'], ['Privacy','🔒','/privacy']] : WORLDS;
   const routes = new Set<string>();
   const items = candidates.filter(([, , route]) => {
@@ -185,7 +215,7 @@ function PuzzleMenu({home=false}: {home?:boolean}) {
     routes.add(route);
     return true;
   });
-  return <nav className={`world-puzzle ${home ? 'home-picture-puzzle' : ''}`} aria-label={home ? 'Home activities' : 'Adventure picture activities'}>{items.map(([label,emoji,to]) => <Link key={to} className={`world-puzzle-piece ${home ? 'has-archie-picture' : ''}`} to={to}>
+  return <nav ref={pictureRef} className={`world-puzzle ${home ? 'home-picture-puzzle' : ''}`} aria-label={home ? 'Home activities' : 'Adventure picture activities'}>{items.map(([label,emoji,to]) => <Link key={to} className={`world-puzzle-piece ${home ? 'has-archie-picture' : ''}`} to={to}>
     {home && <ArchiePicturePiece label={label}/>}
     <svg className="world-puzzle-seam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M100 0 V37 C88 32 88 53 100 48 V100 H63 C68 88 47 88 52 100 H0"/></svg>
     <span className="world-puzzle-label"><h2>{!home&&<span aria-hidden="true">{emoji} </span>}{home ? ({'Learning adventures':'Lessons','Learning quests':'Quests','My lesson':'Whiteboard','Teacher lessons':'Teachers','Class lessons':'Class','Sticker book':'Stickers','Adventure Trail':'Trail','Explore my world':'My world'} as Record<string,string>)[label] || label : label}</h2><span className="puzzle-description">{PUZZLE_DESCRIPTIONS[label]}</span><span className="puzzle-open">Open →</span></span>
@@ -354,7 +384,7 @@ export function ArchieCartoons() {
 export function ArchieAskRoute() {
   const {openArchie}=useArchieContext();
   useEffect(()=>openArchie(),[openArchie]);
-  return <Navigate to="/world" replace/>;
+  return <Page title="Ask Archie" intro="Ask a question, try a hint and learn one step at a time." back="/" scene="adventure"><section className="a-panel"><h2>Your learning helper</h2><p>Use the Ask Archie button to open your question box. Built-in hints work without an AI key.</p></section></Page>;
 }
 
 export function ArchieArtworkGallery() {
