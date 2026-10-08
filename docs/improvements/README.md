@@ -11,4 +11,4 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 
 Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `f254a44`; candidate pushes do not imply deployment.
 
-Next bounded priority: publish the Teacher subject/year grouping, inspect its current browser run and phone/tablet captures, then fix only reproduced failures. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: perform a physical-device keyboard and screen-reader review of the grown-up Teacher flow, then fix only reproduced focus-order or announcement defects. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.

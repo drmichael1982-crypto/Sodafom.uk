@@ -13,8 +13,8 @@
 2. Fraction records produce groups such as `Maths · Year 1`; History records produce `History · Year not recorded` because the older History completion format has no year. The interface explicitly says it will not guess one.
 3. Each group shows a singular/plural completion count and its existing puzzle rows, stars and dates.
 4. The grouping function filters out ordinary lessons/books and does not change storage, create pupil profiles, send data online or add rewards.
-5. Browser checks now require the Maths/History group headings and the transparent missing-year explanation before capturing the Teacher view.
-6. The first published artifact was functionally correct but split the two small groups across phone screens because the explanation used two paragraphs. The final candidate combines that copy and tightens only report-card spacing so both groups can be reviewed together without shrinking controls.
+5. Browser checks require the Maths/History group headings and the transparent missing-year explanation before capturing the Teacher view. They now save separate Maths and History phone captures plus a tablet overview.
+6. The final layout keeps each subject group on its own readable phone screen rather than shrinking text or controls. The tablet view shows both groups together. Previous/Next now also resets vertical page scroll so a newly selected screen starts at the top.
 
 ## Curriculum and comparison basis
 
@@ -23,17 +23,20 @@
 - Mathseeds' official help describes automated progress and achievement reporting: <https://support.mathseeds.com/en_GB/how-will-i-know-that-my-students-are-making-progress-in-mathseeds>.
 - Those products are reporting benchmarks only. Archie's view is intentionally smaller, local-only and non-assessive; it is not equivalent class reporting or evidence of pupil progress, learning outcomes or enjoyment.
 
-## Local verification before publication
+## Verification and rendered review
 
 - `npm run type-check`: PASS.
 - Targeted Teacher, History and Fraction tests: 3 files / 11 tests: PASS.
 - Full Vitest: 84 files / 833 tests: PASS.
 - `npm run build:archie`: PASS with the existing bundle-size and mixed dynamic/static import warnings.
 - `node --check scripts/test-archie-ui.cjs` and `git diff --check`: PASS.
-- A current GitHub browser run and direct review of new 390 × 844 and 820 × 1180 Teacher captures are still required before the grouped layout is visually approved.
+- GitHub run #162 for code/evidence head `52597c5bf1d1af08145c4407d9998b98b8cbcba3`: PASS. TypeScript, 833 tests, production build, the browser route journey across all 130 game routes, 68 simulated learner journeys and artifact upload all passed.
+- Direct artifact review at 390 × 844: the Maths screen shows the explanation, `Maths · Year 1`, its one-completion count and the full Fraction row without horizontal clipping; the History screen shows `History · Year not recorded`, its count and the full Ancient Egypt row without horizontal clipping. The two groups use separate phone screens and retain the large Previous/Next controls.
+- Direct artifact review at 820 × 1180: School preview, Maths and History groups, school-year selection and subject controls are visible together; the established blue/gold styling, pale illustrated background and readable spacing remain coherent.
+- These are simulated browser checks, not real-child testing or evidence of learning outcomes or enjoyment.
 
 ## Boundaries and next priority
 
 No merge/deployment, paid service, credential change, real child data, 3D work or Leonard edit occurred. Physical-device microphone/audio, keyboard and screen-reader review, live accounts/payments, multi-child reporting and cross-device sync remain unverified.
 
-Next bounded priority: publish this grouping candidate, inspect current CI and both Teacher captures, then fix only reproduced accessibility or layout defects.
+Next bounded priority: physical-device keyboard and screen-reader review of the grown-up Teacher flow, followed by any reproduced focus-order or announcement defect.
