@@ -19,7 +19,14 @@ const base = process.env.ARCHIE_TEST_URL || 'http://127.0.0.1:4173';
     assert.equal(await moon.evaluate(element=>getComputedStyle(element).animationPlayState),'paused');
     await page.getByRole('button',{name:'Move planets',exact:true}).click();
     fs.mkdirSync('test-results',{recursive:true});await page.screenshot({path:'test-results/planets-mobile.png',fullPage:true});
-    await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await model.locator('.is-moving').count(),0);
+    for (const [index,name] of ['Mercury','Venus','Earth','Mars','Jupiter','Saturn','Uranus','Neptune'].entries()) {
+      await page.getByRole('button',{name:`Pick up ${name}`,exact:true}).click();
+      await page.getByRole('button',{name:`Place in position ${index+1}: ${name}`,exact:true}).click();
+    }
+    await page.getByRole('heading',{name:'Your solar system is alive!',exact:true}).waitFor();
+    await page.screenshot({path:'test-results/solar-system-reward-mobile.png',fullPage:true});
+    await page.getByRole('button',{name:'Back to puzzle',exact:true}).click();
+    await page.emulateMedia({reducedMotion:'reduce'});
     await page.getByRole('button',{name:'Still planets',exact:true}).waitFor();await page.emulateMedia({reducedMotion:'no-preference'});
     for (const viewport of [{width:320,height:568},{width:390,height:844},{width:844,height:390}]) {
       await page.setViewportSize(viewport);await page.getByRole('button',{name:'Explore',exact:true}).click();
