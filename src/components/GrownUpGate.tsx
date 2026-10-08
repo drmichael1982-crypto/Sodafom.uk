@@ -23,7 +23,7 @@ export default function GrownUpGate({ children, purpose = 'Open the grown-up are
       input.current?.focus();
     }
   }
-  if(unlocked)return <><span ref={content} className="sr-only" tabIndex={-1} aria-label="Grown-up area">Grown-up area opened.</span>{children}</>;
+  if(unlocked)return <><span ref={content} className="sr-only" tabIndex={-1} aria-label="Grown-up area opened">Grown-up area opened.</span>{children}</>;
   return <section className="a-panel grown-up-gate" aria-labelledby={id+'-title'}>
     <h2 id={id+'-title'}>A grown-up needs to help here</h2>
     <p>{purpose}. Please hand the device to the adult looking after this learning session.</p>

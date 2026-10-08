@@ -33,6 +33,8 @@ const results=[];
     assert.ok(words.length>=2,'The visible gate sentence must contain the requested words');
     await page.getByLabel('Grown-up answer',{exact:true}).fill(words.at(-1)+' '+words[1]);
     await button('Continue with a grown-up').click();
+    await page.getByLabel('Grown-up area opened',{exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Grown-up area opened',{exact:true}).evaluate(element=>element===document.activeElement),true,'Unlock confirmation must receive focus and announce that the area opened');
     await page.getByLabel('School year').waitFor();
     assert.equal(await page.getByRole('heading',{name:title,exact:true}).count(),0);
   };
