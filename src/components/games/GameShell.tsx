@@ -551,9 +551,10 @@ export function ResultScreen({
               transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
               className="bg-muted rounded-2xl p-4 mb-5"
             >
-              <div className="text-5xl font-black text-primary mb-1 tabular-nums">
+              <div aria-hidden="true" className="text-5xl font-black text-primary mb-1 tabular-nums">
                 {animatedScore}%
               </div>
+              <span className="sr-only">Final score: {result.score}%</span>
               <div className="text-muted-foreground text-sm font-bold">
                 {result.correct} correct out of {result.total} questions
               </div>

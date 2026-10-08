@@ -75,6 +75,9 @@ it('hands focus from Finish to results, then from Replay to the restarted game t
   expect(screen.getByRole('heading', { level: 1, name: 'Number Planets' })).not.toHaveFocus();
   finish.focus();
   fireEvent.click(finish);
+  // The visible counter starts at zero and animates, but assistive technology
+  // must receive the settled result immediately rather than that transient zero.
+  await waitFor(() => expect(screen.getByText('Final score: 100%')).toHaveClass('sr-only'));
   await waitFor(() => expect(screen.getByRole('heading', { name: /Amazing exploring/ })).toHaveFocus());
   expect(finish).not.toBeInTheDocument();
   expect(screen.getByRole('heading', { name: /Amazing exploring/ })).toHaveAttribute('tabindex', '-1');
