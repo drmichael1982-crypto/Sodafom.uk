@@ -8,6 +8,7 @@ import { useVoice } from '@/lib/voice-context';
 import questData from '@/lib/archie/curriculum-quests.json';
 import './archie.css';
 import GrownUpGate from '@/components/GrownUpGate';
+import LearningYearOptions, { LEARNING_YEAR_SCOPE_NOTE } from '@/components/LearningYearOptions';
 
 type Quest = typeof questData[number];
 const SUBJECT_LABELS = { maths: 'Maths', english: 'English', science: 'Science' };
@@ -17,7 +18,7 @@ export default function ArchieQuests() {
   const [active, setActive] = useState<Quest | null>(null);
   if (active) return <QuestRun key={active.id} quest={active} onBack={() => setActive(null)}/>;
   return <Page title="Learning quests" intro="Help Archie explore, one small challenge at a time. Try a hint, talk it through, and earn a star.">
-    <label className="a-field">Choose a school year<select value={year} onChange={event => setYear(Number(event.target.value))}>{Array.from({length:9}, (_,i) => <option key={i+1} value={i+1}>Year {i+1}</option>)}</select></label>
+    <label className="a-field">Choose a school year<select value={year} onChange={event => setYear(Number(event.target.value))}><LearningYearOptions/></select></label><p className="a-note">{LEARNING_YEAR_SCOPE_NOTE}</p>
     <div className="a-grid">{questData.filter(quest => quest.year === year).map(quest => {
       const Icon = quest.subject === 'maths' ? Calculator : quest.subject === 'english' ? BookOpen : FlaskConical;
       const completed = activities.some(activity => activity.id === 'quest-' + quest.id);

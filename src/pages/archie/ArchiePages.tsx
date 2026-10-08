@@ -26,6 +26,7 @@ import ParentAIConnection from '@/components/ParentAIConnection';
 import './sodafom-polish.css';
 import { isGameForYear } from '@/lib/archie/game-age';
 import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
+import LearningYearOptions, { LEARNING_YEAR_SCOPE_NOTE } from '@/components/LearningYearOptions';
 
 export const ARCHIE_PATHS = ['/', '/world', '/quests', '/courses', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons', '/privacy', '/artwork', '/teacher', '/class', '/time-lab', '/preview-admin', '/history', '/device-check'];
 export function isArchiePage(path: string) { return ARCHIE_PATHS.includes(path) || path.startsWith('/reader/') || path.startsWith('/courses/'); }
@@ -199,7 +200,7 @@ export function ArchieGames() {
   const filtered = catalog.filter(g => isGameForYear(settings.year,g.ageGroups) && (subject === 'all' || g.subject === subject) && `${g.title} ${g.description}`.toLowerCase().includes(query.toLowerCase()));
   return <Page title="Choose a game" intro="Your favourite games, all in one place.">
     <div className="a-actions"><Link className="a-button" to="/courses">Start a learning adventure</Link><Link className="a-button" to="/quests">Try a quick quest</Link></div>
-    <div className="a-panel soda-year-choice"><label className="a-field">My learning year<select value={settings.year} onChange={e=>updateSavedData(d=>({...d,settings:{...d.settings,year:Number(e.target.value)}}))}>{[1,2,3,4,5,6,7,8,9].map(year=><option key={year} value={year}>Year {year} · ages {year+4}–{year+5}</option>)}</select></label><p>Games and lesson practice follow your chosen year. Choose with a grown-up if you are unsure.</p></div>
+    <div className="a-panel soda-year-choice"><label className="a-field">My learning year<select value={settings.year} onChange={e=>updateSavedData(d=>({...d,settings:{...d.settings,year:Number(e.target.value)}}))}><LearningYearOptions/></select></label><p>{LEARNING_YEAR_SCOPE_NOTE}</p></div>
     <label className="a-search"><Search/><input ref={searchInput} type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
     <div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
     <p role="status">{filtered.length} games to explore</p>
@@ -325,7 +326,7 @@ export function ArchieParents({ settingsOnly = false }: { settingsOnly?: boolean
     finally{setChecking(false);}
   }
   return <GrownUpGate key={settingsOnly?'settings':'parents'} purpose="Choose learning settings, online help and saved memory" cancel={<Link className="a-button" to="/world">Back to learning</Link>}><Page title={settingsOnly?'Settings':'Parents & learning'} back="/" calm intro="Sign in, choose your child’s learning settings and connect optional AI help.">{!settingsOnly && <><nav className="a-actions parent-shortcuts" aria-label="Parent hub sections"><a className="a-button" href="#parent-account">1. Parent sign-in</a><a className="a-button" href="#parent-ai">2. Connect AI</a><a className="a-button" href="#learning-settings">3. Learning settings</a></nav><ParentAccountPanel/><ParentAIConnection/></>}<form id="learning-settings" className="a-panel" onSubmit={e=>{e.preventDefault();setSettings({year});setNotice('Your learning settings are saved. The next lesson will use this year group.');}}>
-    <label className="a-field">School year<select value={year} onChange={e=>setYear(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9].map(n=><option key={n} value={n}>Year {n}</option>)}</select></label>
+    <label className="a-field">School year<select value={year} onChange={e=>setYear(Number(e.target.value))}><LearningYearOptions/></select></label><p className="a-note">{LEARNING_YEAR_SCOPE_NOTE}</p>
     <p><strong>Lesson length:</strong> 30 minutes, with a pause button whenever you need it.</p><Link className="a-button" to="/privacy">Privacy information</Link>
     <label className="a-check"><input type="checkbox" checked={settings.sound} onChange={e=>setSettings({sound:e.target.checked})}/> Read aloud and sound</label>
     <label className="a-check"><input type="checkbox" checked={settings.largeText} onChange={e=>setSettings({largeText:e.target.checked})}/> Larger text on menus and books</label>
