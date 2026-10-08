@@ -12,7 +12,7 @@ export default function GrownUpGate({ children, purpose = 'Open the grown-up are
   const [answer,setAnswer]=useState('');
   const [error,setError]=useState('');
   const input=useRef<HTMLInputElement>(null);
-  const content=useRef<HTMLDivElement>(null);
+  const content=useRef<HTMLSpanElement>(null);
   useEffect(()=>{if(unlocked)content.current?.focus();},[unlocked]);
   function submit(event:FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,7 +23,7 @@ export default function GrownUpGate({ children, purpose = 'Open the grown-up are
       input.current?.focus();
     }
   }
-  if(unlocked)return <div ref={content} className="grown-up-unlocked" tabIndex={-1} aria-label="Grown-up area">{children}</div>;
+  if(unlocked)return <><span ref={content} className="sr-only" tabIndex={-1} aria-label="Grown-up area">Grown-up area opened.</span>{children}</>;
   return <section className="a-panel grown-up-gate" aria-labelledby={id+'-title'}>
     <h2 id={id+'-title'}>A grown-up needs to help here</h2>
     <p>{purpose}. Please hand the device to the adult looking after this learning session.</p>

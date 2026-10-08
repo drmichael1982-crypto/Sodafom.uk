@@ -30,6 +30,8 @@
 - `npm run build:archie`: PASS, with the existing bundle-size and mixed dynamic/static import warnings.
 - `node --check scripts/test-archie-ui.cjs`: PASS.
 - The expanded GitHub browser journey and its six new rendered captures require publication and a current CI run before they are claimed as passing or visually approved.
+- Published commit `5be8d97ea997a7e24d262e7090a2aba4e4b4244e` passed GitHub run #142: install, TypeScript, 833 tests, build, the expanded browser route/puzzle/teacher journey, all 130 game routes, 68 simulated learner journeys and artifact upload.
+- Direct review of the six new screenshots found History and Fraction completion states clear at both widths and the teacher summary clear at 820 × 1180. It also reproduced a 390 × 844 defect: the unlocked gate's full-height wrapper nested the teacher content inside one pager column, so page 2 was shifted and clipped. The unlocked gate now returns a focusable screen-reader announcement followed by its content as direct pager children; this preserves the focus test while allowing phone columns to flow correctly. A green rerun and replacement screenshot are required before the phone fix is claimed complete.
 
 ## Boundaries and next priority
 
