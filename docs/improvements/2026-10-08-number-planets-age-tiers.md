@@ -30,7 +30,7 @@
 - `npm test -- --run`: PASS, 85 files / 838 tests.
 - `npm run build:archie`: PASS with the existing bundle-size and mixed dynamic/static import warnings.
 - Browser-script syntax and `git diff --check`: PASS.
-- Hosted Chromium and its screenshots remain required for the reconciled candidate before final browser claims.
+- GitHub run #201 (`37830311163`) passed installation, type-check, all 838 unit tests, the production build and Chromium setup, then found a current route-check mismatch before the simulated journeys ran: the reconciled script searched for an `Artwork` home heading, while duplicate-route filtering keeps the first current label, `Artwork gallery`. The assertion now follows that rendered label without changing the route or app UI. A replacement hosted run remains required before final browser claims.
 
 ## Direct live visual review
 
