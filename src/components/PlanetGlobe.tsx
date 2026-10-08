@@ -26,7 +26,9 @@ export default function PlanetGlobe({ index, moving = false }: { index: number; 
     if (!canvas || typeof CanvasRenderingContext2D === 'undefined') return;
     const context = canvas.getContext('2d');
     if (!context) return;
-    let disposed = false, frame = 0, last = 0;
+    let disposed = false, frame = 0, last = 0, visible = true;
+    const observer = typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(entries => { visible = entries.some(entry => entry.isIntersecting); });
+    observer?.observe(canvas);
     loadAtlas().then(texture => {
       if (!texture || disposed) return;
       const size = canvas.width, radius = size / 2 - 1;
@@ -56,7 +58,7 @@ export default function PlanetGlobe({ index, moving = false }: { index: number; 
       draw();
       const animate = (time: number) => {
         if (disposed) return;
-        if (!document.hidden && time - last > 90) {
+        if (visible && !document.hidden && time - last > 90) {
           angle.current += Math.min(time - (last || time), 150) * .00023 * (index === 1 ? -1 : 1);
           last = time; draw();
         }
@@ -64,7 +66,7 @@ export default function PlanetGlobe({ index, moving = false }: { index: number; 
       };
       if (moving) frame = requestAnimationFrame(animate);
     });
-    return () => { disposed = true; cancelAnimationFrame(frame); };
+    return () => { disposed = true; observer?.disconnect(); cancelAnimationFrame(frame); };
   }, [index, moving]);
   return <span className={`planet-globe planet-kind-${index}`} aria-hidden="true"><canvas ref={ref} width={80} height={80}/>{index === 5 && <span className="planet-real-rings"/>}</span>;
 }

@@ -47,7 +47,7 @@ function SoundButton() {
   const { stop } = useVoice();
   return <button className="a-button a-icon" aria-label={settings.sound ? 'Turn sound off' : 'Turn sound on'} aria-pressed={settings.sound} onClick={() => { setSettings({ sound: !settings.sound }); stop(); }}>{settings.sound ? <Volume2/> : <VolumeX/>}</button>;
 }
-export function Page({ title, intro, children, back = '/world', calm = false, scene }: { title: string; intro?: string; children: ReactNode; back?: string; calm?: boolean; scene?: LearningScene }) {
+export function Page({ title, intro, children, back = '/world', calm = false, scene, toolbar }: { title: string; intro?: string; children: ReactNode; back?: string; calm?: boolean; scene?: LearningScene; toolbar?: ReactNode }) {
   const { settings } = useArchieData();
   const { openArchie } = useArchieContext();
   return <main style={puzzleThemeStyle(title, scene)} className={`archie-app soda-page puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''} ${calm ? 'a-calm' : ''}`}><div className="a-page">
@@ -57,6 +57,7 @@ export function Page({ title, intro, children, back = '/world', calm = false, sc
       {!calm && <SceneArtwork scene={scene ?? sceneForSubject(title)} title={title} compact/>}
     </section>
     <div className="a-page-help"><button className="a-button" onClick={() => openArchie()}>Ask Archie</button><span>Help with this game or lesson</span></div>
+    {toolbar}
     <AppScreenPager>{children}</AppScreenPager>
     <nav className="a-bottom" aria-label="Main navigation"><Link to="/">Home</Link><Link to="/world">My world</Link><Link to="/games">Games</Link><Link to="/courses">Lessons</Link><Link to="/lesson">Spelling</Link><Link to="/privacy">Privacy</Link></nav>
   </div></main>;
@@ -190,12 +191,12 @@ export function ArchieGames() {
   const [query,setQuery] = useState('');
   const subject = params.get('subject') || 'all';
   const filtered = catalog.filter(g => isGameForYear(settings.year,g.ageGroups) && (subject === 'all' || g.subject === subject) && `${g.title} ${g.description}`.toLowerCase().includes(query.toLowerCase()));
-  return <Page title="Choose a game" intro="Your favourite games, all in one place.">
-    <div className="a-actions"><Link className="a-button" to="/courses">Start a learning adventure</Link><Link className="a-button" to="/quests">Try a quick quest</Link></div>
-    <div className="a-panel soda-year-choice"><label className="a-field">My learning year<select value={settings.year} onChange={e=>updateSavedData(d=>({...d,settings:{...d.settings,year:Number(e.target.value)}}))}>{[1,2,3,4,5,6,7,8,9].map(year=><option key={year} value={year}>Year {year} · ages {year+4}–{year+5}</option>)}</select></label><p>Games and lesson practice follow your chosen year. Choose with a grown-up if you are unsure.</p></div>
-    <label className="a-search"><Search/><input type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
-    <div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
-    <p role="status">{filtered.length} games to explore</p>
+  const toolbar = <div className="game-library-toolbar"><div className="game-library-filters">
+    <label className="a-field">My learning year<select value={settings.year} onChange={e=>updateSavedData(d=>({...d,settings:{...d.settings,year:Number(e.target.value)}}))}>{[1,2,3,4,5,6,7,8,9].map(year=><option key={year} value={year}>Year {year} · ages {year+4}–{year+5}</option>)}</select></label>
+    <label className="a-search"><Search aria-hidden="true"/><input type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+    </div><div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
+    <p role="status">{filtered.length} games for Year {settings.year}</p></div>;
+  return <Page title="Choose a game" intro="Pick a picture and let's play." toolbar={toolbar}>
     <div className="a-grid">{filtered.map((g,i)=><Link key={g.id} to={g.route} className={`a-card colour-${i%4}`} data-game-link><SceneArtwork scene={sceneForSubject(g.subject,g.title)} title={g.title} compact/><h2>{g.title}</h2><p>{g.description}</p><small>Ages {g.ageGroups.join(', ')}</small><span className="a-play">Play game →</span></Link>)}</div>
     {!filtered.length && <div className="a-panel"><p>No games match that search.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});}}>Show all games</button></div>}
   </Page>;
