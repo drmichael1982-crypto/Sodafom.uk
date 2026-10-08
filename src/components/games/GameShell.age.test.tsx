@@ -13,7 +13,7 @@ vi.mock('./ActiveChildBanner',()=>({default:()=>null}));
 vi.mock('./ConfettiCanvas',()=>({default:()=>null}));
 vi.mock('./CertificateModal',()=>({default:()=>null}));
 vi.mock('@/components/ShareBar',()=>({default:()=>null}));
-vi.mock('@/components/SceneArtwork',()=>({default:()=>null,sceneForSubject:()=> 'maths'}));
+vi.mock('@/components/SceneArtwork',()=>({default:()=>null,sceneForSubject:()=> 'maths',sceneArtworkPath:()=> '/assets/scenes/archie-jigsaw-maths-v2.webp'}));
 vi.mock('virtual:content',()=>({games:{games:[
   {title:'Starter',slug:'starter',subject:'maths',ageGroups:['5–7']},
   {title:'Algebra',slug:'algebra',subject:'maths',ageGroups:['11–13']},
