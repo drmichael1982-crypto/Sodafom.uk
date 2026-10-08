@@ -1,3 +1,4 @@
+import { PagePictureFrame } from '@/components/PagePictureJigsaw';
 import { isArchiePage } from '@/pages/archie/ArchiePages';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { type ReactElement } from 'react';
@@ -42,7 +43,7 @@ export default function RootLayout({
                 <ScrollRestoration />
                 <SpellingInputPolicy />
                 {!hideHeader && <Header />}
-                {children}
+                {immersiveHome ? <PagePictureFrame>{children}</PagePictureFrame> : children}
                 {!immersiveHome && <Footer />}
                 {/* Floating UI — accessibility toolbar + unified Archie helper + mobile CTA */}
                 {/* Immersive home/cartoon mode already has its own Settings control. */}

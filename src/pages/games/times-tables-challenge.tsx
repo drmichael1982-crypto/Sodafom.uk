@@ -1,3 +1,4 @@
+import {usePicturePuzzlePause} from '@/lib/archie/picture-pause';
 /**
  * /games/times-tables-challenge — Rapid-fire times table quiz with speed bonus
  * Ages 5–13 · Maths subject
@@ -42,30 +43,25 @@ function makeQuestion(difficulty: Difficulty): Question {
 }
 
 // ── Speed timer bar ───────────────────────────────────────────────────────────
-function TimerBar({ duration, onExpire, key: _key }: { duration: number; onExpire: () => void; key: string }) {
+function TimerBar({ duration, onExpire }: { duration: number; onExpire: () => void }) {
   const [pct, setPct] = useState(100);
-  const startRef = useRef(Date.now());
-  const rafRef = useRef<number>(0);
+  const paused = usePicturePuzzlePause();
+  const elapsedRef = useRef(0);
   const firedRef = useRef(false);
-
+  useEffect(() => { elapsedRef.current = 0; firedRef.current = false; setPct(100); }, [duration]);
   useEffect(() => {
-    startRef.current = Date.now();
-    firedRef.current = false;
-    setPct(100);
-
+    if (paused || firedRef.current) return;
+    const started = Date.now();
+    let frame = 0;
     function tick() {
-      const elapsed = Date.now() - startRef.current;
-      const remaining = Math.max(0, 1 - elapsed / (duration * 1000));
+      const remaining = Math.max(0, 1 - (elapsedRef.current + Date.now() - started) / (duration * 1000));
       setPct(remaining * 100);
-      if (remaining <= 0) {
-        if (!firedRef.current) { firedRef.current = true; onExpire(); }
-        return;
-      }
-      rafRef.current = requestAnimationFrame(tick);
+      if (remaining <= 0) { if (!firedRef.current) { firedRef.current = true; onExpire(); } return; }
+      frame = requestAnimationFrame(tick);
     }
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [duration, onExpire]);
+    frame = requestAnimationFrame(tick);
+    return () => { elapsedRef.current += Date.now() - started; cancelAnimationFrame(frame); };
+  }, [duration, onExpire, paused]);
 
   const color = pct > 60 ? 'bg-green-500' : pct > 30 ? 'bg-yellow-500' : 'bg-red-500';
   return (

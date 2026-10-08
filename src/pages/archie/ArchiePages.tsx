@@ -16,6 +16,7 @@ import GrownUpGate from '@/components/GrownUpGate';
 import ArchieAvatar from '@/components/ArchieAvatar';
 import { getArchieStage } from '@/lib/archie/age-style';
 import SceneArtwork, { sceneForSubject, type LearningScene } from '@/components/SceneArtwork';
+import PagePictureJigsaw from '@/components/PagePictureJigsaw';
 import OrbitHome from '@/components/OrbitHome';
 import PlanetGlobe from '@/components/PlanetGlobe';
 import ArchiePicturePiece from '@/components/ArchiePicturePiece';
@@ -147,7 +148,7 @@ export function ArchieHome() {
       <nav className="home-screen-tabs" aria-label="Home screens">{[['activities','Explore'],['planets','Planets'],['learning','Puzzles']].map(([id,label])=><button key={id} type="button" aria-pressed={homeScreen===id} onClick={()=>setHomeScreen(id)}>{label}</button>)}</nav>
       <div className="archie-home-welcome"><div><span>Learn · play · discover</span><strong>Pick a picture, start an adventure!</strong></div><button className="home-ask-button" type="button" onClick={()=>openArchie()}>Ask Archie</button><button type="button" onClick={()=>setHomeScreen('planets')} aria-label="Play the planet jigsaw"><PlanetGlobe index={2} moving={!window.matchMedia('(prefers-reduced-motion: reduce)').matches}/><span>Planet puzzle →</span></button></div>
       <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome autoStart/><LearningJigsaw year={settings.year}/>
-      <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap a jigsaw piece. Choose your next adventure.</p><PuzzleMenu home/></section>
+      <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap a jigsaw piece. Choose your next adventure.</p><PagePictureJigsaw pageKey="home"/></section>
       <section className="soda-talk-card"><ArchieAvatar year={settings.year} className="soda-talk-avatar"/><div><h2>Let's work it out together</h2><p>Ask Archie for a hint, listen to a question or talk through one step.</p></div><button className="a-button" onClick={()=>openArchie()}>Ask Archie</button></section>
       <nav className="a-bottom soda-home-more" aria-label="More activities">{[['Sticker book','/stickers'],['Cartoons','/cartoons'],['Progress','/progress'],['Library','/library'],['Parents','/parents'],['Teachers','/teacher'],['Settings','/settings'],['Clock lab','/time-lab'],['Artwork gallery','/artwork'],['Privacy','/privacy']].map(([label,to])=><Link key={to} to={to}>{label}</Link>)}</nav>
       <p className="soda-small-note">Try a little, take a break, and come back when you're ready.</p>
@@ -251,6 +252,7 @@ export function ArchieLesson() {
   const word = words[step];
   const hideWord = trying && !correct && !feedback.startsWith('Good try.');
   useLearning('My spelling lesson', 'Spelling', `Spell the word ${word}.`);
+  useEffect(()=>{const pause=()=>{setPaused(true);stop();};window.addEventListener('sodafom:picture-puzzle-open',pause);return()=>window.removeEventListener('sodafom:picture-puzzle-open',pause);},[stop]);
   useEffect(()=>{ if(paused || finished || remaining <= 0) return; const endAt=Date.now()+remaining*1000; const timer=window.setInterval(()=>setRemaining(Math.max(0,Math.ceil((endAt-Date.now())/1000))),1000); return ()=>clearInterval(timer); },[paused,finished,remaining===0]);
   useEffect(()=>{ if(trying) input.current?.focus(); },[trying]);
   useEffect(()=>()=>stop(),[]);

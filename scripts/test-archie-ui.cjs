@@ -7,8 +7,8 @@ const browserOptions = { headless: true };
 if (process.env.ARCHIE_CHROMIUM_PATH) browserOptions.executablePath = process.env.ARCHIE_CHROMIUM_PATH;
 const results=[];
 (async()=>{
-  const browser=await (process.env.ARCHIE_BROWSER==='webkit'?webkit.launch({headless:true}):chromium.launch(browserOptions));
-  const page=await browser.newPage({viewport:{width:390,height:844}});
+  let browser=await (process.env.ARCHIE_BROWSER==='webkit'?webkit.launch({headless:true}):chromium.launch(browserOptions));
+  let page=await browser.newPage({viewport:{width:390,height:844}});
   const errors=[];const liveApi=[];
   page.on('pageerror',e=>errors.push({url:page.url(),error:String(e)}));
   page.on('request',r=>{if(r.url().includes('sodafomuk-production')&&r.url().includes('/api'))liveApi.push(r.url());});
@@ -74,6 +74,7 @@ const results=[];
   };
   fs.mkdirSync('test-results',{recursive:true});
   try{
+    if(!process.env.ARCHIE_LAYOUT_ONLY){
     await check('Approved home: every navigation button opens its destination',async()=>{
       const homeLinks = [
         ...[['Lessons','/courses'],['Quests','/quests'],['Maths','/games?subject=maths'],['Reading','/games?subject=reading'],['Spelling','/games?subject=spelling'],['Science','/games?subject=science'],['Geography','/games/geography-quiz'],['Whiteboard','/lesson'],['Library','/library'],['Homework','/homework'],['Cartoons','/cartoons'],['Stickers','/stickers'],['Rewards','/rewards'],['Parents','/parents'],['Class','/class'],['Teachers','/teacher'],['Games','/games'],['History','/history'],['Trail','/games/archie-adventure-trail'],['My world','/world'],['Ask Archie','/ask-archie'],['Clock lab','/time-lab'],['Progress','/progress'],['Artwork','/artwork'],['Settings','/settings'],['Privacy','/privacy']].map(([label,route])=>({label,route,area:'Home activities',card:true})),
@@ -81,8 +82,9 @@ const results=[];
       ];
       for(const {label,route,area,card} of homeLinks){
         await goto('/');
+        if(area==='Home activities')await button('All activities').click();
         const navigation=area?page.getByRole('navigation',{name:area,exact:true}):page;
-        const destination=card?navigation.getByRole('link').filter({has:page.getByRole('heading',{name:label,exact:true})}):navigation.getByRole('link',{name:label,exact:true});
+        const destination=navigation.getByRole('link',{name:label,exact:true});
         assert.equal(await destination.count(),1,'Home destination must be unambiguous: '+label);
         await destination.click();await page.waitForURL(base+route);
         if(route==='/settings'||route==='/parents'){
@@ -234,6 +236,7 @@ const results=[];
         assert.equal(await page.getByText('Something went wrong',{exact:false}).count(),0);
       }
     });
+    }
     await check('Phone, foldable, tablet and landscape layouts: no horizontal overflow',async()=>{
       const routes=['/','/world','/games','/courses','/lesson','/library','/reader/lost-key','/homework','/cartoons','/stickers','/rewards','/progress','/parents','/settings','/teacher','/class','/time-lab','/preview-admin','/artwork','/privacy'];
       const viewports=[
@@ -254,10 +257,14 @@ const results=[];
         {width:844,height:390,label:'phone landscape'},
         {width:932,height:430,label:'foldable landscape'},
       ];
-      for(const viewport of viewports){
+      for(const viewport of (process.env.ARCHIE_LAYOUT_ONLY?viewports.slice(13):viewports)){
+        await browser.close();browser=await (process.env.ARCHIE_BROWSER==='webkit'?webkit.launch({headless:true}):chromium.launch(browserOptions));page=await browser.newPage({viewport:{width:viewport.width,height:viewport.height}});
+        page.on('pageerror',e=>errors.push({url:page.url(),error:String(e)}));
+        page.on('request',r=>{if(r.url().includes('sodafomuk-production')&&r.url().includes('/api'))liveApi.push(r.url());});
+        console.log('LAYOUT '+viewport.label+' '+viewport.width+'x'+viewport.height);
         await page.setViewportSize({width:viewport.width,height:viewport.height});
         for(const route of routes){
-          await goto(route);
+          console.log('LAYOUT ROUTE '+route);await goto(route);
           const dimensions=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
           assert.ok(dimensions.document<=dimensions.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' overflows: '+JSON.stringify(dimensions));
           if(route==='/preview-admin'){
@@ -275,8 +282,8 @@ const results=[];
       await page.setViewportSize({width:390,height:844});await goto('/lesson');await page.screenshot({path:'test-results/lesson-mobile.png',fullPage:true});await goto('/world');await page.screenshot({path:'test-results/world-mobile.png',fullPage:true});
     });
     assert.deepEqual(liveApi,[],'Preview contacted the live production API');assert.deepEqual(errors,[],'Browser errors');
-    fs.writeFileSync('test-results/archie-ui.json',JSON.stringify({passed:results,gameRoutes:catalog.length,browserErrors:errors,productionApiRequests:liveApi},null,2));
-    console.log(`FINISHED: ${results.length} journeys; ${catalog.length} game routes; zero browser errors; zero live API requests.`);
-  }catch(error){await page.screenshot({path:'test-results/failure.png',fullPage:true});console.error(error);console.error(errors);process.exitCode=1;}
+    fs.writeFileSync('test-results/archie-ui.json',JSON.stringify({passed:results,gameRoutes:process.env.ARCHIE_LAYOUT_ONLY?0:catalog.length,browserErrors:errors,productionApiRequests:liveApi},null,2));
+    console.log(`FINISHED: ${results.length} journeys; ${process.env.ARCHIE_LAYOUT_ONLY?0:catalog.length} game routes; zero browser errors; zero live API requests.`);
+  }catch(error){console.error(error);console.error(errors);try{await page.screenshot({path:'test-results/failure.png',fullPage:true,timeout:5000});}catch{}process.exitCode=1;}
   finally{await browser.close();}
 })();

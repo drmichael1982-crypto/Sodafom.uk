@@ -1,3 +1,4 @@
+import {usePicturePuzzlePause} from '@/lib/archie/picture-pause';
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
@@ -84,6 +85,7 @@ function MentalMathsGame({ onComplete, level, onLevelChange, onQuestionChange }:
   });
   const { q, options } = state;
 
+  const picturePaused = usePicturePuzzlePause();
   const [timeLeft, setTimeLeft] = useState<number>(timeLimit);
   const [flash, setFlash] = useState<'correct' | 'wrong' | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
@@ -114,11 +116,12 @@ function MentalMathsGame({ onComplete, level, onLevelChange, onQuestionChange }:
   }, [round, level, timeLimit, onComplete, onLevelChange]);
 
   useEffect(() => {
+    if (picturePaused) return;
     if (flash) return;
     if (timeLeft <= 0) { setFlash('wrong'); setTimeout(() => advance(false, score), 700); return; }
     const t = setTimeout(() => setTimeLeft(t => t - 1), 1000);
     return () => clearTimeout(t);
-  }, [timeLeft, flash, advance, score]);
+  }, [timeLeft, flash, advance, score, picturePaused]);
 
   const handlePick = useCallback((opt: number) => {
     if (flash) return;

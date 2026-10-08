@@ -1,3 +1,4 @@
+import {usePicturePuzzlePause} from '@/lib/archie/picture-pause';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
@@ -32,6 +33,7 @@ function RaceInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResul
   const [correct, setCorrect] = useState(0);
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   const [chosen, setChosen] = useState<string | null>(null);
+  const picturePaused = usePicturePuzzlePause();
   const [timeLeft, setTimeLeft] = useState(15);
   const [shuffled] = useState<string[][]>(() => WORDS.map(w => [...w].sort(() => Math.random() - 0.5)));
 
@@ -42,6 +44,7 @@ function RaceInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResul
   useEffect(() => { onQuestionChange?.(`Which is the correct spelling? (Hint: it means "${word}")`); }, [idx, word, onQuestionChange]);
 
   useEffect(() => {
+    if (picturePaused) return;
     if (feedback) return;
     if (timeLeft <= 0) {
       // Time's up — mark wrong and advance
@@ -59,7 +62,7 @@ function RaceInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResul
     }
     const t = setTimeout(() => setTimeLeft(t => t - 1), 1000);
     return () => clearTimeout(t);
-  }, [timeLeft, feedback, idx, correct, onComplete]);
+  }, [timeLeft, feedback, idx, correct, onComplete, picturePaused]);
 
   function pick(opt: string) {
     if (feedback) return;
