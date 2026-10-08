@@ -91,6 +91,31 @@ describe("Teacher and Class Lessons Views", () => {
     expect(screen.getByText(/Year 5 Maths · 180 lessons/i)).toBeInTheDocument();
   });
 
+  it("shows existing History and Fraction puzzle records without creating another activity", async () => {
+    const saved = {
+      settings: { year: 2, sound: true, largeText: false, onlineHelp: false },
+      activities: [
+        { id: "lesson-year-2-spelling", kind: "lesson", title: "Year 2 spelling", stars: 3, date: "2026-10-07T18:00:00.000Z" },
+        { id: "history-jigsaw-egypt", kind: "lesson", title: "Ancient Egypt history picture puzzle", stars: 1, date: "2026-10-07T19:00:00.000Z" },
+        { id: "fraction-jigsaw-year-2", kind: "lesson", title: "Year 2 fraction picture puzzles", stars: 1, date: "2026-10-07T20:00:00.000Z" },
+      ],
+      stickers: [],
+    };
+    localStorage.setItem("sodafom_archie_design_v1", JSON.stringify(saved));
+    const before = localStorage.getItem("sodafom_archie_design_v1");
+    const user = userEvent.setup();
+    renderWithProviders(<TeacherLessons />, "/teacher?year=2&subject=maths");
+
+    await user.type(screen.getByLabelText(/Grown-up answer/i), "privacy choose");
+    await user.click(screen.getByRole("button", { name: /Continue with a grown-up/i }));
+
+    expect(screen.getByRole("heading", { name: "Recent puzzle learning on this device" })).toBeInTheDocument();
+    expect(screen.getByText("Ancient Egypt history picture puzzle")).toBeInTheDocument();
+    expect(screen.getByText("Year 2 fraction picture puzzles")).toBeInTheDocument();
+    expect(screen.queryByText("Year 2 spelling")).not.toBeInTheDocument();
+    expect(localStorage.getItem("sodafom_archie_design_v1")).toBe(before);
+  });
+
   it("TeacherHubEntry redirects to /teacher when preview is true", () => {
     render(
       <MemoryRouter initialEntries={["/teacher-hub?year=3&subject=science"]}>

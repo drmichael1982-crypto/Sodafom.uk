@@ -201,6 +201,32 @@ const results=[];
       await openParents();await page.getByLabel('School year').selectOption('4');await button('Save learning settings').click();
       await link('View progress').click();await page.getByText('Year 4 spelling',{exact:true}).waitFor();
     });
+    await check('History and Fraction completions appear once in the teacher device summary',async()=>{
+      await openParents();await page.getByLabel('School year').selectOption('1');await button('Save learning settings').click();
+      await page.setViewportSize({width:390,height:844});await goto('/history');
+      await button('The Thames').click();await page.getByText('Try another answer. Ask Archie for a clue if you need one.',{exact:true}).waitFor();
+      for(const answer of ['The Nile','Royal tombs','Hieroglyphs','A pharaoh','Evidence','Ancient Egypt'])await button(answer).click();
+      await page.getByText('You completed Ancient Egypt!',{exact:false}).waitFor();
+      await page.screenshot({path:'test-results/history-complete-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/history-complete-820.png',fullPage:true});
+
+      await page.setViewportSize({width:390,height:844});await goto('/');await button('Puzzles').click();await button('Fractions').click();
+      await page.getByRole('button',{name:'Fraction section 1'}).click();await button('Check the fraction').click();await button('Next fraction').click();
+      await page.getByRole('button',{name:'Fraction section 1'}).click();await button('Check the fraction').click();
+      await button('Practise the fractions again').waitFor();
+      await page.screenshot({path:'test-results/fraction-complete-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/fraction-complete-820.png',fullPage:true});
+
+      await page.setViewportSize({width:390,height:844});await goto('/teacher');await unlockGrownUpArea();
+      await page.getByRole('heading',{name:'Recent puzzle learning on this device',exact:true}).waitFor();
+      await page.getByText('Ancient Egypt history picture puzzle',{exact:true}).waitFor();
+      await page.getByText('Year 1 fraction picture puzzles',{exact:true}).waitFor();
+      const savedIds=await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_archie_design_v1')||'{"activities":[]}').activities.map(activity=>activity.id));
+      assert.equal(savedIds.filter(id=>id==='history-jigsaw-egypt').length,1,'History completion must be stored once');
+      assert.equal(savedIds.filter(id=>id==='fraction-jigsaw-year-1').length,1,'Fraction completion must be stored once');
+      await page.screenshot({path:'test-results/teacher-puzzle-learning-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/teacher-puzzle-learning-820.png',fullPage:true});
+    });
     await check('Cartoons: selection, play/pause, next, restart and return',async()=>{
       await goto('/cartoons');await page.getByRole('button',{name:/The Number Island/}).click();await button('Pause').click();await button('Play').click();await button('Next scene').click();await page.getByText('Scene 2 of 3',{exact:true}).waitFor();await button('Restart').click();await page.getByText('Scene 1 of 3',{exact:true}).waitFor();await button('Read this scene').click();await page.getByRole('button',{name:/All episodes/}).click();
     });
@@ -247,7 +273,7 @@ const results=[];
       }
     });
     await check('Phone, foldable, tablet and landscape layouts: no horizontal overflow',async()=>{
-      const routes=['/','/world','/games','/courses','/lesson','/library','/reader/lost-key','/homework','/cartoons','/stickers','/rewards','/progress','/parents','/settings','/teacher','/class','/time-lab','/preview-admin','/artwork','/privacy'];
+      const routes=['/','/world','/games','/courses','/lesson','/library','/reader/lost-key','/homework','/history','/cartoons','/stickers','/rewards','/progress','/parents','/settings','/teacher','/class','/time-lab','/preview-admin','/artwork','/privacy'];
       const viewports=[
         {width:280,height:653,label:'narrow phone'},
         {width:320,height:640,label:'small phone'},

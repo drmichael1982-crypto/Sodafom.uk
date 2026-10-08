@@ -63,6 +63,29 @@ function PreviewNotice({ teacher }: { teacher: boolean }) {
   );
 }
 
+function DevicePuzzleLearning() {
+  const { activities } = useArchieData();
+  const puzzles = useMemo(
+    () => activities
+      .filter((activity) => activity.id.startsWith("history-jigsaw-") || activity.id.startsWith("fraction-jigsaw-year-"))
+      .slice()
+      .reverse(),
+    [activities],
+  );
+  return (
+    <section className="a-panel" aria-labelledby="teacher-puzzle-learning">
+      <h2 id="teacher-puzzle-learning">Recent puzzle learning on this device</h2>
+      <p className="a-note">This reuses the child’s on-device progress record. It does not create a pupil profile, send data online or award the puzzle twice.</p>
+      {puzzles.length ? puzzles.map((activity) => (
+        <div className="a-activity" key={activity.id}>
+          <strong>{activity.title}</strong>
+          <span>{activity.stars} ★ • {new Date(activity.date).toLocaleDateString("en-GB")}</span>
+        </div>
+      )) : <p>No History or Fraction picture puzzles have been completed on this device yet.</p>}
+    </section>
+  );
+}
+
 function LessonPicker({ year, subject, choose }: ReturnType<typeof useLessonChoice>) {
   return (
     <div className="course-picker tc-picker">
@@ -293,6 +316,7 @@ export function TeacherLessons() {
           </Link>
         }
       >
+        <DevicePuzzleLearning />
         <TeacherLessonList />
       </GrownUpGate>
       <p className="a-note">
