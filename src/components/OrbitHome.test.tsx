@@ -73,6 +73,20 @@ async function completePuzzle(user: ReturnType<typeof userEvent.setup>, selectEa
 function model() { return screen.getByLabelText('Explore the eight planets'); }
 
 describe('home planet discovery', () => {
+  it('lets a child change a chosen piece without losing planets already placed', async () => {
+    const user=userEvent.setup();show();
+    await user.click(screen.getByRole('button',{name:'Pick up Mercury',exact:true}));
+    await user.click(screen.getByRole('button',{name:'Place in position 1: Mercury',exact:true}));
+    await user.click(screen.getByRole('button',{name:'Pick up Mars',exact:true}));
+    await user.click(screen.getByRole('button',{name:'Choose a different piece',exact:true}));
+    expect(screen.getByText('1 / 8')).toBeInTheDocument();
+    expect(screen.getByRole('button',{name:'Pick up Mercury',exact:true})).toBeDisabled();
+    expect(screen.getByRole('button',{name:'Pick up Mars',exact:true})).toHaveAttribute('aria-pressed','false');
+    await user.click(screen.getByRole('button',{name:'Pick up Venus',exact:true}));
+    await user.click(screen.getByRole('button',{name:'Place in position 2: Venus',exact:true}));
+    expect(screen.getByText('2 / 8')).toBeInTheDocument();
+    expect(screen.getByText(/Venus fits!.*Venus has a very hot surface/)).toBeInTheDocument();
+  });
   it('starts still, rejects a wrong piece, starts orbiting only after completion and resets', async () => {
     const user=userEvent.setup();show();
     expect(model()).toHaveClass('is-still');
