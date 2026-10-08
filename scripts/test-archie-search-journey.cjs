@@ -84,7 +84,7 @@ const results = [];
         results.push(`Year ${year}, ${viewport.width}px: eligible menu → wrong answer/hint → pause/resume → ten answers → completion → menu`);
       }
       if (!lessonsOnly) {
-        for (const year of [1, 4, 7]) {
+        for (let year = 1; year <= 7; year++) {
           await goto('/games'); await chooseYear(year);
           await page.getByLabel('Search games', { exact: true }).fill('Number Planets');
           await page.locator('[data-game-link][href="/games/number-planets"]').click();
@@ -135,7 +135,8 @@ const results = [];
           const retried = year === 4;
           const correct = retried ? 7 : 8;
           const score = retried ? 88 : 100;
-          assert.deepEqual([...operations], year === 1 ? ['+'] : year === 4 ? ['×'] : ['×', '÷'], `Year ${year} receives the intended operation tier`);
+          const expectedOperations = year <= 3 ? ['+'] : year <= 6 ? ['×'] : ['×', '÷'];
+          assert.deepEqual([...operations], expectedOperations, `Year ${year} receives the intended operation tier`);
           await page.getByText(`Final score: ${score}%`, { exact: true }).waitFor();
           await page.getByText(`${correct} correct out of 8 questions`, { exact: true }).waitFor();
           await page.getByRole('heading', { name: retried ? '🌟 Great job!' : '🎉 Amazing exploring!', exact: true }).waitFor();
@@ -144,7 +145,8 @@ const results = [];
           await page.getByText(`${score}%`, { exact: true }).waitFor();
           await page.screenshot({ path: `${output}/number-planets-complete-year-${year}-${viewport.width}.png`, fullPage: true });
           await button('Back to games').click(); await page.waitForURL(base + '/games');
-          results.push(`Year ${year}, ${viewport.width}px: Number Planets → ${retried ? 'wrong answer → explicit hint → retry → 7/8 first-try answers (88%, two stars)' : `pause/resume → ${year === 1 ? 'addition' : 'multiplication and division'} → 8/8 first-try answers (100%, three stars)`} → menu`);
+          const tierLabel = year <= 3 ? 'addition' : year <= 6 ? 'multiplication' : 'multiplication and division';
+          results.push(`Year ${year}, ${viewport.width}px: Number Planets → ${retried ? 'wrong answer → explicit hint → retry → 7/8 first-try answers (88%, two stars)' : `pause/resume → ${tierLabel} → 8/8 first-try answers (100%, three stars)`} → menu`);
         }
       }
       for (let year = 1; year <= (lessonsOnly ? 0 : 6); year++) {
