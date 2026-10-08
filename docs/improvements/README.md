@@ -17,6 +17,6 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 13. [Bingo feedback and breaks — 7 October 2026](2026-10-07-bingo-feedback.md): accurate first-try scoring, hints, pause/resume and prior-run evidence.
 14. [Game access — 7 October 2026](2026-10-07-game-access.md): preceding freeze/age-discovery repair and historical starting evidence.
 
-Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `36072ef`; candidate pushes do not imply deployment.
+Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `4b2c533`; candidate pushes do not imply deployment.
 
-Next bounded priority: inspect the reconciled phone/tablet artifacts and measure the compact 26-piece home labels and tap targets; improve them only if a concrete readability or touch-target defect is confirmed. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: measure the whole-page jigsaw's fixed controls, loose-piece tray and phone touch targets/readability; improve them only if a concrete defect is confirmed. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
