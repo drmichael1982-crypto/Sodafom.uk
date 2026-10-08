@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router';
 import { Home, Volume2, VolumeX, ArrowLeft, ArrowRight, Search, BookOpen, Pause, Play, Calculator, SpellCheck, FlaskConical, Globe, NotebookPen, Film, Star, Trophy, Users, KeyRound, Castle, Rocket, Rainbow, Waves, Flower2, Milestone, Gamepad2, Camera, MessageCircle } from 'lucide-react';
 import { useArchieContext } from '@/contexts/ArchieContext';
@@ -17,6 +17,8 @@ import ArchieAvatar from '@/components/ArchieAvatar';
 import { getArchieStage } from '@/lib/archie/age-style';
 import SceneArtwork, { sceneForSubject, type LearningScene } from '@/components/SceneArtwork';
 import OrbitHome from '@/components/OrbitHome';
+import PlanetGlobe from '@/components/PlanetGlobe';
+import ArchiePicturePiece from '@/components/ArchiePicturePiece';
 import LearningJigsaw from '@/components/LearningJigsaw';
 import AppScreenPager from '@/components/AppScreenPager';
 import HistoryJigsaw from '@/components/HistoryJigsaw';
@@ -24,6 +26,7 @@ import ParentAIResources from '@/components/ParentAIResources';
 import ParentAccountPanel from '@/components/ParentAccountPanel';
 import ParentAIConnection from '@/components/ParentAIConnection';
 import './sodafom-polish.css';
+import './archie-picture-home.css';
 import { isGameForYear } from '@/lib/archie/game-age';
 import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
 import LearningYearOptions, { LEARNING_YEAR_SCOPE_NOTE } from '@/components/LearningYearOptions';
@@ -45,7 +48,7 @@ function SoundButton() {
   const { stop } = useVoice();
   return <button className="a-button a-icon" aria-label={settings.sound ? 'Turn sound off' : 'Turn sound on'} aria-pressed={settings.sound} onClick={() => { setSettings({ sound: !settings.sound }); stop(); }}>{settings.sound ? <Volume2/> : <VolumeX/>}</button>;
 }
-export function Page({ title, intro, children, back = '/world', calm = false, scene }: { title: string; intro?: string; children: ReactNode; back?: string; calm?: boolean; scene?: LearningScene }) {
+export function Page({ title, intro, children, back = '/world', calm = false, scene, toolbar }: { title: string; intro?: string; children: ReactNode; back?: string; calm?: boolean; scene?: LearningScene; toolbar?: ReactNode }) {
   const { settings } = useArchieData();
   const { openArchie } = useArchieContext();
   return <main style={puzzleThemeStyle(title, scene)} className={`archie-app soda-page puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''} ${calm ? 'a-calm' : ''}`}><div className="a-page">
@@ -55,6 +58,7 @@ export function Page({ title, intro, children, back = '/world', calm = false, sc
       {!calm && <SceneArtwork scene={scene ?? sceneForSubject(title)} title={title} compact/>}
     </section>
     <div className="a-page-help"><button className="a-button" onClick={() => openArchie()}>Ask Archie</button><span>Help with this game or lesson</span></div>
+    {toolbar}
     <AppScreenPager>{children}</AppScreenPager>
     <nav className="a-bottom" aria-label="Main navigation"><Link to="/">Home</Link><Link to="/world">My world</Link><Link to="/games">Games</Link><Link to="/courses">Lessons</Link><Link to="/lesson">Spelling</Link><Link to="/privacy">Privacy</Link></nav>
   </div></main>;
@@ -142,7 +146,7 @@ export function ArchieHome() {
       <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><button className="a-button a-icon" type="button" aria-label="Ask Archie" onClick={() => openArchie()}><MessageCircle size={19}/></button><button className="a-button a-icon" type="button" aria-label="Personalise my home screen" onClick={() => setPersonalizing(true)}><Camera size={19}/></button><SoundButton/></div></header>
       {homePersonalizer}
       <nav className="home-screen-tabs" aria-label="Home screens">{[['activities','Explore'],['planets','Planets'],['learning','Puzzles']].map(([id,label])=><button key={id} type="button" aria-pressed={homeScreen===id} onClick={()=>setHomeScreen(id)}>{label}</button>)}</nav>
-      <div className="space-home-preview" aria-hidden="true"><span className="space-home-sun"/>{[0,1,2,3,4,5,6,7].map(i=><span key={i} className={`space-preview-orbit space-preview-orbit-${i}`} style={{'--space-size':`${22+i*9}%`,'--space-time':`${18+i*8}s`} as CSSProperties}><span className={`planet-swatch home-planet-${i}`}/></span>)}<ArchieAvatar year={settings.year} className="space-home-archie"/></div>
+      <div className="archie-home-welcome"><div><span>Learn · play · discover</span><strong>Pick a picture, start an adventure!</strong></div><button type="button" onClick={()=>setHomeScreen('planets')} aria-label="Play the planet jigsaw"><PlanetGlobe index={2} moving={!window.matchMedia('(prefers-reduced-motion: reduce)').matches}/><span>Planet puzzle →</span></button></div>
       <div className="soda-year-link"><Link to="/games">Year {settings.year} · Choose my learning year →</Link></div><OrbitHome/><LearningJigsaw year={settings.year}/>
       <section aria-labelledby="home-puzzle-title"><h2 id="home-puzzle-title" className="home-puzzle-title">Choose your adventure</h2><p className="soda-small-note">Tap a jigsaw piece. Choose your next adventure.</p><PuzzleMenu home/></section>
       <section className="soda-talk-card"><ArchieAvatar year={settings.year} className="soda-talk-avatar"/><div><h2>Let's work it out together</h2><p>Ask Archie for a hint, listen to a question or talk through one step.</p></div><button className="a-button" onClick={()=>openArchie()}>Ask Archie</button></section>
@@ -181,9 +185,10 @@ function PuzzleMenu({home=false}: {home?:boolean}) {
     routes.add(route);
     return true;
   });
-  return <nav className={`world-puzzle ${home ? 'home-picture-puzzle' : ''}`} aria-label={home ? 'Home activities' : 'Adventure picture activities'}>{items.map(([label,emoji,to]) => <Link key={to} className="world-puzzle-piece" to={to}>
+  return <nav className={`world-puzzle ${home ? 'home-picture-puzzle' : ''}`} aria-label={home ? 'Home activities' : 'Adventure picture activities'}>{items.map(([label,emoji,to]) => <Link key={to} className={`world-puzzle-piece ${home ? 'has-archie-picture' : ''}`} to={to}>
+    {home && <ArchiePicturePiece label={label}/>}
     <svg className="world-puzzle-seam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M100 0 V37 C88 32 88 53 100 48 V100 H63 C68 88 47 88 52 100 H0"/></svg>
-    <span className="world-puzzle-label"><h2><span aria-hidden="true">{emoji} </span>{home ? ({'Learning adventures':'Lessons','Learning quests':'Quests','My lesson':'Whiteboard','Teacher lessons':'Teachers','Class lessons':'Class','Sticker book':'Stickers','Adventure Trail':'Trail','Explore my world':'My world'} as Record<string,string>)[label] || label : label}</h2><span className="puzzle-description">{PUZZLE_DESCRIPTIONS[label]}</span><span className="puzzle-open">Open →</span></span>
+    <span className="world-puzzle-label"><h2>{!home&&<span aria-hidden="true">{emoji} </span>}{home ? ({'Learning adventures':'Lessons','Learning quests':'Quests','My lesson':'Whiteboard','Teacher lessons':'Teachers','Class lessons':'Class','Sticker book':'Stickers','Adventure Trail':'Trail','Explore my world':'My world'} as Record<string,string>)[label] || label : label}</h2><span className="puzzle-description">{PUZZLE_DESCRIPTIONS[label]}</span><span className="puzzle-open">Open →</span></span>
   </Link>)}</nav>;
 }
 export function ArchieWorld() {
@@ -198,12 +203,12 @@ export function ArchieGames() {
   const searchInput = useRef<HTMLInputElement>(null);
   const subject = params.get('subject') || 'all';
   const filtered = catalog.filter(g => isGameForYear(settings.year,g.ageGroups) && (subject === 'all' || g.subject === subject) && `${g.title} ${g.description}`.toLowerCase().includes(query.toLowerCase()));
-  return <Page title="Choose a game" intro="Your favourite games, all in one place.">
-    <div className="a-actions"><Link className="a-button" to="/courses">Start a learning adventure</Link><Link className="a-button" to="/quests">Try a quick quest</Link></div>
-    <div className="a-panel soda-year-choice"><label className="a-field">My learning year<select value={settings.year} onChange={e=>updateSavedData(d=>({...d,settings:{...d.settings,year:Number(e.target.value)}}))}><LearningYearOptions/></select></label><p>{LEARNING_YEAR_SCOPE_NOTE}</p></div>
-    <label className="a-search"><Search/><input ref={searchInput} type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
-    <div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
-    <p role="status">{filtered.length} games to explore</p>
+  const toolbar = <div className="game-library-toolbar"><div className="game-library-filters">
+    <div className="soda-year-choice"><label className="a-field">My learning year<select value={settings.year} onChange={e=>updateSavedData(d=>({...d,settings:{...d.settings,year:Number(e.target.value)}}))}><LearningYearOptions/></select></label><p>{LEARNING_YEAR_SCOPE_NOTE}</p></div>
+    <label className="a-search"><Search aria-hidden="true"/><input ref={searchInput} type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+    </div><div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
+    <p role="status">{filtered.length} games for Year {settings.year}</p></div>;
+  return <Page title="Choose a game" intro="Pick a picture and let's play." toolbar={toolbar}>
     <div className="a-grid">{filtered.map((g,i)=><Link key={g.id} to={g.route} className={`a-card colour-${i%4}`} data-game-link><SceneArtwork scene={sceneForSubject(g.subject,g.title)} title={g.title} compact/><h2>{g.title}</h2><p>{g.description}</p><small>Ages {g.ageGroups.join(', ')}</small><span className="a-play">Play game →</span></Link>)}</div>
     {!filtered.length && <section className="a-panel" aria-labelledby="game-search-help"><h2 id="game-search-help">Let's find another game</h2><p>No games match those filters for Year {settings.year}. Try a shorter search or choose another subject.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});searchInput.current?.focus();}}>Show Year {settings.year} games</button></section>}
   </Page>;

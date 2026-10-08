@@ -43,7 +43,7 @@
   box-shadow: inset 0 0 35px #09172f;
   border: 3px solid #85afe6;
 }
-.orbit-sun {
+.number-planets .orbit-sun {
   position: absolute;
   left: calc(50% - 25px);
   top: calc(50% - 25px);
@@ -254,4 +254,30 @@
   .electron-track {
     animation: none !important;
   }
+}
+
+/* Picture answer pieces with independently turning spherical surfaces. */
+.number-planets .orbit-body{background:none;box-shadow:none;animation:number-sphere-counter var(--speed) linear infinite;transform:rotate(calc(-1 * var(--angle)))}
+.number-planets .is-still .orbit-body{animation-play-state:paused}
+@keyframes number-sphere-counter{from{transform:rotate(calc(-1 * var(--angle)))}to{transform:rotate(calc(-1 * var(--angle) - 360deg))}}
+.number-planets .answer-planets{gap:8px;margin:12px 0}.number-planets .answer-planets button{display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;background:linear-gradient(140deg,#173e67,#102746);color:#fff;min-height:84px;padding:10px;box-shadow:0 3px 0 #071a36;position:relative}.number-planets .answer-planets button::after{content:'';position:absolute;right:-5px;top:33%;width:12px;height:20px;background:#254e77;border:2px solid #80abd4;border-left:0;border-radius:0 50% 50% 0}.number-planets .answer-planets .planet-globe{width:42px;height:42px;flex-shrink:0}.number-planets .answer-planets strong{background:#fff0c8;border-radius:8px;padding:4px 8px;color:#173b62;font-size:25px;min-width:36px}.number-planets .answer-planets .correct-planet{border-color:#51c38a;background:#0b6249}.number-planets .answer-planets .other-planet{opacity:.35}.number-planets .orbit-body .planet-real-rings,.number-planets .orbit-body .planet-kind-5::before{border-width:3px}
+@media(prefers-reduced-motion:reduce){.number-planets .orbit-body{animation:none!important}}
+
+/* Keep the mission and all four answer pieces together on phone screens. */
+@media (max-width: 500px) {
+  .number-planets .planet-toolbar { gap: 4px 8px; margin-bottom: 6px; }
+  .number-planets .planet-toolbar p { font-size: 12px; line-height: 16px; }
+  .number-planets .planet-toolbar button { padding: 6px; }
+  .number-planets .planet-space { min-height: 130px; height: 130px; aspect-ratio: auto; }
+  .number-planets .planet-equation { inset: 15% 5% 24%; }
+  .number-planets .planet-equation strong { width: 46px; font-size: 22px; }
+  .number-planets .planet-model-note { bottom: 4px; font-size: 10px; line-height: 12px; }
+  .number-planets .planet-answer-heading { font-size: 17px; line-height: 22px; margin: 6px 0; }
+  .number-planets .answer-planets { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 6px 0; }
+  .number-planets .answer-planets button { flex-direction: column; gap: 3px; min-height: 76px; padding: 5px; }
+  .number-planets .answer-planets .planet-globe { width: 30px; height: 30px; }
+  .number-planets .answer-planets strong { font-size: 20px; padding: 1px 6px; }
+  .number-planets .planet-feedback { min-height: 34px; padding: 6px 8px; margin: 6px 0; font-size: 12px; line-height: 16px; }
+  .number-planets .planet-action { margin: 4px 8px 4px 0; padding: 6px 10px; }
+  .number-planets .planet-explorer { margin: 8px 0; padding: 8px; }
 }
