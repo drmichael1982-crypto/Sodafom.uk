@@ -34,7 +34,7 @@ const results = [];
       const chooseYear = year => page.getByRole('combobox', { name: 'My learning year', exact: true }).selectOption(String(year));
       await goto('/games'); await chooseYear(4);
       await page.getByLabel('Search games', { exact: true }).fill('Phonics Parrot');
-      await page.getByText('0 games to explore', { exact: true }).waitFor();
+      await page.getByText('0 games for Year 4', { exact: true }).waitFor();
       await page.screenshot({ path: `${output}/empty-${viewport.width}.png`, fullPage: true });
       if (captureOnly) { await page.close(); continue; }
       for (let year = 1; year <= (lessonsOnly ? 0 : 9); year++) {

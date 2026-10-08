@@ -38,9 +38,10 @@
 - `git diff --check`: PASS.
 - Local Playwright execution could not start because no browser binary was installed; the attempted browser download was truncated by this runtime’s gateway. GitHub run #187 therefore provided the authoritative browser diagnosis and artifact for the merged candidate.
 - After the responsive filter repair, type-check, all 85 files / 835 unit tests, the Archie build and `git diff --check` passed again locally. A fresh hosted browser run is required for the repair.
+- GitHub run #189 then passed the responsive route suite: 12 browser journeys, all 130 linked game routes and the phone/foldable/tablet/landscape overflow checks. The later learner-journey script stopped on a stale assertion for `0 games to explore`; the reconciled UI intentionally reports `0 games for Year 4`. Updated that assertion to the visible accessible status text and syntax-checked the script before the next hosted run.
 
 ## Boundaries and next priority
 
 Nothing was merged into the test or production branch and nothing was deployed. No paid service, credential, real child data or 3D work changed. Physical phone/tablet, microphone/audio, device keyboard/screen reader, live accounts/payments and real-child testing remain unverified.
 
-Next bounded priority: confirm the new hosted browser run clears the Games search regression and completes the simulated learner journeys, then add an automated Number Planets wrong-answer → hint → retry → 7/8 result browser journey at both phone and tablet widths so this manually verified behavior cannot regress.
+Next bounded priority: confirm the new hosted run completes the remaining simulated learner journeys with the corrected assertion, then add an automated Number Planets wrong-answer → hint → retry → 7/8 result browser journey at both phone and tablet widths so this manually verified behavior cannot regress.
