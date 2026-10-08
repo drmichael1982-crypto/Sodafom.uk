@@ -219,6 +219,9 @@ const results=[];
 
       await page.setViewportSize({width:390,height:844});await goto('/teacher');await unlockGrownUpArea();
       const puzzleSummary=page.getByRole('heading',{name:'Recent puzzle learning on this device',exact:true});await puzzleSummary.waitFor();
+      await page.getByRole('heading',{name:'Maths · Year 1',exact:true}).waitFor();
+      await page.getByRole('heading',{name:'History · Year not recorded',exact:true}).waitFor();
+      await page.getByText('History’s older records do not store a year, so this view does not guess it.',{exact:false}).waitFor();
       await page.getByText('Ancient Egypt history picture puzzle',{exact:true}).waitFor();
       await page.getByText('Year 1 fraction picture puzzles',{exact:true}).waitFor();
       const savedIds=await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_archie_design_v1')||'{"activities":[]}').activities.map(activity=>activity.id));

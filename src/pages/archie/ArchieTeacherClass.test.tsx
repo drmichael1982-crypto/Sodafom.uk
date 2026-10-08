@@ -97,6 +97,8 @@ describe("Teacher and Class Lessons Views", () => {
       activities: [
         { id: "lesson-year-2-spelling", kind: "lesson", title: "Year 2 spelling", stars: 3, date: "2026-10-07T18:00:00.000Z" },
         { id: "history-jigsaw-egypt", kind: "lesson", title: "Ancient Egypt history picture puzzle", stars: 1, date: "2026-10-07T19:00:00.000Z" },
+        { id: "history-jigsaw-1066", kind: "lesson", title: "1066 history picture puzzle", stars: 1, date: "2026-10-07T19:30:00.000Z" },
+        { id: "fraction-jigsaw-year-1", kind: "lesson", title: "Year 1 fraction picture puzzles", stars: 1, date: "2026-10-07T19:45:00.000Z" },
         { id: "fraction-jigsaw-year-2", kind: "lesson", title: "Year 2 fraction picture puzzles", stars: 1, date: "2026-10-07T20:00:00.000Z" },
       ],
       stickers: [],
@@ -110,7 +112,14 @@ describe("Teacher and Class Lessons Views", () => {
     await user.click(screen.getByRole("button", { name: /Continue with a grown-up/i }));
 
     expect(screen.getByRole("heading", { name: "Recent puzzle learning on this device" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Maths · Year 1" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Maths · Year 2" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "History · Year not recorded" })).toBeInTheDocument();
+    expect(screen.getByText("2 completed puzzles")).toBeInTheDocument();
+    expect(screen.getByText(/History’s older records do not store a year, so this view does not guess it/i)).toBeInTheDocument();
     expect(screen.getByText("Ancient Egypt history picture puzzle")).toBeInTheDocument();
+    expect(screen.getByText("1066 history picture puzzle")).toBeInTheDocument();
+    expect(screen.getByText("Year 1 fraction picture puzzles")).toBeInTheDocument();
     expect(screen.getByText("Year 2 fraction picture puzzles")).toBeInTheDocument();
     expect(screen.queryByText("Year 2 spelling")).not.toBeInTheDocument();
     expect(localStorage.getItem("sodafom_archie_design_v1")).toBe(before);

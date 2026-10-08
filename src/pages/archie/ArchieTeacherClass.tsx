@@ -5,7 +5,7 @@ import { Page } from "./ArchiePages";
 import LearningModel from "./LearningModel";
 import GrownUpGate from "@/components/GrownUpGate";
 import SceneArtwork, { sceneForSubject } from "@/components/SceneArtwork";
-import { useArchieData } from "@/lib/archie/storage";
+import { useArchieData, type Activity } from "@/lib/archie/storage";
 import type { CourseLesson, CourseSubject } from "@/lib/archie/course-types";
 import {
   LESSON_BANK,
@@ -65,25 +65,60 @@ function PreviewNotice({ teacher }: { teacher: boolean }) {
 
 function DevicePuzzleLearning() {
   const { activities } = useArchieData();
-  const puzzles = useMemo(
-    () => activities
-      .filter((activity) => activity.id.startsWith("history-jigsaw-") || activity.id.startsWith("fraction-jigsaw-year-"))
-      .slice()
-      .reverse(),
+  const groups = useMemo(
+    () => groupPuzzleActivities(activities),
     [activities],
   );
+  const total = groups.reduce((sum, group) => sum + group.activities.length, 0);
   return (
     <section className="a-panel" aria-labelledby="teacher-puzzle-learning">
       <h2 id="teacher-puzzle-learning" tabIndex={-1}>Recent puzzle learning on this device</h2>
       <p className="a-note">This reuses the child’s on-device progress record. It does not create a pupil profile, send data online or award the puzzle twice.</p>
-      {puzzles.length ? puzzles.map((activity) => (
-        <div className="a-activity" key={activity.id}>
-          <strong>{activity.title}</strong>
-          <span>{activity.stars} ★ • {new Date(activity.date).toLocaleDateString("en-GB")}</span>
+      {total ? <>
+        <p className="a-note">Grouped by subject and by school year when the saved completion includes one. History’s older records do not store a year, so this view does not guess it.</p>
+        <div className="tc-puzzle-groups">
+          {groups.map((group) => (
+            <section className="tc-puzzle-group" aria-labelledby={`puzzle-group-${group.key}`} key={group.key}>
+              <div className="tc-puzzle-group-heading">
+                <h3 id={`puzzle-group-${group.key}`}>{group.subject} · {group.year}</h3>
+                <span>{group.activities.length} completed {group.activities.length === 1 ? "puzzle" : "puzzles"}</span>
+              </div>
+              {group.activities.map((activity) => (
+                <div className="a-activity" key={activity.id}>
+                  <strong>{activity.title}</strong>
+                  <span>{activity.stars} ★ • {new Date(activity.date).toLocaleDateString("en-GB")}</span>
+                </div>
+              ))}
+            </section>
+          ))}
         </div>
-      )) : <p>No History or Fraction picture puzzles have been completed on this device yet.</p>}
+      </> : <p>No History or Fraction picture puzzles have been completed on this device yet.</p>}
     </section>
   );
+}
+
+type PuzzleGroup = {
+  key: string;
+  subject: "Maths" | "History";
+  year: string;
+  activities: Activity[];
+};
+
+export function groupPuzzleActivities(activities: Activity[]): PuzzleGroup[] {
+  const grouped = new Map<string, PuzzleGroup>();
+  for (const activity of activities.slice().reverse()) {
+    const fractionYear = activity.id.match(/^fraction-jigsaw-year-(\d+)$/)?.[1];
+    const meta = fractionYear
+      ? { key: `maths-year-${fractionYear}`, subject: "Maths" as const, year: `Year ${fractionYear}` }
+      : activity.id.startsWith("history-jigsaw-")
+        ? { key: "history-shared", subject: "History" as const, year: "Year not recorded" }
+        : null;
+    if (!meta) continue;
+    const group = grouped.get(meta.key) ?? { ...meta, activities: [] };
+    group.activities.push(activity);
+    grouped.set(meta.key, group);
+  }
+  return [...grouped.values()];
 }
 
 function LessonPicker({ year, subject, choose }: ReturnType<typeof useLessonChoice>) {
