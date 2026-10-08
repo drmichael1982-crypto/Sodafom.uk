@@ -84,6 +84,9 @@ const results = [];
         results.push(`Year ${year}, ${viewport.width}px: eligible menu → wrong answer/hint → pause/resume → ten answers → completion → menu`);
       }
       if (!lessonsOnly) {
+        // Sample a younger, middle and older main-path tier with recovery.
+        // These are simulated learner journeys, not claims about real children.
+        const retryYears = new Set([2, 4, 7]);
         for (let year = 1; year <= 7; year++) {
           await goto('/games'); await chooseYear(year);
           await page.getByLabel('Search games', { exact: true }).fill('Number Planets');
@@ -102,7 +105,7 @@ const results = [];
               : parts[2] === '÷'
                 ? `How many groups of ${right} make ${left}?`
                 : `Draw ${left} equal groups of ${right}.`;
-            if (round === 0 && year === 4) {
+            if (round === 0 && retryYears.has(year)) {
               const choices = await page.getByRole('button', { name: /^Answer / }).all();
               for (const choice of choices) {
                 if (await choice.getAttribute('aria-label') !== `Answer ${answer}`) { await choice.click(); break; }
@@ -112,9 +115,18 @@ const results = [];
               assert.equal(await button('Next space mission').count(), 0, 'Wrong answer cannot advance the mission');
               await button('Show a hint').click();
               await page.getByRole('status').getByText(hint, { exact: true }).waitFor();
-              await page.screenshot({ path: `${output}/number-planets-retry-year-4-${viewport.width}.png`, fullPage: true });
+              await page.screenshot({ path: `${output}/number-planets-retry-year-${year}-${viewport.width}.png`, fullPage: true });
+              if (year !== 4) {
+                await button('Pause mission').click();
+                await page.getByRole('heading', { name: 'Time for a breather', exact: true }).waitFor();
+                await page.getByText('Your mission is waiting. Resume when you are ready.', { exact: true }).waitFor();
+                await page.screenshot({ path: `${output}/number-planets-paused-year-${year}-${viewport.width}.png`, fullPage: true });
+                await button('Resume mission').click();
+                assert.equal(await page.locator('.planet-equation').getAttribute('aria-label'), equation, 'Pause preserves the retry equation');
+                await page.getByRole('status').getByText(hint, { exact: true }).waitFor();
+              }
             }
-            if (round === 0 && year !== 4) {
+            if (round === 0 && !retryYears.has(year)) {
               await button('Pause mission').click();
               await page.getByRole('heading', { name: 'Time for a breather', exact: true }).waitFor();
               await page.getByText('Your mission is waiting. Resume when you are ready.', { exact: true }).waitFor();
@@ -132,7 +144,7 @@ const results = [];
             }
             await button(round === 7 ? 'Finish space mission' : 'Next space mission').click();
           }
-          const retried = year === 4;
+          const retried = retryYears.has(year);
           const correct = retried ? 7 : 8;
           const score = retried ? 88 : 100;
           const expectedOperations = year <= 3 ? ['+'] : year <= 6 ? ['×'] : ['×', '÷'];
@@ -146,7 +158,10 @@ const results = [];
           await page.screenshot({ path: `${output}/number-planets-complete-year-${year}-${viewport.width}.png`, fullPage: true });
           await button('Back to games').click(); await page.waitForURL(base + '/games');
           const tierLabel = year <= 3 ? 'addition' : year <= 6 ? 'multiplication' : 'multiplication and division';
-          results.push(`Year ${year}, ${viewport.width}px: Number Planets → ${retried ? 'wrong answer → explicit hint → retry → 7/8 first-try answers (88%, two stars)' : `pause/resume → ${tierLabel} → 8/8 first-try answers (100%, three stars)`} → menu`);
+          const journey = retried
+            ? `wrong answer → explicit hint${year === 4 ? '' : ' → pause/resume with retained hint'} → retry → ${tierLabel} → 7/8 first-try answers (88%, two stars)`
+            : `pause/resume → ${tierLabel} → 8/8 first-try answers (100%, three stars)`;
+          results.push(`Year ${year}, ${viewport.width}px: Number Planets → ${journey} → menu`);
         }
       }
       for (let year = 1; year <= (lessonsOnly ? 0 : 6); year++) {
