@@ -110,7 +110,12 @@ const results = [];
               if (year === 7) assert.equal(parts[2], '÷', 'Year 7 recovery exercises a division mission');
               const choices = await page.getByRole('button', { name: /^Answer / }).all();
               for (const choice of choices) {
-                if (await choice.getAttribute('aria-label') !== `Answer ${answer}`) { await choice.click(); break; }
+                if (await choice.getAttribute('aria-label') !== `Answer ${answer}`) {
+                  await choice.focus();
+                  await page.keyboard.press('Enter');
+                  assert.equal(await choice.evaluate(element => element === document.activeElement), true, 'Wrong keyboard answer keeps focus for another try');
+                  break;
+                }
               }
               await page.getByRole('status').filter({ hasText: `Try another planet. ${hint}` }).waitFor();
               const missionStatus = year === 7
@@ -140,14 +145,22 @@ const results = [];
               await button('Resume mission').click();
               assert.equal(await page.locator('.planet-equation').getAttribute('aria-label'), equation, 'Pause preserves the equation');
             }
-            await button(`Answer ${answer}`).click();
+            const correctChoice = button(`Answer ${answer}`);
+            await correctChoice.focus();
+            await page.keyboard.press(round % 2 ? 'Space' : 'Enter');
             await page.getByRole('status').filter({ hasText: 'Correct!' }).waitFor();
-            assert.equal(await button(`Answer ${answer}`).evaluate(element => element.classList.contains('correct-planet')), true, 'Correct planet is visually identified');
+            assert.equal(await correctChoice.evaluate(element => element.classList.contains('correct-planet')), true, 'Correct planet is visually identified');
             for (const choice of await page.getByRole('button', { name: /^Answer / }).all()) {
               if (await choice.getAttribute('aria-label') !== `Answer ${answer}`)
                 assert.equal(await choice.evaluate(element => element.classList.contains('other-planet')), true, 'Other planets are visually de-emphasised');
             }
-            await button(round === 7 ? 'Finish space mission' : 'Next space mission').click();
+            const advance = button(round === 7 ? 'Finish space mission' : 'Next space mission');
+            assert.equal(await advance.evaluate(element => element === document.activeElement), true, 'Correct keyboard answer moves focus to the mission action');
+            await page.keyboard.press('Enter');
+            if (round < 7) {
+              const questionHeading = page.getByRole('heading', { name: 'Choose the answer planet', exact: true });
+              assert.equal(await questionHeading.evaluate(element => element === document.activeElement), true, 'Keyboard advance moves focus to the next question');
+            }
           }
           const retried = retryYears.has(year);
           const correct = retried ? 7 : 8;
@@ -164,8 +177,8 @@ const results = [];
           await button('Back to games').click(); await page.waitForURL(base + '/games');
           const tierLabel = year <= 3 ? 'addition' : year <= 6 ? 'multiplication' : 'multiplication and division';
           const journey = retried
-            ? `wrong answer${year === 7 ? ' on division' : ''} → explicit hint${year === 4 ? '' : ' → pause/resume with retained hint'} → retry → ${tierLabel} → 7/8 first-try answers (88%, two stars)`
-            : `pause/resume → ${tierLabel} → 8/8 first-try answers (100%, three stars)`;
+            ? `keyboard wrong answer${year === 7 ? ' on division' : ''} with retained focus → explicit hint${year === 4 ? '' : ' → pause/resume with retained hint'} → keyboard retry with Next/question focus hand-off → ${tierLabel} → 7/8 first-try answers (88%, two stars)`
+            : `pause/resume → keyboard answers with Next/question focus hand-off → ${tierLabel} → 8/8 first-try answers (100%, three stars)`;
           results.push(`Year ${year}, ${viewport.width}px: Number Planets → ${journey} → menu`);
         }
       }
