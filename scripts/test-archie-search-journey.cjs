@@ -32,6 +32,15 @@ const results = [];
       const button = name => page.getByRole('button', { name, exact: true });
       const goto = async route => { await page.goto(base + route); await page.getByRole('heading').first().waitFor(); };
       const chooseYear = year => page.getByRole('combobox', { name: 'My learning year', exact: true }).selectOption(String(year));
+      const closeMovingReward = async screenshotPath => {
+        const dialog = page.getByRole('dialog', { name: 'Your rocket is ready!', exact: true });
+        await dialog.waitFor();
+        const close = dialog.getByRole('button', { name: 'Back to puzzle', exact: true });
+        assert.equal(await close.evaluate(element => element === document.activeElement), true, 'Moving reward puts focus on Back to puzzle');
+        if (screenshotPath) await page.screenshot({ path: screenshotPath, fullPage: true });
+        await close.click();
+        await dialog.waitFor({ state: 'detached' });
+      };
       await goto('/games'); await chooseYear(4);
       await page.getByLabel('Search games', { exact: true }).fill('Phonics Parrot');
       await page.getByText('0 games for Year 4', { exact: true }).waitFor();
@@ -77,6 +86,7 @@ const results = [];
           await button(`Pop balloon ${answer}`).click();
           await button(round === 10 ? 'Finish balloon adventure' : 'Next balloon').click();
         }
+        await closeMovingReward(year === 1 ? `${output}/moving-reward-number-pop-year-${year}-${viewport.width}.png` : null);
         await page.getByText('9 correct out of 10 questions', { exact: true }).waitFor();
         await page.getByRole('heading', { name: '🎉 Amazing exploring!', exact: true }).waitFor();
         await page.screenshot({ path: `${output}/complete-year-${year}-${viewport.width}.png`, fullPage: true });
@@ -174,6 +184,7 @@ const results = [];
               assert.equal(await questionHeading.evaluate(element => element === document.activeElement), true, 'Keyboard advance moves focus to the next question');
             }
           }
+          await closeMovingReward(year === 1 ? `${output}/moving-reward-number-planets-year-${year}-${viewport.width}.png` : null);
           const retried = retryYears.has(year);
           const correct = retried ? 7 : 8;
           const score = retried ? 88 : 100;
@@ -246,6 +257,7 @@ const results = [];
             await button(`Bingo number ${answer}, marked`).waitFor();
             await page.waitForFunction(previous => document.body.textContent.includes('🎱 BINGO!') || document.querySelector('p.text-4xl')?.textContent !== previous, question);
           }
+          await closeMovingReward(retry && year === 1 ? `${output}/moving-reward-bingo-year-${year}-${viewport.width}.png` : null);
           const correct = solved - (retry ? 1 : 0);
           await page.getByText(`${correct} correct out of ${solved} questions`, { exact: true }).waitFor().catch(async error => {
             await page.screenshot({ path: `${output}/bingo-failure-${year}-${viewport.width}.png`, fullPage: true });
