@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult } from '@/components/games/GameShell';
@@ -13,6 +13,7 @@ const STORIES = [
       { id: 'd', text: 'The next day, she found the owner and returned the puppy safely.' },
     ],
     order: ['a','b','c','d'],
+    hint: 'Think about the beginning: the puppy wanders away before someone finds it. What can happen after that?',
   },
   {
     title: 'The Science Experiment',
@@ -23,6 +24,7 @@ const STORIES = [
       { id: 'd', text: 'Everyone wrote up their results in their books.' },
     ],
     order: ['a','b','c','d'],
+    hint: 'The children need their equipment before they can mix anything. Results are written after observing what happens.',
   },
 ];
 
@@ -31,25 +33,35 @@ function SequenceInner({ onComplete }: { onComplete: (r: GameResult) => void }) 
   const [correct, setCorrect] = useState(0);
   const [selected, setSelected] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<'correct'|'wrong'|null>(null);
+  const [neededRetry, setNeededRetry] = useState(false);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (advanceTimer.current) clearTimeout(advanceTimer.current); }, []);
   const story = STORIES[storyIdx];
-  const shuffled = [...story.parts].sort(() => Math.random() - 0.5);
-  const [parts] = useState(shuffled);
+  const parts = useMemo(() => {
+    const shuffled = [...story.parts];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }, [story]);
 
   function tap(id: string) {
-    if (selected.includes(id)) return;
+    if (feedback || selected.includes(id)) return;
     const next = [...selected, id];
     setSelected(next);
     if (next.length === story.parts.length) {
       const isCorrect = next.every((v, i) => v === story.order[i]);
       setFeedback(isCorrect ? 'correct' : 'wrong');
-      const nc = correct + (isCorrect ? 1 : 0);
-      setTimeout(() => {
+      if (!isCorrect) { setNeededRetry(true); return; }
+      const nc = correct + (neededRetry ? 0 : 1);
+      advanceTimer.current = setTimeout(() => {
         setFeedback(null);
         const nr = storyIdx + 1;
         if (nr >= STORIES.length) {
           const score = Math.round((nc / STORIES.length) * 100);
-          onComplete({ score, correct: nc, total: STORIES.length, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 });
-        } else { setStoryIdx(nr); setCorrect(nc); setSelected([]); }
+          onComplete({ score, correct: nc, total: STORIES.length, stars: score >= 90 ? 3 : score >= 60 ? 2 : score >= 30 ? 1 : 0 });
+        } else { setStoryIdx(nr); setCorrect(nc); setSelected([]); setNeededRetry(false); }
       }, 1200);
     }
   }
@@ -60,7 +72,7 @@ function SequenceInner({ onComplete }: { onComplete: (r: GameResult) => void }) 
       <p className="text-sm text-muted-foreground text-center">Tap the sentences in the correct order (1st to last)</p>
       <div className="flex flex-col gap-3 w-full">
         {parts.map((part, i) => (
-          <motion.button key={part.id} whileTap={{ scale: 0.98 }} onClick={() => tap(part.id)}
+          <motion.button key={`${storyIdx}:${part.id}`} type="button" disabled={Boolean(feedback) || selected.includes(part.id)} whileTap={{ scale: 0.98 }} onClick={() => tap(part.id)}
             className={`p-4 rounded-xl text-left font-medium border-2 transition-all ${
               selected.includes(part.id)
                 ? 'bg-primary text-primary-foreground border-primary opacity-60'
@@ -72,11 +84,12 @@ function SequenceInner({ onComplete }: { onComplete: (r: GameResult) => void }) 
         ))}
       </div>
       <AnimatePresence>
-        {feedback && <motion.p initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ opacity: 0 }}
+        {feedback && <motion.p role="status" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ opacity: 0 }}
           className={`text-xl font-black ${feedback === 'correct' ? 'text-primary' : 'text-secondary'}`}>
-          {feedback === 'correct' ? '✅ Correct order!' : '❌ Not quite right!'}
+          {feedback === 'correct' ? '✅ Correct order!' : 'Not quite yet. Use the clue and try again.'}
         </motion.p>}
       </AnimatePresence>
+      {feedback === 'wrong' && <><p>{story.hint}</p><button className="a-button" type="button" onClick={() => { setSelected([]); setFeedback(null); }}>Try the same story again</button></>}
     </div>
   );
 }

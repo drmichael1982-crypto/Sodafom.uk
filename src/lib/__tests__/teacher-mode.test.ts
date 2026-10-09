@@ -40,6 +40,38 @@ describe('One-to-One Teacher Mode & Parent Dashboard Engine', () => {
       expect(res).not.toBeNull();
       expect(res?.text).toContain('Sophie');
     });
+
+    it('recovers from malformed tutor topics without losing valid profile choices', () => {
+      localStorage.setItem('sodafom_tutor_memory', JSON.stringify({
+        childName: 'Sophie',
+        ageGroup: '5-7',
+        preferredTutor: 'bella',
+        topics: 'damaged progress',
+      }));
+
+      expect(() => recordQuestionAnswer('Maths', 'counting', true)).not.toThrow();
+      const loaded = loadTutorMemory();
+      expect(loaded).toMatchObject({ childName: 'Sophie', ageGroup: '5-7', preferredTutor: 'bella' });
+      expect(loaded.topics['maths:counting']).toMatchObject({ totalAttempted: 1, totalCorrect: 1 });
+    });
+
+    it('keeps valid tutor achievements when another saved topic is damaged', () => {
+      localStorage.setItem('sodafom_tutor_memory', JSON.stringify({
+        topics: {
+          'maths:fractions': {
+            topic: 'fractions', subject: 'Maths', status: 'GREEN', difficultyLevel: 2,
+            consecutiveCorrect: 2, consecutiveIncorrect: 0, totalAttempted: 2, totalCorrect: 2,
+            lastPractisedAt: '2026-10-09T20:00:00.000Z',
+          },
+          'science:water cycle': 'damaged topic',
+        },
+      }));
+
+      const loaded = loadTutorMemory();
+      expect(loaded.topics['maths:fractions']).toMatchObject({ status: 'GREEN', difficultyLevel: 2, totalCorrect: 2 });
+      expect(loaded.topics['science:water cycle']).toBeUndefined();
+      expect(recordQuestionAnswer('Maths', 'fractions', true)).toEqual({ status: 'GREEN', difficultyLevel: 3 });
+    });
   });
 
   describe('Adaptive Learning & RED/AMBER/GREEN Progress', () => {

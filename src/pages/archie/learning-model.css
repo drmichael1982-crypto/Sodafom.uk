@@ -20,3 +20,5 @@
 .learning-model .learning-rectangle-picture text,
 .learning-model .learning-grid-picture text,
 .learning-model .learning-chart-picture text { fill: #263957; font-size: 15px; }
+
+.counter-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}.counter-actions p{flex-basis:100%;margin:4px 0}.dot-picture .counter-counted{outline:3px solid #22a06b;outline-offset:3px;animation:count-counter .4s ease-out}@keyframes count-counter{50%{transform:translateY(-8px) scale(1.15)}}@media(prefers-reduced-motion:reduce){.dot-picture .counter-counted{animation:none}}

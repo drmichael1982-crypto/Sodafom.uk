@@ -1225,7 +1225,7 @@
     "title": "Speed Reader",
     "subject": "reading",
     "emoji": "💨",
-    "description": "Read the passage as fast as you can, then answer questions to check you understood it. Build reading fluency!",
+    "description": "Read or listen to short passages, find the clues and answer comprehension questions at your own pace. No reading timer.",
     "ageGroups": [
       "9–11",
       "12–13"
@@ -1316,7 +1316,7 @@
     "title": "Reading Fluency",
     "subject": "reading",
     "emoji": "📻",
-    "description": "Read the passage aloud at the right pace. Tap the words as you read to build fluency and confidence!",
+    "description": "Explore short passages and choose clear phrasing, meaningful pauses and expression. Practise aloud if you like; no voice score or time limit.",
     "ageGroups": [
       "7–9",
       "9–11"

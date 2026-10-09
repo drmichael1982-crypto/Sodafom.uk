@@ -50,4 +50,11 @@ describe('whole-page picture around fixed icons',()=>{
   const answer=screen.getByLabelText('Lesson answer');fireEvent.change(answer,{target:{value:'new answer'}});fireEvent.click(screen.getByRole('button',{name:'Play this page as a jigsaw'}));expect(pause).toHaveBeenCalledOnce();
   expect(answer).toBeInTheDocument();expect(answer).not.toBeVisible();fireEvent.click(screen.getByRole('button',{name:'Back to learning'}));expect(answer).toBeVisible();expect(answer).toHaveValue('new answer');window.removeEventListener('sodafom:picture-puzzle-open',pause);
  });
+ it('provides full and compact identity labels for responsive browser layouts',()=>{
+  render(<MemoryRouter initialEntries={['/games']}><PagePictureFrame><p>Games</p></PagePictureFrame></MemoryRouter>);
+  const label=screen.getByLabelText('Your picture playground');
+  expect(label).toHaveClass('picture-mode-label');
+  expect(within(label).getByText('Your picture playground')).toHaveClass('picture-mode-label-full');
+  expect(within(label).getByText('Picture playground')).toHaveClass('picture-mode-label-compact');
+ });
 });

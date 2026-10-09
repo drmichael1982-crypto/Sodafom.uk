@@ -73,18 +73,12 @@ async function completePuzzle(user: ReturnType<typeof userEvent.setup>, selectEa
 function model() { return screen.getByLabelText('Explore the eight planets'); }
 
 describe('home planet discovery', () => {
-  it('moves all eight home planets and the Earth moon before completing the puzzle, and can pause', async () => {
-    const user = userEvent.setup();
+  it('keeps the preview still until the jigsaw is completed', () => {
     render(<MemoryRouter><OrbitHome autoStart /></MemoryRouter>);
-    expect(model()).toHaveClass('is-moving');
-    expect(model().querySelectorAll('.home-orbit')).toHaveLength(8);
-    expect(model().querySelector('.home-orbit-2 .home-moon-orbit')).not.toBeNull();
-    await user.click(screen.getByRole('button', { name: 'Pause planets' }));
     expect(model()).toHaveClass('is-still');
-    await user.click(screen.getByRole('button', { name: 'Move planets' }));
-    await user.click(screen.getByRole('button', { name: 'Start the jigsaw again' }));
-    expect(model()).toHaveClass('is-moving');
+    expect(screen.getByRole('button', {name: 'Finish the jigsaw to move planets'})).toBeDisabled();
   });
+
   it('keeps automatic home motion off for reduced motion', () => {
     media = preference(true);
     vi.stubGlobal('matchMedia', vi.fn(() => media.query));
@@ -249,6 +243,11 @@ it('builds the whole-screen space scene while still, then starts it only on the 
     await user.click(screen.getByRole('button',{name:`Place in position ${index+1}: ${name}`}));
     if(index<7)expect(screen.queryByRole('dialog',{name:'Your solar system is alive!'})).not.toBeInTheDocument();
   }
-  expect(screen.getByRole('dialog',{name:'Your solar system is alive!'})).toBeInTheDocument();
-  expect(document.querySelector('.orbit-completion .orbit-model')).toHaveClass('is-moving');
+  expect(screen.getByRole('dialog',{name:'Full-screen solar system jigsaw'})).toHaveClass('scene-solved');
+  expect(document.querySelector('.orbit-puzzle-full .orbit-model')).toHaveClass('is-moving');
+  await user.click(screen.getByRole('button',{name:'Pause planets'}));
+  expect(document.querySelector('.orbit-puzzle-full .orbit-model')).toHaveClass('is-still');
+  await user.click(screen.getByRole('button',{name:'Start the jigsaw again'}));
+  expect(document.querySelector('.orbit-puzzle-full .orbit-model')).toHaveClass('is-still');
+  expect(screen.getByText('0 / 8')).toBeInTheDocument();
 });

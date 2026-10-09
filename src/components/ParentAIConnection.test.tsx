@@ -142,3 +142,31 @@ describe('parent-controlled AI connection', () => {
     expect(screen.queryByText('No individual API key is connected. Built-in help is available.')).not.toBeInTheDocument();
   });
 });
+
+it('shows free cloud only after an authenticated configured allowance and saves explicit selection', async () => {
+  const user = userEvent.setup();
+  network.mockResolvedValueOnce(response({ connected: false, mode: 'local', available: { local: true, freeCloud: true } }))
+    .mockResolvedValueOnce(response({ connected: false, mode: 'free-cloud', available: { local: true, freeCloud: true } }));
+  render(<ParentAIConnection />);
+  expect(screen.getByRole('option', { name: /configured free cloud/ })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Save model choice' })).toBeDisabled();
+  await user.click(screen.getByRole('button', { name: 'Check my AI connection' }));
+  await user.selectOptions(screen.getByLabelText('Archie’s model'), 'free-cloud');
+  await user.click(screen.getByRole('button', { name: 'Save model choice' }));
+  expect(await screen.findByText(/Configured free cloud backup selected/)).toBeInTheDocument();
+  expect(JSON.parse(network.mock.calls[1][1].body)).toEqual({ mode: 'free-cloud' });
+  expect(saved.data.settings.onlineHelp).toBe(true);
+});
+
+it('submits the chosen API model with a hidden temporary key without selecting paid use automatically', async () => {
+  const user = userEvent.setup();
+  network.mockResolvedValue(response({ connected: true, mode: 'local', model: 'my-model', available: { local: false, freeCloud: false } }));
+  render(<ParentAIConnection />);
+  await user.type(screen.getByLabelText('Parent’s OpenAI API key'), testKey);
+  await user.clear(screen.getByLabelText('OpenAI model ID'));
+  await user.type(screen.getByLabelText('OpenAI model ID'), 'my-model');
+  await user.click(screen.getByRole('button', { name: 'Connect key temporarily' }));
+  expect(JSON.parse(network.mock.calls[0][1].body)).toEqual({ key: testKey, model: 'my-model' });
+  expect(saved.data.settings.onlineHelp).toBe(false);
+  expect(screen.getByLabelText('Archie’s model')).toHaveValue('local');
+});

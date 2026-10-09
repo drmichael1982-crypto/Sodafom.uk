@@ -2,10 +2,10 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'uk.sodafom.app',
-  appName: 'uk.sodafom.app',
+  appName: 'Sodafom',
   webDir: 'dist/client',
   server: {
-    androidScheme: 'http',
+    androidScheme: 'https',
     hostname: 'localhost'
   },
   plugins: {

@@ -29,3 +29,5 @@
 .soda-page:not(.a-calm) .course-vocabulary>div:nth-child(3n+1){background:#e6f6ed}
 .soda-page:not(.a-calm) .course-vocabulary>div:nth-child(3n+2){background:#fff1c7}
 .soda-page:not(.a-calm) .course-vocabulary>div:nth-child(3n+3){background:#eee8ff}
+
+.course-keys>span.found{animation:course-key-fit .65s ease-out both}.course-earned svg{animation:course-star-float 4s ease-in-out infinite}.course-earned svg:nth-child(2){animation-delay:-2s}@keyframes course-key-fit{0%{transform:scale(.6) rotate(-45deg)}65%{transform:scale(1.25) rotate(8deg)}100%{transform:scale(1) rotate(-15deg)}}@keyframes course-star-float{50%{transform:translateY(-8px) rotate(8deg)}}@media(prefers-reduced-motion:reduce){.course-keys>span.found,.course-earned svg{animation:none}}

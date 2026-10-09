@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { answerWithArchie, validateMessages } from "../../lib/archie-brain";
+import { requirePreviewParentSession } from "../../lib/archie-parent-auth";
 import { getParentAIEnv } from "../../lib/archie-parent-ai";
 
 const requests = new Map<string, { count: number; reset: number }>();
@@ -8,6 +9,8 @@ export default async function handler(req: Request, res: Response) {
   const messages = validateMessages(req.body?.messages);
   if (!messages)
     return res.status(400).send("Please send a short learning question.");
+  const session = await requirePreviewParentSession(req, res);
+  if (!session) return;
   const now = Date.now();
   for (const [key, value] of requests)
     if (value.reset < now) requests.delete(key);
@@ -21,16 +24,13 @@ export default async function handler(req: Request, res: Response) {
     const text = await answerWithArchie(
       messages,
       typeof req.body?.systemExtra === "string" ? req.body.systemExtra : "",
-      await getParentAIEnv(req) ?? process.env,
+      await getParentAIEnv(req, session.user.id),
       req.body?.learnerAge,
     );
     return res.type("text/plain").send(text);
-  } catch (error) {
-    const failure = error as { status?: number; code?: string };
-    console.warn("Archie provider request failed", {
-      status: failure.status,
-      code: failure.code,
-    });
+  } catch {
+    // Provider error text may contain submitted data or credentials. Never log it.
+    console.warn("Archie provider request failed");
     return res
       .status(503)
       .type("text/plain")

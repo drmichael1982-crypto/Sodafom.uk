@@ -397,3 +397,10 @@ it('keeps an exact authored answer choice ahead of an apparent lesson-launch com
     expect(state.navigate).not.toHaveBeenCalled();expect(localStorage.getItem('sodafom_archie_learning_v1')).toBeNull();
   } finally { remove(); }
 });
+it('ignores low-confidence background recognition without submitting a new question',async()=>{
+ render(<ArchieHelper/>);await start();const spoken=state.speak.mock.calls.length;
+ await act(async()=>{latest().onresult?.({results:[[{transcript:'background television words',confidence:.2}]]});});
+ expect(state.speak).toHaveBeenCalledTimes(spoken);
+ expect(screen.getByRole('status')).toHaveTextContent('Listening');
+ expect(fetch).not.toHaveBeenCalled();
+});

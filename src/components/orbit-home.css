@@ -93,3 +93,19 @@
 .orbit-puzzle-full .planet-jigsaw-board{padding:112px 0 172px;box-sizing:border-box}
 @media(max-width:350px){.orbit-puzzle-full .planet-jigsaw-board{padding-bottom:210px}}
 @media(max-height:500px) and (min-width:600px){.orbit-puzzle-full .planet-jigsaw-board{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);padding:90px 0 160px}.orbit-puzzle-full .planet-jigsaw-pieces{width:auto;left:8px;right:8px}}
+
+/* Fit each planet directly into the continuous scene; animate this same scene. */
+.orbit-puzzle-full .planet-jigsaw-board{display:block;padding:0!important;overflow:visible}
+.orbit-puzzle-full .planet-jigsaw-board>.orbit-model{pointer-events:auto}
+.orbit-puzzle-full .home-orbit{pointer-events:none;top:46%;width:var(--orbit-size);height:auto}
+.orbit-puzzle-full .scene-planet-slot{position:absolute;left:50%;top:-4px;transform:translate(-25%,-15%);pointer-events:auto;min-width:44px;min-height:44px;padding:4px;background:#102e56;border:2px dashed #ffe078;border-radius:14px;color:white;font-size:16px;box-shadow:0 3px 8px #0008}
+.scene-planet-slot small{display:block;font-size:10px}.orbit-puzzle-full .scene-planet-fit{background:transparent;border-color:#8be5ac;color:#8be5ac;opacity:.65}
+.orbit-puzzle-full .orbit-model:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,transparent calc(50% - 1px),#a0c4e655 50%,transparent calc(50% + 1px)),repeating-linear-gradient(0deg,transparent 0,transparent calc(25% - 1px),#a0c4e655 25%,transparent calc(25% + 1px));transition:opacity .7s}
+.orbit-puzzle-full.scene-solved .orbit-model:before{opacity:0}.scene-solved .planet-jigsaw-pieces,.scene-solved .planet-jigsaw-heading{display:none}
+.orbit-puzzle-full.scene-solved .orbit-motion{display:flex;pointer-events:auto;left:12px;bottom:150px;z-index:5}.orbit-puzzle-full .home-planet-name{display:block;position:absolute;top:100%;left:50%;transform:translateX(-50%);font-size:10px;color:white;background:#030818b8;border-radius:5px;padding:2px 4px;white-space:nowrap}
+
+.orbit-puzzle-full .orbit-model:before{display:none}.scene-jigsaw-seams{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;transition:opacity .7s}.scene-jigsaw-seams path{fill:none;stroke:#a0c4e6;stroke-opacity:.5;stroke-width:1;vector-effect:non-scaling-stroke}.scene-solved .scene-jigsaw-seams{opacity:0}.orbit-puzzle-full .scene-planet-slot{min-width:64px;min-height:64px;border-style:solid;padding:10px 6px}.orbit-puzzle-full .scene-planet-fit{visibility:hidden}
+
+.orbit-puzzle-full .home-orbit{width:min(var(--orbit-size),calc((100dvh - 230px)*var(--orbit-fraction)))}.orbit-puzzle-full .orbit-sun{top:46%;width:min(16vw,calc((100dvh - 230px)*.16))}
+
+.full-scene-facts{position:absolute;left:12px;right:12px;top:62px;padding:8px 12px;border-radius:12px;background:#06152cdd;z-index:5;font-size:13px}.full-scene-facts label{display:flex;align-items:center;gap:8px}.full-scene-facts select{min-height:44px;color:#123459;background:white;border-radius:8px;padding:4px 8px;font-size:16px}.full-scene-facts p{margin:5px 0}.full-scene-facts small{font-size:10px;color:#d0e7ff}@media(max-width:599px){.orbit-puzzle-full .planet-jigsaw-pieces{grid-template-columns:repeat(4,minmax(0,1fr));bottom:calc(92px + env(safe-area-inset-bottom,0px));gap:4px}.orbit-puzzle-full .planet-loose-piece{min-height:60px;font-size:11px}.orbit-puzzle-full .home-orbit{width:min(var(--orbit-size),calc((100dvh - 310px)*var(--orbit-fraction)))}.orbit-puzzle-full .planet-puzzle-notice{min-height:42px;font-size:12px}.orbit-puzzle-full .scene-planet-slot{min-width:52px;min-height:52px;font-size:13px}.orbit-puzzle-full .scene-planet-slot small{font-size:9px}}@media(prefers-reduced-motion:reduce){.orbit-model .home-orbit{transform:translate(-50%,-50%) rotateZ(var(--still-angle,-16deg))}.scene-jigsaw-seams{transition:none}}

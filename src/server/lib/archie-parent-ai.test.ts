@@ -109,3 +109,45 @@ describe('parent key HTTP boundary', () => {
     const status = await fetch(base + '/status', { headers: headers() }); expect((await status.json()).connected).toBe(false);
   });
 });
+
+describe('parent model selection', () => {
+  const server = { OPENAI_API_KEY: 'server-credential', ARCHIE_CLOUD_PROVIDER: 'openai', ARCHIE_OLLAMA_URL: 'http://127.0.0.1:11434', LOCAL_AI_MODEL: 'local-model' };
+  it('defaults to local even with server cloud credentials and requires explicit configured free allowance', () => {
+    const store = new ParentAIKeyStore();
+    expect(store.selectedEnv('a', server)).toMatchObject({ ARCHIE_CLOUD_PROVIDER: 'none', OPENAI_API_KEY: undefined, LOCAL_AI_MODEL: 'local-model' });
+    expect(store.select('a', 'free-cloud', server)).toBe(false);
+    const enabled = { ...server, ARCHIE_FREE_CLOUD_ENABLED: 'true' };
+    expect(store.select('a', 'free-cloud', enabled)).toBe(true);
+    expect(store.selectedEnv('a', enabled)).toEqual(enabled);
+    expect(store.configuration('b', enabled).mode).toBe('local');
+    expect(store.configuration('a', server).mode).toBe('local');
+    expect(store.select('a', 'free-cloud', { ARCHIE_FREE_CLOUD_ENABLED: 'true' })).toBe(false);
+  });
+  it('requires a live personal key for paid selection, uses the parent model and falls back locally on expiry', () => {
+    let now = 0; const store = new ParentAIKeyStore(() => now);
+    expect(store.select('a', 'paid', server)).toBe(false);
+    expect(store.set('a', fixtureKey, 'parent-selected-model')).toBe(true);
+    expect(store.configuration('a', server).mode).toBe('local');
+    expect(store.select('a', 'paid', server)).toBe(true);
+    expect(store.selectedEnv('a', server)).toMatchObject({ OPENAI_API_KEY: fixtureKey, ARCHIE_MODEL: 'parent-selected-model', LOCAL_AI_MODEL: 'local-model' });
+    expect(JSON.stringify(store.configuration('a', server))).not.toContain(fixtureKey);
+    now = 1800000;
+    expect(store.configuration('a', server).mode).toBe('local');
+    expect(store.selectedEnv('a', server).OPENAI_API_KEY).toBeUndefined();
+  });
+  it('rejects unexpected modes, URL model names and a credential pasted into the model field', () => {
+    const store = new ParentAIKeyStore();
+    expect(store.select('a', 'arbitrary' as never, server)).toBe(false);
+    for (const model of ['https://untrusted.example/model', fixtureKey, 'bad\nmodel', 'x'.repeat(101)]) expect(store.set('a', fixtureKey, model)).toBe(false);
+  });
+});
+
+it('account deletion forgets the credential and any free-cloud preference', () => {
+  const store = new ParentAIKeyStore();
+  const env = { ARCHIE_FREE_CLOUD_ENABLED: 'true', ARCHIE_CLOUD_PROVIDER: 'openai', OPENAI_API_KEY: 'server-credential' };
+  store.set('deleted-parent', fixtureKey);
+  store.select('deleted-parent', 'free-cloud', env);
+  store.forget('deleted-parent');
+  expect(store.configuration('deleted-parent', env)).toMatchObject({ connected: false, model: null, mode: 'local' });
+  expect(store.selectedEnv('deleted-parent', env).OPENAI_API_KEY).toBeUndefined();
+});

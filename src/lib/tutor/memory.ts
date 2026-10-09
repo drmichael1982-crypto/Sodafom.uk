@@ -35,6 +35,38 @@ export interface ChildTutorProfile {
 
 const MEMORY_KEY = 'sodafom_tutor_memory';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function safeCount(value: unknown, maximum = Number.MAX_SAFE_INTEGER): number {
+  return Number.isSafeInteger(value) && (value as number) >= 0
+    ? Math.min(value as number, maximum)
+    : 0;
+}
+
+function loadTopics(value: unknown): Record<string, TopicProgress> {
+  if (!isRecord(value)) return {};
+  const topics: Record<string, TopicProgress> = {};
+
+  for (const [key, stored] of Object.entries(value)) {
+    if (!isRecord(stored)) continue;
+    const totalAttempted = safeCount(stored.totalAttempted);
+    topics[key] = {
+      topic: typeof stored.topic === 'string' && stored.topic.trim() ? stored.topic : key.split(':').slice(1).join(':') || key,
+      subject: typeof stored.subject === 'string' && stored.subject.trim() ? stored.subject : key.split(':')[0] || 'Learning',
+      status: stored.status === 'RED' || stored.status === 'GREEN' ? stored.status : 'AMBER',
+      difficultyLevel: stored.difficultyLevel === 2 || stored.difficultyLevel === 3 ? stored.difficultyLevel : 1,
+      consecutiveCorrect: safeCount(stored.consecutiveCorrect, totalAttempted),
+      consecutiveIncorrect: safeCount(stored.consecutiveIncorrect, totalAttempted),
+      totalAttempted,
+      totalCorrect: safeCount(stored.totalCorrect, totalAttempted),
+      lastPractisedAt: typeof stored.lastPractisedAt === 'string' ? stored.lastPractisedAt : '',
+    };
+  }
+  return topics;
+}
+
 export function loadTutorMemory(): ChildTutorProfile {
   if (typeof window === 'undefined') {
     return { topics: {} };
@@ -43,18 +75,23 @@ export function loadTutorMemory(): ChildTutorProfile {
     const raw = localStorage.getItem(MEMORY_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
+      if (!isRecord(parsed)) throw new Error('Invalid tutor memory');
       const setupComplete = parsed.profileSetupComplete === true;
+      const storedName = typeof parsed.childName === 'string' && parsed.childName.trim() ? parsed.childName : undefined;
+      const legacyName = localStorage.getItem('sodafom_child_name') ?? undefined;
       return {
-        childName: parsed.childName || (setupComplete ? undefined : localStorage.getItem('sodafom_child_name') ?? undefined),
-        ageGroup: parsed.ageGroup ?? '8-10',
-        schoolYear: parsed.schoolYear ?? 'Year 4',
-        preferredTutor: parsed.preferredTutor ?? 'archie',
-        readAloudPreference: parsed.readAloudPreference ?? true,
-        parentPin: parsed.parentPin,
-        topics: parsed.topics ?? {},
-        recentSubject: parsed.recentSubject,
-        recentTopic: parsed.recentTopic,
-        recentLessonTime: parsed.recentLessonTime,
+        childName: storedName || (setupComplete ? undefined : legacyName),
+        ageGroup: parsed.ageGroup === '5-7' || parsed.ageGroup === '11-13' ? parsed.ageGroup : '8-10',
+        schoolYear: typeof parsed.schoolYear === 'string' ? parsed.schoolYear : 'Year 4',
+        preferredTutor: parsed.preferredTutor === 'soda' || parsed.preferredTutor === 'bella' || parsed.preferredTutor === 'rocky'
+          ? parsed.preferredTutor
+          : 'archie',
+        readAloudPreference: typeof parsed.readAloudPreference === 'boolean' ? parsed.readAloudPreference : true,
+        parentPin: typeof parsed.parentPin === 'string' ? parsed.parentPin : undefined,
+        topics: loadTopics(parsed.topics),
+        recentSubject: typeof parsed.recentSubject === 'string' ? parsed.recentSubject : undefined,
+        recentTopic: typeof parsed.recentTopic === 'string' ? parsed.recentTopic : undefined,
+        recentLessonTime: typeof parsed.recentLessonTime === 'string' ? parsed.recentLessonTime : undefined,
         profileSetupComplete: setupComplete || undefined,
       };
     }

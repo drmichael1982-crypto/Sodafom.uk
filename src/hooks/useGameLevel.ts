@@ -7,12 +7,12 @@
  * - Guest / no active child: reads/writes via localStorage key `sodafom_level_<slug>`
  *
  * Level rules (applied server-side on POST, mirrored here for instant UI feedback):
- *   Every completed ten-question round advances one level (max 10).
+ *   Device practice advances after a round earns at least two stars (max 10).
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { getActiveChild } from './useChildAge';
-import { API_PREFIX } from '@/lib/config';
+import { API_PREFIX, ARCHIE_PREVIEW } from '@/lib/config';
 
 export interface GameLevelState {
   level: number;       // 1–5
@@ -25,11 +25,18 @@ const LS_PREFIX = 'sodafom_level_';
 function lsKey(slug: string) { return `${LS_PREFIX}${slug}`; }
 
 function readLocalLevel(slug: string): { level: number; bestStars: number; playsAtLevel: number } {
+  const defaults = { level: 1, bestStars: 0, playsAtLevel: 0 };
   try {
     const raw = localStorage.getItem(lsKey(slug));
-    if (!raw) return { level: 1, bestStars: 0, playsAtLevel: 0 };
-    return JSON.parse(raw) as { level: number; bestStars: number; playsAtLevel: number };
-  } catch { return { level: 1, bestStars: 0, playsAtLevel: 0 }; }
+    if (!raw) return defaults;
+    const stored = JSON.parse(raw);
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return defaults;
+    return {
+      level: Number.isInteger(stored.level) && stored.level >= 1 && stored.level <= 10 ? stored.level : defaults.level,
+      bestStars: Number.isInteger(stored.bestStars) && stored.bestStars >= 0 && stored.bestStars <= 3 ? stored.bestStars : defaults.bestStars,
+      playsAtLevel: Number.isSafeInteger(stored.playsAtLevel) && stored.playsAtLevel >= 0 ? stored.playsAtLevel : defaults.playsAtLevel,
+    };
+  } catch { return defaults; }
 }
 
 function writeLocalLevel(slug: string, data: { level: number; bestStars: number; playsAtLevel: number }) {
@@ -47,12 +54,12 @@ export function useGameLevel(gameSlug: string): {
 
   // Load on mount
   React.useEffect(() => {
-    const child = getActiveChild();
+    const child = ARCHIE_PREVIEW ? null : getActiveChild();
     if (child?.id) {
       fetch(`${API_PREFIX}/children/${child.id}/game-level/${encodeURIComponent(gameSlug)}`, { credentials: 'include' })
         .then(r => r.ok ? r.json() : null)
         .then((d: { level: number; bestStars: number } | null) => {
-          setState({ level: d?.level ?? 1, bestStars: d?.bestStars ?? 0, loading: false });
+          setState({ level: d?.level ?? readLocalLevel(gameSlug).level, bestStars: d?.bestStars ?? readLocalLevel(gameSlug).bestStars, loading: false });
         })
         .catch(() => {
           // Fall back to localStorage
@@ -66,7 +73,7 @@ export function useGameLevel(gameSlug: string): {
   }, [gameSlug]);
 
   const recordResult = useCallback(async (stars: number): Promise<number> => {
-    const child = getActiveChild();
+    const child = ARCHIE_PREVIEW ? null : getActiveChild();
 
     if (child?.id) {
       try {
@@ -84,13 +91,13 @@ export function useGameLevel(gameSlug: string): {
       } catch { /* fall through to local */ }
     }
 
-    // Guest / offline fallback — mirror server logic locally
+    // Device practice / offline fallback: repeat weaker rounds before advancing.
     const local = readLocalLevel(gameSlug);
     let { level, bestStars, playsAtLevel } = local;
     playsAtLevel += 1;
     if (stars > bestStars) bestStars = stars;
     let newLevel = level;
-    if (level < 10) { newLevel = level + 1; playsAtLevel = 0; }
+    if (stars >= 2 && level < 10) { newLevel = level + 1; playsAtLevel = 0; }
     writeLocalLevel(gameSlug, { level: newLevel, bestStars, playsAtLevel });
     setState({ level: newLevel, bestStars, loading: false });
     return newLevel;

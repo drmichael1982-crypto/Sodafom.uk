@@ -313,7 +313,10 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     listener.lang = 'en-GB'; listener.interimResults = false; listener.continuous = false;
     listener.onresult = (event: any) => {
       if (recognition.current !== listener || listeningContext !== contextKeyRef.current || !conversationRef.current || busyRef.current || playingRef.current || !openRef.current) return;
-      const words = String(event.results?.[0]?.[0]?.transcript || '').trim();
+      const result=event.results?.[0]?.[0];
+      const confidence=Number(result?.confidence);
+      if(Number.isFinite(confidence)&&confidence>0&&confidence<.45){setNotice('I could not hear those words clearly. Please try again a little closer to the microphone.');return;}
+      const words = String(result?.transcript || '').trim();
       if (words) { heardWords = true; quietSessions.current = 0; setInput(words); void sendRef.current(words); }
     };
     listener.onerror = (event: any) => {
@@ -345,7 +348,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     clearRestartTimer();
     if (playing && recognition.current) retireMicrophone();
     if (voiceConversation && isOpen && !busy && !playing && !listening) {
-      restartTimer.current = window.setTimeout(() => { restartTimer.current = null; listenForConversation(); }, 450);
+      restartTimer.current = window.setTimeout(() => { restartTimer.current = null; listenForConversation(); }, 250);
     }
     return clearRestartTimer;
   }, [voiceConversation, isOpen, busy, playing, listening]);
@@ -380,7 +383,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     <dialog ref={dialog} className="archie-dialog" onCancel={close} onClose={() => { if (openRef.current) close(); }} aria-labelledby="archie-title">
       <header><div><h2 id="archie-title">Ask Archie</h2><p>{gameTitle ? `Helping with ${gameTitle}${lesson?.phaseLabel ? ` · ${lesson.phaseLabel}` : ''}` : 'Your learning helper'}</p></div><button aria-label="Close Ask Archie" onClick={close}><X /></button></header>
       <div className="archie-chat-history" role="log" aria-live="polite">
-        {!messages.length && <p>Hi! Ask me about this game or lesson. You can type or tap the microphone.</p>}
+        {!messages.length && <p>Hi{settings.childNickname ? `, ${settings.childNickname}` : ''}! Ask me about this game or lesson. You can type or tap the microphone.</p>}
         {messages.map((m,i) => <p key={i} className={`chat-${m.role}`}><strong>{m.role === 'user' ? 'You' : 'Archie'}: </strong>{m.role === 'assistant' ? <>{m.content.split(/(\s+)/).map((part,wordIndex) => /^\s+$/.test(part) ? part : <span className="archie-word" style={{ animationDelay: `${Math.min(wordIndex, 24) * 22}ms` }} key={wordIndex}>{part}</span>)}<button type="button" className="archie-quick" aria-label="Listen to Archie" onClick={() => read(m.content)}><Volume2 size={18}/> Listen</button></> : m.content.replace(/\[PLAY:[^\]]+\]/g, '')}</p>)}
         {busy && <p>Archie is thinking…</p>}<div ref={end}/>
       </div>

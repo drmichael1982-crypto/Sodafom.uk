@@ -78,6 +78,8 @@ const MockExamsPage = lazy(() => import('./pages/mock-exams/index'));
 const AdminPortal = lazy(() => import('./pages/admin/AdminPortal'));
 const SodafomBotPage = lazy(() => import('./pages/chatbot/SodafomBotPage'));
 const AdminPanelPage = lazy(() => import('./pages/admin-panel'));
+const PaymentSettingsPage = lazy(() => import('./pages/admin/PaymentSettings'));
+const AdminOverviewPage = lazy(() => import('./pages/admin/AdminOverview'));
 // Teacher hub: backend dashboard normally; in the local Archie preview these
 // entry points lead to the real lesson bank at /teacher (see TeacherHubEntry).
 const TeacherHubDashboard = lazy(() => import('./pages/teacher-hub/TeacherHubEntry').then(m => ({ default: m.TeacherHubEntry })));
@@ -219,6 +221,8 @@ export const routes: RouteObject[] = [
   { path: '/artwork', element: <ArchieArtworkGallery /> },
   { path: '/time-lab', element: <ArchieClockLab /> },
   { path: '/preview-admin', element: <ArchiePreviewAdmin /> },
+  { path: '/admin/payments', element: <PaymentSettingsPage /> },
+  { path: '/admin', element: <AdminOverviewPage /> },
   { path: '/quests', element: <ArchieQuests /> },
   { path: '/privacy', element: <ArchiePrivacy /> },
   { path: '/courses', element: <ArchieCourses /> },

@@ -3,7 +3,7 @@
  * Accepts a question bank, renders one question at a time, tracks score,
  * and calls onComplete(stars) when all rounds are done.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { CheckCircle, XCircle, Star } from 'lucide-react';
 import ArchieGameHelper from '@/components/games/ArchieGameHelper';
@@ -22,10 +22,11 @@ interface QuizEngineProps {
   title: string;
   emoji: string;
   questions: QuizQuestion[];
-  onComplete: (stars: number) => void;
+  onComplete: (stars: number, result?: {correct:number;total:number;firstAttemptCorrect:number;solved:number}) => void;
   accentClass?: string; // tailwind bg class for correct highlight
   onQuestionChange?: (question: string, options?: string[]) => void; // reports current question text upward
   sessionKey?: string;
+  answerReward?: 'snake' | 'word-monster' | 'robot';
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -40,6 +41,7 @@ export default function QuizEngine({
   accentClass = 'bg-primary',
   onQuestionChange,
   sessionKey = title,
+  answerReward = 'snake',
 }: QuizEngineProps) {
   const [pool] = useState(() => {
     const unique = [...new Map(questions.map(q => [`${q.question}|${q.answer}`, q])).values()];
@@ -59,6 +61,10 @@ export default function QuizEngine({
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [correct, setCorrect] = useState(0);
+  const [fitted, setFitted] = useState(0);
+  const [tried, setTried] = useState<string[]>([]);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if(advanceTimer.current)clearTimeout(advanceTimer.current); }, []);
   const [done, setDone] = useState(false);
   const { speak } = useVoice();
 
@@ -83,30 +89,35 @@ export default function QuizEngine({
     if (selected !== null) return;
     setSelected(opt);
     const isCorrect = opt === current.answer;
-    if (isCorrect) setCorrect(c => c + 1);
+    if (isCorrect) {
+      if(tried.length===0)setCorrect(c => c + 1);
+      setFitted(value=>value+1);
+    } else setTried(values=>[...values,opt]);
 
     const feedback = isCorrect
       ? `You chose ${opt}. That's correct! Well done.`
-      : `You chose ${opt}. That's not quite right. The correct answer is ${current.answer}.`;
+      : `You chose ${opt}. Let's try a clue. ${current.hint || "Read the question again and try a different answer. You can ask Archie for help."}`;
     speak(`archie-answer:${current.question}:${opt}`, feedback);
-    setTimeout(() => {
+    if(!isCorrect)return;
+    advanceTimer.current=setTimeout(() => {
       if (idx + 1 >= pool.length) {
         setDone(true);
       } else {
         setIdx(i => i + 1);
         setSelected(null);
+        setTried([]);
       }
     }, isCorrect && !reducedMotion ? 1900 : 900);
-  }, [selected, current, idx, pool.length, speak, reducedMotion]);
+  }, [selected, current, idx, pool.length, speak, reducedMotion, tried]);
 
   useEffect(() => {
     if (done) {
       const pct = correct / pool.length;
       const stars = pct >= 0.9 ? 3 : pct >= 0.6 ? 2 : pct >= 0.3 ? 1 : 0;
-      const t = setTimeout(() => onComplete(stars), 1200);
+      const t = setTimeout(() => onComplete(stars,{correct,total:pool.length,firstAttemptCorrect:correct,solved:fitted}), 1200);
       return () => clearTimeout(t);
     }
-  }, [done, correct, pool.length, onComplete]);
+  }, [done, correct, fitted, pool.length, onComplete]);
 
   if (done) {
     const pct = correct / pool.length;
@@ -115,7 +126,7 @@ export default function QuizEngine({
       <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
         <div className="text-6xl">{emoji}</div>
         <h2 className="text-2xl font-black text-foreground">
-          {correct}/{pool.length} correct!
+          {correct}/{pool.length} right first time!
         </h2>
         <div className="flex gap-1">
           {[1,2,3].map(s => (
@@ -142,7 +153,7 @@ export default function QuizEngine({
         />
       </div>
 
-      <div className="quiz-picture-jigsaw" aria-label={`${correct} picture pieces earned`}>{pool.map((_,i)=><span key={i} className={i<correct?'quiz-picture-fit':'quiz-picture-gap'} style={{backgroundSize:`${pool.length*100}% 100%`,backgroundPosition:`${pool.length===1?0:i/(pool.length-1)*100}% center`}}/>)}</div>
+      <div className="quiz-picture-jigsaw" aria-label={`${fitted} picture pieces earned`}>{pool.map((_,i)=><span key={i} className={i<fitted?'quiz-picture-fit':'quiz-picture-gap'} style={{backgroundSize:`${pool.length*100}% 100%`,backgroundPosition:`${pool.length===1?0:i/(pool.length-1)*100}% center`}}/>)}</div>
       {/* Question */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -169,8 +180,8 @@ export default function QuizEngine({
       </AnimatePresence>
 
       {/* Options */}
-      <div key={`answers-${idx}`} className={`answer-snake-board grid grid-cols-1 sm:grid-cols-2 gap-3 ${feeding ? 'is-feeding' : ''}`}>
-        {feeding && <span className="answer-snake" aria-hidden="true">🐍</span>}
+      <div key={`answers-${idx}`} className={`answer-snake-board grid grid-cols-1 sm:grid-cols-2 gap-3 ${feeding ? 'is-feeding' : ''} answer-reward-${answerReward}`}>
+        {feeding && <span className="answer-snake" aria-hidden="true">{answerReward==='word-monster'?'👾':answerReward==='robot'?'🤖':'🐍'}</span>}
         {current.options.map(opt => {
           const isSelected = selected === opt;
           const isCorrect = opt === current.answer;
@@ -186,7 +197,7 @@ export default function QuizEngine({
               key={opt}
               whileHover={selected === null ? { scale: 1.03 } : {}}
               whileTap={selected === null ? { scale: 0.97 } : {}}
-              disabled={selected !== null}
+              disabled={selected !== null || tried.includes(opt)}
               onClick={() => pick(opt)}
               className={`flex items-center justify-between gap-2 px-4 py-3 rounded-xl border-2 font-bold text-sm text-left transition-all ${feeding ? isCorrect ? 'snake-right-answer' : 'snake-wrong-answer' : ''} ${cls}`}
             >
@@ -197,7 +208,8 @@ export default function QuizEngine({
           );
         })}
       </div>
-      {feeding && <p role="status" className="answer-snake-notice">Correct! The snake is gobbling up the wrong answers.</p>}
+      {selected !== null && !feeding && <div role="alert" className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 text-amber-950"><p className="font-bold">Good effort. Let’s try a clue!</p><p>{current.hint || "Read the question again and try a different answer. Ask Archie if you need help."}</p><button type="button" className="mt-3 min-h-11 rounded-xl bg-blue-700 px-5 py-2 font-bold text-white" onClick={()=>setSelected(null)}>Try again</button></div>}
+      {feeding && <p role="status" className="answer-snake-notice">{answerReward==='word-monster'?'Correct! The word monster is gobbling up the wrong words.':answerReward==='robot'?'Correct! Your discovery robot is collecting the wrong answers.':'Correct! The snake is gobbling up the wrong answers.'}</p>}
     </div>
   );
 }

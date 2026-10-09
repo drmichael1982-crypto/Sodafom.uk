@@ -1,0 +1,13 @@
+{
+  "id": "/",
+  "name": "Sodafom — Learn, Play, Grow",
+  "short_name": "Sodafom",
+  "description": "Learn and play with Archie through interactive lessons and picture puzzles.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#07152e",
+  "theme_color": "#0965d7",
+  "lang": "en-GB",
+  "icons": [{ "src": "/assets/images/sodafom-launcher-icon-v2.png", "sizes": "1254x1254", "type": "image/png", "purpose": "any" }]
+}

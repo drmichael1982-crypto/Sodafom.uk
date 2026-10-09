@@ -494,6 +494,7 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
         answers[previous.question] = index;
         return { ...previous, answers };
       });
+      speak("read:course-feedback", (sensitive ? "Well explained. " : "You found a key! ") + question.explanation);
       setFeedback(
         (sensitive ? "Well explained. " : "You found a key! ") +
           question.explanation,
@@ -503,6 +504,7 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
       wrongAttemptsRef.current = attempts;
       setWrongAttempts(attempts);
       setHint(true);
+      speak("read:course-feedback", "Good try. " + question.hint + methodNudge(attempts));
       setFeedback(
         "Not quite yet, and that is okay. Take another look at the hint, then have another go." +
           methodNudge(attempts),
@@ -848,6 +850,7 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
                   . Take your time. A hint is always here.
                 </p>
                 <h3>{question.prompt}</h3>
+                <button type="button" className="a-button" onClick={()=>speak("read:course-question",question.prompt + ". " + question.options.join(". "))}><Volume2 size={20}/> Hear the question</button>
                 <div
                   className="quest-options"
                   role="group"
@@ -879,6 +882,7 @@ function CourseSession({ lesson }: { lesson: CourseLesson }) {
                 {hint && (
                   <div id="course-hint">
                     <p className="quest-hint">{question.hint}</p>
+                    <button type="button" className="a-button" onClick={()=>speak("read:course-hint",question.hint)}><Volume2 size={20}/> Hear the clue</button>
                     {lesson.subject === "maths" && (
                       <LearningModel prompt={question.prompt} />
                     )}
