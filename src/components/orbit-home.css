@@ -89,3 +89,7 @@
 .orbit-completion>.planet-puzzle-reset{position:absolute;bottom:max(12px,env(safe-area-inset-bottom));z-index:4}.orbit-completion .orbit-motion{bottom:calc(50% - 24px);left:50%;opacity:.9}
 @media(max-width:350px){.orbit-puzzle-full .planet-jigsaw-pieces{grid-template-columns:repeat(4,1fr)}.orbit-puzzle-full .planet-loose-piece{min-height:52px}.orbit-puzzle-full h1{font-size:17px}}
 @media(max-height:500px) and (min-width:600px){.orbit-puzzle-full .planet-jigsaw-pieces{left:auto;width:40%;bottom:76px}.orbit-completion .orbit-discovery{left:auto;right:12px;top:auto;bottom:76px;width:30%}.orbit-completion .orbit-model{margin:0}}
+/* Keep every fitting space clear of the floating instructions and piece tray. */
+.orbit-puzzle-full .planet-jigsaw-board{padding:112px 0 172px;box-sizing:border-box}
+@media(max-width:350px){.orbit-puzzle-full .planet-jigsaw-board{padding-bottom:210px}}
+@media(max-height:500px) and (min-width:600px){.orbit-puzzle-full .planet-jigsaw-board{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,1fr);padding:90px 0 160px}.orbit-puzzle-full .planet-jigsaw-pieces{width:auto;left:8px;right:8px}}
