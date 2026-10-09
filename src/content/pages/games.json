@@ -2022,7 +2022,7 @@
       "subject": "reading",
       "emoji": "💨",
       "isNew": true,
-      "description": "Read the passage as fast as you can, then answer questions to check you understood it. Build reading fluency!",
+      "description": "Read or listen to short passages, find the clues and answer comprehension questions at your own pace. No reading timer.",
       "ageGroups": [
         "8–10",
         "11–13"
@@ -2032,7 +2032,7 @@
       "featured": false,
       "color": "green",
       "skills": [
-        "Reading speed",
+        "Reading comprehension",
         "Fluency",
         "Comprehension"
       ],
@@ -2176,7 +2176,7 @@
       "subject": "reading",
       "emoji": "📻",
       "isNew": true,
-      "description": "Read the passage aloud at the right pace. Tap the words as you read to build fluency and confidence!",
+      "description": "Explore short passages and choose clear phrasing, meaningful pauses and expression. Practise aloud if you like; no voice score or time limit.",
       "ageGroups": [
         "5–7",
         "8–10"

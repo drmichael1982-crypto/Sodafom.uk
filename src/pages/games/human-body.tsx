@@ -17,7 +17,7 @@ interface BodyQ {
   category: 'external' | 'organ' | 'system' | 'bone';
 }
 
-const QUESTIONS: BodyQ[] = [
+export const QUESTIONS: BodyQ[] = [
   { question: 'Which organ pumps blood around the body?', emoji: '❤️', choices: ['Heart', 'Lungs', 'Liver', 'Kidney'], answer: 'Heart', funFact: 'Your heart beats about 100,000 times every single day!', category: 'organ' },
   { question: 'Which organ do we use to breathe?', emoji: '🫁', choices: ['Lungs', 'Heart', 'Stomach', 'Brain'], answer: 'Lungs', funFact: 'You have two lungs — the right one is slightly bigger than the left!', category: 'organ' },
   { question: 'Which organ controls everything your body does?', emoji: '🧠', choices: ['Brain', 'Heart', 'Spine', 'Liver'], answer: 'Brain', funFact: 'Your brain uses about 20% of all the energy your body produces!', category: 'organ' },
@@ -29,7 +29,7 @@ const QUESTIONS: BodyQ[] = [
   { question: 'How many bones does an adult human body have?', emoji: '💀', choices: ['206', '180', '250', '300'], answer: '206', funFact: 'Babies are born with about 270 bones — many fuse together as you grow!', category: 'bone' },
   { question: 'Which organ produces bile to help digest fats?', emoji: '🟤', choices: ['Liver', 'Pancreas', 'Stomach', 'Kidney'], answer: 'Liver', funFact: 'The liver performs over 500 different functions and can regenerate itself!', category: 'organ' },
   { question: 'What do red blood cells carry around the body?', emoji: '🔴', choices: ['Oxygen', 'Carbon dioxide', 'Nutrients', 'Water'], answer: 'Oxygen', funFact: 'You have about 25 trillion red blood cells — and your body makes 2 million new ones every second!', category: 'system' },
-  { question: 'Which part of the eye controls how much light enters?', emoji: '👁️', choices: ['Pupil', 'Iris', 'Retina', 'Cornea'], answer: 'Pupil', funFact: 'Your pupils can change size in less than a second to adjust to different light levels!', category: 'external' },
+  { question: 'Which part of the eye controls how much light enters?', emoji: '👁️', choices: ['Pupil', 'Iris', 'Retina', 'Cornea'], answer: 'Iris', funFact: 'Muscles in the iris change the size of the pupil, the opening that lets light into your eye.', category: 'external' },
   { question: 'What is the name of the tube that carries food from your mouth to your stomach?', emoji: '🍽️', choices: ['Oesophagus', 'Trachea', 'Intestine', 'Aorta'], answer: 'Oesophagus', funFact: 'The oesophagus uses wave-like muscle contractions called peristalsis to push food down!', category: 'system' },
   { question: 'Which organ produces insulin to control blood sugar?', emoji: '🫀', choices: ['Pancreas', 'Liver', 'Kidney', 'Spleen'], answer: 'Pancreas', funFact: 'The pancreas also produces digestive enzymes that break down carbohydrates, proteins and fats!', category: 'organ' },
   { question: 'How many chambers does the human heart have?', emoji: '❤️', choices: ['4', '2', '3', '6'], answer: '4', funFact: 'The four chambers are: right atrium, right ventricle, left atrium, and left ventricle!', category: 'organ' },
