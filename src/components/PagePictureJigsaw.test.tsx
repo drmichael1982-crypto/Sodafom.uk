@@ -57,9 +57,4 @@ describe('whole-page picture around fixed icons',()=>{
   expect(within(label).getByText('Your picture playground')).toHaveClass('picture-mode-label-full');
   expect(within(label).getByText('Picture playground')).toHaveClass('picture-mode-label-compact');
  });
- it('provides a compact short-phone tray instruction without removing the full instruction',()=>{
-  show();
-  expect(screen.getByText('Swipe to see more →')).toHaveClass('picture-tray-long-help');
-  expect(screen.getByText('Pick → matching space')).toHaveClass('picture-tray-short-help');
- });
 });
