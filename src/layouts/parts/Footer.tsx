@@ -113,9 +113,9 @@ function TikTokIcon({ size = 16 }: { size?: number }) {
 }
 
 
-const footerLinks = {
+export const footerLinks = {
   Learn: [
-    { label: 'All Games',          href: '/' },
+    { label: 'All Games',          href: '/games' },
     { label: '⭐ Game of the Week', href: '/game-of-the-week' },
     { label: 'Maths Games',        href: '/subjects/maths' },
     { label: 'Spelling Games',     href: '/subjects/spelling' },
