@@ -123,26 +123,38 @@ const results = [];
                 : 'Mission 1 of 8 · 0 first-try discoveries';
               await page.getByText(missionStatus, { exact: true }).waitFor();
               assert.equal(await button('Next space mission').count(), 0, 'Wrong answer cannot advance the mission');
-              await button('Show a hint').click();
+              const hintButton = button('Show a hint');
+              await hintButton.focus();
+              await page.keyboard.press('Enter');
+              assert.equal(await hintButton.evaluate(element => element === document.activeElement), true, 'Keyboard hint keeps focus on its control');
               await page.getByRole('status').getByText(hint, { exact: true }).waitFor();
               await page.screenshot({ path: `${output}/number-planets-retry-year-${year}-${viewport.width}.png`, fullPage: true });
               if (year !== 4) {
-                await button('Pause mission').click();
+                const pauseButton = button('Pause mission');
+                await pauseButton.focus();
+                await page.keyboard.press('Space');
                 await page.getByRole('heading', { name: 'Time for a breather', exact: true }).waitFor();
                 await page.getByText('Your mission is waiting. Resume when you are ready.', { exact: true }).waitFor();
+                const resumeButton = button('Resume mission');
+                assert.equal(await resumeButton.evaluate(element => element === document.activeElement), true, 'Keyboard pause keeps focus on the renamed Resume control');
                 await page.screenshot({ path: `${output}/number-planets-paused-year-${year}-${viewport.width}.png`, fullPage: true });
-                await button('Resume mission').click();
+                await page.keyboard.press('Enter');
+                assert.equal(await button('Pause mission').evaluate(element => element === document.activeElement), true, 'Keyboard resume restores focus to the Pause control');
                 assert.equal(await page.locator('.planet-equation').getAttribute('aria-label'), equation, 'Pause preserves the retry equation');
                 await page.getByRole('status').getByText(hint, { exact: true }).waitFor();
               }
             }
             if (round === 0 && !retryYears.has(year)) {
-              await button('Pause mission').click();
+              const pauseButton = button('Pause mission');
+              await pauseButton.focus();
+              await page.keyboard.press('Space');
               await page.getByRole('heading', { name: 'Time for a breather', exact: true }).waitFor();
               await page.getByText('Your mission is waiting. Resume when you are ready.', { exact: true }).waitFor();
               await page.getByText('Mission 1 of 8 · 0 first-try discoveries', { exact: true }).waitFor();
+              assert.equal(await button('Resume mission').evaluate(element => element === document.activeElement), true, 'Keyboard pause keeps focus on the renamed Resume control');
               await page.screenshot({ path: `${output}/number-planets-paused-year-${year}-${viewport.width}.png`, fullPage: true });
-              await button('Resume mission').click();
+              await page.keyboard.press('Enter');
+              assert.equal(await button('Pause mission').evaluate(element => element === document.activeElement), true, 'Keyboard resume restores focus to the Pause control');
               assert.equal(await page.locator('.planet-equation').getAttribute('aria-label'), equation, 'Pause preserves the equation');
             }
             const correctChoice = button(`Answer ${answer}`);
@@ -177,8 +189,8 @@ const results = [];
           await button('Back to games').click(); await page.waitForURL(base + '/games');
           const tierLabel = year <= 3 ? 'addition' : year <= 6 ? 'multiplication' : 'multiplication and division';
           const journey = retried
-            ? `keyboard wrong answer${year === 7 ? ' on division' : ''} with retained focus → explicit hint${year === 4 ? '' : ' → pause/resume with retained hint'} → keyboard retry with Next/question focus hand-off → ${tierLabel} → 7/8 first-try answers (88%, two stars)`
-            : `pause/resume → keyboard answers with Next/question focus hand-off → ${tierLabel} → 8/8 first-try answers (100%, three stars)`;
+            ? `keyboard wrong answer${year === 7 ? ' on division' : ''} with retained focus → keyboard hint${year === 4 ? '' : ' → keyboard pause/resume with retained hint and focus'} → keyboard retry with Next/question focus hand-off → ${tierLabel} → 7/8 first-try answers (88%, two stars)`
+            : `keyboard pause/resume with retained focus → keyboard answers with Next/question focus hand-off → ${tierLabel} → 8/8 first-try answers (100%, three stars)`;
           results.push(`Year ${year}, ${viewport.width}px: Number Planets → ${journey} → menu`);
         }
       }
