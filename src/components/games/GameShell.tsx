@@ -1,3 +1,4 @@
+import CompletionScene from '@/components/CompletionScene';
 import AppScreenPager from '@/components/AppScreenPager';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -82,6 +83,8 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   const playable = useRef(!blocked);
   playable.current = !blocked;
   const isLoggedIn = !!session?.user;
+  const [rewardOpen,setRewardOpen]=useState(false);
+  const closeReward=useCallback(()=>setRewardOpen(false),[]);
   const [result, setResult] = useState<GameResult | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -155,6 +158,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
     // Record progression
     const slug = gameSlug;
     recordGameCompletion(subject, slug);
+    if(r.total>0)setRewardOpen(true);
 
     try {
       const k = `game-${gameSlug}`;
@@ -204,6 +208,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
   const handleReplay = () => {
     const focused = document.activeElement;
     replayFocusOriginRef.current = gameAreaRef.current?.contains(focused) ? focused : null;
+    setRewardOpen(false);
     setResult(null);
     setKey(k => k + 1);
     startTimeRef.current = Date.now();
@@ -225,6 +230,7 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
 
   const gameContent = (
     <div style={puzzleThemeStyle(title, subject)} className="archie-game-shell soda-game-shell puzzle-themed min-h-screen bg-background flex flex-col">
+      {rewardOpen&&<CompletionScene kind={subject==='reading'||subject==='spelling'?'words':subject} onClose={closeReward}/>}
       <Helmet>
         <title>{title} — Sodafom Games</title>
         <meta name="description" content={`Play ${title} on Sodafom — a fun educational game for children ages ${ageGroups.join(', ')}.`} />
@@ -515,6 +521,7 @@ export function ResultScreen({
             {/* Headline */}
             <motion.h2
               ref={headingRef}
+              data-reward-return
               tabIndex={-1}
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}

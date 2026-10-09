@@ -6,3 +6,16 @@ afterEach(cleanup);
 it('rejects wrong letters and accepts separate repeated letters',()=>{render(<LearningJigsaw text="Moon rises."/>);fireEvent.click(screen.getByRole('button',{name:'Piece 4: N'}));expect(screen.getByText('That piece does not fit yet. Try another answer.')).toBeTruthy();['M','O','O','N'].forEach((letter,i)=>fireEvent.click(screen.getByRole('button',{name:`Piece ${i+1}: ${letter}`})));expect(screen.getByText('Well done! You built the picture.')).toBeTruthy();});
 it('builds the actual book sentence in order',()=>{render(<LearningJigsaw text="Archie found a key. He smiled."/>);fireEvent.click(screen.getByRole('button',{name:'Sentence pieces'}));['Archie','found','a','key'].forEach((word,i)=>fireEvent.click(screen.getByRole('button',{name:`Piece ${i+1}: ${word}`})));expect(screen.getByText('Well done! You built the picture.')).toBeTruthy();});
 it('requires the correct maths answer and resets the picture',()=>{render(<LearningJigsaw year={1}/>);fireEvent.click(screen.getByRole('button',{name:'Maths pieces'}));fireEvent.click(screen.getByRole('button',{name:'Piece 1: 6'}));expect(screen.getByText('That piece does not fit yet. Try another answer.')).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:'Piece 2: 4'}));expect(screen.getByText('Well done! You built the picture.')).toBeTruthy();fireEvent.click(screen.getByRole('button',{name:'Next puzzle'}));expect(screen.getByText('4 + 2 = ?')).toBeTruthy();expect(screen.queryByText('Well done! You built the picture.')).toBeNull();});
+it('starts a word reward only after completion, allows pausing and returns to the same completed puzzle',()=>{
+ render(<LearningJigsaw text="Moon rises."/>);
+ expect(screen.queryByRole('dialog')).toBeNull();
+ ['M','O','O'].forEach((letter,i)=>fireEvent.click(screen.getByRole('button',{name:`Piece ${i+1}: ${letter}`})));
+ expect(screen.queryByRole('dialog')).toBeNull();
+ fireEvent.click(screen.getByRole('button',{name:'Piece 4: N'}));
+ expect(screen.getByRole('dialog',{name:'Your word world is alive!'})).toBeTruthy();
+ fireEvent.click(screen.getByRole('button',{name:'Pause scene'}));
+ expect(screen.getByRole('button',{name:'Resume scene'})).toHaveAttribute('aria-pressed','true');
+ fireEvent.click(screen.getByRole('button',{name:'Back to puzzle'}));
+ expect(screen.queryByRole('dialog')).toBeNull();
+ expect(screen.getByText('Well done! You built the picture.')).toBeTruthy();
+});

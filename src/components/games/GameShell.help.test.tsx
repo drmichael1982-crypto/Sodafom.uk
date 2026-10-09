@@ -75,6 +75,7 @@ it('hands focus from Finish to results, then from Replay to the restarted game t
   expect(screen.getByRole('heading', { level: 1, name: 'Number Planets' })).not.toHaveFocus();
   finish.focus();
   fireEvent.click(finish);
+  fireEvent.click(screen.getByRole('button',{name:'Back to puzzle'}));
   // The visible counter starts at zero and animates, but assistive technology
   // must receive the settled result immediately rather than that transient zero.
   await waitFor(() => expect(screen.getByText('Final score: 100%')).toHaveClass('sr-only'));
@@ -102,6 +103,7 @@ it('preserves surviving tutor input focus while Replay replaces the result', asy
   </ArchieProvider></MemoryRouter></HelmetProvider>);
   const finish = screen.getByRole('button', { name: 'Finish test mission' });
   finish.focus(); fireEvent.click(finish);
+  fireEvent.click(screen.getByRole('button',{name:'Back to puzzle'}));
   await waitFor(() => expect(screen.getByRole('heading', { name: /Amazing exploring/ })).toHaveFocus());
   const replay = screen.getByRole('button', { name: 'Play another round' });
   const input = screen.getByRole('textbox', { name: 'Tutor question' });
@@ -122,6 +124,7 @@ it('does not retry a modal-blocked replay handoff after a later rerender', async
   const view = render(content('Number Planets'));
   const finish = screen.getByRole('button', { name: 'Finish test mission' });
   finish.focus(); fireEvent.click(finish);
+  fireEvent.click(screen.getByRole('button',{name:'Back to puzzle'}));
   await waitFor(() => expect(screen.getByRole('heading', { name: /Amazing exploring/ })).toHaveFocus());
   const replay = screen.getByRole('button', { name: 'Play another round' });
   const dialog = screen.getByLabelText('Test help');

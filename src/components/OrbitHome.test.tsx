@@ -238,3 +238,17 @@ describe('home planet discovery', () => {
   });
 
 });
+
+it('builds the whole-screen space scene while still, then starts it only on the last fitting piece',async()=>{
+  show();const user=userEvent.setup();
+  await user.click(screen.getByRole('button',{name:'Build my full-screen space jigsaw'}));
+  expect(screen.getByRole('dialog',{name:'Full-screen solar system jigsaw'})).toBeInTheDocument();
+  expect(document.querySelector('.orbit-puzzle-full .orbit-model')).toHaveClass('is-still');
+  for(const [index,[name]] of FACTS.entries()){
+    await user.click(screen.getByRole('button',{name:`Pick up ${name}`}));
+    await user.click(screen.getByRole('button',{name:`Place in position ${index+1}: ${name}`}));
+    if(index<7)expect(screen.queryByRole('dialog',{name:'Your solar system is alive!'})).not.toBeInTheDocument();
+  }
+  expect(screen.getByRole('dialog',{name:'Your solar system is alive!'})).toBeInTheDocument();
+  expect(document.querySelector('.orbit-completion .orbit-model')).toHaveClass('is-moving');
+});
