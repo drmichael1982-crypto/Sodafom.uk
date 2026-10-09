@@ -14,6 +14,22 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('saved game progression', () => {
+  it.each(['null', '[]', '{"level":"4","bestStars":"3","playsAtLevel":-1}', '{"level":99,"bestStars":12,"playsAtLevel":0}'])('recovers from invalid stored progress %s and can save a new result', async (raw) => {
+    localStorage.setItem('sodafom_level_number-pop', raw);
+    vi.stubGlobal('fetch', vi.fn());
+    const { result } = renderHook(() => useGameLevel('number-pop'));
+    expect(result.current).toMatchObject({ loading: false, level: 1, bestStars: 0 });
+    await act(async () => { expect(await result.current.recordResult(2)).toBe(2); });
+    expect(JSON.parse(localStorage.getItem('sodafom_level_number-pop')!)).toEqual({ level: 2, bestStars: 2, playsAtLevel: 0 });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it('keeps valid achievements when only the saved play counter is invalid', async () => {
+    localStorage.setItem('sodafom_level_number-pop', JSON.stringify({ level: 4, bestStars: 3, playsAtLevel: -2 }));
+    const { result } = renderHook(() => useGameLevel('number-pop'));
+    expect(result.current).toMatchObject({ level: 4, bestStars: 3 });
+    await act(async () => { expect(await result.current.recordResult(0)).toBe(4); });
+    expect(JSON.parse(localStorage.getItem('sodafom_level_number-pop')!)).toEqual({ level: 4, bestStars: 3, playsAtLevel: 1 });
+  });
   it('loads and advances device preview progress without using a stale account child', async () => {
     const fetch = vi.fn();
     vi.stubGlobal('fetch', fetch);

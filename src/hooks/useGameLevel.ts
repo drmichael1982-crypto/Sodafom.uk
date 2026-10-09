@@ -25,11 +25,18 @@ const LS_PREFIX = 'sodafom_level_';
 function lsKey(slug: string) { return `${LS_PREFIX}${slug}`; }
 
 function readLocalLevel(slug: string): { level: number; bestStars: number; playsAtLevel: number } {
+  const defaults = { level: 1, bestStars: 0, playsAtLevel: 0 };
   try {
     const raw = localStorage.getItem(lsKey(slug));
-    if (!raw) return { level: 1, bestStars: 0, playsAtLevel: 0 };
-    return JSON.parse(raw) as { level: number; bestStars: number; playsAtLevel: number };
-  } catch { return { level: 1, bestStars: 0, playsAtLevel: 0 }; }
+    if (!raw) return defaults;
+    const stored = JSON.parse(raw);
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return defaults;
+    return {
+      level: Number.isInteger(stored.level) && stored.level >= 1 && stored.level <= 10 ? stored.level : defaults.level,
+      bestStars: Number.isInteger(stored.bestStars) && stored.bestStars >= 0 && stored.bestStars <= 3 ? stored.bestStars : defaults.bestStars,
+      playsAtLevel: Number.isSafeInteger(stored.playsAtLevel) && stored.playsAtLevel >= 0 ? stored.playsAtLevel : defaults.playsAtLevel,
+    };
+  } catch { return defaults; }
 }
 
 function writeLocalLevel(slug: string, data: { level: number; bestStars: number; playsAtLevel: number }) {
