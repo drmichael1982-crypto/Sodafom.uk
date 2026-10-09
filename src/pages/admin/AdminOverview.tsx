@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import AdminGameCatalog from './AdminGameCatalog';
+import AdminGameIdeas from './AdminGameIdeas';
 import './payment-settings.css';
 import './admin-overview.css';
 
@@ -35,12 +37,16 @@ export default function AdminOverview() {
     {loading && <p role="status">Checking owner access and loading current account totals…</p>}
     {error && <><p role="alert" className="payment-error">{error}</p><p><Link to="/parents">Sign in through the parent hub</Link>. This page requires the owner account authorized on the server.</p></>}
     {overview && <>
+      <nav className="admin-section-links" aria-label="Owner dashboard sections"><a href="#owner-account-heading">Accounts</a><a href="#owner-payment-heading">Payments</a><a href="#admin-add-game-heading">Add an idea</a><a href="#admin-games-heading">All games</a></nav>
+      <section className="admin-phone-shortcut" aria-labelledby="admin-phone-heading"><h2 id="admin-phone-heading">Keep the owner page on your phone</h2><p>On iPhone, open this page in Safari, choose Share, then Add to Home Screen. On Android, use your browser menu and choose Add to Home screen.</p><p className="payment-help">This makes a website shortcut. Owner sign-in is still required.</p></section>
       <section aria-labelledby="owner-account-heading"><div className="admin-section-heading"><h2 id="owner-account-heading">Parent accounts</h2><button type="button" onClick={() => void load()} disabled={loading}>Refresh</button></div>
         <div className="admin-metrics"><article><strong>{overview.registeredParents.toLocaleString()}</strong><h3>Registered parents</h3><p>Accounts stored by this app’s account service.</p></article><article><strong>{overview.validParentSessions.toLocaleString()}</strong><h3>Valid sign-in sessions</h3><p>Unexpired parent sessions. One parent can have several sessions.</p></article></div>
         <p className="payment-help">Sessions are not a count of people online or children playing. Device-only learning activity is not collected here.</p>
         <p className="payment-help">Updated: {new Date(overview.generatedAt).toLocaleString()}</p>
       </section>
       <section className="payment-free-status" aria-labelledby="owner-payment-heading"><h2 id="owner-payment-heading">Payments and revenue</h2><strong>Learning is free</strong><span>Payment collection: off</span><p>No transaction collection is configured in this app. This dashboard has no collected revenue to report.</p><Link to="/admin/payments">Manage the private future payment draft →</Link></section>
+      <AdminGameIdeas />
+      <AdminGameCatalog />
       <section className="admin-ideas" aria-labelledby="owner-ideas-heading"><h2 id="owner-ideas-heading">Ideas for a future release</h2><p>These are planning ideas, not enabled features or measured trends.</p><ul>
         <li><span className="admin-idea-status">Idea</span><div><h3>Opt-in learning reports</h3><p>Help parents review completed activities across their devices with clear consent and privacy controls.</p></div></li>
         <li><span className="admin-idea-status">Idea</span><div><h3>Weekly practice suggestions</h3><p>Suggest a small next step based on a learner’s chosen age and skills they want to practise.</p></div></li>

@@ -5,7 +5,7 @@ import AdminOverview from './AdminOverview';
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 const overview = { registeredParents: 7, validParentSessions: 9, mode: 'free', collectionEnabled: false, paymentsConfigured: false, generatedAt: '2026-10-09T14:00:00.000Z' };
 it('shows owner-only real account counts with their limits and inactive payment status', async () => {
-  vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => overview })));
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, json: async () => url.endsWith('/game-ideas') ? { ideas: [], editable: true } : overview })));
   render(<MemoryRouter><AdminOverview /></MemoryRouter>);
   expect(await screen.findByText('7')).toBeInTheDocument();
   expect(screen.getByText('9')).toBeInTheDocument();
@@ -22,7 +22,12 @@ it('hides all metrics and owner links when access is denied', async () => {
   expect(screen.queryByRole('link', { name: /payment draft/ })).not.toBeInTheDocument();
 });
 it('clears previously displayed metrics if a refresh loses authorization', async () => {
-  const fetcher = vi.fn().mockResolvedValueOnce({ ok: true, json: async () => overview }).mockResolvedValueOnce({ ok: false, json: async () => ({ error: 'Sign in again.' }) });
+  let overviewReads = 0;
+  const fetcher = vi.fn(async (url: string) => {
+    if (url.endsWith('/game-ideas')) return { ok: true, json: async () => ({ ideas: [], editable: true }) };
+    overviewReads++;
+    return overviewReads === 1 ? { ok: true, json: async () => overview } : { ok: false, json: async () => ({ error: 'Sign in again.' }) };
+  });
   vi.stubGlobal('fetch', fetcher);
   render(<MemoryRouter><AdminOverview /></MemoryRouter>);
   fireEvent.click(await screen.findByRole('button', { name: 'Refresh' }));

@@ -22,6 +22,7 @@ import PlanetGlobe from '@/components/PlanetGlobe';
 import ArchiePicturePiece from '@/components/ArchiePicturePiece';
 import LearningJigsaw from '@/components/LearningJigsaw';
 import AppScreenPager from '@/components/AppScreenPager';
+import InstallAppButton from '@/components/InstallAppButton';
 import HistoryJigsaw from '@/components/HistoryJigsaw';
 import ParentAIResources from '@/components/ParentAIResources';
 import ParentAccountPanel from '@/components/ParentAccountPanel';
@@ -145,7 +146,7 @@ export function ArchieHome() {
 
   return <main className={`soda-home soda-home-whole-puzzle space-jigsaw-home puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''}`} style={{...puzzleThemeStyle('Home'), ...(theme ? { backgroundImage: theme.background } : {})}}>
     <div className={`soda-home-inner app-home-screen screen-${homeScreen}`}>
-      <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><button className="a-button a-icon" type="button" aria-label="Personalise my home screen" onClick={()=>setPersonalizing(true)}><NotebookPen size={19}/></button><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><SoundButton/></div></header>
+      <header className="soda-home-top"><Link className="a-logo" to="/">SODAFOM<small>Learn · Play · Grow</small></Link><div className="soda-home-tools"><InstallAppButton/><button className="a-button a-icon" type="button" aria-label="Personalise my home screen" onClick={()=>setPersonalizing(true)}><NotebookPen size={19}/></button><Link className="a-button" to="/parents" aria-label="Parents and learning settings"><Users size={19}/><span>Grown-ups</span></Link><SoundButton/></div></header>
       {homePersonalizer}
       <nav className="home-screen-tabs" aria-label="Home screens">{[['activities','Explore'],['planets','Planets'],['learning','Puzzles'],['missions','Learn']].map(([id,label])=><button key={id} type="button" aria-pressed={homeScreen===id} onClick={()=>setHomeScreen(id)}>{label}</button>)}</nav>
       <div className="archie-home-welcome"><div><span>Learn · play · discover</span><strong>{settings.childNickname ? `Hello, ${settings.childNickname}! Pick an adventure.` : 'Pick a picture, start an adventure!'}</strong></div><button className="home-ask-button" type="button" onClick={()=>openArchie()}>Ask Archie</button><button type="button" onClick={()=>setHomeScreen('planets')} aria-label="Play the planet jigsaw"><PlanetGlobe index={2} moving={!window.matchMedia('(prefers-reduced-motion: reduce)').matches}/><span>Planet puzzle →</span></button></div>

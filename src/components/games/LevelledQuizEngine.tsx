@@ -28,6 +28,7 @@ import { useGameLevel } from '@/hooks/useGameLevel';
 import { useChildAge } from '@/hooks/useChildAge';
 import { generateMathQuestions } from '@/lib/adaptive-question-generator';
 import type { GameResult } from './GameShell';
+import catalog from '@/lib/archie/game-catalog.json';
 
 interface LevelledQuizEngineProps {
   gameSlug: string;
@@ -99,7 +100,10 @@ export default function LevelledQuizEngine({
         sessionKey={gameSlug}
         title={title}
         emoji={emoji}
-        answerReward={subject==='spelling'||subject==='reading'?'word-monster':subject==='maths'?'snake':'robot'}
+        answerReward={(() => {
+          const rewardSubject = subject ?? catalog.find(game => game.slug === gameSlug)?.subject;
+          return rewardSubject === 'spelling' || rewardSubject === 'reading' ? 'word-monster' : rewardSubject === 'maths' ? 'snake' : 'robot';
+        })()}
         questions={questions}
         accentClass={accentClass}
         onComplete={handleComplete}

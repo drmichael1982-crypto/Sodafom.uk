@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak:vi.fn()})}));
 import AgeExperience, { saveLearningAge } from './AgeExperience';
 beforeEach(() => localStorage.clear());
 afterEach(cleanup);
@@ -31,7 +32,7 @@ it('presents an older learner with reasoning rather than the beginner question',
 it('sentence game rewards only the complete meaningful word order and supports correcting mistakes',()=>{
   saveLearningAge(6);
   render(<MemoryRouter><AgeExperience year={2} askArchie={()=>{}}/></MemoryRouter>);
-  fireEvent.click(screen.getByRole('button',{name:'📝 Sentence builder'}));
+  fireEvent.click(screen.getByRole('button',{name:'📝 Build a sentence'}));
   for(const name of ['dog','The','can','run.'])fireEvent.click(screen.getByRole('button',{name}));
   fireEvent.click(screen.getByRole('button',{name:'Check sentence'}));
   expect(document.querySelector('.age-mission-complete')).toBeNull();
@@ -58,4 +59,47 @@ it('older fraction game requires six eighths and offers correction without rewar
 it('uses the optional nickname only as a rendered local greeting',()=>{
  render(<MemoryRouter><AgeExperience year={4} nickname="Rocket pal" askArchie={()=>{}}/></MemoryRouter>);
  expect(screen.getByText('Hello, Rocket pal! Ready for your next discovery?')).toBeInTheDocument();
+});
+it('saves a correct mini mission once per age band and never counts a wrong answer or replay twice',()=>{
+ saveLearningAge(6);
+ const view=render(<MemoryRouter><AgeExperience year={2} askArchie={()=>{}}/></MemoryRouter>);
+ fireEvent.click(screen.getByRole('button',{name:'4'}));
+ expect(screen.getByText('0 / 4 mini missions saved')).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'5'}));
+ expect(screen.getByText('1 / 4 mini missions saved')).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Try again'}));
+ fireEvent.click(screen.getByRole('button',{name:'5'}));
+ let saved=JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!);
+ expect(saved.activities).toHaveLength(1);
+ expect(saved.activities[0]).toMatchObject({id:'learn-starter-space',kind:'lesson',stars:1,title:'Space maths · Ages 5–7'});
+ saveLearningAge(11);
+ view.rerender(<MemoryRouter><AgeExperience year={6} askArchie={()=>{}}/></MemoryRouter>);
+ expect(screen.getByText('0 / 4 mini missions saved')).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'40'}));
+ saved=JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!);
+ expect(saved.activities).toHaveLength(2);
+ expect(saved.activities[1].id).toBe('learn-challenger-space');
+});
+it('story sequence offers correction and saves only the completed correct order',()=>{
+ saveLearningAge(6);
+ render(<MemoryRouter><AgeExperience year={2} askArchie={()=>{}}/></MemoryRouter>);
+ fireEvent.click(screen.getByRole('button',{name:'🌱 Put the story in order'}));
+ for(const name of ['The flower opens.','Plant the seed.','Water it and let it grow.'])fireEvent.click(screen.getByRole('button',{name}));
+ fireEvent.click(screen.getByRole('button',{name:'Check the order'}));
+ expect(document.querySelector('.age-mission-complete')).toBeNull();
+ expect(screen.getByText('0 / 4 mini missions saved')).toBeInTheDocument();
+ fireEvent.click(screen.getByRole('button',{name:'Start the story again'}));
+ for(const name of ['Plant the seed.','Water it and let it grow.','The flower opens.'])fireEvent.click(screen.getByRole('button',{name}));
+ fireEvent.click(screen.getByRole('button',{name:'Check the order'}));
+ expect(screen.getByRole('status')).toHaveTextContent('First we plant a seed');
+ expect(screen.getByText('1 / 4 mini missions saved')).toBeInTheDocument();
+ expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).activities[0].id).toBe('learn-starter-story');
+});
+it('older sequencing introduces predicting and comparing evidence',()=>{
+ saveLearningAge(11);
+ render(<MemoryRouter><AgeExperience year={6} askArchie={()=>{}}/></MemoryRouter>);
+ fireEvent.click(screen.getByRole('button',{name:'🔬 Order an investigation'}));
+ for(const name of ['Ask a question and predict what might happen.','Compare plants with different light, keeping water and plant type the same.','Measure growth and compare the evidence with the prediction.'])fireEvent.click(screen.getByRole('button',{name}));
+ fireEvent.click(screen.getByRole('button',{name:'Check the order'}));
+ expect(screen.getByRole('status')).toHaveTextContent('Keeping other conditions the same');
 });

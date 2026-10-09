@@ -17,6 +17,15 @@ beforeEach(() => { vi.useFakeTimers(); vi.clearAllMocks(); });
 afterEach(() => { cleanup(); localStorage.clear(); vi.useRealTimers(); });
 
 it.each([
+  ['adjective-adventure', 'word monster'],
+  ['ordering-numbers', 'snake'],
+])('uses the catalog subject for %s rewards when the page omits subject', (slug, reward) => {
+  render(<LevelledQuizEngine gameSlug={slug} title="Catalog reward" emoji="⭐" questionsByLevel={[[{ question: 'Choose', options: ['Right', 'Wrong'], answer: 'Right' }]]} onComplete={() => {}}/>);
+  fireEvent.click(screen.getByRole('button', { name: 'Right' }));
+  expect(screen.getByRole('status')).toHaveTextContent(reward);
+});
+
+it.each([
   { total: 10, misses: 1, score: 90, correct: 9, stars: 3 },
   { total: 1, misses: 1, score: 0, correct: 0, stars: 0 },
   { total: 3, misses: 0, score: 100, correct: 3, stars: 3 },

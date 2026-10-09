@@ -36,6 +36,14 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('real parent accounts', () => {
+  it('shows a read-only account setup ID supplied by the verified session', async () => {
+    ready({ user: { id: 'verified-parent-id', isAdmin: false } });
+    render(<ParentAccountPanel />);
+    const input = await screen.findByLabelText('Account setup ID');
+    expect(input).toHaveValue('verified-parent-id');
+    expect(input).toHaveAttribute('readonly');
+    expect(screen.queryByRole('link', { name: 'Owner dashboard' })).not.toBeInTheDocument();
+  });
   it('shows protected payment settings only for a server-confirmed owner session', async () => {
     ready({ user: { id: 'owner', isAdmin: true } });
     render(<ParentAccountPanel />);
