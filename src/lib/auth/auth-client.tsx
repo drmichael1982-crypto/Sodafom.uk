@@ -9,7 +9,7 @@ import { createAuthClient } from 'better-auth/react';
 import { ReactNode, useEffect, useState } from 'react';
 import { Navigate, useLocation } from "react-router";
 import { SESSION_RECOVERY_URL, claimSessionRecovery, clearSessionRecovery } from './session-recovery';
-import { API_BASE_URL, API_PREFIX, ARCHIE_PREVIEW } from '../config';
+import { API_BASE_URL, API_PREFIX } from '../config';
 
 // Auth client - baseURL must be the full origin for BetterAuth's URL construction.
 const _authClient = createAuthClient({
@@ -89,10 +89,13 @@ export const {
  */
 export function useSession() {
   const {
-    data: session,
+    data: serverSession,
     isPending,
     error
   } = _authClient.useSession();
+  const session = serverSession as (NonNullable<typeof serverSession> & {
+    user: NonNullable<typeof serverSession>['user'] & { isAdmin?: boolean };
+  }) | null;
 
   // Log for debugging blank screen on Android
   useEffect(() => {
@@ -103,18 +106,6 @@ export function useSession() {
 
   const isAuthenticated = !isPending && !!session?.user;
   useStaleSessionRecovery(error, isPending, isAuthenticated);
-
-  // MOCK SESSION FOR FREE ACCESS (1182 code)
-  const hasFreeAccess = !ARCHIE_PREVIEW && typeof window !== 'undefined' && localStorage.getItem('sodafom_free_access') === 'true';
-  if (hasFreeAccess) {
-    return {
-      session: { user: { id: 'free-user', name: 'Archie Friend', email: '1182@sodafom.uk', isAdmin: true } } as any,
-      user: { id: 'free-user', name: 'Archie Friend', email: '1182@sodafom.uk', isAdmin: true } as any,
-      isPending: false,
-      error: null,
-      isAuthenticated: true
-    };
-  }
 
   return {
     session,

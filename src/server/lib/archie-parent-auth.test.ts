@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Request, Response } from 'express';
-import { createParentAuthService, parentAuthOptions, readParentAuthConfiguration, verifyParentAccountTables, type ParentAuthRuntime, type PreviewParentSession } from './archie-parent-auth';
+import { createParentAuthService, parentAuthOptions, readParentAuthConfiguration, requirePreviewParentSession, verifyParentAccountTables, type ParentAuthRuntime, type PreviewParentSession } from './archie-parent-auth';
 
 const configured = {
   ARCHIE_PARENT_ACCOUNTS_ENABLED: 'true', NODE_ENV: 'development',
@@ -171,6 +171,40 @@ describe('isolated preview parent account backend', () => {
 
 
 describe('persistent account storage', () => {
+  it('grants owner access only to the server-listed authenticated user ID', async () => {
+    const auth = backend();
+    auth.getSession.mockResolvedValue({ user: { id: 'parent-a', isAdmin: true } });
+    const ordinary = createParentAuthService(configured, async () => auth);
+    expect((await ordinary.getSession(request()))?.user.isAdmin).toBe(false);
+    const owner = createParentAuthService({ ...configured, ARCHIE_OWNER_USER_ID: 'parent-a' }, async () => auth);
+    expect((await owner.getSession(request()))?.user.isAdmin).toBe(true);
+    auth.getSession.mockResolvedValue({ user: { id: 'parent-b', isAdmin: true } });
+    const spoof = request(); spoof.headers['x-user-id'] = 'parent-a';
+    expect((await owner.getSession(spoof))?.user.isAdmin).toBe(false);
+    auth.getSession.mockResolvedValue(null);
+    expect(await owner.getSession(spoof)).toBeNull();
+  });
+  it('exposes the same owner allowlist decision in the browser session response', async () => {
+    for (const ownerId of ['', 'parent-b', 'parent-a']) {
+      const auth = backend();
+      const service = createParentAuthService({ ...configured, ARCHIE_OWNER_USER_ID: ownerId }, async () => auth);
+      const res = response();
+      await service.handle(request('/api/auth/get-session'), res);
+      const body = JSON.parse(vi.mocked(res.send).mock.calls[0][0] as string);
+      expect(body.user).toMatchObject({ id: 'parent-a', isAdmin: ownerId === 'parent-a' });
+      expect(res.setHeader).toHaveBeenCalledWith('set-cookie', [expect.stringContaining('HttpOnly')]);
+    }
+  });
+  it('requires a verified server session for protected settings, ignoring a supplied user ID', async () => {
+    const req = request(); req.headers['x-user-id'] = 'parent-b';
+    const denied = response();
+    expect(await requirePreviewParentSession(req, denied, async () => null)).toBeNull();
+    expect(denied.status).toHaveBeenCalledWith(401);
+    expect(denied.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-store');
+    const allowed = response();
+    expect(await requirePreviewParentSession(req, allowed, async () => ({ user: { id: 'parent-a' } }))).toEqual({ user: { id: 'parent-a' } });
+    expect(allowed.status).not.toHaveBeenCalled();
+  });
   it('requires production SQLite to be inside a mounted volume', () => {
     const env = { ...configured, NODE_ENV: 'production', BETTER_AUTH_URL: 'https://example.test', ARCHIE_PARENT_SQLITE_PATH: '/data/accounts.sqlite' };
     expect(readParentAuthConfiguration(env).configuration).toBeNull();

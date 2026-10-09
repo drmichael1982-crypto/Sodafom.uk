@@ -1,0 +1,68 @@
+import { useState, type CSSProperties } from 'react';
+import { Link } from 'react-router';
+import './AgeExperience.css';
+
+const AGE_KEY = 'sodafom_learning_age';
+export function readLearningAge(): number | null {
+  try { const raw = localStorage.getItem(AGE_KEY); const age = Number(raw); return raw && Number.isInteger(age) && age >= 5 && age <= 12 ? age : null; } catch { return null; }
+}
+export function saveLearningAge(age: number | null): boolean {
+  try { if (age === null) localStorage.removeItem(AGE_KEY); else if (Number.isInteger(age) && age >= 5 && age <= 12) localStorage.setItem(AGE_KEY, String(age)); else return false; return true; } catch { return false; }
+}
+export function experienceBand(age: number | null, year: number): 'starter' | 'explorer' | 'challenger' {
+  if (age !== null) return age <= 7 ? 'starter' : age <= 9 ? 'explorer' : 'challenger';
+  return year <= 3 ? 'starter' : year <= 5 ? 'explorer' : 'challenger';
+}
+const EXPERIENCES = {
+  starter: { title: 'Little discoveries', label: 'Ages 5–7', intro: 'Listen, count and try one little step.', question: 'There are 3 stars. Add 2 more. How many?', choices: [4, 5, 6], answer: 5, hint: 'Start at 3. Count two more: 4, 5.', explanation: '3 + 2 = 5. You counted two extra stars!', links: [['Hear and spell', '/lesson', '🔤'], ['Read together', '/library', '📖'], ['Count and play', '/games', '⭐']] },
+  explorer: { title: 'Discovery missions', label: 'Ages 8–9', intro: 'Spot a pattern, try a hint and explain your thinking.', question: 'Each rocket carries 4 explorers. How many in 3 rockets?', choices: [7, 12, 16], answer: 12, hint: 'Count three groups of 4: 4, 8, …', explanation: '4 + 4 + 4 = 12, so 3 × 4 = 12.', links: [['Learn a new skill', '/courses', '🧠'], ['Read an adventure', '/library', '📚'], ['Explore the world', '/world', '🌍']] },
+  challenger: { title: 'Challenge lab', label: 'Ages 10–12', intro: 'Investigate, solve and tell Archie how you worked it out.', question: 'A probe travels 120 km in 3 hours at a steady speed. How far in 1 hour?', choices: [30, 40, 60], answer: 40, hint: 'Divide the total distance into 3 equal parts.', explanation: '120 ÷ 3 = 40. The probe travels 40 km each hour.', links: [['Subject missions', '/courses', '🔬'], ['Practise a challenge', '/games', '🎯'], ['History discoveries', '/history', '🏰']] },
+} as const;
+
+export default function AgeExperience({ year, askArchie, nickname }: { year: number; askArchie: () => void; nickname?: string }) {
+  const age = readLearningAge();
+  const band = experienceBand(age, year);
+  return <ExperienceMission key={`${band}-${year}`} nickname={nickname} band={band} age={age} year={year} askArchie={askArchie}/>;
+}
+function ExperienceMission({ band, age, year, askArchie, nickname }: { nickname?: string; band: keyof typeof EXPERIENCES; age: number | null; year: number; askArchie: () => void }) {
+  const experience = EXPERIENCES[band];
+  const [mission, setMission] = useState<'space' | 'words' | 'fractions'>('space');
+  const [chosen, setChosen] = useState<number | null>(null);
+  const [hint, setHint] = useState(false);
+  const correct = chosen === experience.answer;
+  return <section className={`age-experience age-experience-${band}`} aria-labelledby="age-experience-title">
+    <div className="age-experience-heading"><div><small>{age === null ? `Year ${year} presentation` : `Age ${age} · ${experience.label}`}</small><h2 id="age-experience-title">{experience.title}</h2></div><Link to="/parents">Grown-ups: change age</Link></div>
+    {nickname && <p className="age-learner-greeting">Hello, {nickname}! Ready for your next discovery?</p>}
+    <p>{experience.intro}</p>
+    <nav className="age-experience-links" aria-label="Learning adventures">{experience.links.map(([title, path, icon]) => <Link key={path} to={path}><span aria-hidden="true">{icon}</span><strong>{title}</strong><span aria-hidden="true">→</span></Link>)}</nav>
+    <div className="age-game-picker" role="group" aria-label="Choose a learning mini game">{([['space','🚀 Space maths'],['words','📝 Sentence builder'],['fractions','🍕 Share a pizza']] as const).map(([id,title])=><button className="a-button" type="button" key={id} aria-pressed={mission===id} onClick={()=>setMission(id)}>{title}</button>)}</div>
+    {mission==='words' && <SentenceMission band={band} askArchie={askArchie}/>}
+    {mission==='fractions' && <FractionMission band={band} askArchie={askArchie}/>}
+    {mission==='space' && <div className={`age-mission ${correct ? 'age-mission-complete' : ''}`}>
+      <span className="age-mission-rocket" aria-hidden="true">🚀</span><h3>Try a space question</h3><p>{experience.question}</p>
+      <div className="age-answer-options" aria-label="Choose your answer">{experience.choices.map(answer => <button className="a-button" type="button" key={answer} disabled={correct} aria-pressed={chosen === answer} onClick={() => setChosen(answer)}>{answer}</button>)}</div>
+      <p role="status">{chosen === null ? 'Choose an answer. Take your time.' : correct ? `Well done! ${experience.explanation}` : 'Have another try. A hint can help.'}</p>
+      {hint && !correct && <p className="age-mission-hint">{experience.hint}</p>}
+      <div className="a-actions">{!correct && <button className="a-button" type="button" onClick={() => setHint(true)}>Give me a hint</button>}<button className="a-button" type="button" onClick={askArchie}>Talk it through with Archie</button>{correct && <button className="a-button" type="button" onClick={() => { setChosen(null); setHint(false); }}>Try again</button>}</div>
+    </div>}
+  </section>;
+}
+
+const SENTENCES = {
+  starter: { words: ['The', 'dog', 'can', 'run.'], order: [2, 0, 3, 1], hint: 'Start with The. Who can run? The dog.', fact: 'The dog can run. A sentence starts with a capital letter and ends with a full stop.' },
+  explorer: { words: ['Archie', 'found', 'a', 'shiny', 'shell.'], order: [3, 1, 4, 0, 2], hint: 'Who found something? Start with Archie. Shiny describes the shell.', fact: 'Archie found a shiny shell. Shiny is an adjective: it describes the shell.' },
+  challenger: { words: ['Although', 'it', 'rained,', 'we', 'explored', 'the', 'museum.'], order: [5, 2, 4, 0, 6, 1, 3], hint: 'Start with Although it rained, then say what we did.', fact: 'Although it rained, we explored the museum. Although introduces a contrast, and the comma separates the opening clause.' },
+} as const;
+function SentenceMission({band,askArchie}:{band:keyof typeof EXPERIENCES;askArchie:()=>void}) {
+  const puzzle=SENTENCES[band];
+  const [selected,setSelected]=useState<number[]>([]);
+  const [message,setMessage]=useState('Tap the words to build a sentence.');
+  const [solved,setSolved]=useState(false);
+  function check(){if(selected.length!==puzzle.words.length){setMessage('Add every word, then check your sentence.');return;}if(selected.every((value,index)=>value===index)){setSolved(true);setMessage(puzzle.fact);}else setMessage('Read it aloud. Does it make sense? Undo a word or clear the sentence and try again.');}
+  return <div className={`age-mission age-word-mission ${solved?'age-mission-complete':''}`}><span className="age-mission-rocket" aria-hidden="true">🦋</span><h3>Sentence builder</h3><p>{band==='starter'?'Tell us that the dog can run.':band==='explorer'?'Tell us that Archie found a shiny shell.':'Say that we explored the museum despite the rain.'}</p><div className="age-built-sentence" aria-label="Your sentence">{selected.length?selected.map(index=>puzzle.words[index]).join(' '):'Your words go here…'}</div><div className="age-word-bank" aria-label="Word pieces">{puzzle.order.map(index=><button className="a-button" key={index} type="button" disabled={solved||selected.includes(index)} onClick={()=>{setSelected(previous=>[...previous,index]);setMessage('Keep building, then check your sentence.');}}>{puzzle.words[index]}</button>)}</div><p role="status">{message}</p><div className="a-actions"><button className="a-button" type="button" disabled={solved} onClick={check}>Check sentence</button><button className="a-button" type="button" disabled={solved||!selected.length} onClick={()=>setSelected(previous=>previous.slice(0,-1))}>Undo last word</button><button className="a-button" type="button" onClick={()=>{setSelected([]);setSolved(false);setMessage('Tap the words to build a sentence.');}}>Clear sentence</button>{!solved&&<button className="a-button" type="button" onClick={()=>setMessage(puzzle.hint)}>Sentence hint</button>}<button className="a-button" type="button" onClick={askArchie}>Ask Archie about sentences</button></div></div>;
+}
+const FRACTIONS={starter:{total:2,target:1,label:'one half',fact:'1 out of 2 equal slices is one half: ½.'},explorer:{total:4,target:3,label:'three quarters',fact:'3 out of 4 equal slices is three quarters: ¾.'},challenger:{total:8,target:6,label:'three quarters, using eighths',fact:'6 out of 8 equal slices is the same as 3 out of 4: 6/8 = 3/4.'}} as const;
+function FractionMission({band,askArchie}:{band:keyof typeof EXPERIENCES;askArchie:()=>void}){
+ const puzzle=FRACTIONS[band];const [selected,setSelected]=useState<number[]>([]);const [solved,setSolved]=useState(false);const [message,setMessage]=useState('Tap equal pizza slices to share the right amount.');
+ return <div className={`age-mission age-fraction-mission ${solved?'age-mission-complete':''}`}><span className="age-mission-rocket" aria-hidden="true">🍕</span><h3>Share a pizza</h3><p>Give Archie {puzzle.label} of this pizza. It has {puzzle.total} equal slices.</p><div className="age-pizza" role="group" aria-label="Equal pizza slices" style={{'--pizza-slices':puzzle.total} as CSSProperties}>{Array.from({length:puzzle.total},(_,index)=><button type="button" key={index} aria-label={`Pizza slice ${index+1}`} aria-pressed={selected.includes(index)} disabled={solved} onClick={()=>{setSelected(previous=>previous.includes(index)?previous.filter(value=>value!==index):[...previous,index]);setMessage('Check when you have shared the right amount.');}}><span aria-hidden="true">🍕</span><small>{index+1}</small></button>)}</div><p>{selected.length} of {puzzle.total} slices selected</p><p role="status">{message}</p><div className="a-actions"><button className="a-button" type="button" disabled={solved} onClick={()=>{if(selected.length===puzzle.target){setSolved(true);setMessage(puzzle.fact);}else setMessage(selected.length<puzzle.target?'A little more is needed. Tap another equal slice.':'That is more than Archie needs. Tap a selected slice to take it back.');}}>Check my sharing</button>{!solved&&<button className="a-button" type="button" onClick={()=>setMessage(band==='starter'?'A half is one of two equal parts.':band==='explorer'?'Three quarters means three of four equal parts.':'Half of 8 is 4. A quarter of 8 is 2. Add them to make three quarters.')}>Sharing hint</button>}<button className="a-button" type="button" onClick={()=>{setSelected([]);setSolved(false);setMessage('Tap equal pizza slices to share the right amount.');}}>Share again</button><button className="a-button" type="button" onClick={askArchie}>Ask Archie about fractions</button></div></div>;
+}

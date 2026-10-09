@@ -33,7 +33,7 @@ const L2: QuizQuestion[] = [
 ];
 const L3: QuizQuestion[] = [
   { question: 'What is the formula for converting Celsius to Kelvin?', options: ['K = °C + 273','K = °C - 273','K = °C × 273','K = °C / 273'], answer: 'K = °C + 273' },
-  { question: 'What is the ideal gas law?', options: ['PV = nRT','PV = nR/T','P = nRT/V','PV = RT'], answer: 'PV = nRT' },
+  { question: 'What is the ideal gas law?', options: ['PV = nRT','PV = nR/T','P = nRV/T','PV = RT'], answer: 'PV = nRT' },
   { question: 'What is Boyle\'s Law?', options: ['At constant temperature, pressure × volume = constant','At constant pressure, volume / temperature = constant','At constant volume, pressure / temperature = constant','Pressure × volume × temperature = constant'], answer: 'At constant temperature, pressure × volume = constant' },
   { question: 'What is Charles\'s Law?', options: ['At constant pressure, volume / temperature = constant','At constant temperature, pressure × volume = constant','At constant volume, pressure / temperature = constant','Pressure × volume × temperature = constant'], answer: 'At constant pressure, volume / temperature = constant' },
   { question: 'What is Gay-Lussac\'s Law?', options: ['At constant volume, pressure / temperature = constant','At constant temperature, pressure × volume = constant','At constant pressure, volume / temperature = constant','Pressure × volume × temperature = constant'], answer: 'At constant volume, pressure / temperature = constant' },

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import './learning-model.css';
 
 /** Angles are clockwise from twelve. The hour hand moves throughout each hour. */
@@ -32,6 +33,8 @@ export function getLearningModel(prompt:string) {
   return null;
 }
 export default function LearningModel({prompt}:{prompt:string}) {
+  const [counted,setCounted]=useState(0);
+  useEffect(()=>setCounted(0),[prompt]);
   const model=getLearningModel(prompt);
   if (!model) return null;
   if (model.kind === 'clock') {
@@ -95,5 +98,5 @@ export default function LearningModel({prompt}:{prompt:string}) {
     return <figure className="learning-model"><figcaption>Place-value picture</figcaption><div className="place-value-picture">{model.digits.split('').map((digit,i)=><div key={i}><strong>{digit}</strong><span>{places[model.digits.length-i-1]}</span></div>)}</div><p className="a-note">Read each digit with its place. An empty place is shown by zero.</p></figure>;
   }
   if (model.kind === 'fraction') return <figure className="learning-model"><figcaption>One whole · {model.numerator}/{model.denominator} shaded</figcaption><div className="fraction-picture" role="img" aria-label={model.denominator+' equal parts, '+model.numerator+' shaded'}>{Array.from({length:model.denominator},(_,i)=><span key={i} className={i<model.numerator ? 'shaded' : ''} aria-hidden="true"/>)}</div><p className="a-note">Every part is the same size. This picture shows the fraction of one whole.</p></figure>;
-  return <figure className="learning-model"><figcaption>{model.operation === '+' ? 'Two groups to combine' : 'A group with some taken away'}</figcaption><div className="dot-picture" role="img" aria-label={model.operation === '+' ? model.a+' blue counters and '+model.b+' gold counters' : model.a+' counters with '+model.b+' crossed out'}>{Array.from({length:model.operation === '+' ? model.a+model.b : model.a},(_,i)=><span key={i} className={model.operation === '+' ? (i<model.a?'':'gold') : (i<model.b?'crossed':'')} aria-hidden="true"/>)}</div><p className="a-note">Point to each counter as you count. You can draw your own picture too.</p></figure>;
+  return <figure className="learning-model"><figcaption>{model.operation === '+' ? 'Two groups to combine' : 'A group with some taken away'}</figcaption><div className="dot-picture" role="img" aria-label={model.operation === '+' ? model.a+' blue counters and '+model.b+' gold counters' : model.a+' counters with '+model.b+' crossed out'}>{Array.from({length:model.operation === '+' ? model.a+model.b : model.a},(_,i)=><span key={i} className={(model.operation === '+' ? (i<model.a?'':'gold') : (i<model.b?'crossed':'')) + ((model.operation==='+'?i:i-model.b)>=0 && (model.operation==='+'?i:i-model.b)<counted?' counter-counted':'')} aria-hidden="true"/>)}</div><div className="counter-actions"><button type="button" className="a-button" disabled={counted>=(model.operation==='+'?model.a+model.b:model.a-model.b)} onClick={()=>setCounted(value=>value+1)}>Count the next counter</button><button type="button" className="a-button" onClick={()=>setCounted(0)}>Count again</button>{counted>0&&<p aria-live="polite">You counted {counted}. Keep pointing and counting.</p>}</div><p className="a-note">Point to each counter as you count. You can draw your own picture too.</p></figure>;
 }

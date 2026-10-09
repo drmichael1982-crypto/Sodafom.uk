@@ -1,0 +1,61 @@
+import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import AgeExperience, { saveLearningAge } from './AgeExperience';
+beforeEach(() => localStorage.clear());
+afterEach(cleanup);
+it('keeps a beginner reward still until the correct answer and offers a useful retry hint', () => {
+  saveLearningAge(6);
+  const ask = vi.fn();
+  render(<MemoryRouter><AgeExperience year={2} askArchie={ask}/></MemoryRouter>);
+  expect(screen.getByRole('heading', { name: 'Little discoveries' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '4' }));
+  expect(document.querySelector('.age-mission-complete')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Give me a hint' }));
+  expect(screen.getByText('Start at 3. Count two more: 4, 5.')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '5' }));
+  expect(document.querySelector('.age-mission-complete')).not.toBeNull();
+  expect(screen.getByRole('status')).toHaveTextContent('3 + 2 = 5');
+  fireEvent.click(screen.getByRole('button', { name: 'Talk it through with Archie' }));
+  expect(ask).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+  expect(document.querySelector('.age-mission-complete')).toBeNull();
+});
+it('presents an older learner with reasoning rather than the beginner question', () => {
+  saveLearningAge(11);
+  render(<MemoryRouter><AgeExperience year={6} askArchie={()=>{}}/></MemoryRouter>);
+  expect(screen.getByRole('heading', { name: 'Challenge lab' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '40' }));
+  expect(screen.getByRole('status')).toHaveTextContent('120 ÷ 3 = 40');
+});
+it('sentence game rewards only the complete meaningful word order and supports correcting mistakes',()=>{
+  saveLearningAge(6);
+  render(<MemoryRouter><AgeExperience year={2} askArchie={()=>{}}/></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button',{name:'📝 Sentence builder'}));
+  for(const name of ['dog','The','can','run.'])fireEvent.click(screen.getByRole('button',{name}));
+  fireEvent.click(screen.getByRole('button',{name:'Check sentence'}));
+  expect(document.querySelector('.age-mission-complete')).toBeNull();
+  expect(screen.getByRole('status')).toHaveTextContent('Read it aloud');
+  fireEvent.click(screen.getByRole('button',{name:'Clear sentence'}));
+  for(const name of ['The','dog','can','run.'])fireEvent.click(screen.getByRole('button',{name}));
+  fireEvent.click(screen.getByRole('button',{name:'Check sentence'}));
+  expect(document.querySelector('.age-mission-complete')).not.toBeNull();
+  expect(screen.getByRole('status')).toHaveTextContent('capital letter');
+});
+it('older fraction game requires six eighths and offers correction without rewarding a wrong share',()=>{
+  saveLearningAge(11);
+  render(<MemoryRouter><AgeExperience year={6} askArchie={()=>{}}/></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button',{name:'🍕 Share a pizza'}));
+  for(let i=1;i<=5;i++)fireEvent.click(screen.getByRole('button',{name:`Pizza slice ${i}`}));
+  fireEvent.click(screen.getByRole('button',{name:'Check my sharing'}));
+  expect(document.querySelector('.age-mission-complete')).toBeNull();
+  expect(screen.getByRole('status')).toHaveTextContent('A little more');
+  fireEvent.click(screen.getByRole('button',{name:'Pizza slice 6'}));
+  fireEvent.click(screen.getByRole('button',{name:'Check my sharing'}));
+  expect(screen.getByRole('status')).toHaveTextContent('6/8 = 3/4');
+  expect(document.querySelector('.age-mission-complete')).not.toBeNull();
+});
+it('uses the optional nickname only as a rendered local greeting',()=>{
+ render(<MemoryRouter><AgeExperience year={4} nickname="Rocket pal" askArchie={()=>{}}/></MemoryRouter>);
+ expect(screen.getByText('Hello, Rocket pal! Ready for your next discovery?')).toBeInTheDocument();
+});

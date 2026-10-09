@@ -18,11 +18,13 @@ export interface ParentAuthRuntime {
   handle(request: globalThis.Request): Promise<globalThis.Response>;
   getSession(headers: Headers): Promise<PreviewParentSession | null>;
   close(): Promise<void>;
+  stats?(): Promise<{ registeredParents: number; validParentSessions: number }>;
 }
 const unavailableMessage = 'Parent accounts are temporarily unavailable. Learning on this device is still available.';
 const paths = new Map([
   ['/api/auth/get-session', 'GET'], ['/api/auth/sign-up/email', 'POST'],
   ['/api/auth/sign-in/email', 'POST'], ['/api/auth/sign-out', 'POST'],
+  ['/api/auth/delete-user', 'POST'],
 ]);
 
 /** Uses explicit environment configuration only: no default root DB or secret file. */
@@ -64,7 +66,10 @@ export function parentAuthOptions(configuration: ParentAuthConfiguration, databa
     database, secret: configuration.secret, baseURL: configuration.origin, basePath: '/api/auth',
     trustedOrigins: [configuration.origin],
     emailAndPassword: { enabled: true, minPasswordLength: 12, maxPasswordLength: 128 },
-    user: { additionalFields: {
+    user: { deleteUser: { enabled: true, afterDelete: async user => {
+      const { forgetParentAI } = await import('./archie-parent-ai');
+      forgetParentAI(user.id);
+    } }, additionalFields: {
       isAdmin: { type: 'boolean', defaultValue: false, input: false, returned: true },
       role: { type: 'string', defaultValue: 'parent', input: false, returned: true },
     } },
@@ -126,6 +131,10 @@ async function loadParentAuth(configuration: ParentAuthConfiguration): Promise<P
           return { user: { id: user.id, email: user.email, isAdmin: user.isAdmin === true } };
         },
         close: async () => { database.close(); },
+        stats: async () => ({
+          registeredParents: Number((database.prepare("SELECT COUNT(*) AS count FROM \"user\" WHERE role = 'parent'").get() as { count: number }).count),
+          validParentSessions: Number((database.prepare("SELECT COUNT(*) AS count FROM \"session\" s JOIN \"user\" u ON s.\"userId\" = u.id WHERE u.role = 'parent' AND s.\"expiresAt\" > ?").get(Date.now()) as { count: number }).count),
+        }),
       };
     } catch (error) { database.close(); throw error; }
   }
@@ -161,6 +170,11 @@ async function loadParentAuth(configuration: ParentAuthConfiguration): Promise<P
         return { user: { id: user.id, email: user.email, isAdmin: user.isAdmin === true } };
       },
       close: () => pool.end(),
+      stats: async () => {
+        const [users] = await pool.query("SELECT COUNT(*) AS count FROM `user` WHERE role = 'parent'");
+        const [sessions] = await pool.query("SELECT COUNT(*) AS count FROM `session` s JOIN `user` u ON s.user_id = u.id WHERE u.role = 'parent' AND s.expires_at > NOW()");
+        return { registeredParents: Number((users as { count: number }[])[0].count), validParentSessions: Number((sessions as { count: number }[])[0].count) };
+      },
     };
   } catch (error) { await pool.end().catch(() => undefined); throw error; }
 }
@@ -205,7 +219,13 @@ export function createParentAuthService(
   const getSession = async (req: Request): Promise<PreviewParentSession | null> => {
     const auth = await getRuntime();
     if (!auth) return null;
-    try { return await auth.getSession(accountHeaders(req)); }
+    try {
+      const session = await auth.getSession(accountHeaders(req));
+      if (!session?.user?.id) return null;
+      // Owner privileges come only from explicit server configuration.
+      const ownerId = env.ARCHIE_OWNER_USER_ID?.trim();
+      return { user: { ...session.user, isAdmin: Boolean(ownerId && session.user.id === ownerId) } };
+    }
     catch { await invalidate(); return null; }
   };
   const handle = async (req: Request, res: Response) => {
@@ -224,28 +244,62 @@ export function createParentAuthService(
         return res.status(403).json({ error: 'Open account settings on this app to continue.', code: 'INVALID_ORIGIN' });
       }
       const allowed = req.path === '/api/auth/sign-up/email' ? ['name', 'email', 'password']
-        : req.path === '/api/auth/sign-in/email' ? ['email', 'password', 'rememberMe'] : [];
+        : req.path === '/api/auth/sign-in/email' ? ['email', 'password', 'rememberMe']
+        : req.path === '/api/auth/delete-user' ? ['password'] : [];
       if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body) || Object.keys(req.body).some((key) => !allowed.includes(key))) {
         return res.status(400).json({ error: 'Account form contains unsupported fields.' });
       }
       if (req.path === '/api/auth/sign-up/email' && (typeof req.body.name !== 'string' || !req.body.name.trim() || req.body.name.length > 100)) {
         return res.status(400).json({ error: 'Use a short grown-up account name.' });
       }
+      if (req.path === '/api/auth/delete-user') {
+        if (typeof req.body.password !== 'string' || !req.body.password || req.body.password.length > 128) {
+          return res.status(400).json({ error: 'Enter the current account password to delete this account.' });
+        }
+        if (!await getSession(req)) return res.status(401).json({ error: 'Sign in before deleting your parent account.' });
+      }
     }
     try {
-      const response = await auth.handle(new globalThis.Request(configuration!.origin + req.originalUrl, {
+      let response = await auth.handle(new globalThis.Request(configuration!.origin + req.originalUrl, {
         method: req.method, headers: accountHeaders(req),
         ...(req.method === 'POST' ? { body: JSON.stringify(req.body) } : {}),
       }));
       if (response.status >= 500) { await invalidate(); return res.status(503).json({ error: unavailableMessage, code: 'PARENT_ACCOUNTS_UNAVAILABLE' }); }
+      if (req.path === '/api/auth/get-session' && response.ok) {
+        const data = await response.json();
+        if (data?.user?.id) data.user.isAdmin = Boolean(env.ARCHIE_OWNER_USER_ID?.trim() && data.user.id === env.ARCHIE_OWNER_USER_ID.trim());
+        const headers = new Headers(response.headers); headers.delete('content-length');
+        response = new globalThis.Response(JSON.stringify(data), { status: response.status, headers });
+      }
       await sendWebResponse(response, res);
     } catch { await invalidate(); return res.status(503).json({ error: unavailableMessage, code: 'PARENT_ACCOUNTS_UNAVAILABLE' }); }
   };
-  return { status, getSession, handle };
+  const stats = async () => {
+    const auth = await getRuntime();
+    if (!auth?.stats) return null;
+    try { return await auth.stats(); } catch { return null; }
+  };
+  return { status, getSession, handle, stats, close: invalidate };
 }
 
 const previewParentAuth = createParentAuthService();
 export const getPreviewParentSession = (req: Request) => previewParentAuth.getSession(req);
+export const getPreviewParentStats = () => previewParentAuth.stats();
+
+/** Protected operations use a verified server session, never the practice gate. */
+export async function requirePreviewParentSession(
+  req: Request,
+  res: Response,
+  resolveSession: (request: Request) => Promise<PreviewParentSession | null> = getPreviewParentSession,
+): Promise<PreviewParentSession | null> {
+  res.setHeader('Cache-Control', 'no-store');
+  const session = await resolveSession(req);
+  if (!session?.user?.id) {
+    res.status(401).json({ error: 'Sign in to a real parent account first.', code: 'PARENT_SIGN_IN_REQUIRED' });
+    return null;
+  }
+  return session;
+}
 
 export function createParentAccountRouter(service = previewParentAuth) {
   const router = Router();

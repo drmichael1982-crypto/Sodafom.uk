@@ -36,6 +36,18 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('real parent accounts', () => {
+  it('shows protected payment settings only for a server-confirmed owner session', async () => {
+    ready({ user: { id: 'owner', isAdmin: true } });
+    render(<ParentAccountPanel />);
+    expect(await screen.findByRole('link', { name: 'Owner payment settings' })).toHaveAttribute('href', '/admin/payments');
+    expect(screen.getByRole('link', { name: 'Owner dashboard' })).toHaveAttribute('href', '/admin');
+  });
+  it('does not expose owner settings for an ordinary parent', async () => {
+    ready({ user: { id: 'parent', isAdmin: false } });
+    render(<ParentAccountPanel />);
+    await screen.findByText('You are signed in to a real parent account.');
+    expect(screen.queryByRole('link', { name: 'Owner payment settings' })).not.toBeInTheDocument();
+  });
   it('keeps credentials and submission unavailable when the server is disconnected', async () => {
     network.mockResolvedValue(response({ ready: false, message: 'Accounts are not connected.' }));
     render(<ParentAccountPanel />);

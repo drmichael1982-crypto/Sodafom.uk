@@ -1,6 +1,6 @@
 import {cleanup,fireEvent,render,screen} from '@testing-library/react';
 import {afterEach,expect,it,vi} from 'vitest';
-vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak:vi.fn()})}));
+vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak:vi.fn(),stop:vi.fn()})}));
 import LearningJigsaw from './LearningJigsaw';
 afterEach(cleanup);
 it('rejects wrong letters and accepts separate repeated letters',()=>{render(<LearningJigsaw text="Moon rises."/>);fireEvent.click(screen.getByRole('button',{name:'Piece 4: N'}));expect(screen.getByText('That piece does not fit yet. Try another answer.')).toBeTruthy();['M','O','O','N'].forEach((letter,i)=>fireEvent.click(screen.getByRole('button',{name:`Piece ${i+1}: ${letter}`})));expect(screen.getByText('Well done! You built the picture.')).toBeTruthy();});

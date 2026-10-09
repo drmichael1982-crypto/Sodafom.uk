@@ -73,14 +73,18 @@ export default function LevelledQuizEngine({
     ? [...baseQuestions, ...generateMathQuestions(gameSlug, tier, effectiveLevel)]
     : baseQuestions;
 
-  async function handleComplete(stars: number) {
+  async function handleComplete(stars: number, result?: { correct: number; total: number; firstAttemptCorrect: number; solved: number }) {
     const newLevel = await recordResult(stars);
     if (newLevel > prevLevel.current) setToast('up');
     else if (newLevel < prevLevel.current) setToast('down');
     prevLevel.current = newLevel;
 
-    const sc = stars === 3 ? 95 : stars === 2 ? 70 : stars === 1 ? 45 : 20;
-    onComplete({ score: sc, correct: Math.round(sc / 10), total: 10, stars });
+    // A star band cannot recover the question count or the child's accuracy.
+    // Preserve the actual first-attempt result, including short question banks.
+    const correct = result?.firstAttemptCorrect ?? 0;
+    const total = result?.total ?? 0;
+    const score = total > 0 ? Math.round(correct / total * 100) : 0;
+    onComplete({ score, correct, total, stars });
   }
 
   return (
@@ -95,6 +99,7 @@ export default function LevelledQuizEngine({
         sessionKey={gameSlug}
         title={title}
         emoji={emoji}
+        answerReward={subject==='spelling'||subject==='reading'?'word-monster':subject==='maths'?'snake':'robot'}
         questions={questions}
         accentClass={accentClass}
         onComplete={handleComplete}
