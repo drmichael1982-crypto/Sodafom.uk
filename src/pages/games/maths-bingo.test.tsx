@@ -1,5 +1,6 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
 const state = vi.hoisted(() => ({ tier: 1 }));
 vi.mock('@/components/games/GameShell', () => ({ default: () => null, useChildAge: () => ({ tier: state.tier }) }));
 vi.mock('motion/react', () => ({ useReducedMotion: () => false, AnimatePresence: ({ children }: any) => children, motion: {
@@ -62,7 +63,8 @@ describe('bounded, age-appropriate Maths Bingo cards', () => {
     if (!retry) expect(complete.mock.calls[0][0].stars).toBe(3);
   });
 
-  it.each([1, 2])('tier %i pause blocks answers and preserves its question, hint and retry state', tier => {
+  it.each([1, 2])('tier %i keeps keyboard focus through hint and pause while preserving retry state', async tier => {
+    const user = userEvent.setup();
     vi.spyOn(Math, 'random').mockReturnValue(0.5); state.tier = tier;
     const context = vi.fn();
     render(<BingoInner onComplete={vi.fn()} onQuestionChange={context}/>);
@@ -70,13 +72,21 @@ describe('bounded, age-appropriate Maths Bingo cards', () => {
     const parts = question.match(/^(\d+) \+ (\d+) = \?$/)!;
     const answer = Number(parts[1]) + Number(parts[2]);
     const wrong = screen.getAllByRole('button', { name: /^Bingo number/ }).find(button => button.getAttribute('aria-label') !== `Bingo number ${answer}`)!;
-    fireEvent.click(wrong); fireEvent.click(screen.getByRole('button', { name: 'Show a hint' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Pause Bingo' }));
+    wrong.focus(); await user.keyboard('{Enter}');
+    expect(wrong).toHaveFocus();
+    const hint = screen.getByRole('button', { name: 'Show a hint' });
+    hint.focus(); await user.keyboard('{Enter}');
+    expect(hint).toHaveFocus();
+    const pause = screen.getByRole('button', { name: 'Pause Bingo' });
+    pause.focus(); await user.keyboard(' ');
+    const resume = screen.getByRole('button', { name: 'Resume Bingo' });
+    expect(resume).toHaveFocus();
     expect(screen.getByRole('status')).toHaveTextContent('Your card and question are saved');
     for (const button of screen.getAllByRole('button', { name: /^Bingo number/ })) expect(button).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: `Bingo number ${answer}` }));
     expect(context).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByRole('button', { name: 'Resume Bingo' }));
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('button', { name: 'Pause Bingo' })).toHaveFocus();
     expect(screen.getByRole('status')).toHaveTextContent('Good try. Use a hint');
     expect(screen.getByRole('status')).toHaveTextContent('Start at');
     expect(context.mock.calls.at(-1)![0]).toBe(question);

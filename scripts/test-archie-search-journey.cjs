@@ -218,13 +218,28 @@ const results = [];
                 await page.getByRole('status').filter({ hasText: 'Good try. Use a hint' }).waitFor();
                 assert.equal(await page.locator('p.text-4xl').innerText(), question, 'Wrong answer preserves the question');
               }
-              await button('Show a hint').click();
+              const hintButton = button('Show a hint');
+              await hintButton.focus();
+              await page.keyboard.press('Enter');
+              assert.equal(await hintButton.evaluate(element => element === document.activeElement), true, 'Keyboard hint keeps focus on the Bingo hint control');
               await page.getByRole('status').filter({ hasText: /Start at|Try \d+ groups/ }).waitFor();
-              await button('Pause Bingo').click();
+              if (retry && (year === 1 || year === 6)) {
+                await page.screenshot({ path: `${output}/bingo-keyboard-hint-year-${year}-${viewport.width}.png`, fullPage: true });
+              }
+              const pauseButton = button('Pause Bingo');
+              await pauseButton.focus();
+              await page.keyboard.press('Space');
               await page.getByText('Paused. Your card and question are saved.', { exact: true }).waitFor();
+              const resumeButton = button('Resume Bingo');
+              assert.equal(await resumeButton.evaluate(element => element === document.activeElement), true, 'Keyboard pause keeps focus on the renamed Bingo Resume control');
               for (const choice of await page.getByRole('button', { name: /^Bingo number / }).all()) assert.equal(await choice.isDisabled(), true);
-              await button('Resume Bingo').click();
+              if (retry && (year === 1 || year === 6)) {
+                await page.screenshot({ path: `${output}/bingo-keyboard-paused-year-${year}-${viewport.width}.png`, fullPage: true });
+              }
+              await page.keyboard.press('Enter');
+              assert.equal(await button('Pause Bingo').evaluate(element => element === document.activeElement), true, 'Keyboard resume restores focus to the Bingo Pause control');
               assert.equal(await page.locator('p.text-4xl').innerText(), question, 'Pause preserves the question');
+              await page.getByRole('status').filter({ hasText: /Start at|Try \d+ groups/ }).waitFor();
               await page.screenshot({ path: `${output}/bingo-practice-${retry ? 'retry' : 'perfect'}-year-${year}-${viewport.width}.png`, fullPage: true });
             }
             await button(`Bingo number ${answer}`).click(); solved++;
@@ -270,7 +285,7 @@ const results = [];
           }
           await page.screenshot({ path: `${output}/bingo-complete-${retry ? 'retry' : 'perfect'}-year-${year}-${viewport.width}.png`, fullPage: true });
           await button('Back to games').click(); await page.waitForURL(base + '/games');
-          results.push(`Year ${year}, ${viewport.width}px: Maths Bingo ${retry ? 'retry' : 'perfect'} → hint → pause/resume → completed line → ${correct}/${solved} first-try answers (${score}%) → menu`);
+          results.push(`Year ${year}, ${viewport.width}px: Maths Bingo ${retry ? 'retry' : 'perfect'} → keyboard hint → keyboard pause/resume with retained focus → completed line → ${correct}/${solved} first-try answers (${score}%) → menu`);
         }
       }
       for (let year = 1; year <= 9; year++) {
