@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Ask Archie learner age and memory isolation — 10 October 2026](2026-10-10-ask-archie-learner-memory.md): sends the selected learner’s scoped age to wider help, keeps saved question-and-answer pairs with that learner and clears only their memory while preserving other/older local records.
 1. [Learner-owned practice settings — 10 October 2026](2026-10-10-learner-settings-ownership.md): keeps nickname, age presentation and school year with the selected local learner while retaining explicit device-wide sound, large-text and optional-online-help choices.
 1. [Word Scramble pager journey repair — 10 October 2026](2026-10-10-word-scramble-pager-journey.md): records the exact final-head CI failure and makes the simulated retry/pause journey use the visible Previous/Next pager controls before activating off-screen actions.
 1. [Learner-scoped sticker rewards — 10 October 2026](2026-10-10-learner-sticker-isolation.md): keeps newly collected stickers with the active learner, preserves older device-wide claims as read-only history and verifies profile switching at phone/tablet widths.
@@ -45,4 +46,4 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 
 Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `2868173`; candidate pushes do not imply deployment.
 
-Next bounded priority: audit saved Ask Archie memory and optional-online-help context for the same synthetic learner boundary, then continue the remaining complete phone/tablet game/lesson matrix. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: extend complete wrong-answer, hint/retry, pause/resume, completion and navigation walkthroughs beyond the current 84 sampled scenarios to remaining supported game/lesson and age/year combinations, prioritising reading, spelling and voice flows. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
