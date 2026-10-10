@@ -92,6 +92,7 @@ function DevicePuzzleLearning() {
           ))}
         </div>
       </> : <p>No History or Fraction picture puzzles have been completed on this device yet.</p>}
+      <Link className="a-button" to="/progress?from=teacher">Open full device progress</Link>
     </section>
   );
 }

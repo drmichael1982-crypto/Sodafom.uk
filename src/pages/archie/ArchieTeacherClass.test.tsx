@@ -39,6 +39,7 @@ describe("Teacher and Class Lessons Views", () => {
 
     // Unlocked!
     expect(screen.getByText(/Year 1 Maths · 180 lessons/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open full device progress" })).toHaveAttribute("href", "/progress?from=teacher");
 
     // Open first unit details
     const firstUnit = container.querySelector(".tc-unit > summary") as HTMLElement;
