@@ -6,6 +6,7 @@
 - The evidence-resolved children’s target remains `test/archie-2026-10-02` at `286817348b5bf82954b7e67cab01fdd99c4187f8`, newer than the reference `be917c8e6cdb99156a63b38f8d12792babeb31c4`.
 - Dedicated candidate branch: `improve/archie-learning-20261007`; draft PR [#81](https://github.com/drmichael1982-crypto/Sodafom.uk/pull/81) remains open, draft and unmerged.
 - Published implementation commit: `4e8d233b0c7e38abac3f2dab1996a7b9317afb76`.
+- Published browser-check repair: `3745a76293f54419e76473583dd493bc4d6981db`.
 - Before editing, the target branch, candidate head, open PRs, current CI and latest Railway deployment were rechecked. This run did not merge, deploy, change credentials or payments, touch 3D work, or modify the separate `sodafom797` service. Leonard’s external queue is not visible in this runtime, so no claim of active-worker coordination is made.
 
 ## Reproduced behavior and bounded repair
@@ -35,9 +36,12 @@ The repair is deliberately non-destructive. It improves local attribution from t
 | Browser script syntax | PASS — `node --check scripts/test-shared-device-progress.cjs` |
 | Patch whitespace | PASS — `git diff --check` |
 | Exact implementation interest-theme workflow | PASS — [run #60](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38075098106) |
-| Exact implementation full workflow | In progress when this note was written — [run #415](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38075098034) |
+| Exact implementation full workflow | FAILED in the current browser step after TypeScript, 1,044 tests, build and Chromium setup passed — [run #415](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38075098034) |
+| Browser-check repair | PASS — script syntax and whitespace; replacement CI pending when this note was written |
 
 The regression suite uses synthetic Mia and Leo profiles. It proves that each learner receives separate activities and stars, that switching to a learner with no records shows an empty state, and that valid and malformed legacy records remain preserved. This is simulated shared-device behavior, not real-child testing.
+
+The exact current failure was inspected rather than inferred from an older report: the general UI journey timed out while waiting for the removed `Shared practice on this device` heading. Commit `3745a76293f54419e76473583dd493bc4d6981db` updates the parent, teacher, progress and desktop-layout assertions to the new learner-scoped labels. The later age/year scenario step in run #415 was skipped because the preceding browser step failed; it was not reported as an application failure.
 
 The new deterministic browser journey also seeds scoped and legacy records, checks the phone/tablet parent report and switches to the empty synthetic learner. It could not be executed locally because this runner has no Playwright Chromium binary. A bounded `playwright install chromium` attempt failed repeatedly with a truncated zero-byte CDN download. That is a runner/tooling blocker, not evidence of an application failure; the exact hosted workflow is the authoritative browser check once complete.
 
