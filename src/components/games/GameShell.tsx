@@ -163,12 +163,19 @@ export default function GameShell({ title, emoji, subject, ageGroups, children, 
     try {
       const k = `game-${gameSlug}`;
       const raw = localStorage.getItem('sodafom_game_stars');
-      const map: Record<string, number> = raw ? (JSON.parse(raw) as Record<string, number>) : {};
-      if ((map[k] ?? 0) < stars) {
+      const parsed: unknown = raw ? JSON.parse(raw) : {};
+      const map: Record<string, unknown> = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
+      const previous = map[k];
+      const previousStars = typeof previous === 'number' && Number.isInteger(previous) && previous >= 0 && previous <= 3 ? previous : 0;
+      if (previousStars < stars) {
         map[k] = stars;
         localStorage.setItem('sodafom_game_stars', JSON.stringify(map));
       }
-    } catch { /* ignore */ }
+    } catch {
+      try {
+        if (stars > 0) localStorage.setItem('sodafom_game_stars', JSON.stringify({ [`game-${gameSlug}`]: stars }));
+      } catch { /* storage is unavailable */ }
+    }
 
     const activeChild = getActiveChild();
     if (!ARCHIE_PREVIEW && activeChild?.id) {

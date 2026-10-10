@@ -77,7 +77,6 @@ const CertificatesPage = lazy(() => import('./pages/certificates'));
 const MockExamsPage = lazy(() => import('./pages/mock-exams/index'));
 const AdminPortal = lazy(() => import('./pages/admin/AdminPortal'));
 const SodafomBotPage = lazy(() => import('./pages/chatbot/SodafomBotPage'));
-const AdminPanelPage = lazy(() => import('./pages/admin-panel'));
 const PaymentSettingsPage = lazy(() => import('./pages/admin/PaymentSettings'));
 const AdminOverviewPage = lazy(() => import('./pages/admin/AdminOverview'));
 // Teacher hub: backend dashboard normally; in the local Archie preview these
@@ -257,10 +256,10 @@ export const routes: RouteObject[] = [
   element: <BlogPostPage />
 }, {
   path: '/admin-panel',
-  element: <AdminPanelPage />
+  element: <Navigate to="/admin" replace />
 }, {
   path: '/admin/sodafom-bot',
-  element: <Navigate to="/admin-panel?tab=bot" replace />
+  element: <Navigate to="/admin" replace />
 }, {
   path: '/tutor',
   element: <TeacherModePage />

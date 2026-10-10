@@ -94,6 +94,22 @@ describe('preview direct-route age guard',()=>{
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('spelling','spelling-bee');
     expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-spelling-bee':3});
   });
+  it.each(['oops','[]','null'])('repairs a damaged %s star record when the child completes a scored game',saved=>{
+    localStorage.setItem('sodafom_game_stars',saved);
+    show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['5–7']}>
+      {complete=> <button onClick={()=>complete(result)}>Finish repaired round</button>}
+    </GameShell>);
+    fireEvent.click(screen.getByRole('button',{name:'Finish repaired round'}));
+    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+  });
+  it('keeps valid scores when it saves a new best result',()=>{
+    localStorage.setItem('sodafom_game_stars',JSON.stringify({'game-counting':2}));
+    show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['5–7']}>
+      {complete=> <button onClick={()=>complete(result)}>Finish merged round</button>}
+    </GameShell>);
+    fireEvent.click(screen.getByRole('button',{name:'Finish merged round'}));
+    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-counting':2,'game-starter':3});
+  });
 });
 
 describe('preview legacy-account request isolation',()=>{
