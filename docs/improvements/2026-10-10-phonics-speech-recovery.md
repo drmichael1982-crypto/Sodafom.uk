@@ -49,3 +49,12 @@ Real-device touch, browser voice playback, microphone capture, screen-reader har
 
 1. Require the final hosted branch workflow to pass and inspect `phonics-speech-fallback-390.png` and `phonics-speech-fallback-820.png` before closing this item.
 2. Then migrate the next high-value direct speech caller, `reading-quest.tsx`, to the shared recovery pattern without changing the now-green pager.
+
+## Hosted completion update
+
+- [Archie test build #343](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38030551247) completed successfully on published head `2871a543331755f05aec66078981ef828061d5ac`. Checkout, install, TypeScript, all unit tests, build, Chromium install, core route/button/game journeys, the 130-route inventory and the full simulated age/year game and spelling matrix passed. Artifact `11661399984` was uploaded.
+- The new Phonics Parrot unavailable-speech journey passed at 390 × 844 and 820 × 1180. Both captures keep the printed task and recovery action in the viewport without horizontal overflow; the phone view is clear, compact and readable.
+- Direct inspection of `phonics-speech-fallback-820.png` found a separate visual-quality concern: the puzzle-themed tablet background visually washes out the game body while the fixed recovery notice stays prominent. The automated assertions passed, but that capture is not accepted as proof of a polished tablet appearance. Determine whether it is a transient route animation or a stable compositing/contrast problem before changing product CSS.
+- [Archie interest themes #32](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38030551279) was triggered for the same head; it is independent of this speech-recovery change.
+
+Next bounded priority: reproduce the washed-out 820px Phonics capture after waiting for the declared page/motion transitions. If it persists, repair the tablet contrast without weakening the speech recovery or the full-scene puzzle identity. If it clears after settling, make the hosted visual capture deterministic, then continue to `reading-quest.tsx`.
