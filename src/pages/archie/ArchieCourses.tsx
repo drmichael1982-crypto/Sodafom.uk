@@ -47,6 +47,7 @@ import {
   type LessonCoachContext,
   type LessonPhase,
 } from "@/lib/archie/lesson-coach";
+import { schoolYearAgeLabel } from "@/lib/archie/game-age";
 
 export const COURSE_LESSONS = [
   ...MATHS_LESSONS,
@@ -129,7 +130,7 @@ function CourseLibrary() {
           >
             {Array.from({ length: 9 }, (_, i) => (
               <option key={i + 1} value={i + 1}>
-                Year {i + 1} · ages {i + 5}–{i + 6}
+                Year {i + 1} · {schoolYearAgeLabel(i + 1)}
               </option>
             ))}
           </select>

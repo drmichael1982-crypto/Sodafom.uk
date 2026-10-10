@@ -395,6 +395,19 @@ describe("child lesson adventure", () => {
       }),
     ).toHaveAttribute("href", lesson.source);
   });
+  it("does not advertise age 14 in the Year 9 course selector", () => {
+    render(
+      <MemoryRouter initialEntries={["/courses?year=1"]}>
+        <ArchieCourses />
+      </MemoryRouter>,
+    );
+    expect(
+      screen.getByRole("option", { name: "Year 9 · age 13" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("option", { name: /Year 9.*14/ }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe('authored talking whiteboard',()=>{

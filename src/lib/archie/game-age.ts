@@ -17,11 +17,24 @@ export function isGameForAgeBand(ageBand: string, ageGroups: readonly string[]):
   });
 }
 
+/** Ages represented by an England school year within Sodafom's 5–13 range. */
+export function schoolYearAgeRange(year: number): [number, number] | null {
+  if (!Number.isInteger(year) || year < 1 || year > 9) return null;
+  return [year + 4, Math.min(year + 5, 13)];
+}
+
+/** Short learner-facing label that never advertises an unsupported age. */
+export function schoolYearAgeLabel(year: number): string {
+  const range = schoolYearAgeRange(year);
+  if (!range) return '';
+  return range[0] === range[1] ? `age ${range[0]}` : `ages ${range[0]}–${range[1]}`;
+}
+
 export function isGameForYear(year: number, ageGroups: readonly string[]): boolean {
-  if (!Number.isInteger(year) || year < 1 || year > 9) return false;
   // England school years normally span two ages because birthdays fall
   // throughout the academic year. Keep the public app's upper age at 13.
-  const practiceRange: [number, number] = [year + 4, Math.min(year + 5, 13)];
+  const practiceRange = schoolYearAgeRange(year);
+  if (!practiceRange) return false;
   return ageGroups.some(group => {
     const gameRange = parseAgeRange(group);
     return gameRange !== null && practiceRange[0] <= gameRange[1] && gameRange[0] <= practiceRange[1];

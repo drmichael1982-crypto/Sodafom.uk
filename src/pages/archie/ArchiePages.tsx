@@ -31,7 +31,7 @@ import ParentLearningReport from '@/components/ParentLearningReport';
 import AgeExperience, { readLearningAge, saveLearningAge } from '@/components/AgeExperience';
 import './sodafom-polish.css';
 import './archie-picture-home.css';
-import { isGameForYear } from '@/lib/archie/game-age';
+import { isGameForYear, schoolYearAgeLabel } from '@/lib/archie/game-age';
 import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
 
 export const ARCHIE_PATHS = ['/', '/world', '/quests', '/courses', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons', '/privacy', '/artwork', '/teacher', '/class', '/time-lab', '/preview-admin', '/history', '/device-check', '/ask-archie', '/chat'];
@@ -231,7 +231,7 @@ export function ArchieGames() {
   const chooseYear = (year:number) => { const next=new URLSearchParams(params);next.delete('age');setParams(next);updateSavedData(d=>({...d,settings:{...d.settings,year}})); };
   const filtered = catalog.filter(g => isGameForYear(activeYear,g.ageGroups) && (subject === 'all' || g.subject === subject) && `${g.title} ${g.description}`.toLowerCase().includes(query.toLowerCase()));
   const toolbar = <div className="game-library-toolbar"><div className="game-library-filters">
-    <label className="a-field">My learning year<select value={activeYear} onChange={e=>chooseYear(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9].map(year=><option key={year} value={year}>Year {year} · ages {year+4}–{year+5}</option>)}</select></label>
+    <label className="a-field">My learning year<select value={activeYear} onChange={e=>chooseYear(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9].map(year=><option key={year} value={year}>Year {year} · {schoolYearAgeLabel(year)}</option>)}</select></label>
     <label className="a-search"><Search aria-hidden="true"/><input type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
     </div><div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
     <p role="status">{filtered.length} games for Year {activeYear}</p></div>;

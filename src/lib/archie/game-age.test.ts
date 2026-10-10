@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isGameForAgeBand, isGameForYear } from './game-age';
+import { isGameForAgeBand, isGameForYear, schoolYearAgeLabel, schoolYearAgeRange } from './game-age';
 
 describe('game age matching', () => {
   it('matches exact and overlapping displayed age bands', () => {
@@ -20,5 +20,14 @@ describe('game age matching', () => {
     expect(isGameForYear(6, ['11–13'])).toBe(true);
     expect(isGameForYear(2, ['9–11'])).toBe(false);
     expect(isGameForYear(9, ['14–16'])).toBe(false);
+  });
+
+  it('labels school years only within the supported learner ages', () => {
+    expect(schoolYearAgeRange(1)).toEqual([5, 6]);
+    expect(schoolYearAgeLabel(1)).toBe('ages 5–6');
+    expect(schoolYearAgeRange(9)).toEqual([13, 13]);
+    expect(schoolYearAgeLabel(9)).toBe('age 13');
+    expect(schoolYearAgeRange(10)).toBeNull();
+    expect(schoolYearAgeLabel(10)).toBe('');
   });
 });
