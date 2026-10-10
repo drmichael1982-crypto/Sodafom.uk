@@ -338,6 +338,17 @@ const results = [];
       }
       for (const [name, route] of [['home', '/'], ['games', '/games'], ['lesson', '/lesson'], ['parents', '/parents'], ['teacher', '/teacher']]) {
         await goto(route); await page.screenshot({ path: `${output}/${name}-${viewport.width}.png`, fullPage: true });
+        if (name === 'games') {
+          const yearControl = page.getByRole('combobox', { name: 'My learning year', exact: true });
+          const labelFit = await yearControl.evaluate(element => {
+            const context = document.createElement('canvas').getContext('2d');
+            const label = element.options[element.selectedIndex].text;
+            context.font = getComputedStyle(element).font;
+            return { label, controlWidth: element.getBoundingClientRect().width, textWidth: context.measureText(label).width };
+          });
+          assert.equal(labelFit.label, 'Year 9 · age 13 · optional extension');
+          assert.ok(labelFit.controlWidth >= labelFit.textWidth + 32, `Year 9 label and native arrow must fit at ${viewport.width}px`);
+        }
         if (name === 'parents' || name === 'teacher') {
           const words = (await page.getByRole('form').locator('p strong').first().innerText()).split(' ');
           await page.getByLabel('Grown-up answer', { exact: true }).fill(`${words.at(-1)} ${words[1]}`);
