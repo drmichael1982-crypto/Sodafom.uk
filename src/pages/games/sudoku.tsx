@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion } from 'motion/react';
 import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
@@ -251,7 +251,7 @@ function DifficultyPicker({ onSelect }: { onSelect: (d: Difficulty) => void }) {
 }
 
 // ── Puzzle inner ──────────────────────────────────────────────────────────────
-function SudokuInner({ onComplete, difficulty }: { onComplete: (result: GameResult) => void; difficulty: Difficulty }) {
+export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: GameResult) => void; difficulty: Difficulty }) {
   const pool = ALL_PUZZLES.filter(p => p.difficulty === difficulty);
   const [puzzleDef] = useState<PuzzleDef>(() => pool[Math.floor(Math.random() * pool.length)] ?? ALL_PUZZLES[0]!);
   const { puzzle, solution, size } = puzzleDef;
@@ -260,6 +260,7 @@ function SudokuInner({ onComplete, difficulty }: { onComplete: (result: GameResu
   const [done, setDone] = useState(false);
   const [startTime] = useState(Date.now());
   const [mistakes, setMistakes] = useState(0);
+  const completionSent = useRef(false);
 
   const isFixed = (r: number, c: number) => cell(puzzle, r, c) !== null;
   const boxColors = size === 4 ? BOX_COLORS_4 : BOX_COLORS_9;
@@ -274,22 +275,22 @@ function SudokuInner({ onComplete, difficulty }: { onComplete: (result: GameResu
   };
 
   const handleInput = (n: number) => {
-    if (!selected || done) return;
+    if (!selected || done || completionSent.current) return;
     const [r, c] = selected;
     if (isFixed(r, c)) return;
     const newGrid = grid.map(row => [...row]);
     setCell(newGrid, r, c, n);
     setGrid(newGrid);
     if (n !== cell(solution, r, c)) { setMistakes(m => m + 1); return; }
-    const total = size * size;
     const allFilled = newGrid.every((row, ri) => row.every((v, ci) => v === cell(solution, ri, ci)));
     if (allFilled) {
+      completionSent.current = true;
       const elapsed = Math.round((Date.now() - startTime) / 1000);
       const score = Math.max(100 - elapsed - mistakes * 5, 10);
       const stars = score >= 90 ? 3 : score >= 70 ? 2 : score >= 50 ? 1 : 0;
       const blanks = puzzle.flat().filter(v => v === null).length;
       setDone(true);
-      onComplete({ score, correct: total - blanks, total, stars });
+      onComplete({ score, correct: blanks, total: blanks, stars });
     }
   };
 

@@ -39,6 +39,8 @@ function cleanTutorText(text: string) {
 }
 function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
+  const learningAge = Number(localStorage.getItem('sodafom_learning_age'));
+  if (Number.isInteger(learningAge) && learningAge >= 5 && learningAge <= 12) return learningAge;
   try {
     const app = JSON.parse(localStorage.getItem('sodafom_archie_design_v1') || '{}');
     const year = Number(app.settings?.year);

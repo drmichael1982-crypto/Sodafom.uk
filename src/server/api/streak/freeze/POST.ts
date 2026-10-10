@@ -9,7 +9,6 @@ import { sql } from 'drizzle-orm';
 
 const FREEZE_COST = 50;
 
-interface StarRow { total_stars: number }
 interface StreakRow { current_streak: number; freeze_active: number; freeze_used_at: string | null }
 
 export default async function handler(req: Request, res: Response) {
@@ -22,15 +21,13 @@ export default async function handler(req: Request, res: Response) {
 
     // Verify ownership
     const childRows = (await db.execute(sql`
-      SELECT id FROM children WHERE id = ${childId} AND user_id = ${session.user.id} LIMIT 1
-    `))[0] as unknown as { id: string }[];
+      SELECT id, total_stars FROM children WHERE id = ${childId} AND parent_id = ${session.user.id} LIMIT 1
+    `))[0] as unknown as { id: string; total_stars: number }[];
     if (!childRows.length) return res.status(404).json({ error: 'Child not found' });
 
-    // Check current stars
-    const starRows = (await db.execute(sql`
-      SELECT COALESCE(SUM(stars), 0) as total_stars FROM child_progress WHERE child_id = ${childId}
-    `))[0] as unknown as StarRow[];
-    const totalStars = Number(starRows[0]?.total_stars ?? 0);
+    // The child row is the canonical spendable balance. Activity sessions remain
+    // an immutable history of earned stars and must not be rewritten for a purchase.
+    const totalStars = Number(childRows[0]?.total_stars ?? 0);
 
     if (totalStars < FREEZE_COST) {
       return res.status(400).json({ error: `Not enough stars. You need ${FREEZE_COST} stars to buy a freeze.`, totalStars });
@@ -47,10 +44,15 @@ export default async function handler(req: Request, res: Response) {
     }
 
     // Deduct stars
-    await db.execute(sql`
-      INSERT INTO child_progress (child_id, game_title, subject, stars, score, completed_at)
-      VALUES (${childId}, '__streak_freeze__', 'system', ${-FREEZE_COST}, 0, NOW())
+    const deduction = await db.execute(sql`
+      UPDATE children
+      SET total_stars = total_stars - ${FREEZE_COST}
+      WHERE id = ${childId} AND parent_id = ${session.user.id} AND total_stars >= ${FREEZE_COST}
     `);
+    const affectedRows = Number((deduction[0] as unknown as { affectedRows?: number }).affectedRows ?? 0);
+    if (affectedRows !== 1) {
+      return res.status(409).json({ error: 'Star balance changed. Please try again.' });
+    }
 
     // Activate freeze
     await db.execute(sql`
