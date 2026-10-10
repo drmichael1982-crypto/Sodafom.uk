@@ -110,7 +110,7 @@ function DifficultyPicker({ onSelect }: { onSelect: (d: Difficulty) => void }) {
 const TOTAL = 12;
 const TIME_PER_Q = 8; // seconds
 
-function TimesTablesChallengeInner({
+export function TimesTablesChallengeInner({
   onComplete, difficulty,
 }: {
   onComplete: (r: GameResult) => void;
@@ -126,12 +126,11 @@ function TimesTablesChallengeInner({
   const qStartRef = useRef(Date.now());
   const advanceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const advance = useCallback(() => {
+  const advance = useCallback((finalScore = score, finalCorrect = correct) => {
     const next = qIdx + 1;
     if (next >= TOTAL) {
-      const finalScore = score;
       const stars = finalScore >= TOTAL * 12 ? 3 : finalScore >= TOTAL * 8 ? 2 : finalScore >= TOTAL * 4 ? 1 : 0;
-      onComplete({ score: finalScore, correct, total: TOTAL, stars, maxScore: TOTAL * 15, durationSeconds: 0 });
+      onComplete({ score: finalScore, correct: finalCorrect, total: TOTAL, stars, maxScore: TOTAL * 15, durationSeconds: 0 });
     } else {
       setQIdx(next);
       setQuestion(makeQuestion(difficulty));
@@ -146,20 +145,24 @@ function TimesTablesChallengeInner({
     const elapsed = (Date.now() - qStartRef.current) / 1000;
     const isRight = choice === question.answer;
 
+    let nextScore = score;
+    let nextCorrect = correct;
     if (isRight) {
       // Speed bonus: full 15pts under 2s, 12pts under 4s, 10pts otherwise
       const pts = elapsed < 2 ? 15 : elapsed < 4 ? 12 : 10;
       const isBonus = pts > 10;
-      setScore(s => s + pts);
-      setCorrect(c => c + 1);
+      nextScore += pts;
+      nextCorrect += 1;
+      setScore(nextScore);
+      setCorrect(nextCorrect);
       if (isBonus) setSpeedBonuses(b => b + 1);
       setPhase('correct');
     } else {
       setPhase('wrong');
     }
 
-    advanceRef.current = setTimeout(advance, isRight ? 900 : 1400);
-  }, [phase, question.answer, advance]);
+    advanceRef.current = setTimeout(() => advance(nextScore, nextCorrect), isRight ? 900 : 1400);
+  }, [phase, question.answer, score, correct, advance]);
 
   const handleTimeout = useCallback(() => {
     if (phase !== 'answering') return;
@@ -172,29 +175,31 @@ function TimesTablesChallengeInner({
   const progress = (qIdx / TOTAL) * 100;
 
   return (
-    <div className="flex flex-col items-center gap-5 w-full max-w-md mx-auto px-4 py-6">
-      {/* Progress + score */}
-      <div className="w-full flex items-center gap-3">
-        <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
-          <motion.div className="h-full rounded-full bg-primary" animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
-        </div>
-        <span className="text-xs font-black text-muted-foreground whitespace-nowrap">{qIdx + 1}/{TOTAL}</span>
-        <div className="flex items-center gap-1 bg-accent/20 rounded-full px-2.5 py-1">
-          <Star size={13} className="text-accent fill-accent" />
-          <span className="text-xs font-black text-foreground">{score}</span>
-        </div>
-        {speedBonuses > 0 && (
-          <div className="flex items-center gap-1 bg-yellow-100 rounded-full px-2.5 py-1">
-            <Zap size={12} className="text-yellow-600" />
-            <span className="text-xs font-black text-yellow-700">{speedBonuses}</span>
+    <div aria-label="Times Tables Challenge game" className="flex h-full min-h-0 flex-col items-center gap-5 w-full max-w-md mx-auto overflow-y-auto overscroll-contain px-4 py-6">
+      <div data-testid="challenge-timer" className="sticky top-0 z-10 flex w-full flex-col gap-2 bg-background/95 py-2">
+        {/* Progress + score */}
+        <div className="w-full flex items-center gap-3">
+          <div className="flex-1 h-3 rounded-full bg-muted overflow-hidden">
+            <motion.div className="h-full rounded-full bg-primary" animate={{ width: `${progress}%` }} transition={{ duration: 0.4 }} />
           </div>
+          <span className="text-xs font-black text-muted-foreground whitespace-nowrap">{qIdx + 1}/{TOTAL}</span>
+          <div className="flex items-center gap-1 bg-accent/20 rounded-full px-2.5 py-1">
+            <Star size={13} className="text-accent fill-accent" />
+            <span className="text-xs font-black text-foreground">{score}</span>
+          </div>
+          {speedBonuses > 0 && (
+            <div className="flex items-center gap-1 bg-yellow-100 rounded-full px-2.5 py-1">
+              <Zap size={12} className="text-yellow-600" />
+              <span className="text-xs font-black text-yellow-700">{speedBonuses}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Timer bar */}
+        {phase === 'answering' && (
+          <TimerBar key={timerKey} duration={TIME_PER_Q} onExpire={handleTimeout} />
         )}
       </div>
-
-      {/* Timer bar */}
-      {phase === 'answering' && (
-        <TimerBar key={timerKey} duration={TIME_PER_Q} onExpire={handleTimeout} />
-      )}
 
       {/* Question card */}
       <AnimatePresence mode="wait">

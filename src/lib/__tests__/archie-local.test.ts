@@ -36,6 +36,20 @@ describe('Archie Local Maths & Name Memory', () => {
       expect(res?.text).toBe('Okay, I have forgotten your name!');
       expect(getRememberedChildName()).toBeNull();
     });
+
+    it('uses the nickname saved by a grown-up for local name questions', () => {
+      localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({ settings: { childNickname: '  Mia  ' } }));
+      expect(getRememberedChildName()).toBe('Mia');
+      expect(tryLocalChildName('What is my name?')?.text).toBe('Your name is Mia!');
+    });
+
+    it('prefers a child-supplied name and ignores damaged parent settings', () => {
+      localStorage.setItem('sodafom_archie_design_v1', '{broken');
+      expect(getRememberedChildName()).toBeNull();
+      localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({ settings: { childNickname: 'Mia' } }));
+      localStorage.setItem('sodafom_child_name', 'Sam');
+      expect(getRememberedChildName()).toBe('Sam');
+    });
   });
 
   describe('Local Maths Engine', () => {
