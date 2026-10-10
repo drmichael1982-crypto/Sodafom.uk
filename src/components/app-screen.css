@@ -24,3 +24,4 @@
 .space-jigsaw-home .screen-activities>section[aria-labelledby=home-puzzle-title]{overflow-y:auto;overscroll-behavior:contain;scroll-padding:12px}.space-jigsaw-home .home-picture-puzzle{flex-shrink:0;min-height:308px}
 @media(max-width:380px){.soda-page .a-top{flex-wrap:wrap}.soda-page .a-top .a-logo{font-size:24px}.app-screen-controls{gap:4px}.app-screen-controls button{padding:8px;font-size:14px}}
 @media(max-height:550px){.soda-page .a-page-help{display:none}.soda-page .soda-hero h1{font-size:20px!important}.soda-page .a-bottom{max-height:88px;overflow-y:auto}.compact-lesson{height:100dvh}.compact-lesson .compact-board{min-height:160px}.space-jigsaw-home .space-home-preview{display:none!important}}
+.app-screen-flow .a-reader{break-inside:avoid}

@@ -326,9 +326,10 @@ export function ArchieReader() {
   useEffect(()=>{setPage(0);return ()=>stop();},[bookId]);
   if(!book) return <Page title="Choose a story"><Link className="a-button" to="/library">Open the library</Link></Page>;
   const finished=activities.some(a=>a.id===`book-${book.id}`);
-  return <Page title={book.title} back="/" scene="reading"><Link className="a-button" to="/library">← All books</Link><LearningJigsaw key={`${book.id}-${currentPage}`} text={book.pages[currentPage]}/><article className="a-panel a-reader"><ArtIcon symbol={book.emoji}/><p>{book.pages[currentPage]}</p><small>Page {currentPage+1} of {book.pages.length}</small></article><div className="a-actions">
+  const storyId=`reader-story-${book.id}-${currentPage}`;
+  return <Page title={book.title} back="/" scene="reading"><Link className="a-button" to="/library">← All books</Link><LearningJigsaw key={`${book.id}-${currentPage}`} text={book.pages[currentPage]}/><article id={storyId} className="a-panel a-reader"><ArtIcon symbol={book.emoji}/><p>{book.pages[currentPage]}</p><small>Page {currentPage+1} of {book.pages.length}</small></article><div className="a-actions">
     <button className="a-button" disabled={currentPage===0} onClick={()=>{stop();setPage(p=>p-1);}}><ArrowLeft/> Previous</button>
-    <button className="a-button" onClick={()=>playing?stop():speak('read:book',book.pages[currentPage])}>{playing?<Pause/>:<Volume2/>}{playing?'Stop reading':'Read aloud'}</button>
+    <button className="a-button" aria-controls={storyId} onClick={()=>playing?stop():speak('read:book',book.pages[currentPage])}>{playing?<Pause/>:<Volume2/>}{playing?'Stop reading':'Read aloud'}</button>
     {currentPage<book.pages.length-1?<button className="a-button" onClick={()=>{stop();setPage(p=>p+1);}}>Next page <ArrowRight/></button>:<button className="a-button" disabled={finished} onClick={()=>complete({id:`book-${book.id}`,kind:'book',title:book.title,stars:1})}>{finished?'Book completed ✓':'Finish book • Earn 1 star'}</button>}
   </div>{finished&&<p role="status">Your reading star is saved. <Link to="/rewards">See your rewards</Link></p>}</Page>;
 }
