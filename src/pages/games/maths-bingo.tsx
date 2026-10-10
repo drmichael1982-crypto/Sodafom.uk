@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
@@ -37,13 +37,14 @@ function generateQuestionForAnswer(answer: number, tier: 1 | 2 | 3): string {
   return Math.random() < 0.5 ? `${answer + b} - ${b}` : `${answer - b} + ${b}`;
 }
 
-function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string, opts?: string[]) => void }) {
+export function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string, opts?: string[]) => void }) {
   const { tier } = useChildAge();
   const [card] = useState(() => generateCard(tier as 1 | 2 | 3));
   const [marked, setMarked] = useState<Set<number>>(new Set());
   const [current, setCurrent] = useState<{ q: string; answer: number } | null>(null);
   const [bingo, setBingo] = useState(false);
   const [round, setRound] = useState(0);
+  const completionSent = useRef(false);
 
   const nextQuestion = useCallback(() => {
     // Pick an unmarked number from the card to ensure it exists!
@@ -60,7 +61,7 @@ function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResu
     onQuestionChange?.(`${qText} = ?`, card.map(String));
   }, [tier, card, marked, onQuestionChange]);
 
-  useEffect(() => { nextQuestion(); }, [nextQuestion]);
+  useEffect(() => { if (!bingo) nextQuestion(); }, [bingo, nextQuestion]);
 
   function checkBingo(m: Set<number>): boolean {
     const rows = [[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]];
@@ -69,17 +70,18 @@ function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResu
   }
 
   function handleMark(num: number) {
-    if (!current || num !== current.answer) return;
+    if (!current || bingo || completionSent.current || num !== current.answer) return;
     const next = new Set(marked);
     next.add(num);
     setMarked(next);
     const newRound = round + 1;
     setRound(newRound);
     if (checkBingo(next)) {
+      completionSent.current = true;
       setBingo(true);
-      const score = Math.round((next.size / 16) * 100);
-      setTimeout(() => onComplete({ score, correct: next.size, total: 16, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 }), 1500);
+      setTimeout(() => onComplete({ score: 100, correct: next.size, total: next.size, stars: 3 }), 1500);
     } else if (newRound >= 20) {
+      completionSent.current = true;
       const score = Math.round((next.size / 16) * 100);
       onComplete({ score, correct: next.size, total: 16, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 });
     }
@@ -99,6 +101,7 @@ function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResu
         {card.map((num, i) => (
           <motion.button key={i} whileTap={{ scale: 0.9 }}
             onClick={() => handleMark(num)}
+            disabled={bingo}
             className={`aspect-square rounded-xl text-lg font-black border-2 transition-all ${
               marked.has(num)
                 ? 'bg-primary text-primary-foreground border-primary'
