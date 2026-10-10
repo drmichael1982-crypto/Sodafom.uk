@@ -17,6 +17,7 @@ const results=[];
   const button=name=>page.getByRole('button',{name,exact:true});
   const link=name=>page.getByRole('link',{name,exact:true});
   const checkbox=name=>page.getByRole('checkbox',{name,exact:true});
+  const revealWithPager=async locator=>{for(let attempt=0;attempt<30;attempt++){const direction=await locator.evaluate(element=>{const viewport=element.closest('.app-screen-window')?.getBoundingClientRect(),box=element.getBoundingClientRect();if(!viewport)return 0;if(box.left>=viewport.left-1&&box.right<=viewport.right+1)return 0;return box.left<viewport.left?-1:1;});if(direction===0)return;await button(direction<0?'← Previous':'Next →').click();await page.waitForTimeout(180);}throw new Error('Pager did not reveal the requested control');};
   // Follow the instruction displayed to the adult; never unlock through storage or events.
   const unlockGrownUpArea=async({rejectWrongAnswer=false}={})=>{
     const title='A grown-up needs to help here';
@@ -192,6 +193,7 @@ const results=[];
       await page.getByRole('status').filter({hasText:recovery}).waitFor();
       assert.equal(await readAloud.evaluate(element=>element===document.activeElement),true,'Read-aloud failure must leave keyboard focus on the retry control');
       assert.equal(await page.getByText(/Archie found a tiny golden key/).isVisible(),true,'The printed story must remain available');
+      await page.waitForFunction(()=>{const windowElement=document.querySelector('.app-screen-window');const story=document.querySelector('.a-reader');const puzzle=document.querySelector('.learning-jigsaw');if(!windowElement||!story||!puzzle)return false;const viewport=windowElement.getBoundingClientRect(),storyBox=story.getBoundingClientRect(),puzzleBox=puzzle.getBoundingClientRect();return windowElement.scrollLeft===0&&storyBox.left>=viewport.left-1&&storyBox.right<=viewport.right+1&&!(puzzleBox.right>viewport.left+1&&puzzleBox.left<viewport.right-1);},undefined,{timeout:2000});
       await page.screenshot({path:'test-results/reader-speech-fallback-390.png',fullPage:true});
       await button('Got it').click();await page.getByRole('status').filter({hasText:recovery}).waitFor({state:'detached'});
       await page.setViewportSize({width:820,height:1180});
@@ -216,7 +218,7 @@ const results=[];
     });
     await check('Parents: gate, saved year group, sound, large text, setup status and progress',async()=>{
       await openParents();await page.getByLabel('School year').selectOption('2');
-      await checkbox('Larger text on menus and books').check();const soundSetting=checkbox('Read aloud and sound');await soundSetting.focus();await page.waitForFunction(()=>{const element=document.activeElement;if(!(element instanceof HTMLElement))return false;const box=element.getBoundingClientRect();return box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth;});await soundSetting.uncheck();
+      await checkbox('Larger text on menus and books').check();const soundSetting=checkbox('Read aloud and sound');await revealWithPager(soundSetting);await soundSetting.uncheck();
       await button('Save learning settings').click();await page.reload();await unlockGrownUpArea();
       assert.equal(await page.getByLabel('School year').inputValue(),'2');
       assert.equal(await checkbox('Larger text on menus and books').isChecked(),true);
