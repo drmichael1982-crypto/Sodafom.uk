@@ -14,8 +14,11 @@ describe('game age matching', () => {
     expect(isGameForAgeBand('5–7', ['older children'])).toBe(false);
   });
 
-  it('keeps practice-year matching on the same range parser', () => {
+  it('matches both possible ages in a school year without exceeding age 13', () => {
     expect(isGameForYear(5, ['9–11'])).toBe(true);
+    expect(isGameForYear(3, ['8–10'])).toBe(true);
+    expect(isGameForYear(6, ['11–13'])).toBe(true);
     expect(isGameForYear(2, ['9–11'])).toBe(false);
+    expect(isGameForYear(9, ['14–16'])).toBe(false);
   });
 });
