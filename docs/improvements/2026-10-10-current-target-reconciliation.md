@@ -17,6 +17,10 @@
 - The only content conflict was Maths Bingo. The resolution keeps the candidate’s age-scaled 3×3/4×4 card, explicit wrong-answer feedback, hint, pause/resume, retry-aware scoring, reduced-motion behavior and unmount cleanup. It also retains the target’s new completed-line regression, adapted to the starter card’s three-cell line and the accessible `Bingo number N` button names.
 - Reading Quest and the shared voice provider did not overlap the target delta. No character art, branding, curriculum content, payments, credentials, deployment configuration, 3D code or `sodafom797` code changed.
 
+## Curriculum and comparison continuity
+
+This reconciliation changes no lesson objective, passage, question, year policy or reward rule. The bounded Reading Quest repair remains grounded in the [England English programme of study](https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study) and [DfE reading framework](https://www.gov.uk/government/publications/the-reading-framework-teaching-the-foundations-of-literacy) for the distinction between reading practice, comprehension and a complete systematic programme. [Khan Academy Kids' official literacy description](https://learn.khanacademy.org/khan-academy-kids/) remains a product benchmark only for pairing accessible print with optional read-aloud support. The original story, questions, interface, Archie character and art were not copied. Exact source interpretation and boundaries are recorded in the [Reading Quest speech-recovery note](2026-10-10-reading-quest-speech-recovery.md); no statutory or educational-outcome claim is added here.
+
 ## Checks
 
 - Focused reconciliation/voice suite: PASS — 8 files / 55 tests.
