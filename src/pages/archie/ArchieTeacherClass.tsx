@@ -72,8 +72,8 @@ function DevicePuzzleLearning() {
   const total = groups.reduce((sum, group) => sum + group.activities.length, 0);
   return (
     <section className="a-panel" aria-labelledby="teacher-puzzle-learning">
-      <h2 id="teacher-puzzle-learning" tabIndex={-1}>Recent puzzle learning on this device</h2>
-      <p className="a-note">Uses the child’s on-device record only. Grouped by subject and saved year; History records have no saved year, so none is guessed. No pupil profile, online data or duplicate reward.</p>
+      <h2 id="teacher-puzzle-learning" tabIndex={-1}>Recent puzzle learning for this learner</h2>
+      <p className="a-note">Uses only the selected local learner profile. Grouped by subject and saved year; History records have no saved year, so none is guessed. No online data or duplicate reward.</p>
       {total ? <>
         <div className="tc-puzzle-groups">
           {groups.map((group) => (
@@ -91,8 +91,8 @@ function DevicePuzzleLearning() {
             </section>
           ))}
         </div>
-      </> : <p>No History or Fraction picture puzzles have been completed on this device yet.</p>}
-      <Link className="a-button" to="/progress?from=teacher">Open full device progress</Link>
+      </> : <p>No History or Fraction picture puzzles have been completed for this learner yet.</p>}
+      <Link className="a-button" to="/progress?from=teacher">Open learner progress</Link>
     </section>
   );
 }

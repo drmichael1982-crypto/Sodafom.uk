@@ -10,6 +10,7 @@ import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 import { isGameForAgeBand } from '@/lib/archie/game-age';
+import { readScopedGameStars } from '@/lib/archie/storage';
 
 type WeeklyChallenge = { gameId: string; title: string; emoji: string; tagline: string; prize: string };
 const games = _games as typeof _games & { weeklyChallenge?: WeeklyChallenge };
@@ -886,17 +887,21 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
   // ── Recently played (from localStorage) ────────────────────────────────────
   const [recentlyPlayed, setRecentlyPlayed] = useState<{ id: string; title: string; emoji: string; slug: string; subject: string }[]>([]);
   React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem('sodafom_game_stars');
-      if (!raw) return;
-      const map: Record<string, number> = JSON.parse(raw);
-      // Map played game IDs back to game data
-      const playedSlugs = Object.keys(map).map(k => k.replace('game-', ''));
-      const matched = (games.games as { id: string; title: string; emoji: string; slug: string; subject: string }[])
-        .filter(g => playedSlugs.includes(g.slug))
-        .slice(0, 6);
-      setRecentlyPlayed(matched);
-    } catch { /* ignore */ }
+    const refresh = () => {
+      try {
+        const map = readScopedGameStars();
+        // Map played game IDs back to game data
+        const playedSlugs = Object.keys(map).map(k => k.replace('game-', ''));
+        const matched = (games.games as { id: string; title: string; emoji: string; slug: string; subject: string }[])
+          .filter(g => playedSlugs.includes(g.slug))
+          .slice(0, 6);
+        setRecentlyPlayed(matched);
+      } catch { setRecentlyPlayed([]); }
+    };
+    refresh();
+    window.addEventListener('storage', refresh);
+    window.addEventListener('sodafom:active-child-changed', refresh);
+    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('sodafom:active-child-changed', refresh); };
   }, []);
 
   // ── Archie tip cycling ──────────────────────────────────────────────────────
@@ -979,10 +984,11 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
   // Read earned stars from localStorage
   const [earnedStars, setEarnedStars] = useState<Record<string, number>>({});
   React.useEffect(() => {
-    try {
-      const raw = localStorage.getItem('sodafom_game_stars');
-      if (raw) setEarnedStars(JSON.parse(raw) as Record<string, number>);
-    } catch { /* ignore */ }
+    const refresh = () => setEarnedStars(readScopedGameStars());
+    refresh();
+    window.addEventListener('storage', refresh);
+    window.addEventListener('sodafom:active-child-changed', refresh);
+    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('sodafom:active-child-changed', refresh); };
   }, []);
 
   // Keep URL in sync when filters change

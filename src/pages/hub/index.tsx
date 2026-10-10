@@ -15,6 +15,7 @@ import ChildSwitcher from '@/components/ChildSwitcher';
 import HubStatsBar from '@/components/HubStatsBar';
 import { games as _games } from 'virtual:content';
 import { API_PREFIX } from '@/lib/config';
+import { readScopedGameStars } from '@/lib/archie/storage';
 
 type WeeklyChallenge = { gameId: string; title: string; emoji: string; tagline: string; prize: string };
 const games = _games as typeof _games & { weeklyChallenge?: WeeklyChallenge };
@@ -34,24 +35,28 @@ function PersonalBestCard() {
   const [pbData, setPbData] = useState<Record<string, { stars: number; gameName: string }>>({});
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('sodafom_game_stars');
-      if (!raw) return;
-      const starMap: Record<string, number> = JSON.parse(raw) as Record<string, number>;
-      // Map game slug keys back to subjects using games content
-      const subjectBest: Record<string, { stars: number; gameName: string }> = {};
-      for (const game of games.games) {
-        const key = `game-${game.title.toLowerCase().replace(/\s+/g, '-')}`;
-        const stars = starMap[key] ?? 0;
-        if (stars > 0) {
-          const subj = game.subject;
-          if (!subjectBest[subj] || stars > subjectBest[subj].stars) {
-            subjectBest[subj] = { stars, gameName: game.title };
+    const refresh = () => {
+      try {
+        const starMap = readScopedGameStars();
+        // Map game slug keys back to subjects using games content
+        const subjectBest: Record<string, { stars: number; gameName: string }> = {};
+        for (const game of games.games) {
+          const key = `game-${game.title.toLowerCase().replace(/\s+/g, '-')}`;
+          const stars = starMap[key] ?? 0;
+          if (stars > 0) {
+            const subj = game.subject;
+            if (!subjectBest[subj] || stars > subjectBest[subj].stars) {
+              subjectBest[subj] = { stars, gameName: game.title };
+            }
           }
         }
-      }
-      setPbData(subjectBest);
-    } catch { /* ignore */ }
+        setPbData(subjectBest);
+      } catch { setPbData({}); }
+    };
+    refresh();
+    window.addEventListener('storage', refresh);
+    window.addEventListener('sodafom:active-child-changed', refresh);
+    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('sodafom:active-child-changed', refresh); };
   }, []);
 
   const entries = Object.entries(pbData);

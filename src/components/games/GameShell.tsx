@@ -18,7 +18,7 @@ export { useChildAge } from '@/hooks/useChildAge';
 export type { AgeGroup } from '@/hooks/useChildAge';
 import { getActiveChild } from '@/hooks/useChildAge';
 import { API_PREFIX, ARCHIE_PREVIEW } from '@/lib/config';
-import { isSoundEnabled, useArchieData } from '@/lib/archie/storage';
+import { isSoundEnabled, recordScopedGameStars, useArchieData } from '@/lib/archie/storage';
 import { isGameForYear } from '@/lib/archie/game-age';
 import { games as gamesContent } from 'virtual:content';
 import SceneArtwork, { sceneForSubject } from '@/components/SceneArtwork';
@@ -168,22 +168,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
     recordGameCompletion(subject, slug);
     if(r.total>0)setRewardOpen(true);
 
-    try {
-      const k = `game-${gameSlug}`;
-      const raw = localStorage.getItem('sodafom_game_stars');
-      const parsed: unknown = raw ? JSON.parse(raw) : {};
-      const map: Record<string, unknown> = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
-      const previous = map[k];
-      const previousStars = typeof previous === 'number' && Number.isInteger(previous) && previous >= 0 && previous <= 3 ? previous : 0;
-      if (previousStars < stars) {
-        map[k] = stars;
-        localStorage.setItem('sodafom_game_stars', JSON.stringify(map));
-      }
-    } catch {
-      try {
-        if (stars > 0) localStorage.setItem('sodafom_game_stars', JSON.stringify({ [`game-${gameSlug}`]: stars }));
-      } catch { /* storage is unavailable */ }
-    }
+    recordScopedGameStars(`game-${gameSlug}`, stars);
 
     const activeChild = getActiveChild();
     if (!ARCHIE_PREVIEW && activeChild?.id) {

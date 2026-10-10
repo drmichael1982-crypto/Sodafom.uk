@@ -7,7 +7,7 @@ import { useVoice } from '@/lib/voice-context';
 import { API_PREFIX } from '@/lib/config';
 import { BOOKS, SPELLING_WORDS } from '@/lib/archie/books';
 import { clearSavedLearning, loadSavedLearning } from '@/lib/archie/device-learning';
-import { useArchieData, updateSavedData, readGameStars } from '@/lib/archie/storage';
+import { useArchieData, updateSavedData, readGameStars, readLegacyGameStars, readScopedGameStars } from '@/lib/archie/storage';
 import catalog from '@/lib/archie/game-catalog.json';
 import { EPISODES } from '@/pages/CartoonTheatrePage';
 import './archie.css';
@@ -350,19 +350,26 @@ export function ArchieHomework() {
 const STICKERS = [{id:'key',emoji:'🔑',name:'Golden key',stars:1,art:'/assets/archie-approved/home.png'},{id:'book',emoji:'📘',name:'Book explorer',stars:3,art:'/assets/archie-approved/lesson.png'},{id:'castle',emoji:'🏰',name:'Castle explorer',stars:6,art:'/assets/cartoon/worlds/geography.png'},{id:'rocket',emoji:'🚀',name:'Star traveller',stars:10,art:'/assets/cartoon/worlds/science.png'},{id:'rainbow',emoji:'🌈',name:'Rainbow learner',stars:15,art:'/assets/cartoon/worlds/reading.png'},{id:'trophy',emoji:'🏆',name:'Learning champion',stars:25,art:'/assets/images/archie-character-v2.png'}];
 export function ArchieRewards({ stickers = false, progress = false }: { stickers?: boolean; progress?: boolean }) {
   const [params]=useSearchParams();
-  const { activities,stickers:claimed }=useArchieData();
+  const { activities,legacyActivities,settings,progressProfile,stickers:claimed }=useArchieData();
   const { completedGamesCount,level }=useProgression();
-  const stars=activities.reduce((sum,a)=>sum+a.stars,0)+readGameStars();
   const source=params.get('from');
   const adultSource=source==='parents'||source==='teacher'?source:null;
-  const sharedDeviceProgress=adultSource!==null;
-  const sourceQuery=adultSource?`?from=${adultSource}`:'';
+  const legacyMode=adultSource!==null&&params.get('scope')==='legacy';
+  const shownActivities=legacyMode?legacyActivities:activities;
+  const shownGameStars=legacyMode?readLegacyGameStars():readScopedGameStars();
+  const stars=shownActivities.reduce((sum,a)=>sum+a.stars,0)+Object.values(shownGameStars).reduce((sum,value)=>sum+value,0);
+  const learnerName=progressProfile.source==='active-child'?progressProfile.name:settings.childNickname?.trim()||progressProfile.name;
+  const adultView=adultSource!==null;
+  const sourceQuery=adultSource?`?from=${adultSource}${legacyMode?'&scope=legacy':''}`:'';
   const back=adultSource==='parents'?'/parents':adultSource==='teacher'?'/teacher':'/world';
   const backLabel=adultSource==='parents'?'Back to parents and learning':adultSource==='teacher'?'Back to teacher lessons':undefined;
   useLearning(stickers?'Sticker book':progress?'Progress':'Rewards');
-  return <Page title={stickers?'My sticker book':progress&&sharedDeviceProgress?'Shared device progress':progress?'My progress':'My rewards'} intro={sharedDeviceProgress?'Combined practice saved in this browser.':'Your learning, saved on this device.'} back={back} backLabel={backLabel}>{sharedDeviceProgress&&<aside className="a-panel" aria-label="Shared device progress scope"><h2>Shared device history</h2><p>These game, book and lesson results are not separated by learner yet. They may combine practice from everyone who uses this browser.</p></aside>}<div className="a-stats"><div><strong>{stars}</strong><span>{sharedDeviceProgress?'Stars in this browser':'Stars earned'}</span></div><div><strong>{completedGamesCount}</strong><span>{sharedDeviceProgress?'Games finished here':'Games finished'}</span></div><div><strong>{level}</strong><span>{sharedDeviceProgress?'Browser game level':'Game level'}</span></div></div>
+  const title=stickers?'My sticker book':progress?(legacyMode?'Older shared device progress':adultView?`${learnerName} progress`:'My progress'):'My rewards';
+  const intro=legacyMode?'Older records kept separately from learner profiles.':adultView?`Practice saved for ${learnerName} on this device.`:'Your learning, saved on this device.';
+  const adultGamesCount=Object.keys(shownGameStars).length;
+  return <Page title={title} intro={intro} back={back} backLabel={backLabel}>{adultView&&<aside className="a-panel" aria-label={legacyMode?'Older shared device progress scope':'Learner progress scope'}>{legacyMode?<><h2>Older shared device history</h2><p>These records were saved before learner profiles were separated. They may combine several people and have not been copied to {learnerName}.</p></>:<><h2>Learner-scoped history</h2><p>New game, book and lesson results are stored under {learnerName}’s local profile. Changing the selected child uses a different record.</p>{(legacyActivities.length>0||Object.keys(readLegacyGameStars()).length>0)&&<Link className="a-button" to={`/progress?from=${adultSource}&scope=legacy`}>View older shared history</Link>}</>}</aside>}<div className="a-stats"><div><strong>{stars}</strong><span>{legacyMode?'Older shared stars':'Stars earned'}</span></div><div><strong>{adultView?adultGamesCount:completedGamesCount}</strong><span>{legacyMode?'Shared game records':adultView?'Games recorded':'Games finished'}</span></div><div><strong>{adultView?shownActivities.length:level}</strong><span>{adultView?'Books and lessons':'Game level'}</span></div></div>
     <div className="a-tabs"><Link className="a-button" to={`/rewards${sourceQuery}`}>Rewards</Link><Link className="a-button" to={`/stickers${sourceQuery}`}>Sticker book</Link><Link className="a-button" to={`/progress${sourceQuery}`}>Progress</Link></div>
-    {progress?<div className="a-panel"><h2>{sharedDeviceProgress?'Recent shared learning':'Recent learning'}</h2>{activities.length?activities.slice().reverse().map(a=><div className="a-activity" key={a.id}><strong>{a.title}</strong><span>{a.stars} ★ • {new Date(a.date).toLocaleDateString('en-GB')}</span></div>):<p>Complete a lesson or puzzle, or read a book, to start your learning record.</p>}<Link className="a-button" to="/lesson">Start a lesson</Link></div>:<div className="a-grid">{STICKERS.map(s=><div key={s.id} className={`a-card ${claimed.includes(s.id)?'colour-0':'colour-3'}`}><div className={`a-sticker-art ${claimed.includes(s.id)?'is-earned':''}`}><img src={s.art} alt={claimed.includes(s.id)?`${s.name} sticker earned`:`${s.name} sticker preview`}/><span aria-hidden="true">{s.emoji}</span></div><h2>{s.name}</h2><p>{s.stars} stars to unlock</p><button className="a-button" disabled={stars<s.stars||claimed.includes(s.id)} onClick={()=>updateSavedData(d=>({...d,stickers:d.stickers.includes(s.id)?d.stickers:[...d.stickers,s.id]}))}>{claimed.includes(s.id)?'Collected ✓':stars>=s.stars?'Collect sticker':`${s.stars-stars} more stars`}</button></div>)}</div>}
+    {progress?<div className="a-panel"><h2>{legacyMode?'Older shared learning':'Recent learning'}</h2>{shownActivities.length?shownActivities.slice().reverse().map(a=><div className="a-activity" key={`${a.profileId??'legacy'}-${a.id}`}><strong>{a.title}</strong><span>{a.stars} ★ • {new Date(a.date).toLocaleDateString('en-GB')}</span></div>):<p>{legacyMode?'No older shared books or lessons are stored.':'Complete a lesson or puzzle, or read a book, to start this learner record.'}</p>}<Link className="a-button" to="/lesson">Start a lesson</Link></div>:<div className="a-grid">{STICKERS.map(s=><div key={s.id} className={`a-card ${claimed.includes(s.id)?'colour-0':'colour-3'}`}><div className={`a-sticker-art ${claimed.includes(s.id)?'is-earned':''}`}><img src={s.art} alt={claimed.includes(s.id)?`${s.name} sticker earned`:`${s.name} sticker preview`}/><span aria-hidden="true">{s.emoji}</span></div><h2>{s.name}</h2><p>{s.stars} stars to unlock</p><button className="a-button" disabled={stars<s.stars||claimed.includes(s.id)} onClick={()=>updateSavedData(d=>({...d,stickers:d.stickers.includes(s.id)?d.stickers:[...d.stickers,s.id]}))}>{claimed.includes(s.id)?'Collected ✓':stars>=s.stars?'Collect sticker':`${s.stars-stars} more stars`}</button></div>)}</div>}
   </Page>;
 }
 export function ArchieParents({ settingsOnly = false }: { settingsOnly?: boolean }) {

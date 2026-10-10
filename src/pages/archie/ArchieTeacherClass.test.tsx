@@ -39,7 +39,7 @@ describe("Teacher and Class Lessons Views", () => {
 
     // Unlocked!
     expect(screen.getByText(/Year 1 Maths · 180 lessons/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open full device progress" })).toHaveAttribute("href", "/progress?from=teacher");
+    expect(screen.getByRole("link", { name: "Open learner progress" })).toHaveAttribute("href", "/progress?from=teacher");
 
     // Open first unit details
     const firstUnit = container.querySelector(".tc-unit > summary") as HTMLElement;
@@ -93,18 +93,20 @@ describe("Teacher and Class Lessons Views", () => {
   });
 
   it("shows existing History and Fraction puzzle records without creating another activity", async () => {
+    const profileId = "child:21";
     const saved = {
       settings: { year: 2, sound: true, largeText: false, onlineHelp: false },
       activities: [
-        { id: "lesson-year-2-spelling", kind: "lesson", title: "Year 2 spelling", stars: 3, date: "2026-10-07T18:00:00.000Z" },
-        { id: "history-jigsaw-egypt", kind: "lesson", title: "Ancient Egypt history picture puzzle", stars: 1, date: "2026-10-07T19:00:00.000Z" },
-        { id: "history-jigsaw-1066", kind: "lesson", title: "1066 history picture puzzle", stars: 1, date: "2026-10-07T19:30:00.000Z" },
-        { id: "fraction-jigsaw-year-1", kind: "lesson", title: "Year 1 fraction picture puzzles", stars: 1, date: "2026-10-07T19:45:00.000Z" },
-        { id: "fraction-jigsaw-year-2", kind: "lesson", title: "Year 2 fraction picture puzzles", stars: 1, date: "2026-10-07T20:00:00.000Z" },
-        { id: "fraction-picture-1-1791601200000-0", kind: "lesson", title: "Fractions · 10 questions · 8 first-try answers", stars: 3, date: "2026-10-07T20:15:00.000Z" },
+        { id: "lesson-year-2-spelling", kind: "lesson", title: "Year 2 spelling", stars: 3, date: "2026-10-07T18:00:00.000Z", profileId },
+        { id: "history-jigsaw-egypt", kind: "lesson", title: "Ancient Egypt history picture puzzle", stars: 1, date: "2026-10-07T19:00:00.000Z", profileId },
+        { id: "history-jigsaw-1066", kind: "lesson", title: "1066 history picture puzzle", stars: 1, date: "2026-10-07T19:30:00.000Z", profileId },
+        { id: "fraction-jigsaw-year-1", kind: "lesson", title: "Year 1 fraction picture puzzles", stars: 1, date: "2026-10-07T19:45:00.000Z", profileId },
+        { id: "fraction-jigsaw-year-2", kind: "lesson", title: "Year 2 fraction picture puzzles", stars: 1, date: "2026-10-07T20:00:00.000Z", profileId },
+        { id: "fraction-picture-1-1791601200000-0", kind: "lesson", title: "Fractions · 10 questions · 8 first-try answers", stars: 3, date: "2026-10-07T20:15:00.000Z", profileId },
       ],
       stickers: [],
     };
+    localStorage.setItem("sodafom_active_child", JSON.stringify({ id: 21, name: "Synthetic learner" }));
     localStorage.setItem("sodafom_archie_design_v1", JSON.stringify(saved));
     const before = localStorage.getItem("sodafom_archie_design_v1");
     const user = userEvent.setup();
@@ -113,7 +115,7 @@ describe("Teacher and Class Lessons Views", () => {
     await user.type(screen.getByLabelText(/Grown-up answer/i), "privacy choose");
     await user.click(screen.getByRole("button", { name: /Continue with a grown-up/i }));
 
-    expect(screen.getByRole("heading", { name: "Recent puzzle learning on this device" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Recent puzzle learning for this learner" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Maths · Year 1" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Maths · Year 2" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "History · Year not recorded" })).toBeInTheDocument();

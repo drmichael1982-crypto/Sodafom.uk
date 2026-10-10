@@ -21,7 +21,7 @@ vi.mock('virtual:content',()=>({games:{games:[
   {title:'Middle',slug:'middle',subject:'maths',ageGroups:['8–10']},
 ]}}));
 import GameShell, {type GameResult, type GameShellControls} from './GameShell';
-import { updateSavedData } from '@/lib/archie/storage';
+import { readScopedGameStars, scopedGameStarsKey, updateSavedData } from '@/lib/archie/storage';
 const result:GameResult={score:100,correct:8,total:8,stars:3};
 const saveYear=(year:number)=>updateSavedData(data=>({...data,settings:{...data.settings,year,sound:false}}));
 function Route(){return <span data-testid="route">{useLocation().pathname}</span>;}
@@ -44,7 +44,7 @@ describe('preview direct-route age guard',()=>{
     expect(child).not.toHaveBeenCalled();expect(screen.queryByText('Play older question')).not.toBeInTheDocument();
     expect(mocks.setGameContext).not.toHaveBeenCalled();expect(mocks.clearGameContext).toHaveBeenCalled();
     expect(localStorage.getItem('sodafom_last_played')).toBe('previous-game');
-    expect(localStorage.getItem('sodafom_game_stars')).toBeNull();
+    expect(localStorage.getItem(scopedGameStarsKey())).toBeNull();
     expect(mocks.recordGameCompletion).not.toHaveBeenCalled();expect(fetch).not.toHaveBeenCalled();
   });
   it('mounts the supported direct game and exposes an age-safe next-game suggestion after its result',async()=>{
@@ -71,7 +71,7 @@ describe('preview direct-route age guard',()=>{
     expect(screen.queryByRole('button',{name:'Older game'})).not.toBeInTheDocument();
     act(()=>{complete(result);controls.recordCompletion(result);});
     expect(mocks.recordGameCompletion).not.toHaveBeenCalled();expect(fetch).not.toHaveBeenCalled();
-    expect(mocks.setGameContext).not.toHaveBeenCalled();expect(localStorage.getItem('sodafom_game_stars')).toBeNull();
+    expect(mocks.setGameContext).not.toHaveBeenCalled();expect(localStorage.getItem(scopedGameStarsKey())).toBeNull();
     act(()=>saveYear(7));
     expect(screen.getByRole('button',{name:'Older game'})).toBeInTheDocument();
   });
@@ -92,7 +92,7 @@ describe('preview direct-route age guard',()=>{
     fireEvent.click(screen.getByRole('button',{name:'Record spelling set'}));
     expect(screen.getByRole('button',{name:'Record spelling set'})).toBeInTheDocument();
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('spelling','spelling-bee');
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-spelling-bee':3});
+    expect(readScopedGameStars()).toEqual({'game-spelling-bee':3});
   });
   it('uses the canonical catalogue slug when the display title differs from the game route',()=>{
     show(<GameShell title="Number Grid" gameSlug="number-puzzle" emoji="1" subject="maths" ageGroups={['5–7']}>
@@ -101,23 +101,25 @@ describe('preview direct-route age guard',()=>{
     expect(JSON.parse(localStorage.getItem('sodafom_last_played')!)).toMatchObject({id:'game-number-puzzle',slug:'number-puzzle',title:'Number Grid'});
     fireEvent.click(screen.getByRole('button',{name:'Finish canonical game'}));
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('maths','number-puzzle');
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-number-puzzle':3});
+    expect(readScopedGameStars()).toEqual({'game-number-puzzle':3});
   });
-  it.each(['oops','[]','null'])('repairs a damaged %s star record when the child completes a scored game',saved=>{
+  it.each(['oops','[]','null'])('leaves a damaged older shared %s record untouched and saves the new learner score separately',saved=>{
     localStorage.setItem('sodafom_game_stars',saved);
     show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['5–7']}>
       {complete=> <button onClick={()=>complete(result)}>Finish repaired round</button>}
     </GameShell>);
     fireEvent.click(screen.getByRole('button',{name:'Finish repaired round'}));
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+    expect(localStorage.getItem('sodafom_game_stars')).toBe(saved);
+    expect(readScopedGameStars()).toEqual({'game-starter':3});
   });
-  it('keeps valid scores when it saves a new best result',()=>{
+  it('does not copy a valid older shared score into the new learner record',()=>{
     localStorage.setItem('sodafom_game_stars',JSON.stringify({'game-counting':2}));
     show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['5–7']}>
       {complete=> <button onClick={()=>complete(result)}>Finish merged round</button>}
     </GameShell>);
     fireEvent.click(screen.getByRole('button',{name:'Finish merged round'}));
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-counting':2,'game-starter':3});
+    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-counting':2});
+    expect(readScopedGameStars()).toEqual({'game-starter':3});
   });
   it('normalises point-based results for the child while preserving raw account progress',async()=>{
     mocks.preview=false;
@@ -128,7 +130,7 @@ describe('preview direct-route age guard',()=>{
     await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Finish points round'}));});
     expect(await screen.findByText('75%')).toBeInTheDocument();
     expect(screen.getByText('You earned 2 stars!')).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':2});
+    expect(readScopedGameStars()).toEqual({'game-starter':2});
     const progress=vi.mocked(fetch).mock.calls.find(([url])=>url==='/children/42/progress');
     expect(JSON.parse(String(progress?.[1]?.body))).toMatchObject({score:90,maxScore:120});
   });
@@ -138,7 +140,7 @@ describe('preview direct-route age guard',()=>{
     </GameShell>);
     fireEvent.click(screen.getByRole('button',{name:'Finish full points round'}));
     expect(await screen.findByText('100%')).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+    expect(readScopedGameStars()).toEqual({'game-starter':3});
   });
 });
 
@@ -154,7 +156,7 @@ describe('preview legacy-account request isolation',()=>{
     await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Complete preview round'}));});
     expect(fetch).not.toHaveBeenCalled();
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('maths','starter');
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+    expect(readScopedGameStars()).toEqual({'game-starter':3});
     expect(localStorage.getItem('sodafom_active_child')).toBe(savedChild);
     expect(JSON.parse(localStorage.getItem('sodafom_last_played')!).id).toBe('game-starter');
   });
@@ -175,6 +177,6 @@ describe('preview legacy-account request isolation',()=>{
     expect(rewards?.[1]).toMatchObject({method:'POST',credentials:'include',headers:{'Content-Type':'application/json'}});
     expect(JSON.parse(String(rewards?.[1]?.body))).toEqual({childId:42});
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('maths','starter');
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+    expect(readScopedGameStars()).toEqual({'game-starter':3});
   });
 });

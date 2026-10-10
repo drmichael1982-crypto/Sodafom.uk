@@ -67,21 +67,25 @@ async function reveal(page, locator) {
       localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({
         settings: { childNickname: 'Mia', year: 2, sound: false, largeText: false, onlineHelp: false },
         activities: [
-          { id: 'book-lost-key', kind: 'book', title: 'Archie and the Lost Key', stars: 1, date: '2026-10-10T12:00:00.000Z' },
-          { id: 'learn-year-2', kind: 'lesson', title: 'Year 2 spelling', stars: 3, date: '2026-10-10T12:05:00.000Z' },
+          { id: 'book-lost-key', kind: 'book', title: 'Archie and the Lost Key', stars: 1, date: '2026-10-10T12:00:00.000Z', profileId: 'child:21' },
+          { id: 'learn-year-2', kind: 'lesson', title: 'Year 2 spelling', stars: 3, date: '2026-10-10T12:05:00.000Z', profileId: 'child:21' },
+          { id: 'legacy-book', kind: 'book', title: 'Older shared book', stars: 1, date: '2026-10-01T12:00:00.000Z' },
         ],
         stickers: [],
       }));
-      localStorage.setItem('sodafom_game_stars', JSON.stringify({ 'game-archie-adventure-trail': 2 }));
+      localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 21, name: 'Mia', ageGroup: '5-7' }));
+      localStorage.setItem('sodafom_game_stars:profile:child:21', JSON.stringify({ 'game-archie-adventure-trail': 2 }));
+      localStorage.setItem('sodafom_game_stars', JSON.stringify({ 'game-spelling-bee': 3 }));
     });
     await page.goto(`${base}/parents`);
     await unlock(page);
-    const reportHeading = page.getByRole('heading', { name: 'Shared practice on this device', exact: true });
+    const reportHeading = page.getByRole('heading', { name: 'Practice for Mia on this device', exact: true });
     await reportHeading.waitFor({ state: 'attached' });
     await reveal(page, reportHeading);
-    await page.getByText('Current profile: Mia · selected lesson year 2', { exact: true }).waitFor();
-    await page.getByText(/may combine practice from everyone who uses this browser/).waitFor();
-    assert.equal(await page.getByText('Mia’s saved practice', { exact: true }).count(), 0);
+    await page.getByText('Learner profile: Mia · selected lesson year 2', { exact: true }).waitFor();
+    await page.getByText(/new game, book and lesson results are stored under this local learner profile/).waitFor();
+    await page.getByRole('heading', { name: 'Older shared device history', exact: true }).waitFor();
+    await page.getByText(/They have not been copied to Mia or deleted/).waitFor();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
     await page.screenshot({ path: path.join(captureDir, 'parent-phone.png'), fullPage: true });
     await page.setViewportSize({ width: 820, height: 1180 });
@@ -89,21 +93,37 @@ async function reveal(page, locator) {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
     await page.screenshot({ path: path.join(captureDir, 'parent-tablet.png'), fullPage: true });
 
-    const sharedProgressLink = page.getByRole('link', { name: 'Open shared device progress', exact: true });
-    await reveal(page, sharedProgressLink);
-    await sharedProgressLink.click();
+    const learnerProgressLink = page.getByRole('link', { name: 'Open this learner’s progress', exact: true });
+    await reveal(page, learnerProgressLink);
+    await learnerProgressLink.click();
     await page.waitForURL(`${base}/progress?from=parents`);
-    await page.getByRole('heading', { level: 1, name: 'Shared device progress', exact: true }).waitFor();
-    await page.getByRole('heading', { name: 'Shared device history', exact: true }).waitFor();
-    await page.getByText('Recent shared learning', { exact: true }).waitFor();
-    assert.equal(await page.getByRole('heading', { level: 1, name: 'My progress', exact: true }).count(), 0);
+    await page.getByRole('heading', { level: 1, name: 'Mia progress', exact: true }).waitFor();
+    await page.getByRole('heading', { name: 'Learner-scoped history', exact: true }).waitFor();
+    await page.getByText('Recent learning', { exact: true }).waitFor();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
     await page.screenshot({ path: path.join(captureDir, 'progress-tablet.png'), fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
     await page.screenshot({ path: path.join(captureDir, 'progress-phone.png'), fullPage: true });
+
+    await page.getByRole('link', { name: 'View older shared history', exact: true }).click();
+    await page.waitForURL(`${base}/progress?from=parents&scope=legacy`);
+    await page.getByRole('heading', { level: 1, name: 'Older shared device progress', exact: true }).waitFor();
+    await page.getByText(/may combine several people and have not been copied to Mia/).waitFor();
+    await page.screenshot({ path: path.join(captureDir, 'legacy-progress-phone.png'), fullPage: true });
+
+    await page.evaluate(() => localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 22, name: 'Leo', ageGroup: '5-7' })));
+    await page.goto(`${base}/parents`);
+    await unlock(page);
+    const leoHeading = page.getByRole('heading', { name: 'Practice for Leo on this device', exact: true });
+    await leoHeading.waitFor({ state: 'attached' });
+    await reveal(page, leoHeading);
+    await page.getByText('No game scores have been saved for this learner yet.', { exact: true }).waitFor();
+    await page.getByText('No books or lessons have been recorded for this learner yet.', { exact: true }).waitFor();
+    assert.equal(await page.getByText('Archie and the Lost Key', { exact: true }).count(), 0);
+    assert.equal(await page.getByText('Archie’s Adventure Trail — practise again', { exact: true }).count(), 0);
     assert.deepEqual(errors, []);
-    console.log('PASS shared browser history is explicit in parent and detailed progress at phone/tablet widths');
+    console.log('PASS learner progress is isolated, legacy history stays separate, and parent/progress layouts fit phone/tablet widths');
   } finally {
     await browser.close();
     await stopServer();
