@@ -75,3 +75,11 @@ Real-device touch/keyboard, microphone capture, speech-synthesis playback, scree
 - GitHub still had not scheduled a workflow for `99331eb…` or its PR merge candidate when this update was recorded. The strict 820px browser geometry and fresh phone/tablet captures therefore remain unverified; this note does not claim the pager defect is closed.
 
 Next bounded priority remains a hosted Chromium run for `99331eb…`, followed by direct inspection of both reader recovery captures. If Actions continues not to schedule, add the planned diagnostic metrics before another product change rather than weakening the assertion.
+
+## Deferred layout measurement update — 10 October 2026
+
+- [Run #317](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38022946790) supplied fresh evidence on the reconciled tree. Checkout, install, TypeScript, all unit tests, the Archie build, Playwright installation, home/personalisation/Ask Archie, spelling reward, book completion and the 390px reader recovery passed. The strict 820px check still failed with zero native scroll, the intact story one screen to the right (`storyLeft: 820`) and the picture puzzle still active. The all-year simulated step was therefore skipped.
+- The remaining reset coincides with the read-aloud button mutating during the synchronous speech-error rerender. Pager observer measurements now wait for two animation frames, allowing CSS columns to settle before recalculating the page count or clamping the selected screen. Initial measurement remains synchronous.
+- A new unit regression supplies a transient one-screen `scrollWidth` during a control mutation and proves screen 2 stays selected when the settled three-screen layout is measured. The hosted assertion now reports viewport/flow widths, transform, pager status, controlled story ID, active control and puzzle/story edges without weakening its pass criteria.
+- Current local validation: focused pager suite PASS (5 cases); full Vitest PASS (113 files / 963 tests); TypeScript PASS; Archie build PASS with unchanged mixed-import and large-chunk warnings; browser-script syntax and `git diff --check` PASS.
+- Hosted Chromium validation for this deferred-measurement change is pending. Do not mark the tablet defect fixed until the fresh workflow passes and both 390px and 820px screenshots have been inspected.
