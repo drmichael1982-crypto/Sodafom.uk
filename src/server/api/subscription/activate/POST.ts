@@ -43,6 +43,14 @@ function getExpiry(plan: string): Date | null {
 
 export default async function handler(req: Request, res: Response) {
   try {
+    // A historical checkout session must not be able to reactivate paid access
+    // while this release is intentionally free. This guard is checked before
+    // authentication, database access or any Stripe request.
+    if (getSecret('SODAFOM_PAYMENTS_ENABLED') !== 'true') {
+      res.status(403).json({ success: false, error: 'Payments are disabled while Sodafom is free.' });
+      return;
+    }
+
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: req.headers as unknown as Headers });
 

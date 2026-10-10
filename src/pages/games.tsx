@@ -9,6 +9,7 @@ import { games as _games } from 'virtual:content';
 import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
+import { isGameForAgeBand } from '@/lib/archie/game-age';
 
 type WeeklyChallenge = { gameId: string; title: string; emoji: string; tagline: string; prize: string };
 const games = _games as typeof _games & { weeklyChallenge?: WeeklyChallenge };
@@ -420,7 +421,7 @@ function SurpriseMeButton({
     // Filter by active age
     if (selectedAge !== ageAll) {
       const band = ageYears.find(a => a.label === selectedAge);
-      if (band) pool = pool.filter(g => band.groups.some(grp => g.ageGroups.includes(grp)));
+      if (band) pool = pool.filter(g => isGameForAgeBand(band.label, g.ageGroups));
     }
     if (!pool.length) pool = games;
     const pick = pool[Math.floor(Math.random() * pool.length)];
@@ -1054,7 +1055,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
     if (!ageOk) {
       const yearBand = AGE_YEARS.find((a) => a.label === selectedAge);
       if (yearBand) {
-        ageOk = yearBand.groups.some((g) => game.ageGroups.includes(g));
+        ageOk = isGameForAgeBand(yearBand.label, game.ageGroups);
       }
     }
     const catId = selectedCat.replace('cat-', '');
@@ -1078,7 +1079,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
     const visible = games.games.filter(isGameVisible);
     if (visible.length === 0) return;
     const pick = visible[Math.floor(Math.random() * visible.length)];
-    const route = GAME_ROUTES[pick.id];
+    const route = GAME_ROUTES[pick.id] ?? `/games/${pick.slug}`;
     if (route) navigate(route);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAge, selectedCat, starsFilter, searchQuery, earnedStars, navigate]);
@@ -1782,9 +1783,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
               {AGE_YEARS.map((yr) => {
                 const isActive = selectedAge === yr.label;
                 // Count games visible for this age band
-                const count = games.games.filter(g =>
-                  yr.groups.some(grp => g.ageGroups.includes(grp))
-                ).length;
+                const count = games.games.filter(g => isGameForAgeBand(yr.label, g.ageGroups)).length;
                 return (
                   <motion.button
                     key={yr.label}
@@ -2337,8 +2336,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                     }} whileTap={{
                       scale: 0.97
                     }} onClick={() => {
-                      const route = GAME_ROUTES[game.id];
-                      if (route) navigate(route);
+                      navigate(GAME_ROUTES[game.id] ?? `/games/${game.slug}`);
                     }} className="mt-1 w-full py-3.5 rounded-xl font-black text-base bg-primary text-primary-foreground flex items-center justify-center gap-2 hover:opacity-90 transition-opacity shadow-sm">
                             <Play size={17} className="fill-current" />
                             {isDemo ? 'Play Free' : 'Play Now'}

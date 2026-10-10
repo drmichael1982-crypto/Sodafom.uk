@@ -233,12 +233,27 @@ function FamilySummaryCard({ children }: { children: ChildSummary[] }) {
 function ChildCard({ childId }: { childId: number }) {
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
+    setLoading(true);
+    setError(false);
     fetch(`${API_PREFIX}/parent/dashboard?childId=${childId}`, { credentials: 'include' })
-      .then((r) => r.json())
-      .then((d) => setData(d as DashData))
-      .catch(console.error)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then((d: DashData) => {
+        if (!d?.child || !Array.isArray(d.subjects) || !Array.isArray(d.daily) || !Array.isArray(d.recent)) {
+          throw new Error('Invalid progress response');
+        }
+        setData(d);
+      })
+      .catch((err) => {
+        console.error(err);
+        setData(null);
+        setError(true);
+      })
       .finally(() => setLoading(false));
   }, [childId]);
 
@@ -247,6 +262,12 @@ function ChildCard({ childId }: { childId: number }) {
       <div className="h-6 bg-muted rounded w-32 mb-4" />
       <div className="h-4 bg-muted rounded w-full mb-2" />
       <div className="h-4 bg-muted rounded w-3/4" />
+    </div>
+  );
+  if (error) return (
+    <div className="bg-card rounded-3xl border-2 border-border p-6 text-center">
+      <p className="font-black text-foreground">Could not load this learner’s progress.</p>
+      <p className="mt-1 text-sm text-muted-foreground">Please refresh the page to try again.</p>
     </div>
   );
   if (!data) return null;
@@ -262,8 +283,8 @@ function ChildCard({ childId }: { childId: number }) {
       className="bg-card rounded-3xl border-2 border-border overflow-hidden shadow-sm"
     >
       {/* Header */}
-      <div className="bg-primary px-6 py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="bg-primary px-4 py-5 sm:px-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-primary-foreground/20 flex items-center justify-center text-xl shrink-0">
             {child.avatarEmoji ?? '🦁'}
           </div>
@@ -271,14 +292,14 @@ function ChildCard({ childId }: { childId: number }) {
             <h2 className="text-xl font-black text-primary-foreground" style={{ fontFamily: 'var(--font-heading)' }}>
               {child.name}
             </h2>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <p className="text-primary-foreground/70 text-sm">Age group: {child.age_group}</p>
               <ChildStreakBadge childId={childId} />
             </div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="flex items-center gap-1 justify-end">
+        <div className="text-left sm:text-right">
+          <div className="flex items-center gap-1 sm:justify-end">
             <Star size={18} className="text-accent fill-accent" />
             <span className="text-2xl font-black text-primary-foreground">{child.total_stars}</span>
           </div>
@@ -347,9 +368,9 @@ function ChildCard({ childId }: { childId: number }) {
             </h3>
             <div className="flex flex-col gap-2">
               {recent.map((r, i) => (
-                <div key={i} className="flex items-center justify-between bg-muted rounded-xl px-3 py-2">
-                  <div>
-                    <p className="text-sm font-bold text-foreground capitalize">
+                <div key={i} className="flex items-center justify-between gap-2 bg-muted rounded-xl px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-foreground capitalize">
                       {r.game_slug.replace(/-/g, ' ')}
                     </p>
                     <p className="text-xs text-muted-foreground capitalize">{r.subject}</p>

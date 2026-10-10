@@ -14,6 +14,9 @@ beforeEach(()=>{
 afterEach(()=>{cleanup();vi.unstubAllGlobals();vi.clearAllMocks();});
 async function ask(question:string) {
   render(<ArchieHelper/>);
+  await submit(question);
+}
+async function submit(question:string) {
   fireEvent.change(screen.getByLabelText('Your question for Archie'),{target:{value:question}});
   fireEvent.click(screen.getByLabelText('Send question'));
 }
@@ -63,6 +66,22 @@ describe('Archie online-help privacy default',()=>{
     await ask('Explain the history of the telescope');
     await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(1));
     expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toMatchObject({learnerAge:6});
+  });
+  it('keeps a locally saved nickname out of later online conversation history',async()=>{
+    localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:4,sound:false,onlineHelp:true,childNickname:'Mia'},activities:[],stickers:[]}));
+    const fetch=vi.fn().mockResolvedValue({ok:true,text:async()=> 'Telescopes help us study distant objects.'});vi.stubGlobal('fetch',fetch);
+    render(<ArchieHelper/>);
+    await submit('What is 8 plus 4?');
+    await screen.findByText('Answered on this device.');
+    expect(screen.getByRole('log')).toHaveTextContent('Mia');
+    await submit('Explain the history of the telescope');
+    await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(1));
+    const body=JSON.parse(String(fetch.mock.calls[0][1]?.body));
+    expect(JSON.stringify(body.messages)).not.toMatch(/Mia/i);
+    expect(body.messages).toEqual(expect.arrayContaining([
+      expect.objectContaining({role:'assistant',content:expect.stringMatching(/the learner/i)}),
+      expect.objectContaining({role:'user',content:'Explain the history of the telescope'}),
+    ]));
   });
   it('falls back to the school year when a saved learning age is invalid',async()=>{
     localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:8,sound:false},activities:[],stickers:[]}));

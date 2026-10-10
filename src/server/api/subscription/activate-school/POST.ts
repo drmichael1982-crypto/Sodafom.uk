@@ -29,6 +29,13 @@ function generateCode(): string {
 
 export default async function handler(req: Request, res: Response) {
   try {
+    // Do not let an old school checkout session create licences or device
+    // codes while this deployment is operating in free mode.
+    if (getSecret('SODAFOM_PAYMENTS_ENABLED') !== 'true') {
+      res.status(403).json({ success: false, error: 'Payments are disabled while Sodafom is free.' });
+      return;
+    }
+
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: req.headers as unknown as Headers });
     if (!session?.user?.id) {

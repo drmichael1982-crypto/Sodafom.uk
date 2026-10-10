@@ -62,6 +62,14 @@ function paymentEmail(session: Stripe.Checkout.Session): { subject: string; html
 
 
 export default async function handler(req: Request, res: Response): Promise<void> {
+  // The free release does not process payment events. In particular, never
+  // fall through to the legacy unsigned-body compatibility path merely
+  // because a webhook secret is absent.
+  if (getSecret('SODAFOM_PAYMENTS_ENABLED') !== 'true') {
+    res.status(403).json({ received: false, error: 'Payments are disabled while Sodafom is free.' });
+    return;
+  }
+
   // Stripe sends raw body — must be read as buffer
   const sig = req.headers['stripe-signature'];
   const webhookSecret = getSecret('STRIPE_WEBHOOK_SECRET');

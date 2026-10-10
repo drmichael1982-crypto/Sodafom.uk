@@ -18,6 +18,17 @@ import { coachLessonReply, guardPracticeReply, lessonContextForService, subjectM
 import type { CourseLesson, CourseSubject } from '@/lib/archie/course-types';
 
 type Message = { role: 'user' | 'assistant'; content: string };
+/** Keep locally remembered names out of an opted-in online conversation. */
+export function privateServiceHistory(messages: Message[], childName: string | null): Message[] {
+  const name = childName?.trim();
+  if (!name) return messages;
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const named = new RegExp(`(^|[^a-z0-9])${escaped}(?=$|[^a-z0-9])`, 'gi');
+  return messages.map(message => ({
+    ...message,
+    content: message.content.replace(named, (_match, prefix: string) => `${prefix}the learner`),
+  }));
+}
 /** Lesson help uses the authored source; only the lesson's handler can grade an answer. */
 export function authoredLessonReply(text: string, lesson: LessonTutorContext, unmatched = false): string | null {
   if (lesson.status === 'paused') return 'Your lesson is paused. Resume it when you are ready; your place is kept.';
@@ -282,8 +293,9 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
           : 'Online learning help is off. I can still help with maths, spelling and finding a game. Ask a grown-up about wider questions, or try a learning quest.';
         setNotice('Online learning help is off on this device.');
       } else {
+        const serviceHistory = privateServiceHistory(history.slice(-12), getRememberedChildName());
         const response = await fetch(`${API_PREFIX}/chat`, { method: 'POST', credentials: 'include', signal: controller.signal,
-          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: history.slice(-12), learnerAge:getLearnerAge(),
+          headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: serviceHistory, learnerAge:getLearnerAge(),
             systemExtra: `Learning activity: ${gameTitle || 'Sodafom home'}. Subject: ${subject || 'general learning'}. Current question: ${currentQuestion || 'none'}. Choices: ${currentOptions?.join(', ') || 'none'}. ${lessonContextForService(lesson)}`.trim() }) });
         if (!response.ok) throw new Error('Learning service unavailable');
         reply = (await response.text()).trim();
