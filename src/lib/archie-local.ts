@@ -18,6 +18,16 @@ export function getRememberedChildName(): string | null {
       }
     }
   } catch { /* ignore */ }
+  try {
+    const rawDesign = localStorage.getItem('sodafom_archie_design_v1');
+    if (rawDesign) {
+      const parsed = JSON.parse(rawDesign) as { settings?: { childNickname?: unknown } };
+      const nickname = typeof parsed.settings?.childNickname === 'string'
+        ? parsed.settings.childNickname.trim()
+        : '';
+      if (nickname) return nickname.slice(0, 30);
+    }
+  } catch { /* ignore damaged parent settings */ }
   return null;
 }
 

@@ -119,6 +119,27 @@ describe('preview direct-route age guard',()=>{
     fireEvent.click(screen.getByRole('button',{name:'Finish merged round'}));
     expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-counting':2,'game-starter':3});
   });
+  it('normalises point-based results for the child while preserving raw account progress',async()=>{
+    mocks.preview=false;
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:42,name:'Learner',ageGroup:'5-7'}));
+    show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['5–7']}>
+      {complete=> <button onClick={()=>complete({score:90,maxScore:120,correct:9,total:12,stars:3})}>Finish points round</button>}
+    </GameShell>);
+    await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Finish points round'}));});
+    expect(await screen.findByText('75%')).toBeInTheDocument();
+    expect(screen.getByText('You earned 2 stars!')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':2});
+    const progress=vi.mocked(fetch).mock.calls.find(([url])=>url==='/children/42/progress');
+    expect(JSON.parse(String(progress?.[1]?.body))).toMatchObject({score:90,maxScore:120});
+  });
+  it('clamps a full point-based result to 100 percent',async()=>{
+    show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['5–7']}>
+      {complete=> <button onClick={()=>complete({score:180,maxScore:180,correct:12,total:12,stars:3})}>Finish full points round</button>}
+    </GameShell>);
+    fireEvent.click(screen.getByRole('button',{name:'Finish full points round'}));
+    expect(await screen.findByText('100%')).toBeInTheDocument();
+    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+  });
 });
 
 describe('preview legacy-account request isolation',()=>{

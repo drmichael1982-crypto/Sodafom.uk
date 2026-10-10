@@ -22,10 +22,11 @@ const SUBJECT_META: Record<string, { label: string; color: string; icon: React.E
   science:  { label: 'Science',  color: 'bg-orange-100 text-orange-700 border-orange-200', icon: FlaskConical },
 };
 
-interface Child { id: number; name: string; age_group: string; total_stars: number; avatarEmoji?: string }
+interface ChildSummary { id: number; name: string; ageGroup: string; totalStars: number; avatarEmoji?: string }
+interface DashboardChild { id: number; name: string; age_group: string; total_stars: number; avatarEmoji?: string }
 interface StreakInfo { currentStreak: number; maxStreak: number; starBalance: number }
 interface DashData {
-  child: Child;
+  child: DashboardChild;
   totalGames: number;
   badgeCount: number;
   subjects: { subject: string; games_played: number; stars: number }[];
@@ -178,8 +179,8 @@ function ChildStreakBadge({ childId }: { childId: number }) {
   );
 }
 
-function FamilySummaryCard({ children }: { children: Child[] }) {
-  const totalStars = children.reduce((s, c) => s + (c.total_stars ?? 0), 0);
+function FamilySummaryCard({ children }: { children: ChildSummary[] }) {
+  const totalStars = children.reduce((s, c) => s + (c.totalStars ?? 0), 0);
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -214,7 +215,7 @@ function FamilySummaryCard({ children }: { children: Child[] }) {
               <div key={c.id} className="flex items-center gap-1.5 text-sm font-bold text-foreground">
                 <span className="text-lg">{c.avatarEmoji ?? '🦁'}</span>
                 <span>{c.name}</span>
-                <span className="text-xs text-accent font-black">⭐{c.total_stars}</span>
+                <span className="text-xs text-accent font-black">⭐{c.totalStars}</span>
               </div>
             ))}
           </div>
@@ -405,9 +406,9 @@ function ChildCard({ childId }: { childId: number }) {
   );
 }
 
-function ParentDashboardInner() {
+export function ParentDashboardInner() {
   const { user } = useSession();
-  const [children, setChildren] = useState<Child[]>([]);
+  const [children, setChildren] = useState<ChildSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -420,7 +421,7 @@ function ParentDashboardInner() {
       })
       .then((d) => {
         console.log('ParentDashboard: Data loaded', d);
-        setChildren((d as { children?: Child[] }).children ?? []);
+        setChildren(Array.isArray(d) ? d as ChildSummary[] : []);
       })
       .catch(err => {
         console.error('ParentDashboard: Load failed', err);

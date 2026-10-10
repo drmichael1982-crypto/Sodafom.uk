@@ -153,7 +153,13 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
   const recordCompletion = (r: GameResult): GameResult => {
     // A retired game's delayed callback cannot record progress after an age guard.
     if (!playable.current) return r;
-    const stars = calcStars(r.score);
+    // Keep raw points for account progress, but show the same percentage and
+    // stars locally that the account API derives from score / maxScore.
+    const rawMaxScore = typeof r.maxScore === 'number' && Number.isFinite(r.maxScore) && r.maxScore > 0
+      ? r.maxScore
+      : 100;
+    const percentage = Math.round(Math.max(0, Math.min(100, (r.score / rawMaxScore) * 100)));
+    const stars = calcStars(percentage);
     const durationSeconds = r.durationSeconds ?? Math.round((Date.now() - startTimeRef.current) / 1000);
     startTimeRef.current = Date.now();
 
@@ -211,7 +217,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
         })
         .catch(() => { /* silent — rewards are non-critical */ });
     }
-    return { ...r, stars, durationSeconds };
+    return { ...r, score: percentage, stars, durationSeconds };
   };
 
   const handleReplay = () => {

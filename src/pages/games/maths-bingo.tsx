@@ -87,7 +87,7 @@ export function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: G
     onQuestionChange?.(`${qText} = ?`, card.map(String));
   }, [tier, card, marked, bingo, onQuestionChange]);
 
-  useEffect(() => { nextQuestion(); }, [nextQuestion]);
+  useEffect(() => { if (!bingo) nextQuestion(); }, [bingo, nextQuestion]);
 
   function handleMark(num: number) {
     if (!current || bingo || paused || marked.has(num)) return;
