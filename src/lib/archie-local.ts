@@ -5,19 +5,30 @@ export type LocalArchieResult = {
 
 // ── Child Name Memory ─────────────────────────────────────────────────────────
 
+function activeChildIdentity(): { id: string; name: string } | null {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('sodafom_active_child') || 'null') as { id?: unknown; name?: unknown } | null;
+    const id = typeof parsed?.id === 'number' || typeof parsed?.id === 'string' ? String(parsed.id).trim() : '';
+    if (!id) return null;
+    return { id, name: typeof parsed?.name === 'string' ? parsed.name.trim() : '' };
+  } catch { return null; }
+}
+
+function rememberedNameKey(active: { id: string } | null): string {
+  return active ? `sodafom_child_name:${encodeURIComponent(active.id)}` : 'sodafom_child_name';
+}
+
 export function getRememberedChildName(): string | null {
   if (typeof window === 'undefined') return null;
-  const direct = localStorage.getItem('sodafom_child_name')?.trim();
+  const active = activeChildIdentity();
+  const direct = localStorage.getItem(rememberedNameKey(active))?.trim();
   if (direct) return direct;
-  try {
-    const rawActive = localStorage.getItem('sodafom_active_child');
-    if (rawActive) {
-      const parsed = JSON.parse(rawActive);
-      if (parsed?.name && parsed.name !== 'Learner') {
-        return parsed.name.trim();
-      }
-    }
-  } catch { /* ignore */ }
+  if (active?.name && active.name !== 'Learner') return active.name;
+  // A legacy unscoped child-supplied name is used only when no child profile is active.
+  if (!active) {
+    const legacy = localStorage.getItem('sodafom_child_name')?.trim();
+    if (legacy) return legacy;
+  }
   try {
     const rawDesign = localStorage.getItem('sodafom_archie_design_v1');
     if (rawDesign) {
@@ -33,12 +44,12 @@ export function getRememberedChildName(): string | null {
 
 export function saveRememberedChildName(name: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('sodafom_child_name', name.trim());
+  localStorage.setItem(rememberedNameKey(activeChildIdentity()), name.trim());
 }
 
 export function clearRememberedChildName(): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem('sodafom_child_name');
+  localStorage.removeItem(rememberedNameKey(activeChildIdentity()));
 }
 
 export function tryLocalChildName(input: string): LocalArchieResult | null {

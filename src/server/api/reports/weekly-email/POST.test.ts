@@ -79,4 +79,58 @@ describe('weekly parent report email', () => {
     expect(res.json).toHaveBeenCalledWith({ sent: false, reason: 'No children found' });
     expect(mocks.sendEmail).not.toHaveBeenCalled();
   });
+
+  it('escapes stored child fields before adding them to the report HTML', async () => {
+    mocks.execute
+      .mockResolvedValueOnce([[
+        {
+          id: 7,
+          name: '</strong><img src="https://attacker.example/pixel"><strong>',
+          total_stars: 1,
+          avatar_emoji: '<svg onload="alert(1)">',
+        },
+      ]])
+      .mockResolvedValueOnce([[
+        { top_subject: '</td><a href="https://attacker.example">maths</a>', games_played: 1, stars_this_week: 1 },
+      ]]);
+    const res = response();
+
+    await handler({ headers: {} } as Request, res);
+
+    const message = mocks.sendEmail.mock.calls[0][0] as { html: string };
+    expect(message.html).toContain('&lt;img src=&quot;https://attacker.example/pixel&quot;&gt;');
+    expect(message.html).toContain('&lt;svg onload=&quot;alert(1)&quot;&gt;');
+    expect(message.html).toContain('&lt;a href=&quot;https://attacker.example&quot;&gt;maths&lt;/a&gt;');
+    expect(message.html).not.toContain('<img src="https://attacker.example/pixel">');
+    expect(message.html).not.toContain('<svg onload="alert(1)">');
+  });
+
+  it('removes line breaks from the parent name used in the email subject', async () => {
+    mocks.getSession.mockResolvedValue({
+      user: { id: 'parent-1', email: 'parent@example.test', name: 'Pat\r\nBcc: attacker@example.test' },
+    });
+    mocks.execute
+      .mockResolvedValueOnce([[
+        { id: 7, name: 'Ava', total_stars: 1, avatar_emoji: '🦊' },
+      ]])
+      .mockResolvedValueOnce([[]]);
+    const res = response();
+
+    await handler({ headers: {} } as Request, res);
+
+    const message = mocks.sendEmail.mock.calls[0][0] as { subject: string };
+    expect(message.subject).not.toMatch(/[\r\n]/);
+    expect(message.subject).toContain("Pat's weekly learning report");
+  });
+
+  it('does not disclose internal database errors to the client', async () => {
+    mocks.execute.mockRejectedValueOnce(new Error('private-db-host/schema-detail'));
+    const res = response();
+
+    await handler({ headers: {} } as Request, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Failed to send report' });
+    expect(JSON.stringify((res.json as ReturnType<typeof vi.fn>).mock.calls)).not.toContain('private-db-host');
+  });
 });

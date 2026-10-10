@@ -132,7 +132,7 @@ function AnswerSlot({
 }
 
 // ── Game inner ────────────────────────────────────────────────────────────────
-function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
+export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
   // Pick word pool based on time of day (fun variety) — mix all levels
   const allWords: WordEntry[] = [...WORDS_EASY, ...WORDS_MEDIUM, ...WORDS_HARD];
   const TOTAL = 10;
@@ -185,9 +185,11 @@ function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) => void
       const word = newAnswer.join('');
       const isCorrect = word === entry.word;
       const pts = isCorrect ? (showHint ? 5 : 10) : 0;
+      const finalScore = score + pts;
+      const finalCorrect = correctCount + (isCorrect ? 1 : 0);
       if (isCorrect) {
-        setScore(s => s + pts);
-        setCorrectCount(c => c + 1);
+        setScore(finalScore);
+        setCorrectCount(finalCorrect);
         setStreak(s => s + 1);
         setPhase('correct');
         speak(`Correct! The word is ${entry.word.toLowerCase()}.`);
@@ -196,9 +198,9 @@ function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) => void
         setPhase('wrong');
         speak(`Not quite. The word was ${entry.word.toLowerCase()}.`);
       }
-      timerRef.current = setTimeout(() => advance(), isCorrect ? 1400 : 2000);
+      timerRef.current = setTimeout(() => advance(finalScore, finalCorrect), isCorrect ? 1400 : 2000);
     }
-  }, [phase, usedIndices, answer, answerSrcIdx, scrambled, entry.word, showHint]);
+  }, [phase, usedIndices, answer, answerSrcIdx, scrambled, entry.word, showHint, score, correctCount]);
 
   const removeLetter = useCallback((slotIdx: number) => {
     if (phase !== 'answering') return;
@@ -219,10 +221,10 @@ function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) => void
     setUsedIndices([]);
   }, [entry.word.length]);
 
-  function advance() {
+  function advance(finalScore = score, finalCorrect = correctCount) {
     if (qIdx + 1 >= TOTAL) {
-      const stars = correctCount >= TOTAL * 0.9 ? 3 : correctCount >= TOTAL * 0.6 ? 2 : correctCount >= TOTAL * 0.3 ? 1 : 0;
-      onComplete({ score, correct: correctCount, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
+      const stars = finalCorrect >= TOTAL * 0.9 ? 3 : finalCorrect >= TOTAL * 0.6 ? 2 : finalCorrect >= TOTAL * 0.3 ? 1 : 0;
+      onComplete({ score: finalScore, correct: finalCorrect, total: TOTAL, stars, maxScore: TOTAL * 10, durationSeconds: 0 });
     } else {
       setQIdx(i => i + 1);
     }

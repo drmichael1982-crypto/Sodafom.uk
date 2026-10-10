@@ -30,3 +30,14 @@ it('reports only the cells the child solved and sends completion once', () => {
   fireEvent.click(screen.getByRole('button', { name: '1' }));
   expect(onComplete).toHaveBeenCalledExactlyOnceWith({ score: 100, correct: 8, total: 8, stars: 3 });
 });
+
+it.each(['Easy', 'Hard'] as const)('keeps the %s board compact inside a reachable narrow-screen region', difficulty => {
+  render(<SudokuInner difficulty={difficulty} onComplete={vi.fn()} />);
+
+  const region = screen.getByRole('region', { name: /Sudoku board/i });
+  expect(region).toHaveClass('w-full', 'max-w-full', 'overflow-x-auto', 'overscroll-x-contain');
+  expect(region.firstElementChild).toHaveClass('grid', 'w-max', 'mx-auto');
+  expect(region.firstElementChild).toHaveStyle({
+    gridTemplateColumns: `repeat(${difficulty === 'Easy' ? 4 : 9}, auto)`,
+  });
+});

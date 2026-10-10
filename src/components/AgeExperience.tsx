@@ -6,10 +6,10 @@ import { useArchieData } from '@/lib/archie/storage';
 
 const AGE_KEY = 'sodafom_learning_age';
 export function readLearningAge(): number | null {
-  try { const raw = localStorage.getItem(AGE_KEY); const age = Number(raw); return raw && Number.isInteger(age) && age >= 5 && age <= 12 ? age : null; } catch { return null; }
+  try { const raw = localStorage.getItem(AGE_KEY); const age = Number(raw); return raw && Number.isInteger(age) && age >= 5 && age <= 13 ? age : null; } catch { return null; }
 }
 export function saveLearningAge(age: number | null): boolean {
-  try { if (age === null) localStorage.removeItem(AGE_KEY); else if (Number.isInteger(age) && age >= 5 && age <= 12) localStorage.setItem(AGE_KEY, String(age)); else return false; return true; } catch { return false; }
+  try { if (age === null) localStorage.removeItem(AGE_KEY); else if (Number.isInteger(age) && age >= 5 && age <= 13) localStorage.setItem(AGE_KEY, String(age)); else return false; return true; } catch { return false; }
 }
 export function experienceBand(age: number | null, year: number): 'starter' | 'explorer' | 'challenger' {
   if (age !== null) return age <= 7 ? 'starter' : age <= 9 ? 'explorer' : 'challenger';
@@ -18,7 +18,7 @@ export function experienceBand(age: number | null, year: number): 'starter' | 'e
 const EXPERIENCES = {
   starter: { title: 'Little discoveries', label: 'Ages 5–7', intro: 'Listen, count and try one little step.', question: 'There are 3 stars. Add 2 more. How many?', choices: [4, 5, 6], answer: 5, hint: 'Start at 3. Count two more: 4, 5.', explanation: '3 + 2 = 5. You counted two extra stars!', links: [['Hear and spell', '/lesson', '🔤'], ['Read together', '/library', '📖'], ['Count and play', '/games', '⭐']] },
   explorer: { title: 'Discovery missions', label: 'Ages 8–9', intro: 'Spot a pattern, try a hint and explain your thinking.', question: 'Each rocket carries 4 explorers. How many in 3 rockets?', choices: [7, 12, 16], answer: 12, hint: 'Count three groups of 4: 4, 8, …', explanation: '4 + 4 + 4 = 12, so 3 × 4 = 12.', links: [['Learn a new skill', '/courses', '🧠'], ['Read an adventure', '/library', '📚'], ['Explore the world', '/world', '🌍']] },
-  challenger: { title: 'Challenge lab', label: 'Ages 10–12', intro: 'Investigate, solve and tell Archie how you worked it out.', question: 'A probe travels 120 km in 3 hours at a steady speed. How far in 1 hour?', choices: [30, 40, 60], answer: 40, hint: 'Divide the total distance into 3 equal parts.', explanation: '120 ÷ 3 = 40. The probe travels 40 km each hour.', links: [['Subject missions', '/courses', '🔬'], ['Practise a challenge', '/games', '🎯'], ['History discoveries', '/history', '🏰']] },
+  challenger: { title: 'Challenge lab', label: 'Ages 10–13', intro: 'Investigate, solve and tell Archie how you worked it out.', question: 'A probe travels 120 km in 3 hours at a steady speed. How far in 1 hour?', choices: [30, 40, 60], answer: 40, hint: 'Divide the total distance into 3 equal parts.', explanation: '120 ÷ 3 = 40. The probe travels 40 km each hour.', links: [['Subject missions', '/courses', '🔬'], ['Practise a challenge', '/games', '🎯'], ['History discoveries', '/history', '🏰']] },
 } as const;
 
 export default function AgeExperience({ year, askArchie, nickname }: { year: number; askArchie: () => void; nickname?: string }) {

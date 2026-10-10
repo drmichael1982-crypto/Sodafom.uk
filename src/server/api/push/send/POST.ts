@@ -1,14 +1,14 @@
 /**
  * POST /api/push/send
  * Internal endpoint — sends a push notification to a specific user or all subscribers.
- * Protected by admin code.
+ * Protected by the configured signed-in owner account.
  */
 import type { Request, Response } from 'express';
 import webpush from 'web-push';
 import { db } from '../../../db/client.js';
 import { sql } from 'drizzle-orm';
 import { getOrCreateVapidKeys } from '../../../push-keys.js';
-import { getAuth } from '@/lib/auth/auth';
+import { requireArchieOwnerSession } from '@/server/lib/archie-owner-session';
 
 interface PushRow {
   endpoint: string;
@@ -18,8 +18,9 @@ interface PushRow {
 
 export default async function handler(req: Request, res: Response) {
   try {
-    const { code, userId, title, body, url, icon, tag } = req.body as {
-      code?: string;
+    if (!await requireArchieOwnerSession(req, res)) return;
+
+    const { userId, title, body, url, icon, tag } = req.body as {
       userId?: string;
       title?: string;
       body?: string;
@@ -30,15 +31,6 @@ export default async function handler(req: Request, res: Response) {
     if (!title?.trim() || !body?.trim()) {
       return res.status(400).json({ error: 'Title and message are required' });
     }
-    const auth = getAuth();
-    const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-    const masterCodeEnv = process.env.ADMIN_MASTER_CODE || '040718';
-
-    // Allow access if user is a signed-in admin OR provides the correct master code
-    if (!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin && code !== masterCodeEnv) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-
     const { publicKey, privateKey } = await getOrCreateVapidKeys();
     webpush.setVapidDetails('mailto:sodafom.uk@gmail.com', publicKey, privateKey);
 

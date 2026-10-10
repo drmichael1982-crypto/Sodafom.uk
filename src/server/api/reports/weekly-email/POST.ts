@@ -22,6 +22,21 @@ interface SubjectStatsRow {
   top_subject: string;
 }
 
+function escapeHtml(value: unknown): string {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[character] ?? character);
+}
+
+function safeSubjectName(value: unknown): string {
+  const name = String(value ?? '').replace(/[\r\n]+/g, ' ').trim().slice(0, 50);
+  return name.split(/\s+/)[0] || 'Your';
+}
+
 export default async function handler(req: Request, res: Response) {
   try {
     const session = await getAuth().api.getSession({ headers: req.headers as Record<string, string> });
@@ -80,7 +95,7 @@ export default async function handler(req: Request, res: Response) {
     const childRows2 = childStats.map(c => `
       <tr>
         <td style="padding:12px 16px;border-bottom:1px solid #f0f0f0;">
-          <strong>${c.avatarEmoji} ${c.name}</strong>
+          <strong>${escapeHtml(c.avatarEmoji)} ${escapeHtml(c.name)}</strong>
         </td>
         <td style="padding:12px 16px;border-bottom:1px solid #f0f0f0;text-align:center;">
           ${c.gamesThisWeek}
@@ -89,7 +104,7 @@ export default async function handler(req: Request, res: Response) {
           ⭐ ${c.starsThisWeek}
         </td>
         <td style="padding:12px 16px;border-bottom:1px solid #f0f0f0;text-align:center;text-transform:capitalize;">
-          ${c.topSubject ?? '—'}
+          ${escapeHtml(c.topSubject ?? '—')}
         </td>
       </tr>
     `).join('');
@@ -161,13 +176,13 @@ export default async function handler(req: Request, res: Response) {
 
     await sendEmail({
       to: parent.email,
-      subject: `📊 ${parent.name?.split(' ')[0] ?? 'Your'}'s weekly learning report — ${totalGamesThisWeek} games, ${totalStarsThisWeek} stars`,
+      subject: `📊 ${safeSubjectName(parent.name)}'s weekly learning report — ${totalGamesThisWeek} games, ${totalStarsThisWeek} stars`,
       html,
     });
 
     return res.json({ sent: true, childCount: childStats.length, totalGamesThisWeek, totalStarsThisWeek });
   } catch (err) {
     console.error('[weekly-email]', err);
-    return res.status(500).json({ error: 'Failed to send report', message: String(err) });
+    return res.status(500).json({ error: 'Failed to send report' });
   }
 }

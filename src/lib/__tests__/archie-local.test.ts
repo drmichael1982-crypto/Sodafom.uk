@@ -50,6 +50,19 @@ describe('Archie Local Maths & Name Memory', () => {
       localStorage.setItem('sodafom_child_name', 'Sam');
       expect(getRememberedChildName()).toBe('Sam');
     });
+
+    it('keeps remembered names separate when the active child changes', () => {
+      localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 1, name: 'Mia', ageGroup: '5-7' }));
+      saveRememberedChildName('Mimi');
+      expect(getRememberedChildName()).toBe('Mimi');
+
+      localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 2, name: 'Leo', ageGroup: '8-10' }));
+      expect(getRememberedChildName()).toBe('Leo');
+      saveRememberedChildName('Lee');
+
+      localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 1, name: 'Mia', ageGroup: '5-7' }));
+      expect(getRememberedChildName()).toBe('Mimi');
+    });
   });
 
   describe('Local Maths Engine', () => {

@@ -1170,7 +1170,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
           <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.2 }}
             className="absolute top-4 right-4 z-20 w-16 h-16 rounded-full flex flex-col items-center justify-center shadow-lg border-4 border-white bg-accent">
             <span className="text-accent-foreground font-black text-xs leading-none">Ages</span>
-            <span className="text-accent-foreground font-black text-sm leading-none">5–12</span>
+            <span className="text-accent-foreground font-black text-sm leading-none">5–13</span>
           </motion.div>
 
           {/* Main content */}

@@ -51,7 +51,7 @@ function cleanTutorText(text: string) {
 function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
   const learningAge = Number(localStorage.getItem('sodafom_learning_age'));
-  if (Number.isInteger(learningAge) && learningAge >= 5 && learningAge <= 12) return learningAge;
+  if (Number.isInteger(learningAge) && learningAge >= 5 && learningAge <= 13) return learningAge;
   try {
     const app = JSON.parse(localStorage.getItem('sodafom_archie_design_v1') || '{}');
     const year = Number(app.settings?.year);
@@ -123,6 +123,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   const quietSessions = useRef(0);
   const launchedLessonRoute = useRef<string | null>(null);
   const previousRoute = useRef(`${location.pathname}${location.search || ''}`);
+  const previousLearningYear = useRef(settings.year);
   const contextKey = JSON.stringify([gameTitle, subject, currentQuestion, currentOptions,
     lessonTutor?.activityId, lessonTutor?.questionId, lessonTutor?.stepId,
     lessonTutor?.status === 'paused', lessonTutor?.status === 'finished', lesson?.phase]);
@@ -170,6 +171,23 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     stopVoiceConversation(conversationRef.current || recognition.current ? 'Voice conversation stopped after changing activity.' : '');
     pending.current?.abort(); pending.current = null; busyRef.current = false; setBusy(false); setMessages([]);
   }, [location.pathname, location.search]);
+  useEffect(() => {
+    const resetForLearner = () => {
+      requestLessonVoice?.(null);
+      stopVoiceConversation('Learner changed. Start a new conversation when you are ready.');
+      pending.current?.abort(); pending.current = null; busyRef.current = false; setBusy(false);
+      setInput(''); setMessages([]);
+    };
+    window.addEventListener('sodafom:active-child-changed', resetForLearner);
+    return () => window.removeEventListener('sodafom:active-child-changed', resetForLearner);
+  });
+  useEffect(() => {
+    if (previousLearningYear.current === settings.year) return;
+    previousLearningYear.current = settings.year;
+    requestLessonVoice?.(null);
+    stopVoiceConversation('Learning year changed. Start a new conversation when you are ready.');
+    setInput(''); setMessages([]);
+  }, [settings.year]);
   useEffect(() => {
     if (previousContext.current === contextKey) return;
     const sameLesson = !!lessonTutor && previousLessonId.current === lessonTutor.activityId;
