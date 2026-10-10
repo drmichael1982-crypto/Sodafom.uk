@@ -19,9 +19,11 @@ export function isGameForAgeBand(ageBand: string, ageGroups: readonly string[]):
 
 export function isGameForYear(year: number, ageGroups: readonly string[]): boolean {
   if (!Number.isInteger(year) || year < 1 || year > 9) return false;
-  const practiceAge = year + 4;
+  // England school years normally span two ages because birthdays fall
+  // throughout the academic year. Keep the public app's upper age at 13.
+  const practiceRange: [number, number] = [year + 4, Math.min(year + 5, 13)];
   return ageGroups.some(group => {
     const gameRange = parseAgeRange(group);
-    return gameRange !== null && practiceAge >= gameRange[0] && practiceAge <= gameRange[1];
+    return gameRange !== null && practiceRange[0] <= gameRange[1] && gameRange[0] <= practiceRange[1];
   });
 }

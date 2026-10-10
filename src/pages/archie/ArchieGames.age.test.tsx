@@ -58,7 +58,7 @@ describe('selected-year game discovery and difficulty',()=>{
     expect(gameRoutes(view.container)).not.toContain('/games/phonics-parrot');
     expect(gameRoutes(view.container)).toContain('/games/punctuation-patrol');
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent('8-10 · tier 2');
-    chooseYear(6);expect(gameRoutes(view.container)).not.toContain('/games/algebra-quest');
+    chooseYear(6);expect(gameRoutes(view.container)).toContain('/games/algebra-quest');
     chooseYear(7);
     expect(gameRoutes(view.container)).toContain('/games/algebra-quest');
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent('11-13 · tier 3');
@@ -100,11 +100,12 @@ describe('selected-year game discovery and difficulty',()=>{
     expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year).toBe(year);
     expect(JSON.parse(localStorage.getItem('sodafom_active_child')!)).toEqual(staleProfile);
   });
-  it('does not offer a game for a year its entry screen rejects',()=>{
-    saveYear(4);const view=show();
+  it('offers a game when either learner age in the school year matches its entry range',()=>{
+    saveYear(3);const view=show();
     for(const route of ['/games/angle-explorer','/games/area-adventure','/games/data-detective'])expect(gameRoutes(view.container)).not.toContain(route);
-    chooseYear(5);
+    chooseYear(4);
     for(const route of ['/games/angle-explorer','/games/area-adventure','/games/data-detective'])expect(gameRoutes(view.container)).toContain(route);
-    chooseYear(8);expect(gameRoutes(view.container)).not.toContain('/games/place-value');
+    chooseYear(6);expect(gameRoutes(view.container)).toContain('/games/place-value');
+    chooseYear(7);expect(gameRoutes(view.container)).not.toContain('/games/place-value');
   });
 });

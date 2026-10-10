@@ -49,8 +49,18 @@ describe.each([
     controls.year = year;
     render(<Contents Page={Page} />);
     // Independent expected teaching-age ranges, not the predicate under test.
-    const band = year <= 3 ? 'young' : year <= 6 ? 'middle' : 'older';
-    const expectedNames = included.flatMap(item => [`${item} ${band}`, `${item} shared`, ...(year <= 2 ? [`${item} early`] : [])]);
+    const bandsByYear: Record<number, string[]> = {
+      1: ['early', 'young'],
+      2: ['early', 'young'],
+      3: ['young', 'middle'],
+      4: ['middle'],
+      5: ['middle'],
+      6: ['middle', 'older'],
+      7: ['older'],
+      8: ['older'],
+      9: ['older'],
+    };
+    const expectedNames = included.flatMap(item => [...bandsByYear[year].map(band => `${item} ${band}`), `${item} shared`]);
     const articles = screen.getAllByRole('article');
     expect(articles).toHaveLength(expectedNames.length);
     expect(articles.map(article => within(article).getByRole('heading', { level: 2 }).textContent).sort()).toEqual(expectedNames.sort());
