@@ -258,9 +258,12 @@ export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: G
   const [grid, setGrid] = useState<Grid>(puzzle.map(row => [...row]));
   const [selected, setSelected] = useState<[number, number] | null>(null);
   const [done, setDone] = useState(false);
-  const [startTime] = useState(Date.now());
   const [mistakes, setMistakes] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [feedback, setFeedback] = useState('Select an empty square, then choose a number.');
   const completionSent = useRef(false);
+  const pauseButtonRef = useRef<HTMLButtonElement>(null);
+  const resumeButtonRef = useRef<HTMLButtonElement>(null);
 
   const isFixed = (r: number, c: number) => cell(puzzle, r, c) !== null;
   const boxColors = size === 4 ? BOX_COLORS_4 : BOX_COLORS_9;
@@ -270,23 +273,29 @@ export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: G
   const boxBorderR = size === 4 ? 1 : 2;
 
   const handleCellClick = (r: number, c: number) => {
-    if (isFixed(r, c) || done) return;
+    if (isFixed(r, c) || done || paused) return;
     setSelected([r, c]);
+    setFeedback(`Row ${r + 1}, column ${c + 1} selected. Choose a number.`);
   };
 
   const handleInput = (n: number) => {
-    if (!selected || done || completionSent.current) return;
+    if (!selected || done || paused || completionSent.current) return;
     const [r, c] = selected;
     if (isFixed(r, c)) return;
     const newGrid = grid.map(row => [...row]);
     setCell(newGrid, r, c, n);
     setGrid(newGrid);
-    if (n !== cell(solution, r, c)) { setMistakes(m => m + 1); return; }
+    if (n !== cell(solution, r, c)) {
+      setMistakes(m => m + 1);
+      setFeedback('That number does not fit here yet. Try another number, erase it, or use a hint.');
+      return;
+    }
+    setFeedback('Good reasoning — that number fits. Choose another empty square.');
     const allFilled = newGrid.every((row, ri) => row.every((v, ci) => v === cell(solution, ri, ci)));
     if (allFilled) {
       completionSent.current = true;
-      const elapsed = Math.round((Date.now() - startTime) / 1000);
-      const score = Math.max(100 - elapsed - mistakes * 5, 10);
+      // Thoughtful play and optional breaks must not carry a hidden time penalty.
+      const score = Math.max(100 - mistakes * 5, 50);
       const stars = score >= 90 ? 3 : score >= 70 ? 2 : score >= 50 ? 1 : 0;
       const blanks = puzzle.flat().filter(v => v === null).length;
       setDone(true);
@@ -295,12 +304,43 @@ export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: G
   };
 
   const handleErase = () => {
-    if (!selected || done) return;
+    if (!selected || done || paused) return;
     const [r, c] = selected;
     if (isFixed(r, c)) return;
     const newGrid = grid.map(row => [...row]);
     setCell(newGrid, r, c, null);
     setGrid(newGrid);
+    setFeedback('Square cleared. Check its row, column and box, then try again.');
+  };
+
+  const handleHint = () => {
+    if (!selected || paused || done) {
+      setFeedback('Select an empty square first, then ask for a hint.');
+      return;
+    }
+    const [r, c] = selected;
+    const selectedValue = cell(grid, r, c);
+    if (selectedValue !== null) {
+      setFeedback(selectedValue === cell(solution, r, c)
+        ? 'That number already fits. Select another empty square for a new hint.'
+        : 'Erase the red number first, then use the row and column clues to retry.');
+      return;
+    }
+    const rowMissing = numbers.filter(n => !grid.at(r)?.includes(n));
+    const columnMissing = numbers.filter(n => !grid.some(row => row.at(c) === n));
+    setFeedback(`Hint for row ${r + 1}, column ${c + 1}: the row is missing ${rowMissing.join(' and ')}; the column is missing ${columnMissing.join(' and ')}. Which number appears in both lists?`);
+  };
+
+  const handlePause = () => {
+    setPaused(true);
+    setFeedback('Puzzle paused. Your entries are safe.');
+    requestAnimationFrame(() => resumeButtonRef.current?.focus());
+  };
+
+  const handleResume = () => {
+    setPaused(false);
+    setFeedback(selected ? 'Puzzle resumed. Continue with your selected square.' : 'Puzzle resumed. Select an empty square.');
+    requestAnimationFrame(() => pauseButtonRef.current?.focus());
   };
 
   const getCellBg = (r: number, c: number) => {
@@ -340,9 +380,56 @@ export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: G
           : 'Each row, column and 3×3 box must contain 1–9 exactly once.'}
       </p>
 
+      <div className="mx-auto flex w-fit flex-wrap items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={handleHint}
+          disabled={paused || done}
+          className="min-h-11 rounded-xl border-2 border-blue-300 bg-blue-50 px-4 py-2 text-sm font-black text-blue-800 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          💡 Show hint
+        </button>
+        {!paused && (
+          <button
+            ref={pauseButtonRef}
+            type="button"
+            onClick={handlePause}
+            disabled={done}
+            className="min-h-11 rounded-xl border-2 border-border bg-card px-4 py-2 text-sm font-black text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            ⏸ Pause puzzle
+          </button>
+        )}
+      </div>
+
+      <p
+        role="status"
+        aria-live="polite"
+        className={`mx-auto min-h-12 w-full max-w-md rounded-xl border px-3 py-2 text-center text-sm font-bold ${feedback.startsWith('That number') ? 'border-red-300 bg-red-50 text-red-800' : 'border-blue-200 bg-blue-50 text-blue-900'}`}
+      >
+        {feedback}
+      </p>
+
+      {paused && (
+        <div className="mx-auto flex min-h-64 w-full max-w-md flex-col items-center justify-center gap-4 rounded-2xl border-2 border-blue-300 bg-blue-50 p-6 text-center">
+          <span className="text-4xl" aria-hidden="true">🌿</span>
+          <h3 className="text-xl font-black text-blue-950">Take a calm break</h3>
+          <p className="text-sm font-semibold text-blue-900">Your puzzle and selected square are saved on this screen.</p>
+          <button
+            ref={resumeButtonRef}
+            type="button"
+            onClick={handleResume}
+            className="min-h-11 rounded-xl bg-blue-700 px-5 py-2 font-black text-white transition-colors hover:bg-blue-800"
+          >
+            ▶ Resume puzzle
+          </button>
+        </div>
+      )}
+
       {/* Grid */}
       <div
-        className="w-full max-w-full overflow-x-auto overscroll-x-contain pb-1"
+        hidden={paused}
+        className={`${paused ? 'hidden' : ''} w-full max-w-full overflow-x-auto overscroll-x-contain pb-1`}
         role="region"
         aria-label="Sudoku board. Scroll sideways to reach every column on a narrow screen."
         tabIndex={0}
@@ -356,6 +443,7 @@ export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: G
               const highlight = selVal && val === selVal && !selected?.every((v, i) => [r, c].at(i) === v);
               const isBoxBorderR = r === boxBorderR || (size === 9 && r === 5);
               const isBoxBorderC = c === boxBorderC || (size === 9 && c === 5);
+              const isError = val !== null && val !== cell(solution, r, c);
               return (
                 <motion.button
                   key={`${r}-${c}`}
@@ -371,7 +459,9 @@ export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: G
                     ${!isFixed(r, c) ? 'cursor-pointer' : 'cursor-default'}
                   `}
                   disabled={isFixed(r, c)}
-                  aria-label={`Row ${r + 1} column ${c + 1}: ${val ?? 'empty'}`}
+                  aria-pressed={!isFixed(r, c) ? selected?.[0] === r && selected?.[1] === c : undefined}
+                  aria-invalid={isError || undefined}
+                  aria-label={`Row ${r + 1} column ${c + 1}: ${val ?? 'empty'}${isError ? ', try again' : ''}`}
                 >
                   {val ?? ''}
                 </motion.button>
@@ -382,13 +472,14 @@ export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: G
       </div>
 
       {/* Number pad */}
-      <div className="flex flex-wrap gap-2 justify-center max-w-xs">
+      <div hidden={paused} className={`${paused ? 'hidden' : ''} mx-auto flex max-w-xs flex-wrap justify-center gap-2`} aria-label="Number choices">
         {numbers.map(n => (
           <motion.button
             key={n}
             whileTap={{ scale: 0.85 }}
             onClick={() => handleInput(n)}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-lg font-black border-2 border-border bg-card hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all shadow-sm"
+            disabled={!selected || done}
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-lg font-black border-2 border-border bg-card hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
           >
             {n}
           </motion.button>
@@ -396,7 +487,8 @@ export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: G
         <motion.button
           whileTap={{ scale: 0.85 }}
           onClick={handleErase}
-          className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-base font-bold border-2 border-border bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-all"
+          disabled={!selected || done}
+          className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl text-base font-bold border-2 border-border bg-muted text-muted-foreground hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-all disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Erase"
         >
           ✕
@@ -456,3 +548,4 @@ export default function SudokuGame() {
     </>
   );
 }
+

@@ -16,6 +16,8 @@ it('waits for the child to replay and does not call 90% a perfect score',()=>{
   expect(replay).not.toHaveBeenCalled();
   expect(screen.queryByText(/Perfect score/i)).not.toBeInTheDocument();
   expect(screen.queryByText('All correct!')).not.toBeInTheDocument();
+  expect(screen.queryByText('You got every question right!')).not.toBeInTheDocument();
+  expect(screen.getByText('Your practice earned three stars!')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Play another round'}));expect(replay).toHaveBeenCalledTimes(1);
 });
 it('uses readable reward colours on the maths result screen',()=>{
@@ -58,3 +60,4 @@ it('leaves focus alone while a native dialog is open',()=>{
   render(<><dialog open aria-label="Ask Archie"><input aria-label="Tutor question" /></dialog><MemoryRouter><ResultScreen result={{score:80,correct:8,total:10,stars:2}} focusOrigin={origin} onReplay={vi.fn()} onHome={vi.fn()} gameTitle="Number Pop" subject="maths" nextGame={null} navigate={vi.fn()}/></MemoryRouter></>);
   expect(document.body).toHaveFocus();
 });
+

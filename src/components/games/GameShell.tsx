@@ -515,7 +515,7 @@ export function ResultScreen({
                 <p className="font-black text-lg tracking-wide" style={{ fontFamily: 'var(--font-heading)' }}>
                   ⭐ Three stars earned! ⭐
                 </p>
-                <p className="text-sm opacity-90 font-bold">{result.correct===result.total?'You got every question right!':'Your practice earned three stars!'}</p>
+                <p className="text-sm opacity-90 font-bold">{result.score===100?'You got every question right!':'Your practice earned three stars!'}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -766,3 +766,4 @@ export function ResultScreen({
     </>
   );
 }
+

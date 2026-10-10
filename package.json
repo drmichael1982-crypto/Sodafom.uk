@@ -26,7 +26,8 @@
     "build:legacy": "vite build && vite build --ssr src/server/entry.ts",
     "start:legacy": "node dist/server.bundle.mjs",
     "seed:legacy": "tsx scripts/run-education-cloud-seed.ts",
-    "test:archie:ui": "node scripts/test-archie-ui.cjs"
+    "test:archie:ui": "node scripts/test-archie-ui.cjs",
+    "test:archie:sudoku": "node scripts/test-sudoku-journey.cjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.43",
