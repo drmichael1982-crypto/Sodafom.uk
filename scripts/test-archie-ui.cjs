@@ -352,6 +352,13 @@ const results=[];
         assert.equal(await hear.evaluate(element=>element===document.activeElement),true,label+' speech failure must retain retry focus');
         assert.equal(await soundCard.isVisible(),true,label+' printed phonics sound must remain visible');
         assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,label+' recovery must not overflow');
+        await page.waitForFunction(id=>{
+          const panel=document.querySelector('.game-app-area > div');const card=document.getElementById(id);
+          if(!panel||!card)return false;
+          const panelStyle=getComputedStyle(panel);const cardStyle=getComputedStyle(card);
+          const cardTransform=cardStyle.transform;
+          return panelStyle.opacity==='1'&&cardStyle.opacity==='1'&&(cardTransform==='none'||cardTransform==='matrix(1, 0, 0, 1, 0, 0)');
+        },controlledId);
         await page.screenshot({path:`test-results/phonics-speech-fallback-${width}.png`,fullPage:true});
         await button('Got it').click();await page.getByRole('status').filter({hasText:recovery}).waitFor({state:'detached'});
       };
