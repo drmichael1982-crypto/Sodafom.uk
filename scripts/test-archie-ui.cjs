@@ -47,7 +47,8 @@ const results=[];
   const isEligible=(game,year)=>game.ageGroups.some(group=>{
     const match=group.trim().match(/^(\d+)\s*[–-]\s*(\d+)$/);
     assert.ok(match,'Catalogue must advertise a clear age range: '+game.title);
-    return year+4>=Number(match[1])&&year+4<=Number(match[2]);
+    const schoolYearAges=[year+4,Math.min(year+5,13)];
+    return schoolYearAges[0]<=Number(match[2])&&Number(match[1])<=schoolYearAges[1];
   });
   const assertGameIntersection=async(year,subject='all',query='')=>{
     const expected=catalog.filter(game=>isEligible(game,year)&&(subject==='all'||game.subject===subject)&&
