@@ -101,6 +101,7 @@ describe("Teacher and Class Lessons Views", () => {
         { id: "history-jigsaw-1066", kind: "lesson", title: "1066 history picture puzzle", stars: 1, date: "2026-10-07T19:30:00.000Z" },
         { id: "fraction-jigsaw-year-1", kind: "lesson", title: "Year 1 fraction picture puzzles", stars: 1, date: "2026-10-07T19:45:00.000Z" },
         { id: "fraction-jigsaw-year-2", kind: "lesson", title: "Year 2 fraction picture puzzles", stars: 1, date: "2026-10-07T20:00:00.000Z" },
+        { id: "fraction-picture-1-1791601200000-0", kind: "lesson", title: "Fractions · 10 questions · 8 first-try answers", stars: 3, date: "2026-10-07T20:15:00.000Z" },
       ],
       stickers: [],
     };
@@ -116,12 +117,13 @@ describe("Teacher and Class Lessons Views", () => {
     expect(screen.getByRole("heading", { name: "Maths · Year 1" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Maths · Year 2" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "History · Year not recorded" })).toBeInTheDocument();
-    expect(screen.getByText("2 completed puzzles")).toBeInTheDocument();
+    expect(screen.getAllByText("2 completed puzzles")).toHaveLength(2);
     expect(screen.getByText(/History records have no saved year, so none is guessed/i)).toBeInTheDocument();
     expect(screen.getByText("Ancient Egypt history picture puzzle")).toBeInTheDocument();
     expect(screen.getByText("1066 history picture puzzle")).toBeInTheDocument();
     expect(screen.getByText("Year 1 fraction picture puzzles")).toBeInTheDocument();
     expect(screen.getByText("Year 2 fraction picture puzzles")).toBeInTheDocument();
+    expect(screen.getByText("Fractions · 10 questions · 8 first-try answers")).toBeInTheDocument();
     expect(screen.queryByText("Year 2 spelling")).not.toBeInTheDocument();
     expect(localStorage.getItem("sodafom_archie_design_v1")).toBe(before);
   });

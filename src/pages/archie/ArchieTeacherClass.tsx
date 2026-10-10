@@ -107,7 +107,8 @@ type PuzzleGroup = {
 export function groupPuzzleActivities(activities: Activity[]): PuzzleGroup[] {
   const grouped = new Map<string, PuzzleGroup>();
   for (const activity of activities.slice().reverse()) {
-    const fractionYear = activity.id.match(/^fraction-jigsaw-year-(\d+)$/)?.[1];
+    const fractionYear = activity.id.match(/^fraction-jigsaw-year-(\d+)$/)?.[1]
+      ?? activity.id.match(/^fraction-picture-(\d+)-/)?.[1];
     const meta = fractionYear
       ? { key: `maths-year-${fractionYear}`, subject: "Maths" as const, year: `Year ${fractionYear}` }
       : activity.id.startsWith("history-jigsaw-")
