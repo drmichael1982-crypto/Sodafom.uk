@@ -22,3 +22,6 @@
 /* Short landscape screens need a scrollable lesson area. Fragmenting the
    nested class grid into tiny columns can freeze the browser renderer. */
 @media(max-height:500px){.picture-route-content .app-screen-window{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain}.picture-route-content .app-screen-flow{height:auto;column-width:auto!important;transform:none!important}.picture-route-content .app-screen-controls{display:none}}
+
+/* Keep the fixed icon pieces usable even on very narrow phones. */
+.picture-jigsaw-board{min-width:calc(var(--picture-cols)*44px + 6px);min-height:calc(var(--picture-rows)*44px + 6px)}

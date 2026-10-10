@@ -5,6 +5,7 @@ import { useArchieContext } from '@/contexts/ArchieContext';
 import { useVoice } from '@/lib/voice-context';
 import { sceneArtworkPath, sceneForSubject } from './SceneArtwork';
 import './page-picture-jigsaw.css';
+import ShootingStars from './ShootingStars';
 import {PicturePauseContext} from '@/lib/archie/picture-pause';
 
 const ACTIVITIES = [['Lessons','/courses'],['Quests','/quests'],['Maths','/games?subject=maths'],['Reading','/games?subject=reading'],['Spelling','/games?subject=spelling'],['Science','/games?subject=science'],['Geography','/games/geography-quiz'],['Whiteboard','/lesson'],['Library','/library'],['Homework','/homework'],['Cartoons','/cartoons'],['Stickers','/stickers'],['Rewards','/rewards'],['Parents','/parents'],['Class','/class'],['Teachers','/teacher'],['Games','/games'],['History','/history'],['Trail','/games/archie-adventure-trail'],['My world','/world'],['Ask Archie','/ask-archie'],['Clock lab','/time-lab'],['Progress','/progress'],['Artwork','/artwork'],['Settings','/settings'],['Privacy','/privacy']];
@@ -42,6 +43,7 @@ export default function PagePictureJigsaw({pageKey,title='Archie’s picture pla
   return <section className={`page-picture-jigsaw ${complete?'picture-complete':''}`} aria-label="Whole-page picture jigsaw">
     <header className="picture-heading"><div><span className="picture-eyebrow"><Sparkles size={13}/> Archie & friends</span><h2>{title}</h2></div><span className="picture-count" aria-label="Picture puzzle progress">{placed.length} / {total-pins.length}</span></header>
     <div className="picture-play-area"><div ref={board} className="picture-jigsaw-board" style={{'--picture-cols':cols,'--picture-rows':rows,'--picture-art':`url("${art}")`} as CSSProperties} aria-label="Picture puzzle spaces">
+      {scene==='science'&&<ShootingStars/>}
       {Array.from({length:total},(_,piece)=>{const pin=pins.indexOf(piece),row=Math.floor(piece/cols),col=piece%cols;
         if(pin>=0){const {label,to,Icon}=pin===0&&onReturn?{label:pageKey.startsWith('/games/')?'My game':pageKey.startsWith('/lesson')||pageKey.startsWith('/courses/')?'My lesson':'This page',to:null,Icon:ArrowLeft}:pin===5&&pageKey==='home'?{label:'Parents',to:'/parents',Icon:Users}:PINS[pin];const content=<>{tile(piece)}<span className={`picture-icon-label pin-colour-${pin}`}><Icon size={22}/><span>{label==='Ask Archie'?'Archie':label}</span><span className="picture-pin-mark" aria-hidden="true">●</span></span></>;
           return to?<Link key={piece} className="picture-board-piece picture-fixed-piece" aria-label={label} to={to}>{content}</Link>:<button key={piece} type="button" className="picture-board-piece picture-fixed-piece" aria-label={label} onClick={()=>{if(pin===0&&onReturn)onReturn();else openArchie();}}>{content}</button>;

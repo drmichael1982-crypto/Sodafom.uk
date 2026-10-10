@@ -1,0 +1,74 @@
+.shooting-stars {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+  border-radius: inherit;
+}
+.shooting-star {
+  position: absolute;
+  width: 90px;
+  height: 2px;
+  border-radius: 100%;
+  opacity: 0;
+  background: linear-gradient(90deg, transparent, #91dcff, #fff);
+  transform: rotate(-28deg);
+  animation: archie-shooting-star 8s linear infinite;
+  animation-play-state: paused;
+}
+.shooting-star:after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: -2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px #b7e8ff;
+}
+.stars-moving .shooting-star {
+  animation-play-state: running;
+}
+.shooting-star-0 {
+  top: 14%;
+  left: -100px;
+  animation-delay: -2s;
+}
+.shooting-star-1 {
+  top: 44%;
+  left: -100px;
+  animation-delay: -5s;
+  animation-duration: 11s;
+}
+.shooting-star-2 {
+  top: 28%;
+  left: -100px;
+  animation-delay: -8s;
+  animation-duration: 13s;
+}
+@keyframes archie-shooting-star {
+  0%,
+  72% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(-28deg);
+  }
+  74% {
+    opacity: 0.9;
+  }
+  85% {
+    opacity: 0;
+    transform: translate(650px, 310px) rotate(-28deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(650px, 310px) rotate(-28deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shooting-star {
+    display: none;
+    animation: none;
+  }
+}
