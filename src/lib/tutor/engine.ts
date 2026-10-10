@@ -25,10 +25,11 @@ let activePendingQuestion: {
   subject: string;
   topic: string;
   question: LessonQuestion;
+  ageGroup: TopicLesson['ageGroup'];
 } | null = null;
 
-export function setActivePendingQuestion(subject: string, topic: string, question: LessonQuestion) {
-  activePendingQuestion = { subject, topic, question };
+export function setActivePendingQuestion(subject: string, topic: string, question: LessonQuestion, ageGroup = getActiveAgeGroup()) {
+  activePendingQuestion = { subject, topic, question, ageGroup };
 }
 
 export function getActivePendingQuestion() {
@@ -44,6 +45,13 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
   const lower = trimmed.toLowerCase();
   const memory = loadTutorMemory();
   const childName = memory.childName ? memory.childName : '';
+  const activeAgeGroup = getActiveAgeGroup();
+
+  // A question prepared for a different learner band must never be graded
+  // after a grown-up changes the saved school year.
+  if (activePendingQuestion && activePendingQuestion.ageGroup !== activeAgeGroup) {
+    activePendingQuestion = null;
+  }
 
   const isNewLessonRequest = /\b(?:teach|quiz|practice|practise|explain|learn|test)\b/i.test(lower);
   if (isNewLessonRequest) {
@@ -113,7 +121,6 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
 
   // 4. Match topic / subject lesson query
   // Subjects: Maths, English, Science, Geography, RE, Technology, Computing, General Knowledge
-  const activeAgeGroup = getActiveAgeGroup();
   const ageOrder: TopicLesson['ageGroup'][] = ['5-7', '8-10', '11-13'];
   // Prefer the child's current band, but keep earlier foundations available for
   // review. For example, an older child asking for grammar can still learn nouns
@@ -138,7 +145,7 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
 
     if (isQuizMode && matchedLesson.questions.length > 0) {
       const q = matchedLesson.questions[0];
-      setActivePendingQuestion(matchedLesson.subject, matchedLesson.topic, q);
+      setActivePendingQuestion(matchedLesson.subject, matchedLesson.topic, q, activeAgeGroup);
       const optsText = q.options ? ` Options: ${q.options.join(', ')}` : '';
       return {
         text: `${greeting}Let's practice ${matchedLesson.title}! ${q.question}${optsText}`,
@@ -148,7 +155,7 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
       // Teach mode
       const firstQ = matchedLesson.questions[0];
       if (firstQ) {
-        setActivePendingQuestion(matchedLesson.subject, matchedLesson.topic, firstQ);
+        setActivePendingQuestion(matchedLesson.subject, matchedLesson.topic, firstQ, activeAgeGroup);
       }
       const exampleText = matchedLesson.examples.length > 0 ? ` Example: ${matchedLesson.examples[0]}.` : '';
       const qText = firstQ ? ` Ready for a question? ${firstQ.question}` : '';

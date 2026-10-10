@@ -81,6 +81,24 @@ describe('Local Tutoring Engine & Memory', () => {
       expect(getActivePendingQuestion()?.topic).toBe('grammar');
     });
 
+    it('drops an older age-band question before grading a younger learner', () => {
+      localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({ settings: { year: 4 } }));
+      expect(tryLocalTutor('teach me fractions')?.text).toContain('What is 1/2 of 20?');
+      expect(getActivePendingQuestion()?.topic).toBe('fractions');
+
+      localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({ settings: { year: 1 } }));
+      expect(tryLocalTutor('what is a verb?')).toBeNull();
+      expect(getActivePendingQuestion()).toBeNull();
+      expect(loadTutorMemory().topics['maths:fractions']).toBeUndefined();
+    });
+
+    it('still grades a pending question when the learning age band is unchanged', () => {
+      localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({ settings: { year: 4 } }));
+      tryLocalTutor('teach me fractions');
+      expect(tryLocalTutor('10')?.text).toContain('Spot on');
+      expect(loadTutorMemory().topics['maths:fractions']).toMatchObject({ totalAttempted: 1, totalCorrect: 1 });
+    });
+
     it('teaches a Geography lesson locally', () => {
       const res = tryLocalTutor('quiz me on geography');
       expect(res).not.toBeNull();
