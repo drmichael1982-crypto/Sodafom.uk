@@ -70,7 +70,17 @@ export default async function handler(req: Request, res: Response) {
     const session = await auth.api.getSession({ headers: new Headers(req.headers as Record<string, string>) });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
 
-    const childId = parseInt(String(req.params.childId));
+    const childIdParam = Array.isArray(req.params.childId) ? req.params.childId[0] : req.params.childId;
+    if (!/^\d+$/.test(childIdParam ?? '')) return res.status(400).json({ error: 'Invalid child ID' });
+    const childId = Number(childIdParam);
+    if (!Number.isSafeInteger(childId) || childId <= 0) return res.status(400).json({ error: 'Invalid child ID' });
+
+    const [ownedChild] = await db.select({ id: children.id })
+      .from(children)
+      .where(and(eq(children.id, childId), eq(children.parentId, session.user.id)))
+      .limit(1);
+    if (!ownedChild) return res.status(404).json({ error: 'Child not found' });
+
     const { subject, activityId, activityTitle, score, maxScore, durationSeconds } = req.body;
     if (!subject || !activityId || !activityTitle) return res.status(400).json({ error: 'Missing fields' });
 
@@ -96,9 +106,11 @@ export default async function handler(req: Request, res: Response) {
     if (starsEarned > 0) {
       await db.update(children)
         .set({ totalStars: sql`${children.totalStars} + ${starsEarned}` })
-        .where(eq(children.id, childId));
+        .where(and(eq(children.id, childId), eq(children.parentId, session.user.id)));
       // Fetch updated total for milestone check
-      const [updated] = await db.select({ totalStars: children.totalStars }).from(children).where(eq(children.id, childId));
+      const [updated] = await db.select({ totalStars: children.totalStars })
+        .from(children)
+        .where(and(eq(children.id, childId), eq(children.parentId, session.user.id)));
       if (updated) {
         milestoneCode = await checkAndAwardMilestones(childId, updated.totalStars);
       }

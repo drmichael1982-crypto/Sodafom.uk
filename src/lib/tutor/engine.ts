@@ -40,6 +40,35 @@ export function clearActivePendingQuestion() {
   activePendingQuestion = null;
 }
 
+function normalizedAnswer(value: string): string {
+  return value
+    .normalize('NFKC')
+    .toLocaleLowerCase('en-GB')
+    .replace(/[‘’']/g, '')
+    .replace(/[^a-z0-9£%+./-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/[.!]+$/g, '')
+    .trim();
+}
+
+const answerPrefixes = [
+  'i think the answer is ', 'i think it is ', 'i think its ',
+  'i believe the answer is ', 'i believe it is ', 'i believe its ',
+  'the answer is ', 'my answer is ', 'my choice is ', 'the word is ',
+  'it is ', 'its ', 'is it ', 'i choose ', 'i pick ',
+];
+const negatedAnswer = /\b(?:no|not|never|dont|doesnt|didnt|isnt|arent|wasnt|werent|cant|cannot|wont|wouldnt|shouldnt|couldnt|except|wrong|incorrect)\b/;
+
+export function matchesTutorAnswer(input: string, question: LessonQuestion): boolean {
+  let reply = normalizedAnswer(input);
+  if (!reply || negatedAnswer.test(reply)) return false;
+  const prefix = answerPrefixes.find(value => reply.startsWith(value));
+  if (prefix) reply = reply.slice(prefix.length);
+  reply = reply.replace(/ please$/, '');
+  const accepted = [question.answer, ...(question.alternateAnswers ?? [])].map(normalizedAnswer);
+  return accepted.includes(reply);
+}
+
 export function tryLocalTutor(input: string): LocalArchieResult | null {
   const trimmed = input.trim();
   const lower = trimmed.toLowerCase();
@@ -88,10 +117,7 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
   // 3. Evaluate active pending question answer if one is waiting
   if (activePendingQuestion) {
     const q = activePendingQuestion.question;
-    const expected = q.answer.toLowerCase();
-    const alternates = q.alternateAnswers?.map(a => a.toLowerCase()) ?? [];
-
-    const isCorrect = lower === expected || alternates.includes(lower) || lower.includes(expected);
+    const isCorrect = matchesTutorAnswer(trimmed, q);
 
     // Update child memory & adaptive difficulty
     const result = recordQuestionAnswer(
