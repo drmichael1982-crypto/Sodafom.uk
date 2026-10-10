@@ -7,6 +7,7 @@ const KEY = 'sodafom_archie_design_v1';
 const LOCAL_PROFILE_KEY = 'sodafom_archie_local_profile_v1';
 const GAME_STARS_KEY = 'sodafom_game_stars';
 const SCOPED_GAME_STARS_PREFIX = 'sodafom_game_stars:profile:';
+const SCOPED_STICKERS_PREFIX = 'sodafom_archie_stickers:profile:';
 const DEFAULT: SavedData = { settings: { year: 4, sound: true, largeText: false, onlineHelp: false }, activities: [], stickers: [] };
 let cachedRaw: string | null | undefined;
 let cached = DEFAULT;
@@ -47,6 +48,32 @@ export function currentProgressProfile(): ProgressProfile {
 
 export function scopedGameStarsKey(profile = currentProgressProfile()): string {
   return `${SCOPED_GAME_STARS_PREFIX}${profile.id}`;
+}
+
+export function scopedStickersKey(profile = currentProgressProfile()): string {
+  return `${SCOPED_STICKERS_PREFIX}${profile.id}`;
+}
+
+function parseStickers(raw: string | null): string[] {
+  try {
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? [...new Set(parsed.filter((sticker): sticker is string => typeof sticker === 'string'))] : [];
+  } catch { return []; }
+}
+
+export function readScopedStickers(profile = currentProgressProfile()): string[] {
+  if (typeof window === 'undefined') return [];
+  return parseStickers(localStorage.getItem(scopedStickersKey(profile)));
+}
+
+export function claimScopedSticker(stickerId: string, profile = currentProgressProfile()): void {
+  if (typeof window === 'undefined' || !stickerId.trim()) return;
+  const stickers = readScopedStickers(profile);
+  if (stickers.includes(stickerId)) return;
+  try { localStorage.setItem(scopedStickersKey(profile), JSON.stringify([...stickers, stickerId])); }
+  catch { return; }
+  cachedRaw = undefined;
+  subscribers.forEach(fn => fn());
 }
 
 function parseGameStars(raw: string | null): Record<string, number> {
@@ -113,12 +140,13 @@ export function useArchieData() {
   const progressProfile = currentProgressProfile();
   const activities = data.activities.filter(activity => activity.profileId === progressProfile.id);
   const legacyActivities = data.activities.filter(activity => !activity.profileId);
+  const stickers = readScopedStickers(progressProfile);
   const setSettings = useCallback((settings: Partial<Settings>) => updateSavedData(d => ({ ...d, settings: { ...d.settings, ...settings } })), []);
   const complete = useCallback((activity: Omit<Activity, 'date' | 'profileId'>) => {
     const profileId = currentProgressProfile().id;
     updateSavedData(d => d.activities.some(a => a.id === activity.id && a.profileId === profileId) ? d : { ...d, activities: [...d.activities, { ...activity, profileId, date: new Date().toISOString() }] });
   }, []);
-  return { ...data, activities, legacyActivities, progressProfile, setSettings, complete };
+  return { ...data, activities, legacyActivities, legacyStickers: data.stickers, stickers, progressProfile, setSettings, complete };
 }
 export function isSoundEnabled() { return read().settings.sound; }
 export function readGameStars(): number {

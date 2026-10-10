@@ -1,6 +1,6 @@
 import { renderHook, act, cleanup } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
-import { currentProgressProfile, useArchieData } from './storage';
+import { claimScopedSticker, currentProgressProfile, scopedStickersKey, useArchieData } from './storage';
 afterEach(()=>{cleanup();localStorage.clear();});
 it('keeps a multi-year course record beyond 500 lessons and never awards a repeat twice',()=>{
   localStorage.setItem('sodafom_active_child',JSON.stringify({id:12,name:'Synthetic learner'}));
@@ -25,4 +25,26 @@ it('does not attribute older shared activities or another child\'s records to th
   const {result}=renderHook(()=>useArchieData());
   expect(result.current.activities.map(activity=>activity.id)).toEqual(['mia-lesson']);
   expect(result.current.legacyActivities.map(activity=>activity.id)).toEqual(['legacy-book']);
+});
+it('keeps collected stickers with the selected learner and preserves older shared stickers separately',()=>{
+  localStorage.setItem('sodafom_active_child',JSON.stringify({id:21,name:'Mia'}));
+  localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:4,sound:true},activities:[],stickers:['legacy-key']}));
+  const {result}=renderHook(()=>useArchieData());
+  act(()=>claimScopedSticker('book'));
+  expect(result.current.stickers).toEqual(['book']);
+  expect(result.current.legacyStickers).toEqual(['legacy-key']);
+  expect(JSON.parse(localStorage.getItem(scopedStickersKey())!)).toEqual(['book']);
+  act(()=>{
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:22,name:'Leo'}));
+    window.dispatchEvent(new Event('sodafom:active-child-changed'));
+  });
+  expect(result.current.progressProfile.name).toBe('Leo');
+  expect(result.current.stickers).toEqual([]);
+  act(()=>claimScopedSticker('key'));
+  expect(result.current.stickers).toEqual(['key']);
+  act(()=>{
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:21,name:'Mia'}));
+    window.dispatchEvent(new Event('sodafom:active-child-changed'));
+  });
+  expect(result.current.stickers).toEqual(['book']);
 });
