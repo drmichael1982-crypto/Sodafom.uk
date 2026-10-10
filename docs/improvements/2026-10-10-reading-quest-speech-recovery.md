@@ -32,7 +32,7 @@ No story, question, grading, age policy, art, CSS, payment or account behavior c
 - Archie production build: PASS; the existing mixed-import and large-chunk warnings remain.
 - Focused ESLint and `git diff --check`: PASS.
 
-The local runtime has no Playwright Chromium executable, so the browser suite could not start locally. GitHub had not scheduled a workflow or status for `f743829…` when this note was written. Therefore the new 390×844 and 820×1180 Reading Quest captures are pending and are not claimed as visually verified. The immediately preceding artifact on code commit `92e86eb…` was directly inspected across home, games, completed Maths Bingo, lessons, parents, teachers and the settled Phonics fallback at both widths; branding and layouts were coherent, but those images do not prove this new candidate.
+The local runtime has no Playwright Chromium executable, so the browser suite could not start locally. One locked Playwright install attempt retried five times but each CDN response was an empty/truncated archive (`End of central directory record signature not found`); it was not bypassed with an untracked browser. GitHub had not scheduled a workflow or status for `f743829…` when this note was written. Therefore the new 390×844 and 820×1180 Reading Quest captures are pending and are not claimed as visually verified. The immediately preceding artifact on code commit `92e86eb…` was directly inspected across home, games, completed Maths Bingo, lessons, parents, teachers and the settled Phonics fallback at both widths; branding and layouts were coherent, but those images do not prove this new candidate.
 
 ## Curriculum and original comparison
 
