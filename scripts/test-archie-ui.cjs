@@ -366,6 +366,35 @@ const results=[];
       await checkViewport(820,1180,'Tablet');
       await page.setViewportSize({width:390,height:844});
     });
+    await check('Reading Quest: unavailable speech keeps the passage and gives calm recovery',async()=>{
+      const recovery='Read aloud is not available on this device. Keep reading on the screen, or ask a grown-up to check the sound settings.';
+      const checkViewport=async(width,height,label)=>{
+        await page.setViewportSize({width,height});
+        await goto('/games');await chooseGameYear(4);
+        await page.getByLabel('Search games').fill('Reading Quest');await assertGameIntersection(4,'all','Reading Quest');
+        await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/reading-quest');
+        await page.evaluate(()=>Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:undefined}));
+        const read=button('Read passage aloud');
+        const controlledId=await read.getAttribute('aria-controls');
+        assert.ok(controlledId,'The read-aloud control must name its printed passage');
+        const passageCard=page.locator('#'+controlledId);
+        assert.ok((await passageCard.innerText()).trim().length>80,label+' passage must stay meaningfully visible');
+        await read.click();
+        await page.getByRole('status').filter({hasText:recovery}).waitFor();
+        assert.equal(await read.evaluate(element=>element===document.activeElement),true,label+' speech failure must retain retry focus');
+        assert.equal(await passageCard.isVisible(),true,label+' printed passage must remain visible');
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,label+' recovery must not overflow');
+        await page.waitForFunction(id=>{
+          const panel=document.querySelector('.game-app-area > div');const card=document.getElementById(id);
+          return !!panel&&!!card&&getComputedStyle(panel).opacity==='1'&&getComputedStyle(card).opacity==='1';
+        },controlledId);
+        await page.screenshot({path:`test-results/reading-quest-speech-fallback-${width}.png`,fullPage:true});
+        await button('Got it').click();await page.getByRole('status').filter({hasText:recovery}).waitFor({state:'detached'});
+      };
+      await checkViewport(390,844,'Phone');
+      await checkViewport(820,1180,'Tablet');
+      await page.setViewportSize({width:390,height:844});
+    });
     await check(`All ${catalog.length} linked game routes render without a crash or home redirect`,async()=>{
       assert.equal(new Set(catalog.map(game=>game.route)).size,catalog.length,'Game routes must be distinct');
       assert.equal(catalog.length,130,'The existing complete game-route inventory must remain covered');
