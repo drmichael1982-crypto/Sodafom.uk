@@ -235,7 +235,7 @@ const results=[];
       assert.equal(typeof status.message,'string');assert.ok(status.message.trim(),'Setup status must explain its configuration');
       await page.getByText(status.message,{exact:true}).waitFor();
       assert.equal(await checkbox('Allow online learning help').isChecked(),false,'Checking setup must not enable online help');
-      await checkbox('Read aloud and sound').check();
+      const restoredSoundSetting=checkbox('Read aloud and sound');await revealWithPager(restoredSoundSetting);await restoredSoundSetting.check();
       await link('Try the lesson').click();await page.getByRole('heading',{level:1,name:/My spelling lesson.*Year 2/}).waitFor();
       await openParents();await page.getByLabel('School year').selectOption('4');await checkbox('Larger text on menus and books').uncheck();await button('Save learning settings').click();
       await openParents();await page.getByLabel('School year').selectOption('9');await button('Save learning settings').click();
