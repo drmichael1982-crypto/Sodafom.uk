@@ -322,6 +322,7 @@ export default function CrosswordGame() {
       </h1>
       <GameShell
         title="Crossword Puzzle"
+        gameSlug="crossword"
         emoji="✏️"
         subject="spelling"
         ageGroups={['8–10', '11–13']}

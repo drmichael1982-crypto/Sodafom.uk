@@ -192,7 +192,7 @@ export default function GeographyUKGame() {
         })}</script>
       </Helmet>
       <h1 className="sr-only">UK Geography — Science Game for Kids — Sodafom</h1>
-      <GameShell title="UK Geography" emoji="🗺️" subject="science" ageGroups={['8–10', '11–13']}>
+      <GameShell title="UK Geography" gameSlug="geography-uk" emoji="🗺️" subject="science" ageGroups={['8–10', '11–13']}>
         {(onComplete) => <GeographyUKInner onComplete={onComplete} />}
       </GameShell>
     </>

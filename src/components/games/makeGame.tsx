@@ -37,7 +37,7 @@ export function makeGame(cfg: GameConfig) {
           <meta name="twitter:image" content={`${siteUrl}/og-image.png`} />
         </Helmet>
         <h1 className="sr-only">{cfg.title} — {cfg.subject.charAt(0).toUpperCase() + cfg.subject.slice(1)} Game for Kids — Sodafom</h1>
-        <GameShell title={cfg.title} emoji={cfg.emoji} subject={cfg.subject} ageGroups={cfg.ageGroups} currentQuestion={currentQuestion} currentOptions={currentOptions}>
+        <GameShell title={cfg.title} gameSlug={cfg.slug} emoji={cfg.emoji} subject={cfg.subject} ageGroups={cfg.ageGroups} currentQuestion={currentQuestion} currentOptions={currentOptions}>
           {(oc: (r: GameResult) => void) => (
             <LevelledQuizEngine
               gameSlug={cfg.slug}

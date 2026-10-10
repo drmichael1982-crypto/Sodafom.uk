@@ -94,6 +94,15 @@ describe('preview direct-route age guard',()=>{
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('spelling','spelling-bee');
     expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-spelling-bee':3});
   });
+  it('uses the canonical catalogue slug when the display title differs from the game route',()=>{
+    show(<GameShell title="Number Grid" gameSlug="number-puzzle" emoji="1" subject="maths" ageGroups={['5–7']}>
+      {complete=> <button onClick={()=>complete(result)}>Finish canonical game</button>}
+    </GameShell>);
+    expect(JSON.parse(localStorage.getItem('sodafom_last_played')!)).toMatchObject({id:'game-number-puzzle',slug:'number-puzzle',title:'Number Grid'});
+    fireEvent.click(screen.getByRole('button',{name:'Finish canonical game'}));
+    expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('maths','number-puzzle');
+    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-number-puzzle':3});
+  });
   it.each(['oops','[]','null'])('repairs a damaged %s star record when the child completes a scored game',saved=>{
     localStorage.setItem('sodafom_game_stars',saved);
     show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['5–7']}>

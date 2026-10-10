@@ -200,7 +200,7 @@ export default function SynonymsAntonymsGame() {
         })}</script>
       </Helmet>
       <h1 className="sr-only">Synonyms and Antonyms — Spelling Game for Kids — Sodafom</h1>
-      <GameShell title="Synonyms and Antonyms" emoji="🔗" subject="spelling" ageGroups={['8–10', '11–13']}>
+      <GameShell title="Synonyms and Antonyms" gameSlug="synonyms-antonyms" emoji="🔗" subject="spelling" ageGroups={['8–10', '11–13']}>
         {(onComplete) => <SynonymsAntonymsInner onComplete={onComplete} />}
       </GameShell>
     </>

@@ -90,7 +90,7 @@ export default function ElectricityCircuitGame() {
         <meta name="twitter:image" content="https://sodafom.uk/og-image.png" />
       </Helmet>
       <h1 className="sr-only">Electricity & Circuits — Science Game for Kids — Sodafom</h1>
-      <GameShell title="Electricity & Circuits" emoji="⚡" subject="science" ageGroups={['9–11', '12–13']}>
+      <GameShell title="Electricity & Circuits" gameSlug="electricity-circuit" emoji="⚡" subject="science" ageGroups={['9–11', '12–13']}>
         {(oc: (r: GameResult) => void) => (
           <LevelledQuizEngine
             gameSlug="electricity-circuit"

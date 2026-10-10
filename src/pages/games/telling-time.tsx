@@ -307,7 +307,7 @@ export default function TellingTimeGame() {
         })}</script>
       </Helmet>
       <h1 className="sr-only">Telling the Time — Maths Game for Kids — Sodafom</h1>
-      <GameShell title="Telling the Time" emoji="🕐" subject="maths" ageGroups={['5–7', '8–10']}>
+      <GameShell title="Telling the Time" gameSlug="telling-time" emoji="🕐" subject="maths" ageGroups={['5–7', '8–10']}>
         {(onComplete) => <TellingTimeInner onComplete={onComplete} />}
       </GameShell>
     </>

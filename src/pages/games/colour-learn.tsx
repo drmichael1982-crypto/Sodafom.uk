@@ -220,6 +220,7 @@ export default function ColourLearnPage() {
       </h1>
       <GameShell
         title="Colour & Learn"
+        gameSlug="colour-learn"
         emoji="🎨"
         subject="art"
         ageGroups={['5–7']}

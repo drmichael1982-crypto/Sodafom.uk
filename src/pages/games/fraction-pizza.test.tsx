@@ -17,7 +17,7 @@ describe('Fraction Pizza picnic',()=>{
     mode.tier=tier;vi.spyOn(Math,'random').mockReturnValue(0.5);
     updateSavedData(data=>({...data,settings:{...data.settings,year}}));
     render(<FractionPizzaWithDifficulty onComplete={vi.fn()} onQuestionChange={vi.fn()}/>);
-    expect(screen.getByText('Order 1 of 8 · '+difficulty)).toBeInTheDocument();
+    expect(screen.getByText('Order 1 of 10 · '+difficulty)).toBeInTheDocument();
     expect(screen.getByRole('group',{name:'Choose pizza slices'}).querySelectorAll('button')).toHaveLength(slices);
     expect(screen.queryByRole('button',{name:'Choose pizza challenge'})).not.toBeInTheDocument();
     expect(screen.queryByRole('button',{name:/Hard ·/})).not.toBeInTheDocument();
@@ -29,7 +29,7 @@ describe('Fraction Pizza picnic',()=>{
     fireEvent.click(screen.getByRole('button',{name:'Choose pizza challenge'}));
     expect(screen.getByRole('heading',{name:'Choose your pizza challenge'})).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:/Hard ·/}));
-    expect(screen.getByText('Order 1 of 8 · Hard')).toBeInTheDocument();
+    expect(screen.getByText('Order 1 of 10 · Hard')).toBeInTheDocument();
     expect(screen.getByRole('group',{name:'Choose pizza slices'}).querySelectorAll('button')).toHaveLength(9);
   });
   it('updates the complete slice-count status without moving keyboard focus',async()=>{
@@ -70,28 +70,28 @@ describe('Fraction Pizza picnic',()=>{
     const onComplete=vi.fn();render(<FractionPizzaPlay difficulty="Easy" year={1} onComplete={onComplete}/>);
     fireEvent.click(screen.getByRole('button',{name:'Slice 1'}));fireEvent.click(screen.getByRole('button',{name:'Slice 2'}));
     fireEvent.click(screen.getByRole('button',{name:'Serve my pizza'}));act(()=>vi.advanceTimersByTime(10000));
-    expect(screen.getByText('Order 1 of 8 · Easy')).toBeInTheDocument();
+    expect(screen.getByText('Order 1 of 10 · Easy')).toBeInTheDocument();
     expect(screen.getByText(/Unshade a few slices/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:'Slice 2'}));fireEvent.click(screen.getByRole('button',{name:'Serve my pizza'}));
     act(()=>vi.advanceTimersByTime(10000));expect(onComplete).not.toHaveBeenCalled();
-    expect(screen.getByText('Order 1 of 8 · Easy')).toBeInTheDocument();
+    expect(screen.getByText('Order 1 of 10 · Easy')).toBeInTheDocument();
     expect(screen.getByText('0 first-try orders')).toBeInTheDocument();
     expect(screen.getByText(/The whole pizza has 2 equal slices/)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button',{name:'Next picnic order'}));expect(screen.getByText('Order 2 of 8 · Easy')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button',{name:'Next picnic order'}));expect(screen.getByText('Order 2 of 10 · Easy')).toBeInTheDocument();
   });
-  it('keeps selected slices on a break and completes eight orders with first-try scoring',()=>{
+  it('keeps selected slices on a break and completes ten orders with first-try scoring',()=>{
     vi.spyOn(Math,'random').mockReturnValue(0.5);const onComplete=vi.fn();
     render(<FractionPizzaPlay difficulty="Easy" year={1} onComplete={onComplete}/>);
     fireEvent.click(screen.getByRole('button',{name:'Slice 1'}));fireEvent.click(screen.getByRole('button',{name:'Take a breather'}));
     expect(screen.queryByRole('button',{name:'Slice 1'})).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:'Resume kitchen'}));expect(screen.getByRole('button',{name:'Slice 1'})).toHaveAttribute('aria-pressed','true');
     expect(screen.getByRole('status',{name:'Pizza slice count'})).toHaveTextContent('1 of 2 slices shaded');
-    for(let order=0;order<8;order++){
+    for(let order=0;order<10;order++){
       if(order)fireEvent.click(screen.getByRole('button',{name:'Slice 1'}));
       fireEvent.click(screen.getByRole('button',{name:'Serve my pizza'}));expect(onComplete).not.toHaveBeenCalled();
-      fireEvent.click(screen.getByRole('button',{name:order===7?'Finish picnic · see my stars':'Next picnic order'}));
+      fireEvent.click(screen.getByRole('button',{name:order===9?'Finish picnic · see my stars':'Next picnic order'}));
     }
-    expect(onComplete).toHaveBeenCalledExactlyOnceWith({score:100,correct:8,total:8,stars:3});
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith({score:100,correct:10,total:10,stars:3});
   });
   it('accepts an explicit spoken slice choice only for the current unpaused kitchen',()=>{
     vi.spyOn(Math,'random').mockReturnValue(0.5);render(<FractionPizzaPlay difficulty="Easy" year={1} onComplete={vi.fn()}/>);

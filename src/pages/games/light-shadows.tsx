@@ -90,7 +90,7 @@ export default function LightShadowsGame() {
         <meta name="twitter:image" content="https://sodafom.uk/og-image.png" />
       </Helmet>
       <h1 className="sr-only">Light & Shadows — Science Game for Kids — Sodafom</h1>
-      <GameShell title="Light & Shadows" emoji="💡" subject="science" ageGroups={['7–9', '9–11']}>
+      <GameShell title="Light & Shadows" gameSlug="light-shadows" emoji="💡" subject="science" ageGroups={['7–9', '9–11']}>
         {(oc: (r: GameResult) => void) => (
           <LevelledQuizEngine
             gameSlug="light-shadows"

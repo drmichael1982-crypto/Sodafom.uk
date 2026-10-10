@@ -66,7 +66,7 @@ export const FRACTION_SETS: Record<Difficulty, Fraction[]> = {
   'Hard':   FRACTIONS_HARD,
 };
 
-const TOTAL_ROUNDS = 8;
+const TOTAL_ROUNDS = 10;
 
 const DIFFICULTY_COLORS: Record<Difficulty, string> = {
   'Easy':   'bg-green-100 text-green-700 border-green-300',
@@ -95,7 +95,7 @@ export function FractionPizzaPlay({onComplete,difficulty,year,onQuestionChange}:
   const [selected,setSelected]=useState<number[]>([]);const [feedback,setFeedback]=useState<'correct'|'wrong'|null>(null);
   const [hadMistake,setHadMistake]=useState(false);const [hint,setHint]=useState(false);const [paused,setPaused]=useState(false);
   const completionSent=useRef(false);const frac=recipes[round%recipes.length];
-  const prompt='Make '+frac.numerator+'/'+frac.denominator+' of a pizza with '+frac.denominator+' equal slices.';
+  const prompt='Can you make '+frac.numerator+'/'+frac.denominator+' of a pizza with '+frac.denominator+' equal slices?';
   useEffect(()=>{onQuestionChange?.(prompt,Array.from({length:frac.slices},(_,index)=>'Slice '+(index+1)));},[prompt,frac.slices,onQuestionChange]);
   useEffect(()=>()=>stop(),[stop]);
   function toggleSlice(index:number){if(paused||feedback==='correct')return;setSelected(previous=>previous.includes(index)?previous.filter(item=>item!==index):[...previous,index]);setFeedback(null);}
@@ -111,7 +111,7 @@ export function FractionPizzaPlay({onComplete,difficulty,year,onQuestionChange}:
   return <section className="flex-1 w-full max-w-3xl mx-auto p-3 sm:p-6 bg-gradient-to-b from-orange-50 to-background text-center" aria-label="Fraction Pizza kitchen">
     <div className="flex justify-between flex-wrap gap-2 font-bold text-sm mb-3"><span>Order {round+1} of {TOTAL_ROUNDS} · {difficulty}</span><span>{correct} first-try orders</span></div>
     <progress className="w-full h-4 mb-4" aria-label="Pizza orders completed" max={TOTAL_ROUNDS} value={round+(feedback==='correct'?1:0)}/>
-    <h2 className="text-2xl font-black mb-2">A pizza for the star picnic</h2><p className="text-base mb-3">Shade this much of the whole pizza. Every slice is equal.</p>
+    <h2 className="text-2xl font-black mb-2">A pizza for the star picnic</h2><p className="text-base mb-3">{prompt} Tap the equal slices to answer.</p>
     <p className="text-4xl font-black mb-1">{frac.label}</p><p className="text-base mb-3">{frac.description||frac.numerator+' out of '+frac.denominator+' equal parts'}</p>
     <div className="flex justify-center flex-wrap gap-2 mb-4"><button type="button" className="min-h-12 p-3 rounded-xl bg-white border-2 border-orange-300 font-bold" onClick={()=>speak('read:fraction-pizza',prompt)}>Read my order</button><button type="button" className="min-h-12 p-3 rounded-xl bg-white border-2 border-orange-300 font-bold" onClick={()=>setHint(value=>!value)} aria-expanded={hint}>{hint?'Hide recipe hint':'Show recipe hint'}</button><button type="button" className="min-h-12 p-3 rounded-xl bg-white border-2 border-orange-300 font-bold" onClick={()=>{stop();setPaused(value=>!value);}}>{paused?'Resume kitchen':'Take a breather'}</button></div>
     {paused?<div role="status" className="p-6 bg-white rounded-2xl"><h3 className="text-xl font-black">Your pizza is safe</h3><p>Stretch or look away. Resume when you are ready.</p></div>:<>

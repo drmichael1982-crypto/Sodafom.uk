@@ -164,6 +164,7 @@ export default function NumberPuzzleGame() {
       </h1>
       <GameShell
         title="Number Grid"
+        gameSlug="number-puzzle"
         emoji="🔢"
         subject="maths"
         ageGroups={['7–10', '11–13']}

@@ -310,6 +310,7 @@ export default function ColourBookGame() {
       </h1>
       <GameShell
         title="Colour-In Book"
+        gameSlug="colour-book"
         emoji="🎨"
         subject="art"
         ageGroups={['4–6', '5–7']}
