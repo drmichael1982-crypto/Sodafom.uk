@@ -2,6 +2,8 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Reading Quest speech recovery — 10 October 2026](2026-10-10-reading-quest-speech-recovery.md): replaces Reading Quest's silent direct browser-speech failure with the shared calm recovery path, preserves the printed passage and focus, and records the pending hosted phone/tablet evidence without overstating completion.
+1. [Phonics Parrot speech recovery — 10 October 2026](2026-10-10-phonics-speech-recovery.md): uses the shared read-aloud recovery, preserves the printed sound and verifies settled phone/tablet captures instead of a transient entrance frame.
 1. [Reader pager alignment — 10 October 2026](2026-10-10-reader-pager-alignment.md): repairs the one-tap pager action regression and develops the reader alignment fix, while recording the exact hosted geometry failure and unscheduled final browser check without overstating completion.
 1. [Read-aloud recovery — 10 October 2026](2026-10-10-read-aloud-recovery.md): replaces silent speech-synthesis failure with a calm on-screen fallback, preserves focus and printed text, and records the tablet pager alignment defect found during direct visual review.
 1. [Voice fallback focus — 10 October 2026](2026-10-10-voice-fallback-focus.md): moves unsupported, denied, missing and failed microphone journeys into the typed Archie input with specific recovery guidance and verified phone/tablet focus.
@@ -29,6 +31,6 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 23. [Bingo feedback and breaks — 7 October 2026](2026-10-07-bingo-feedback.md): accurate first-try scoring, hints, pause/resume and prior-run evidence.
 24. [Game access — 7 October 2026](2026-10-07-game-access.md): preceding freeze/age-discovery repair and historical starting evidence.
 
-Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `13f0c79`; candidate pushes do not imply deployment.
+Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `1bd5690`; candidate pushes do not imply deployment.
 
-Next bounded priority: obtain a hosted Chromium run for `8415014`, keep the 820px story-edge and puzzle-overlap assertions strict, and inspect both rendered recovery captures. If it still fails, add live pager status/transform/width diagnostics before another product change. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: obtain a hosted Chromium run for `f743829`, require Reading Quest's unavailable-speech journey to pass at 390×844 and 820×1180, and inspect both rendered recovery captures before widening work. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
