@@ -335,6 +335,30 @@ const results=[];
       await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/phonics-parrot');
       await button('Ask Archie').waitFor();assert.equal(await button('Ask Archie').count(),1);await button('Ask Archie').click();await page.getByText(/Helping with Phonics Parrot/).waitFor();await button('Close Ask Archie').click();
     });
+    await check('Phonics Parrot: unavailable speech keeps the printed sound and gives calm recovery',async()=>{
+      const recovery='Read aloud is not available on this device. Keep reading on the screen, or ask a grown-up to check the sound settings.';
+      const checkViewport=async(width,height,label)=>{
+        await page.setViewportSize({width,height});
+        await goto('/games');await chooseGameYear(1);
+        await page.getByLabel('Search games').fill('Phonics Parrot');await assertGameIntersection(1,'all','Phonics Parrot');
+        await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/phonics-parrot');
+        await page.evaluate(()=>Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:undefined}));
+        const hear=button('Hear the sound');
+        const controlledId=await hear.getAttribute('aria-controls');
+        assert.ok(controlledId,'The hear control must name its printed sound card');
+        const soundCard=page.locator('#'+controlledId);
+        await hear.click();
+        await page.getByRole('status').filter({hasText:recovery}).waitFor();
+        assert.equal(await hear.evaluate(element=>element===document.activeElement),true,label+' speech failure must retain retry focus');
+        assert.equal(await soundCard.isVisible(),true,label+' printed phonics sound must remain visible');
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,label+' recovery must not overflow');
+        await page.screenshot({path:`test-results/phonics-speech-fallback-${width}.png`,fullPage:true});
+        await button('Got it').click();await page.getByRole('status').filter({hasText:recovery}).waitFor({state:'detached'});
+      };
+      await checkViewport(390,844,'Phone');
+      await checkViewport(820,1180,'Tablet');
+      await page.setViewportSize({width:390,height:844});
+    });
     await check(`All ${catalog.length} linked game routes render without a crash or home redirect`,async()=>{
       assert.equal(new Set(catalog.map(game=>game.route)).size,catalog.length,'Game routes must be distinct');
       assert.equal(catalog.length,130,'The existing complete game-route inventory must remain covered');
