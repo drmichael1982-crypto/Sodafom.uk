@@ -20,7 +20,6 @@ const ReadingSubjectPage = lazy(() => import('./pages/subjects/reading'));
 const ScienceSubjectPage = lazy(() => import('./pages/subjects/science'));
 const PricingPage = lazy(() => import('./pages/pricing'));
 const DemoPage = lazy(() => import('./pages/demo'));
-const SubscribePage = lazy(() => import('./pages/subscribe'));
 const LoginRedirectPage = lazy(() => import('./pages/login'));
 const HubPage = lazy(() => import('./pages/hub/index'));
 const HubLoginPage = lazy(() => import('./pages/hub/login'));
@@ -292,7 +291,9 @@ export const routes: RouteObject[] = [
   element: <DemoPage />
 }, {
   path: '/subscribe',
-  element: <SubscribePage />
+  // Payments are deliberately closed while the public test is free. Keeping
+  // the route as a redirect also makes old bookmarks and marketing links safe.
+  element: <Navigate to="/games" replace />
 },
 // Individual game routes
 {

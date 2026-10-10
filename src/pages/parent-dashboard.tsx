@@ -164,8 +164,12 @@ function ChildStreakBadge({ childId }: { childId: number }) {
 
   useEffect(() => {
     fetch(`${API_PREFIX}/streak?childId=${childId}`, { credentials: 'include' })
-      .then(r => r.json())
-      .then(d => setStreak(d as StreakInfo))
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (d && Number.isFinite(d.currentStreak) && Number.isFinite(d.maxStreak) && Number.isFinite(d.starBalance ?? d.totalStars)) {
+          setStreak({ currentStreak: Number(d.currentStreak), maxStreak: Number(d.maxStreak), starBalance: Number(d.starBalance ?? d.totalStars) });
+        }
+      })
       .catch(() => {});
   }, [childId]);
 

@@ -36,6 +36,17 @@ interface CreateCheckoutSessionRequest {
 
 export default async function handler(req: Request, res: Response) {
   try {
+    // Fail closed for the free public test. A Stripe key may remain configured
+    // for future owner use, but it cannot create a charge until this separate
+    // deployment switch is deliberately enabled.
+    if (getSecret('SODAFOM_PAYMENTS_ENABLED') !== 'true') {
+      res.status(403).json({
+        success: false,
+        error: 'Payments are disabled while Sodafom is free.',
+      });
+      return;
+    }
+
     const {
       priceId,
       lineItems,

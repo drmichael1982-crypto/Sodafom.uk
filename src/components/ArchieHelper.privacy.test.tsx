@@ -46,6 +46,33 @@ describe('Archie online-help privacy default',()=>{
     await screen.findByText('Answered on this device.');
     expect(fetch).not.toHaveBeenCalled();
   });
+  it('uses the parent-saved age for a built-in age-specific answer before the school year',async()=>{
+    localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:8,sound:false},activities:[],stickers:[]}));
+    localStorage.setItem('sodafom_learning_age','6');
+    const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
+    await ask('Who was Christopher Columbus?');
+    await screen.findByText('Answered on this device.');
+    expect(screen.getByRole('log')).toHaveTextContent('sailor from Genoa, in present-day Italy');
+    expect(screen.getByRole('log')).not.toHaveTextContent('Historians examine both');
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it('sends the parent-saved age to opted-in online help',async()=>{
+    localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:4,sound:false,onlineHelp:true},activities:[],stickers:[]}));
+    localStorage.setItem('sodafom_learning_age','6');
+    const fetch=vi.fn().mockResolvedValue({ok:true,text:async()=> 'Telescopes help us study distant objects.'});vi.stubGlobal('fetch',fetch);
+    await ask('Explain the history of the telescope');
+    await waitFor(()=>expect(fetch).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toMatchObject({learnerAge:6});
+  });
+  it('falls back to the school year when a saved learning age is invalid',async()=>{
+    localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:8,sound:false},activities:[],stickers:[]}));
+    localStorage.setItem('sodafom_learning_age','99');
+    const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
+    await ask('Who was Christopher Columbus?');
+    await screen.findByText('Answered on this device.');
+    expect(screen.getByRole('log')).toHaveTextContent('Historians examine both');
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });
 
 describe('Archie reply feedback',()=>{

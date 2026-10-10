@@ -26,6 +26,17 @@ interface CreateTrialRequest {
 
 export default async function handler(req: Request, res: Response) {
   try {
+    // Fail closed: the test release is free, so a configured Stripe key must
+    // never be enough on its own to expose a checkout. Payments can only be
+    // opened later by an explicit deployment-level owner decision.
+    if (getSecret('SODAFOM_PAYMENTS_ENABLED') !== 'true') {
+      res.status(403).json({
+        success: false,
+        error: 'Payments are disabled while Sodafom is free.',
+      });
+      return;
+    }
+
     const { priceId, successUrl, cancelUrl } = req.body as CreateTrialRequest;
 
     if (!priceId) {

@@ -449,10 +449,18 @@ const results=[];
             const unlocked=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
             assert.ok(unlocked.document<=unlocked.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' unlocked overflows: '+JSON.stringify(unlocked));
           }
-          if(route==='/parents'||route==='/settings'){
+          if(route==='/parents'||route==='/settings'||route==='/teacher'){
             await unlockGrownUpArea();
             const unlocked=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
             assert.ok(unlocked.document<=unlocked.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' unlocked overflows: '+JSON.stringify(unlocked));
+            if(route==='/teacher'){
+              assert.equal(await page.getByRole('heading',{name:'A grown-up needs to help here',exact:true}).count(),0,'The teacher gate must leave layout flow after unlock');
+              const learning=page.getByRole('heading',{name:'Recent puzzle learning on this device',exact:true});
+              await learning.waitFor();await revealWithPager(learning);
+              const geometry=await learning.evaluate(element=>{const screen=element.closest('.app-screen-window')?.getBoundingClientRect(),box=element.getBoundingClientRect();return screen?{screenLeft:screen.left,screenRight:screen.right,left:box.left,right:box.right}:null;});
+              assert.ok(geometry&&geometry.left>=geometry.screenLeft-1&&geometry.right<=geometry.screenRight+1,viewport.label+' '+viewport.width+'x'+viewport.height+' teacher content is clipped after unlock: '+JSON.stringify(geometry));
+              if(viewport.width===1440&&viewport.height===900)await page.screenshot({path:'test-results/teacher-unlocked-1440.png',fullPage:true});
+            }
           }
         }
       }
