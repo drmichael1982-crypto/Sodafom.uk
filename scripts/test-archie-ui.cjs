@@ -182,8 +182,11 @@ const results=[];
       await page.getByRole('heading',{name:'3 stars earned'}).waitFor();await link('See my rewards').click();await button('Collect sticker').first().click();await button('Collected ✓').first().waitFor();await page.reload();await button('Collected ✓').first().waitFor();
       await page.evaluate(()=>{localStorage.setItem('sodafom_active_child',JSON.stringify({id:'browser-second-learner',name:'Second learner'}));window.dispatchEvent(new Event('sodafom:active-child-changed'));});
       await page.reload();assert.equal(await button('Collected ✓').count(),0,'A different learner must not inherit the first learner\'s sticker');
+      await page.screenshot({path:'test-results/sticker-isolation-second-learner-390.png',fullPage:true});
       await page.evaluate(()=>{localStorage.removeItem('sodafom_active_child');window.dispatchEvent(new Event('sodafom:active-child-changed'));});
-      await page.reload();await button('Collected ✓').first().waitFor();
+      await page.setViewportSize({width:820,height:1180});await page.reload();await button('Collected ✓').first().waitFor();
+      await page.screenshot({path:'test-results/sticker-isolation-original-learner-820.png',fullPage:true});
+      await page.setViewportSize({width:390,height:844});
     });
     await check('Books: reader pagination, read aloud and completion saved once',async()=>{
       await goto('/library');await page.getByRole('link',{name:/Archie and the Lost Key/}).click();await button('Read aloud').click();
