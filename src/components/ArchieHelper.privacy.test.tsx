@@ -4,7 +4,7 @@ const { speak, stop, navigate } = vi.hoisted(() => ({speak:vi.fn(),stop:vi.fn(),
 vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak,stop,playing:false})}));
 vi.mock('react-router',()=>({useNavigate:()=>navigate,useLocation:()=>({pathname:'/'})}));
 vi.mock('@/contexts/ArchieContext',()=>({useArchieContext:()=>({isOpen:true,draft:'',voiceOnOpen:false,openArchie:vi.fn(),closeArchie:vi.fn(),gameTitle:'Home',subject:'Learning',currentQuestion:null,currentOptions:null})}));
-import ArchieHelper from './ArchieHelper';
+import ArchieHelper, { getLearnerAge } from './ArchieHelper';
 beforeEach(()=>{
   localStorage.clear();
   HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};
@@ -21,6 +21,14 @@ async function submit(question:string) {
   fireEvent.click(screen.getByLabelText('Send question'));
 }
 describe('Archie online-help privacy default',()=>{
+  it('uses the active child profile instead of another child’s legacy age group',()=>{
+    localStorage.setItem('sodafom_tutor_memory',JSON.stringify({ageGroup:'5-7',topics:{}}));
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:2,name:'Leo',ageGroup:'11-13'}));
+    expect(getLearnerAge()).toBe(12);
+
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:1,name:'Mia',ageGroup:'5-7'}));
+    expect(getLearnerAge()).toBe(6);
+  });
   it('does not transmit a wider question from a new device',async()=>{
     const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
     await ask('Explain the history of the telescope');

@@ -14,6 +14,7 @@ import '@/pages/archie/archie.css';
 import { blockedLearningText, FRIENDLY_REDIRECT, safeLearningReply } from '@/lib/archie/learning-safety';
 import { normaliseVoiceAnswer, submitGameVoiceAnswer } from '@/lib/archie/game-voice';
 import { coachLessonReply, guardPracticeReply, lessonContextForService, subjectMethod } from '@/lib/archie/lesson-coach';
+import { loadTutorMemory } from '@/lib/tutor/memory';
 
 import type { CourseLesson, CourseSubject } from '@/lib/archie/course-types';
 
@@ -48,7 +49,7 @@ function cleanTutorText(text: string) {
   return text.replaceAll('**', '').replaceAll('__', '').replaceAll('~~', '')
     .replaceAll('`', '').replace(/\\[PLAY:[^\\]]+\\]/g, '').trim();
 }
-function getLearnerAge() {
+export function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
   const learningAge = Number(localStorage.getItem('sodafom_learning_age'));
   if (Number.isInteger(learningAge) && learningAge >= 5 && learningAge <= 13) return learningAge;
@@ -59,11 +60,9 @@ function getLearnerAge() {
   } catch { /* use the next available local learner setting */ }
   const selected = Number(localStorage.getItem('sodafom_ai_teacher_age'));
   if (selected >= 5 && selected <= 13) return selected;
-  try {
-    const profile = JSON.parse(localStorage.getItem('sodafom_tutor_memory') || '{}');
-    if (profile.ageGroup === '5-7') return 6;
-    if (profile.ageGroup === '11-13') return 12;
-  } catch { /* use the app's default learner age */ }
+  const ageGroup = loadTutorMemory().ageGroup;
+  if (ageGroup === '5-7') return 6;
+  if (ageGroup === '11-13') return 12;
   return 9;
 }
 
