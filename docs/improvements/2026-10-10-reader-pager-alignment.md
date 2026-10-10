@@ -83,3 +83,9 @@ Next bounded priority remains a hosted Chromium run for `99331eb…`, followed b
 - A new unit regression supplies a transient one-screen `scrollWidth` during a control mutation and proves screen 2 stays selected when the settled three-screen layout is measured. The hosted assertion now reports viewport/flow widths, transform, pager status, controlled story ID, active control and puzzle/story edges without weakening its pass criteria.
 - Current local validation: focused pager suite PASS (5 cases); full Vitest PASS (113 files / 963 tests); TypeScript PASS; Archie build PASS with unchanged mixed-import and large-chunk warnings; browser-script syntax and `git diff --check` PASS.
 - Hosted Chromium validation for this deferred-measurement change is pending. Do not mark the tablet defect fixed until the fresh workflow passes and both 390px and 820px screenshots have been inspected.
+
+### Hosted transition diagnosis
+
+- [Run #321](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38023407289) passed TypeScript, all 963 unit tests, build, browser installation and every browser journey through book completion. Its added diagnostics proved the React pager state was already correct (`Screen 2 of 2`), the flow was exactly two screens wide, focus and `aria-controls` both named the reader, and native scroll was zero. The computed transform was still the identity matrix at the instant of the assertion because the declared 150ms screen transition had only just started.
+- The browser journey now waits up to two seconds for that declared transition to reach the same strict geometry, then repeats the unchanged zero-scroll, full-story-fit and no-puzzle-overlap assertions and records all diagnostics. This changes timing only; it does not relax any final layout criterion.
+- Run #321 uploaded artifact `11659640746` (five files, 1,627,515 bytes). The all-year simulated step remained skipped because the earlier immediate geometry assertion failed.
