@@ -9,7 +9,8 @@ const output = `test-results/search-${captureOnly ? 'before' : 'after'}`;
 const catalog = require('../src/lib/archie/game-catalog.json');
 const eligible = (game, year) => game.ageGroups.some(range => {
   const [low, high] = range.split(/[–-]/).map(Number);
-  return year + 4 >= low && year + 4 <= high;
+  const schoolYearAges = [year + 4, Math.min(year + 5, 13)];
+  return schoolYearAges[0] <= high && low <= schoolYearAges[1];
 });
 const luminance = rgb => rgb.map(value => {
   const channel = value / 255;
