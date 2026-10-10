@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Word Scramble retry and optional break — 10 October 2026](2026-10-10-word-scramble-retry-break.md): keeps a mistaken arrangement on the same word, adds corrective retry and Pause/Resume with retained letters, and verifies the complete ten-word journey at phone/tablet widths.
 1. [Tablet learning-year label visibility — 10 October 2026](2026-10-10-tablet-year-selector-label.md): gives the full Year 9 optional-extension label measured room at phone, tablet and desktop widths, adds a rendered-width regression assertion and records the fresh local browser/visual evidence.
 1. [School-year age-range reconciliation — 10 October 2026](2026-10-10-school-year-age-reconciliation.md): reconciles the current `d5200d2` target, matches both possible ages in each school year, keeps Year 9 capped at age 13 and preserves the main ages 5–12 pathway.
 1. [Teacher desktop gate-layout regression — 10 October 2026](2026-10-10-teacher-desktop-gate-layout.md): reproduces the deployed unlocked-teacher clipping, adds the missing 1440×900 settled-geometry assertion, reconciles the current `4cf60d5` target, repairs its stale `/preview-admin` browser check and records the final green hosted workflows without hiding earlier test-development failures.
@@ -35,6 +36,6 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 23. [Bingo feedback and breaks — 7 October 2026](2026-10-07-bingo-feedback.md): accurate first-try scoring, hints, pause/resume and prior-run evidence.
 24. [Game access — 7 October 2026](2026-10-07-game-access.md): preceding freeze/age-discovery repair and historical starting evidence.
 
-Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `d5200d2`; candidate pushes do not imply deployment.
+Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `2868173`; candidate pushes do not imply deployment.
 
-Next bounded priority: walk through the newly deployed parent summaries plus complete Sudoku and Word Scramble rounds at phone/tablet widths, then verify saved-age tutoring remains isolated by synthetic learner and year. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: walk through the newly deployed parent summaries plus a complete Sudoku round at phone/tablet widths, then verify saved-age tutoring remains isolated by synthetic learner and year. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
