@@ -57,13 +57,14 @@ async function reveal(page, locator) {
 }
 
 async function saveLearner(page, { nickname, age, year }) {
-  const nicknameInput = page.getByLabel('Child’s nickname (optional)', { exact: true });
+  const form = page.locator('#learning-settings');
+  const nicknameInput = form.locator('input[type="text"]').first();
   await reveal(page, nicknameInput);
   await nicknameInput.fill(nickname);
-  const ageInput = page.getByLabel('Child’s age (5–13, optional)', { exact: true });
+  const ageInput = form.locator('input[type="number"]').first();
   await reveal(page, ageInput);
   await ageInput.fill(String(age));
-  const yearSelect = page.getByLabel('School year', { exact: true });
+  const yearSelect = form.locator('select').first();
   await reveal(page, yearSelect);
   await yearSelect.selectOption(String(year));
   const save = page.getByRole('button', { name: 'Save learning settings', exact: true });
@@ -105,9 +106,9 @@ async function saveLearner(page, { nickname, age, year }) {
     await page.reload();
     await unlock(page);
     await page.getByRole('heading', { name: 'Practice settings for Leo', exact: true }).waitFor();
-    assert.equal(await page.getByLabel('School year', { exact: true }).inputValue(), '4');
-    assert.equal(await page.getByLabel('Child’s nickname (optional)', { exact: true }).inputValue(), 'Older nickname');
-    assert.equal(await page.getByLabel('Child’s age (5–13, optional)', { exact: true }).inputValue(), '9');
+    assert.equal(await page.locator('#learning-settings select').first().inputValue(), '4');
+    assert.equal(await page.locator('#learning-settings input[type="text"]').first().inputValue(), 'Older nickname');
+    assert.equal(await page.locator('#learning-settings input[type="number"]').first().inputValue(), '9');
     assert.equal(await page.getByLabel('Read aloud and sound', { exact: true }).isChecked(), false);
     assert.equal(await page.getByLabel('Larger text on menus and books', { exact: true }).isChecked(), true);
     await saveLearner(page, { nickname: 'Leo', age: 12, year: 7 });
@@ -118,9 +119,9 @@ async function saveLearner(page, { nickname, age, year }) {
     await page.reload();
     await unlock(page);
     await page.getByRole('heading', { name: 'Practice settings for Mia', exact: true }).waitFor();
-    assert.equal(await page.getByLabel('School year', { exact: true }).inputValue(), '2');
-    assert.equal(await page.getByLabel('Child’s nickname (optional)', { exact: true }).inputValue(), 'Mia');
-    assert.equal(await page.getByLabel('Child’s age (5–13, optional)', { exact: true }).inputValue(), '6');
+    assert.equal(await page.locator('#learning-settings select').first().inputValue(), '2');
+    assert.equal(await page.locator('#learning-settings input[type="text"]').first().inputValue(), 'Mia');
+    assert.equal(await page.locator('#learning-settings input[type="number"]').first().inputValue(), '6');
     assert.equal(await page.getByLabel('Read aloud and sound', { exact: true }).isChecked(), false);
     assert.equal(await page.getByLabel('Larger text on menus and books', { exact: true }).isChecked(), true);
     assert.equal(await page.getByLabel('Allow online learning help', { exact: true }).isChecked(), true);
