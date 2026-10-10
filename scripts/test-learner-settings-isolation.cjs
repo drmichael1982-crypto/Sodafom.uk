@@ -100,7 +100,6 @@ async function saveLearner(page, { nickname, age, year }) {
     const largeText = page.getByLabel('Larger text on menus and books', { exact: true });
     await reveal(page, largeText); await largeText.check();
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
-    await page.screenshot({ path: path.join(captureDir, 'mia-phone.png'), fullPage: true });
 
     await page.evaluate(() => localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 22, name: 'Leo', ageGroup: '11-13' })));
     await page.reload();
@@ -136,7 +135,11 @@ async function saveLearner(page, { nickname, age, year }) {
     assert.deepEqual(stored.leo, { childNickname: 'Leo', year: 7 });
     assert.equal(stored.miaAge, '6'); assert.equal(stored.leoAge, '12');
     assert.deepEqual(stored.device.settings, { childNickname: 'Older nickname', year: 4, sound: false, largeText: true, onlineHelp: true });
+    const miaHeading = page.getByRole('heading', { name: 'Practice settings for Mia', exact: true });
+    await reveal(page, miaHeading);
+    await page.screenshot({ path: path.join(captureDir, 'mia-phone.png'), fullPage: true });
     await page.setViewportSize({ width: 820, height: 1180 });
+    await reveal(page, miaHeading);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
     await page.screenshot({ path: path.join(captureDir, 'mia-tablet.png'), fullPage: true });
     assert.deepEqual(errors, []);
