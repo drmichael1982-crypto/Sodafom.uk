@@ -65,3 +65,13 @@ Real-device touch/keyboard, microphone capture, speech-synthesis playback, scree
 2. If it passes, inspect both recovery screenshots, save exact artifact/run evidence, update PR #81 and mark the browser fix complete.
 3. If it still fails, add rendered pager status/transform/client-width diagnostics before changing product code again.
 4. Only after this is green, continue to remaining direct speech-synthesis callers.
+
+## Reconciliation update — 10 October 2026
+
+- Rechecked the remote instead of relying on the earlier handoff. The authoritative test branch advanced to `aa4d3b6afa7cae730b52e9b6a414d78e18013f86` (`Keep game progress on canonical catalogue IDs`) after adding the whole-scene picture jigsaw and ten-question fractions work. Railway deployment `4c2fa6a1-73b0-429c-bedf-8ddb28a10bcc` is `SUCCESS` on that exact commit, created at 03:40:35 UTC.
+- Reconciled the dedicated improvement branch with that target in remote merge commit `99331eb725aeedca7f78fb75de563ff41af41367`. Newer target versions won the obsolete jigsaw/fractions conflicts; combined non-conflicting picture-jigsaw and canonical game-ID changes were retained. The reader pager and read-aloud recovery files remain in the merged tree.
+- PR #81 is open, draft, unmerged and now reports mergeable against target `aa4d3b6…`. No production/test merge or deployment was performed.
+- Validation on the reconciled tree: TypeScript PASS; focused pager/fraction/orbit tests PASS (3 files / 14 tests); full Vitest PASS (113 files / 962 tests); Archie production build PASS with the existing mixed-import and large-chunk warnings; browser-script syntax and `git diff --check` PASS.
+- GitHub still had not scheduled a workflow for `99331eb…` or its PR merge candidate when this update was recorded. The strict 820px browser geometry and fresh phone/tablet captures therefore remain unverified; this note does not claim the pager defect is closed.
+
+Next bounded priority remains a hosted Chromium run for `99331eb…`, followed by direct inspection of both reader recovery captures. If Actions continues not to schedule, add the planned diagnostic metrics before another product change rather than weakening the assertion.
