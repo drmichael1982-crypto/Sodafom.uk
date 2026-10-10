@@ -7,6 +7,11 @@ const captureOnly = process.env.ARCHIE_CAPTURE_ONLY === '1';
 const lessonsOnly = process.env.ARCHIE_LESSONS_ONLY === '1';
 const output = `test-results/search-${captureOnly ? 'before' : 'after'}`;
 const catalog = require('../src/lib/archie/game-catalog.json');
+const wordScrambleAnswers = [
+  'CAT', 'DOG', 'SUN', 'HAT', 'BUS', 'PEN', 'MAP', 'JAM', 'FAN', 'HOP',
+  'PLANT', 'CLOUD', 'BREAD', 'TRAIN', 'SHARK', 'FLAME', 'GLOBE', 'STORM', 'PRIZE', 'BRAVE',
+  'JUNGLE', 'CASTLE', 'PLANET', 'BRIDGE', 'FROZEN', 'FLIGHT', 'SPRING', 'TROPHY', 'WHISPER', 'BLANKET',
+];
 const eligible = (game, year) => game.ageGroups.some(range => {
   const [low, high] = range.split(/[–-]/).map(Number);
   const schoolYearAges = [year + 4, Math.min(year + 5, 13)];
@@ -34,7 +39,7 @@ const results = [];
       const goto = async route => { await page.goto(base + route); await page.getByRole('heading').first().waitFor(); };
       const chooseYear = year => page.getByRole('combobox', { name: 'My learning year', exact: true }).selectOption(String(year));
       const closeMovingReward = async screenshotPath => {
-        const dialog = page.getByRole('dialog', { name: 'Your rocket is ready!', exact: true });
+        const dialog = page.getByRole('dialog').filter({ has: page.getByRole('button', { name: 'Back to puzzle', exact: true }) });
         await dialog.waitFor();
         const close = dialog.getByRole('button', { name: 'Back to puzzle', exact: true });
         assert.equal(await close.evaluate(element => element === document.activeElement), true, 'Moving reward puts focus on Back to puzzle');
@@ -205,6 +210,64 @@ const results = [];
             : `keyboard pause/resume with retained focus → keyboard answers with Next/question focus hand-off → ${tierLabel} → 8/8 first-try answers (100%, three stars)`;
           results.push(`Year ${year}, ${viewport.width}px: Number Planets → ${journey} → menu`);
         }
+
+        // Complete Word Scramble after an explicit retry and optional break.
+        // This is a simulated learner journey, not evidence of learning outcomes.
+        await goto('/games'); await chooseYear(4);
+        await page.getByLabel('Search games', { exact: true }).fill('Word Scramble');
+        await page.locator('[data-game-link][href="/games/word-scramble"]').click();
+        await page.getByText('Tap each letter to build the word. If it does not fit, change your answer and try the same word again.', { exact: true }).waitFor();
+        await page.waitForTimeout(600); // wait for the game route transition before keyboard/capture checks
+        const chooseWordLetters = async word => {
+          for (const letter of word) {
+            const tile = button(`Letter ${letter}`).first();
+            await tile.focus();
+            await page.keyboard.press('Enter');
+            await page.waitForTimeout(40);
+          }
+        };
+        for (let round = 0; round < 10; round++) {
+          const available = await page.locator('button[aria-label^="Letter "]').evaluateAll(tiles => tiles.map(tile => tile.getAttribute('aria-label').slice(7)));
+          const signature = [...available].sort().join('');
+          const answer = wordScrambleAnswers.find(word => [...word].sort().join('') === signature);
+          assert.ok(answer, `Word Scramble round ${round + 1} has a known answer for ${signature}`);
+          if (round === 0) {
+            const hintButton = button('Show hint');
+            await hintButton.focus();
+            await page.keyboard.press('Enter');
+            assert.equal(await hintButton.evaluate(element => element === document.activeElement), true, 'Word Scramble hint keeps focus');
+            const wrong = answer.split('').reverse().join('') === answer ? answer.slice(1) + answer[0] : answer.split('').reverse().join('');
+            await chooseWordLetters(wrong);
+            await page.getByRole('status').filter({ hasText: 'Not quite yet' }).waitFor();
+            await page.getByText('1/10', { exact: true }).waitFor();
+            await page.waitForTimeout(2100);
+            await page.getByText('1/10', { exact: true }).waitFor();
+            await page.screenshot({ path: `${output}/word-scramble-retry-${viewport.width}.png`, fullPage: true });
+            await button('Clear').click();
+            await button(`Letter ${answer[0]}`).first().click();
+            await button('Pause game').click();
+            await page.getByRole('status').filter({ hasText: 'Paused. Your letters are saved.' }).waitFor();
+            assert.equal(await button(`Remove letter ${answer[0]}`).first().isDisabled(), true);
+            for (const tile of await page.locator('button[aria-label^="Letter "]').all()) assert.equal(await tile.isDisabled(), true);
+            await page.waitForTimeout(400); // inspect the settled paused state after retry feedback exits
+            await page.screenshot({ path: `${output}/word-scramble-paused-${viewport.width}.png`, fullPage: true });
+            await button('Resume game').click();
+            assert.equal(await button(`Remove letter ${answer[0]}`).first().isEnabled(), true);
+            await button('Clear').click();
+          }
+          await chooseWordLetters(answer);
+          await page.getByRole('status').filter({ hasText: 'Correct!' }).waitFor();
+          if (round < 9) await page.getByText(`${round + 2}/10`, { exact: true }).waitFor();
+        }
+        await closeMovingReward(`${output}/moving-reward-word-scramble-${viewport.width}.png`);
+        await page.getByText('10 correct out of 10 questions', { exact: true }).waitFor();
+        await page.getByRole('heading', { name: '🎉 Amazing exploring!', exact: true }).waitFor();
+        await page.getByText('⭐ Three stars earned! ⭐', { exact: true }).waitFor();
+        await page.waitForTimeout(1700);
+        await page.getByText('95%', { exact: true }).waitFor();
+        await page.screenshot({ path: `${output}/word-scramble-complete-${viewport.width}.png`, fullPage: true });
+        await button('Back to games').click(); await page.waitForURL(base + '/games');
+        results.push(`Year 4, ${viewport.width}px: Word Scramble → keyboard hint → wrong answer retained → retry → pause/resume with partial answer → 10 corrected words → three-star reward → menu`);
       }
       for (let year = 1; year <= (lessonsOnly ? 0 : 6); year++) {
         for (const retry of [false, true]) {
