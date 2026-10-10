@@ -27,6 +27,16 @@ afterEach(()=>{cleanup();vi.clearAllMocks();});
 
 describe('selected-year game discovery and difficulty',()=>{
   it.each([
+    {path:'/games?age=5-7',year:2,group:'5-7'},
+    {path:'/games?age=8-10',year:5,group:'8-10'},
+    {path:'/games?age=11-13',year:8,group:'11-13'},
+  ])('opens footer age link $path in its matching middle school year',({path,year,group})=>{
+    saveYear(9);show(path);
+    expect(screen.getByRole('combobox',{name:'My learning year'})).toHaveValue(String(year));
+    expect(screen.getByTestId('game-difficulty')).toHaveTextContent(group);
+    expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year).toBe(year);
+  });
+  it.each([
     {year:3,group:'5-7',tier:1,count:81,present:'/games/number-pop',absent:['/games/crossword','/games/algebra-quest']},
     {year:6,group:'8-10',tier:2,count:118,present:'/games/spelling-bee',absent:['/games/phonics-parrot','/games/algebra-quest']},
     {year:9,group:'11-13',tier:3,count:86,present:'/games/algebra-quest',absent:['/games/phonics-parrot','/games/number-bonds']},
