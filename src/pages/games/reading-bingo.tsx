@@ -11,9 +11,10 @@ const ITEMS = [
   'A book with a dragon or magical creature','A book about friendship','A book set in the future',
   'A book that taught you something new',
 ];
+export const BINGO_LINE_LENGTH = 3;
 
-function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
-  const [grid] = useState(() => ITEMS.sort(() => Math.random() - 0.5).slice(0, 9));
+export function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
+  const [grid] = useState(() => [...ITEMS].sort(() => Math.random() - 0.5).slice(0, 9));
   const [ticked, setTicked] = useState<Set<number>>(new Set());
   const [done, setDone] = useState(false);
 
@@ -32,7 +33,7 @@ function BingoInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResu
     const hasBingo = lines.some(l => l.every(idx => next.has(idx)));
     if (hasBingo) {
       setDone(true);
-      setTimeout(() => onComplete({ score: 90, correct: 9, total: 9, stars: 3 }), 1500);
+      setTimeout(() => onComplete({ score: 100, correct: BINGO_LINE_LENGTH, total: BINGO_LINE_LENGTH, stars: 3 }), 1500);
     }
   }
 

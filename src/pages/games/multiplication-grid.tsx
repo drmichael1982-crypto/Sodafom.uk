@@ -29,7 +29,7 @@ function buildGrid(): GridCell[] {
   return cells;
 }
 
-function MultiplicationGridInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
+export function MultiplicationGridInner({ onComplete }: { onComplete: (r: GameResult) => void }) {
   const [cells, setCells] = useState<GridCell[]>(() => buildGrid());
   const picturePaused = usePicturePuzzlePause();
   const [timeLeft, setTimeLeft] = useState(TIME_LIMIT);
@@ -96,9 +96,9 @@ function MultiplicationGridInner({ onComplete }: { onComplete: (r: GameResult) =
   const correctCount = submitted ? cells.filter(c => c.correct).length : null;
 
   return (
-    <div className="flex flex-col items-center gap-4 w-full max-w-xl mx-auto px-4 py-6">
+    <div aria-label="Multiplication Grid game" className="flex h-full min-h-0 flex-col items-center gap-4 w-full max-w-xl mx-auto overflow-y-auto overscroll-contain px-4 py-6">
       {/* Header bar */}
-      <div className="w-full flex items-center gap-3">
+      <div data-testid="multiplication-timer" className="sticky top-0 z-10 w-full flex items-center gap-3 bg-background/95 py-2">
         <div className="flex items-center gap-1.5 bg-card border border-border rounded-full px-3 py-1.5">
           <Timer size={14} className={timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-muted-foreground'} />
           <span className={`text-sm font-black ${timeLeft <= 10 ? 'text-red-600' : 'text-foreground'}`}>{timeLeft}s</span>

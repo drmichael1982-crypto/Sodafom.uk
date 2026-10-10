@@ -134,6 +134,31 @@ interface ChildProgress {
   activity: ActivityEntry[];
 }
 
+interface ProgressActivity {
+  id: number;
+  activityId: string;
+  activityTitle: string;
+  subject: string;
+  score: number | null;
+  maxScore: number | null;
+  starsEarned: number;
+  completedAt: string;
+}
+
+function toActivityEntry(activity: ProgressActivity): ActivityEntry {
+  const score = Number(activity.score ?? 0);
+  const maxScore = Number(activity.maxScore ?? 0);
+  return {
+    id: activity.id,
+    gameId: activity.activityId,
+    gameName: activity.activityTitle,
+    subject: activity.subject,
+    score: maxScore > 0 ? Math.round((score / maxScore) * 100) : 0,
+    stars: activity.starsEarned,
+    playedAt: activity.completedAt,
+  };
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const SUBJECT_META: Record<string, { icon: React.ReactNode; label: string; color: string; bg: string }> = {
   maths:   { icon: <Calculator size={14} />, label: 'Maths',   color: 'text-amber-700',  bg: 'bg-amber-50 border-amber-200' },
@@ -369,7 +394,7 @@ function ChildProgressCard({ data }: { data: ChildProgress }) {
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-function ProgressDashboard() {
+export function ProgressDashboard() {
   const { user } = useSession();
   const [progressData, setProgressData] = useState<ChildProgress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -385,10 +410,10 @@ function ProgressDashboard() {
         const all = await Promise.all(
           children.map(async (child) => {
             try {
-              const actRes = await fetch(`${API_PREFIX}/teacher/students/${child.id}`, { credentials: 'include' });
+              const actRes = await fetch(`${API_PREFIX}/children/${child.id}/progress`, { credentials: 'include' });
               if (!actRes.ok) return { child, activity: [] };
-              const data = await actRes.json() as { activity?: ActivityEntry[] };
-              return { child, activity: data.activity ?? [] };
+              const data = await actRes.json() as { recent?: ProgressActivity[] };
+              return { child, activity: (data.recent ?? []).map(toActivityEntry) };
             } catch {
               return { child, activity: [] };
             }

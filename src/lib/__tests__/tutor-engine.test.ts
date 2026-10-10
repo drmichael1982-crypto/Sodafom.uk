@@ -4,7 +4,7 @@ import {
   getRememberedChildName,
   tryLocalArchieResponse
 } from '../archie-local';
-import { tryLocalTutor, getActivePendingQuestion, setActivePendingQuestion, clearActivePendingQuestion } from '../tutor/engine';
+import { tryLocalTutor, getActivePendingQuestion, setActivePendingQuestion, clearActivePendingQuestion, matchesTutorAnswer } from '../tutor/engine';
 import { loadTutorMemory, recordQuestionAnswer } from '../tutor/memory';
 
 describe('Local Tutoring Engine & Memory', () => {
@@ -103,6 +103,25 @@ describe('Local Tutoring Engine & Memory', () => {
       const res = tryLocalTutor('quiz me on geography');
       expect(res).not.toBeNull();
       expect(res?.text).toContain('Europe');
+    });
+
+    it('rejects a negated answer instead of counting an expected-word substring as correct', () => {
+      tryLocalTutor('quiz me on geography');
+      expect(tryLocalTutor('It is not Europe')?.text).toContain('Not quite');
+      expect(loadTutorMemory().topics['geography:geography']).toMatchObject({ totalAttempted: 1, totalCorrect: 0 });
+    });
+
+    it('accepts a natural affirmative wrapper only when the remaining answer matches exactly', () => {
+      tryLocalTutor('quiz me on geography');
+      expect(tryLocalTutor("I think it's Europe.")?.text).toContain('Spot on');
+      expect(loadTutorMemory().topics['geography:geography']).toMatchObject({ totalAttempted: 1, totalCorrect: 1 });
+    });
+
+    it('matches whole answers and alternatives without numeric or word substrings', () => {
+      const question = { id: 'test', question: 'How many?', answer: '8', alternateAnswers: ['eight'], hint: '', explanation: '', simplerExplanation: '', difficulty: 1 as const };
+      expect(matchesTutorAnswer('The answer is eight, please.', question)).toBe(true);
+      expect(matchesTutorAnswer('18', question)).toBe(false);
+      expect(matchesTutorAnswer('not 8', question)).toBe(false);
     });
 
     it('teaches a Science lesson locally', () => {

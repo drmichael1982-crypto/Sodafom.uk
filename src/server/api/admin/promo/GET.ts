@@ -2,17 +2,11 @@ import type { Request, Response } from 'express';
 import { db } from '../../../db/client';
 import { promoCodes } from '../../../db/schema';
 import { desc } from 'drizzle-orm';
-import { getAuth } from '@/lib/auth/auth';
+import { requireArchieOwnerSession } from '@/server/lib/archie-owner-session';
 
 export default async function handler(req: Request, res: Response) {
   try {
-    const auth = getAuth();
-    const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-
-    // Security: Only admins can list codes
-    if (!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+    if (!await requireArchieOwnerSession(req, res)) return;
 
     const codes = await db.select().from(promoCodes).orderBy(desc(promoCodes.createdAt));
     res.json({ success: true, codes });
