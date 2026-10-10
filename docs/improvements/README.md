@@ -2,6 +2,9 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Word Scramble pager journey repair — 10 October 2026](2026-10-10-word-scramble-pager-journey.md): records the exact final-head CI failure and makes the simulated retry/pause journey use the visible Previous/Next pager controls before activating off-screen actions.
+1. [Learner-scoped sticker rewards — 10 October 2026](2026-10-10-learner-sticker-isolation.md): keeps newly collected stickers with the active learner, preserves older device-wide claims as read-only history and verifies profile switching at phone/tablet widths.
+1. [Learner-scoped progress records — 10 October 2026](2026-10-10-learner-progress-record-isolation.md): scopes games, books, lessons and adult summaries to the selected local learner while retaining explicit older shared history.
 1. [Shared-device progress scope — 10 October 2026](2026-10-10-shared-device-progress-scope.md): replaces misleading possessive adult progress labels with explicit shared-browser scope, preserves the selected profile only as context and verifies the full parent-to-progress journey at phone/tablet widths.
 1. [Parent tutor report learner isolation — 10 October 2026](2026-10-10-parent-tutor-report-isolation.md): binds every authenticated parent card to its explicit learner/year, removes an unsupported compliance badge and verifies a two-child signed-in journey at phone/tablet widths.
 1. [Sudoku guided retry and optional break — 10 October 2026](2026-10-10-sudoku-guided-retry-break.md): retains a wrong digit for correction, adds reasoning help and a state-preserving break, removes hidden time scoring and verifies an accurate 95% completion at phone/tablet widths.
@@ -41,4 +44,4 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 
 Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `2868173`; candidate pushes do not imply deployment.
 
-Next bounded priority: design a non-destructive migration from shared game/book/lesson history to child-scoped browser keys with an explicit legacy shared fallback, then continue the remaining age/year game matrix. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: finish the exact-head Word Scramble pager workflow and inspect its phone/tablet captures, then audit which remaining learning settings are device-wide versus learner-specific. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
