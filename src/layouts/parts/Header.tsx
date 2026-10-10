@@ -42,10 +42,10 @@ function archieSpeak(text: string): void {
   else { window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.onvoiceschanged = null; go(); }; }
 }
 
-const navLinks = [
+export const navLinks = [
   { label: 'Home',            href: '/' },
   { label: '1-to-1 Tutor',    href: '/tutor' },
-  { label: 'Games',           href: '/' },
+  { label: 'Games',           href: '/games' },
   { label: 'Cartoons',        href: '/cartoons' },
   { label: 'Daily Challenge', href: '/daily-challenge' },
   { label: 'Leaderboard',     href: '/leaderboard' },
