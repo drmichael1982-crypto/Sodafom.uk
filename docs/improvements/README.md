@@ -46,4 +46,4 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 
 Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `2868173`; candidate pushes do not imply deployment.
 
-Next bounded priority: extend complete wrong-answer, hint/retry, pause/resume, completion and navigation walkthroughs beyond the current 84 sampled scenarios to remaining supported game/lesson and age/year combinations, prioritising reading, spelling and voice flows. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: first reconcile draft PR #81's reported merge conflict against the current test target without overwriting concurrent work, then extend complete wrong-answer, hint/retry, pause/resume, completion and navigation walkthroughs beyond the current 84 sampled scenarios to remaining supported game/lesson and age/year combinations, prioritising reading, spelling and voice flows. Keep Leonard's separate queue isolated; do not merge/deploy.

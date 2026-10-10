@@ -7,6 +7,7 @@
 - Dedicated candidate branch: `improve/archie-learning-20261007`.
 - Implementation commit: `9363aa55c6debd3e84d87153da6333c031000934`.
 - Draft PR: [#81](https://github.com/drmichael1982-crypto/Sodafom.uk/pull/81), open and unmerged.
+- The refreshed GitHub snapshot reports `mergeable: false`; reconcile the branch against the current test target before any merge consideration. No merge was attempted.
 - No merge, deployment, credentials, paid service, 3D work, production change or `sodafom797` edit occurred. Leonard’s external queue was not exposed, so no active-queue claim is made.
 
 The reference `be917c8e6cdb99156a63b38f8d12792babeb31c4` was not used as the working head. The newer branch, PR, run notes, current CI and Railway deployment were rechecked first.
@@ -70,4 +71,4 @@ Stripe Directory was attempted before provider research, but its CLI was unavail
 
 Physical phones/tablets, audible speech, microphone capture, device speech services, hardware screen readers, live parent/teacher accounts, email, payments and real-child enjoyment or attainment remain unverified.
 
-Next bounded priority: extend complete wrong-answer, hint/retry, pause/resume, completion and navigation walkthroughs beyond the current 84 sampled scenarios to remaining supported game/lesson and age/year combinations, prioritising reading, spelling and voice flows. Recheck the branch, PR, current CI, Railway state and Leonard ownership before editing.
+Next bounded priority: first reconcile the draft branch's reported merge conflict against the current test target without overwriting concurrent work, then extend complete wrong-answer, hint/retry, pause/resume, completion and navigation walkthroughs beyond the current 84 sampled scenarios to remaining supported game/lesson and age/year combinations, prioritising reading, spelling and voice flows. Recheck the branch, PR, current CI, Railway state and Leonard ownership before editing.
