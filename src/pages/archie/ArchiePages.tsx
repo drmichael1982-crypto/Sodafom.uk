@@ -229,6 +229,7 @@ export function ArchieWorld() {
   useLearning('My world');
   return <Page title="Explore my world" intro="Choose a piece of Archie's adventure picture." back="/" scene="adventure"><PuzzleMenu/><p className="a-note">Every piece opens a game, lesson or activity. The picture stays together as you explore.</p></Page>;
 }
+const yearForAgeBand = (band: string | null) => band === '5-7' ? 2 : band === '8-10' ? 5 : band === '11-13' ? 8 : null;
 export function ArchieGames() {
   useLearning('Choose a game');
   const { settings } = useArchieData();
@@ -236,15 +237,19 @@ export function ArchieGames() {
   const [query,setQuery] = useState('');
   const searchInput = useRef<HTMLInputElement>(null);
   const subject = params.get('subject') || 'all';
-  const filtered = catalog.filter(g => isGameForYear(settings.year,g.ageGroups) && (subject === 'all' || g.subject === subject) && `${g.title} ${g.description}`.toLowerCase().includes(query.toLowerCase()));
+  const linkedYear = yearForAgeBand(params.get('age'));
+  const activeYear = linkedYear ?? settings.year;
+  useEffect(()=>{if(linkedYear && linkedYear!==settings.year)updateSavedData(d=>({...d,settings:{...d.settings,year:linkedYear}}));},[linkedYear,settings.year]);
+  const chooseYear = (year:number) => { const next=new URLSearchParams(params);next.delete('age');setParams(next);updateSavedData(d=>({...d,settings:{...d.settings,year}})); };
+  const filtered = catalog.filter(g => isGameForYear(activeYear,g.ageGroups) && (subject === 'all' || g.subject === subject) && `${g.title} ${g.description}`.toLowerCase().includes(query.toLowerCase()));
   const toolbar = <div className="game-library-toolbar"><div className="game-library-filters">
-    <div className="soda-year-choice"><label className="a-field">My learning year<select value={settings.year} onChange={e=>updateSavedData(d=>({...d,settings:{...d.settings,year:Number(e.target.value)}}))}><LearningYearOptions/></select></label><p>{LEARNING_YEAR_SCOPE_NOTE}</p></div>
+    <div className="soda-year-choice"><label className="a-field">My learning year<select value={activeYear} onChange={e=>chooseYear(Number(e.target.value))}><LearningYearOptions/></select></label><p>{LEARNING_YEAR_SCOPE_NOTE}</p></div>
     <label className="a-search"><Search aria-hidden="true"/><input ref={searchInput} type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
     </div><div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
-    <p role="status">{filtered.length} games for Year {settings.year}</p></div>;
+    <p role="status">{filtered.length} games for Year {activeYear}</p></div>;
   return <Page title="Choose a game" intro="Pick a picture and let's play." toolbar={toolbar}>
     <div className="a-grid">{filtered.map((g,i)=><Link key={g.id} to={g.route} className={`a-card colour-${i%4}`} data-game-link><SceneArtwork scene={sceneForSubject(g.subject,g.title)} title={g.title} compact/><h2>{g.title}</h2><p>{g.description}</p><small>Ages {g.ageGroups.join(', ')}</small><span className="a-play">Play game →</span></Link>)}</div>
-    {!filtered.length && <section className="a-panel" aria-labelledby="game-search-help"><h2 id="game-search-help">Let's find another game</h2><p>No games match those filters for Year {settings.year}. Try a shorter search or choose another subject.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});searchInput.current?.focus();}}>Show Year {settings.year} games</button></section>}
+    {!filtered.length && <section className="a-panel" aria-labelledby="game-search-help"><h2 id="game-search-help">Let's find another game</h2><p>No games match those filters for Year {activeYear}. Try a shorter search or choose another subject.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});searchInput.current?.focus();}}>Show Year {activeYear} games</button></section>}
   </Page>;
 }
 export function ArchieLesson() {

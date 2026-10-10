@@ -118,12 +118,18 @@ describe('press-once voice conversation',()=>{
     expect(screen.getByRole('button',{name:'Start voice conversation'})).toBeEnabled();
   });
 
-  it.each(['not-allowed','service-not-allowed','audio-capture','network'])('stops gracefully on %s rather than repeatedly requesting microphone access',async(error)=>{
+  it.each([
+    ['not-allowed','Microphone permission is off'],
+    ['service-not-allowed','Microphone permission is off'],
+    ['audio-capture','No microphone is available'],
+    ['network','Voice conversation could not continue'],
+  ])('stops gracefully on %s rather than repeatedly requesting microphone access',async(error,message)=>{
     render(<ArchieHelper/>);await start();
     await act(async()=>{latest().error(error);latest().end();});
     await letArchieListen();expect(FakeRecognition.instances).toHaveLength(1);
     expect(screen.getByRole('button',{name:'Start voice conversation'})).toBeEnabled();
-    expect(screen.getByRole('status')).toHaveTextContent(/type to Archie/i);
+    expect(screen.getByRole('status')).toHaveTextContent(message);
+    expect(screen.getByRole('textbox',{name:'Your question for Archie'})).toHaveFocus();
   });
 
   it.each(['close','route','unmount'])('retires callbacks and never restarts after %s',async(action)=>{
@@ -175,8 +181,8 @@ describe('press-once voice conversation',()=>{
   it('offers typed input when browser speech recognition is unsupported',()=>{
     vi.stubGlobal('SpeechRecognition',undefined);vi.stubGlobal('webkitSpeechRecognition',undefined);
     render(<ArchieHelper/>);fireEvent.click(screen.getByRole('button',{name:'Start voice conversation'}));
-    expect(screen.getByRole('status')).toHaveTextContent('You can still type to Archie');
-    expect(screen.getByRole('textbox',{name:'Your question for Archie'})).toBeEnabled();
+    expect(screen.getByRole('status')).toHaveTextContent('Type your question to Archie below');
+    expect(screen.getByRole('textbox',{name:'Your question for Archie'})).toHaveFocus();
     expect(FakeRecognition.instances).toHaveLength(0);
   });
 });

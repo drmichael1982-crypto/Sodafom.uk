@@ -123,6 +123,13 @@ const results=[];
       await page.getByLabel('Your question for Archie').fill('What is 8 plus 4?');await button('Send question').click();await page.getByRole('log').getByText(/8 plus 4 is 12/i).waitFor();await button('Listen to Archie').waitFor({state:'visible'});await button('Listen to Archie').click();
       await button('Close Ask Archie').click();await goto('/lesson');const spokenWord=await studyWord();await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
       // This exercises the typed fallback in the spoken-lesson UI, not microphone recognition.
+      await page.getByRole('status').getByText('Voice conversation is not supported here. Type your question to Archie below.',{exact:true}).waitFor();
+      assert.equal(await page.getByLabel('Your question for Archie').evaluate(element=>element===document.activeElement),true,'Unsupported voice recognition must focus the typed fallback');
+      await page.screenshot({path:'test-results/spoken-lesson-typed-fallback-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Typed voice fallback must not overflow the tablet viewport');
+      await page.screenshot({path:'test-results/spoken-lesson-typed-fallback-820.png',fullPage:true});
+      await page.setViewportSize({width:390,height:844});
       await page.getByLabel('Your question for Archie').fill(spokenWord);await button('Send question').click();await page.getByRole('log').getByText(new RegExp('spelled '+escapeRegex(spokenWord)+' correctly','i')).waitFor();
       await button('Close Ask Archie').click();
       await page.getByRole('heading',{level:1,name:/Step 1 of 7/}).waitFor();
