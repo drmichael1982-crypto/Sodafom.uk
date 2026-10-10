@@ -2,7 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
-1. [Teacher desktop gate-layout regression — 10 October 2026](2026-10-10-teacher-desktop-gate-layout.md): reproduces the deployed unlocked-teacher clipping, adds the missing 1440×900 settled-geometry assertion, reconciles the current `534a317` target and repairs its stale `/preview-admin` browser check without hiding the earlier test-development failures.
+1. [Teacher desktop gate-layout regression — 10 October 2026](2026-10-10-teacher-desktop-gate-layout.md): reproduces the deployed unlocked-teacher clipping, adds the missing 1440×900 settled-geometry assertion, reconciles the current `534a317` target, repairs its stale `/preview-admin` browser check and records the final green hosted workflows without hiding earlier test-development failures.
 1. [Current target reconciliation and live visual review — 10 October 2026](2026-10-10-current-target-reconciliation.md): reconciles the newest deployed parent/timed-maths repairs into PR #81, records the full live game walkthrough and distinguishes the deployed desktop teacher clipping from clear candidate phone/tablet captures.
 1. [Reading Quest speech recovery — 10 October 2026](2026-10-10-reading-quest-speech-recovery.md): replaces Reading Quest's silent direct browser-speech failure with the shared calm recovery path, preserves the printed passage and focus, and records the pending hosted phone/tablet evidence without overstating completion.
 1. [Phonics Parrot speech recovery — 10 October 2026](2026-10-10-phonics-speech-recovery.md): uses the shared read-aloud recovery, preserves the printed sound and verifies settled phone/tablet captures instead of a transient entrance frame.
@@ -35,4 +35,4 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 
 Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `534a317`; candidate pushes do not imply deployment.
 
-Next bounded priority after the final reconciled browser run: walk through the newly deployed parent summaries and a complete Sudoku round at phone/tablet widths, then verify saved-age tutoring with synthetic data only. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: walk through the newly deployed parent summaries and a complete Sudoku round at phone/tablet widths, then verify saved-age tutoring with synthetic data only. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
