@@ -28,7 +28,9 @@ No lesson objective, answer, game, reward, branding, character art, payment path
 - Script syntax and `git diff --check`: PASS.
 - Hosted run [#362](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38040587198) correctly failed the first over-broad version at 280 × 653 because a heading straddled a narrow paged column and the horizontal reveal helper could not settle it. TypeScript, 999 tests and build passed; the later scenario matrix was skipped.
 - Hosted run [#364](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38041000804) reached the intended 1440 × 900 state. Its artifact visibly shows the candidate with the gate gone, `School preview` and `Recent puzzle learning on this device` fully contained on screen 1 / 8, coherent blue/gold styling and no side-by-side clipping. The check still failed because it sampled geometry during the unlock reflow and attempted to click an already-disabled Previous control. The final assertion therefore waits for settled layout and measures the visible first screen directly.
-- Final hosted verification for that settled-geometry assertion must be checked on the documentation head before this work is described as green.
+- Hosted code-head run [#366](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38041445054) is green at `4ec88304b720e4cfb89b4160a79b7fa6a24daf84`: TypeScript, 128 files / 999 tests, production build, Chromium install, 15 complete browser journeys, 130 game routes, all responsive layouts and 82 simulated search/game journeys passed with zero browser errors and zero live API requests.
+- Artifact `11665598691` (`sha256:b214de7a39f9f0a1a5c0bdac3c9ec5d06193da9f755de4cbcc7f277933034045`) contains 180 files. Direct inspection of `teacher-unlocked-1440.png` confirms the gate is absent; `School preview` and `Recent puzzle learning on this device` are fully contained on screen 1 / 8; Previous remains disabled, Next remains visible; and the established blue/gold school artwork is preserved.
+- Documentation-head run [#367](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38041663033) repeated the complete workflow after this note was first published and is also green.
 
 These are simulated browser scenarios, not real-child testing or proof of learning outcomes or enjoyment.
 
@@ -40,4 +42,4 @@ Physical phone/tablet testing, audible speech output, microphone capture, hardwa
 
 ## Next priority
 
-After the final hosted run is reviewed, exercise the newly deployed target’s parent progress summaries and one complete Sudoku round at phone and tablet widths. Verify saved-age tutoring uses the grown-up-selected learning age without sending real child data. Keep PR #81 draft, unmerged and undeployed.
+Exercise the newly deployed target’s parent progress summaries and one complete Sudoku round at phone and tablet widths. Verify saved-age tutoring uses the grown-up-selected learning age without sending real child data. Keep PR #81 draft, unmerged and undeployed.
