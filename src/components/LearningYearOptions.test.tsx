@@ -19,7 +19,7 @@ describe('learning year choices', () => {
     ]);
     expect(within(select).getByRole('option', { name: 'Year 7 · ages 11–12' })).toBeInTheDocument();
     expect(within(select).getByRole('option', { name: 'Year 8 · ages 12–13 · optional extension' })).toBeInTheDocument();
-    expect(within(select).getByRole('option', { name: 'Year 9 · ages 13–14 · optional extension' })).toBeInTheDocument();
+    expect(within(select).getByRole('option', { name: 'Year 9 · age 13 · optional extension' })).toBeInTheDocument();
     expect(screen.getByText(/main pathway is ages 5–12/i)).toBeInTheDocument();
     expect(ALL_LEARNING_YEARS).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
     expect(learningYearLabel(1)).toBe('Year 1 · ages 5–6');

@@ -69,6 +69,11 @@ describe('selected-year game discovery and difficulty',()=>{
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent('11-13 · tier 3');
     expect(JSON.parse(localStorage.getItem('sodafom_active_child')!)).toEqual(staleProfile);
   });
+  it('does not advertise age 14 in the Year 9 selector',()=>{
+    saveYear(9);show();
+    expect(screen.getByRole('option',{name:'Year 9 · age 13 · optional extension'})).toBeInTheDocument();
+    expect(screen.queryByRole('option',{name:/Year 9.*14/})).not.toBeInTheDocument();
+  });
   it('subject, search and empty-search reset keep the selected-year restriction',()=>{
     saveYear(3);const view=show('/games?subject=maths');
     expect(gameRoutes(view.container)).toContain('/games/number-pop');
