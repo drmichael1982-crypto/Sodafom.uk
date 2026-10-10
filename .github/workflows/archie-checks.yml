@@ -30,6 +30,8 @@ jobs:
           node scripts/test-learner-settings-isolation.cjs
           test -f test-results/learner-settings-isolation/mia-phone.png
           test -f test-results/learner-settings-isolation/mia-tablet.png
+          test -f test-results/learner-settings-isolation/ask-archie-memory-phone.png
+          test -f test-results/learner-settings-isolation/ask-archie-memory-tablet.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -9,12 +9,13 @@ import { getRememberedChildName, tryLocalArchieResponse } from '@/lib/archie-loc
 import { tryRememberChildInterest } from '@/lib/interest-themes';
 import { answerFromDevice, answerLessonReply, saveLearningTurn } from '@/lib/archie/device-learning';
 import catalog from '@/lib/archie/game-catalog.json';
-import { useArchieData } from '@/lib/archie/storage';
+import { readScopedLearnerSettings, useArchieData } from '@/lib/archie/storage';
 import '@/pages/archie/archie.css';
 import { blockedLearningText, FRIENDLY_REDIRECT, safeLearningReply } from '@/lib/archie/learning-safety';
 import { normaliseVoiceAnswer, submitGameVoiceAnswer } from '@/lib/archie/game-voice';
 import { coachLessonReply, guardPracticeReply, lessonContextForService, subjectMethod } from '@/lib/archie/lesson-coach';
 import { loadTutorMemory } from '@/lib/tutor/memory';
+import { readLearningAge, scopedLearningAgeKey } from '@/components/AgeExperience';
 
 import type { CourseLesson, CourseSubject } from '@/lib/archie/course-types';
 
@@ -51,8 +52,12 @@ function cleanTutorText(text: string) {
 }
 export function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
-  const learningAge = Number(localStorage.getItem('sodafom_learning_age'));
-  if (Number.isInteger(learningAge) && learningAge >= 5 && learningAge <= 13) return learningAge;
+  const scopedAge = Number(localStorage.getItem(scopedLearningAgeKey()));
+  if (Number.isInteger(scopedAge) && scopedAge >= 5 && scopedAge <= 13) return scopedAge;
+  const learnerYear = readScopedLearnerSettings()?.year;
+  if (learnerYear && learnerYear >= 1 && learnerYear <= 9) return learnerYear + 4;
+  const learningAge = readLearningAge();
+  if (learningAge !== null) return learningAge;
   try {
     const app = JSON.parse(localStorage.getItem('sodafom_archie_design_v1') || '{}');
     const year = Number(app.settings?.year);
