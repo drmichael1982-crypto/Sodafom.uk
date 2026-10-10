@@ -35,6 +35,25 @@ export interface ChildTutorProfile {
 
 const MEMORY_KEY = 'sodafom_tutor_memory';
 
+function activeChild(): { id: string; name?: string; ageGroup?: ChildTutorProfile['ageGroup'] } | null {
+  try {
+    const parsed = JSON.parse(localStorage.getItem('sodafom_active_child') || 'null') as Record<string, unknown> | null;
+    const id = typeof parsed?.id === 'number' || typeof parsed?.id === 'string' ? String(parsed.id).trim() : '';
+    if (!id) return null;
+    const ageGroup = parsed?.ageGroup === '5-7' || parsed?.ageGroup === '8-10' || parsed?.ageGroup === '11-13'
+      ? parsed.ageGroup : undefined;
+    return { id, name: typeof parsed?.name === 'string' ? parsed.name.trim() : undefined, ageGroup };
+  } catch { return null; }
+}
+
+function memoryKey(child = activeChild()): string {
+  return child ? `${MEMORY_KEY}:${encodeURIComponent(child.id)}` : MEMORY_KEY;
+}
+
+function childNameKey(child = activeChild()): string {
+  return child ? `sodafom_child_name:${encodeURIComponent(child.id)}` : 'sodafom_child_name';
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -72,13 +91,14 @@ export function loadTutorMemory(): ChildTutorProfile {
     return { topics: {} };
   }
   try {
-    const raw = localStorage.getItem(MEMORY_KEY);
+    const child = activeChild();
+    const raw = localStorage.getItem(memoryKey(child));
     if (raw) {
       const parsed = JSON.parse(raw);
       if (!isRecord(parsed)) throw new Error('Invalid tutor memory');
       const setupComplete = parsed.profileSetupComplete === true;
       const storedName = typeof parsed.childName === 'string' && parsed.childName.trim() ? parsed.childName : undefined;
-      const legacyName = localStorage.getItem('sodafom_child_name') ?? undefined;
+      const legacyName = localStorage.getItem(childNameKey(child)) ?? undefined;
       return {
         childName: storedName || (setupComplete ? undefined : legacyName),
         ageGroup: parsed.ageGroup === '5-7' || parsed.ageGroup === '11-13' ? parsed.ageGroup : '8-10',
@@ -97,10 +117,11 @@ export function loadTutorMemory(): ChildTutorProfile {
     }
   } catch { /* ignore */ }
 
-  const storedName = localStorage.getItem('sodafom_child_name');
+  const child = activeChild();
+  const storedName = localStorage.getItem(childNameKey(child));
   return {
-    childName: storedName ? storedName : undefined,
-    ageGroup: '8-10',
+    childName: storedName || child?.name || undefined,
+    ageGroup: child?.ageGroup ?? '8-10',
     schoolYear: 'Year 4',
     preferredTutor: 'archie',
     readAloudPreference: true,
@@ -111,9 +132,10 @@ export function loadTutorMemory(): ChildTutorProfile {
 export function saveTutorMemory(profile: ChildTutorProfile): void {
   if (typeof window === 'undefined') return;
   try {
-    localStorage.setItem(MEMORY_KEY, JSON.stringify(profile));
+    const child = activeChild();
+    localStorage.setItem(memoryKey(child), JSON.stringify(profile));
     if (profile.childName) {
-      localStorage.setItem('sodafom_child_name', profile.childName);
+      localStorage.setItem(childNameKey(child), profile.childName);
     }
   } catch { /* ignore */ }
 }

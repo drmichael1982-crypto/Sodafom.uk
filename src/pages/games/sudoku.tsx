@@ -342,36 +342,43 @@ export function SudokuInner({ onComplete, difficulty }: { onComplete: (result: G
 
       {/* Grid */}
       <div
-        className="border-2 border-foreground"
-        style={{ display: 'grid', gridTemplateColumns: `repeat(${size}, 1fr)` }}
+        className="w-full max-w-full overflow-x-auto overscroll-x-contain pb-1"
+        role="region"
+        aria-label="Sudoku board. Scroll sideways to reach every column on a narrow screen."
+        tabIndex={0}
       >
-        {grid.map((row, r) =>
-          row.map((val, c) => {
-            const highlight = selVal && val === selVal && !selected?.every((v, i) => [r, c].at(i) === v);
-            const isBoxBorderR = r === boxBorderR || (size === 9 && r === 5);
-            const isBoxBorderC = c === boxBorderC || (size === 9 && c === 5);
-            return (
-              <motion.button
-                key={`${r}-${c}`}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleCellClick(r, c)}
-                className={`
-                  ${cellSize} font-black flex items-center justify-center
-                  border transition-all
-                  ${getCellBg(r, c)}
-                  ${highlight ? 'ring-2 ring-primary/40' : ''}
-                  ${isBoxBorderC ? 'border-r-2 border-r-foreground/40' : ''}
-                  ${isBoxBorderR ? 'border-b-2 border-b-foreground/40' : ''}
-                  ${!isFixed(r, c) ? 'cursor-pointer' : 'cursor-default'}
-                `}
-                disabled={isFixed(r, c)}
-                aria-label={`Row ${r + 1} column ${c + 1}: ${val ?? 'empty'}`}
-              >
-                {val ?? ''}
-              </motion.button>
-            );
-          })
-        )}
+        <div
+          className="grid w-max mx-auto border-2 border-foreground"
+          style={{ gridTemplateColumns: `repeat(${size}, auto)` }}
+        >
+          {grid.map((row, r) =>
+            row.map((val, c) => {
+              const highlight = selVal && val === selVal && !selected?.every((v, i) => [r, c].at(i) === v);
+              const isBoxBorderR = r === boxBorderR || (size === 9 && r === 5);
+              const isBoxBorderC = c === boxBorderC || (size === 9 && c === 5);
+              return (
+                <motion.button
+                  key={`${r}-${c}`}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => handleCellClick(r, c)}
+                  className={`
+                    ${cellSize} font-black flex items-center justify-center
+                    border transition-all
+                    ${getCellBg(r, c)}
+                    ${highlight ? 'ring-2 ring-primary/40' : ''}
+                    ${isBoxBorderC ? 'border-r-2 border-r-foreground/40' : ''}
+                    ${isBoxBorderR ? 'border-b-2 border-b-foreground/40' : ''}
+                    ${!isFixed(r, c) ? 'cursor-pointer' : 'cursor-default'}
+                  `}
+                  disabled={isFixed(r, c)}
+                  aria-label={`Row ${r + 1} column ${c + 1}: ${val ?? 'empty'}`}
+                >
+                  {val ?? ''}
+                </motion.button>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Number pad */}
