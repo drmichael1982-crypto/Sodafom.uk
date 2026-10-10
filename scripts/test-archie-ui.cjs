@@ -184,6 +184,21 @@ const results=[];
       await goto('/library');await page.getByRole('link',{name:/Archie and the Lost Key/}).click();await button('Read aloud').click();
       for(let i=0;i<3;i++)await button('Next page').click();await button('Finish book • Earn 1 star').click();assert.equal(await button('Book completed ✓').isDisabled(),true);await button('Previous').click();await button('Next page').click();assert.equal(await button('Book completed ✓').isDisabled(),true);
     });
+    await check('Reader: unavailable speech keeps the story visible and gives a calm on-screen recovery',async()=>{
+      await goto('/reader/lost-key');
+      await page.evaluate(()=>Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:undefined}));
+      const readAloud=button('Read aloud');await readAloud.click();
+      const recovery='Read aloud is not available on this device. Keep reading on the screen, or ask a grown-up to check the sound settings.';
+      await page.getByRole('status').filter({hasText:recovery}).waitFor();
+      assert.equal(await readAloud.evaluate(element=>element===document.activeElement),true,'Read-aloud failure must leave keyboard focus on the retry control');
+      assert.equal(await page.getByText(/Archie found a tiny golden key/).isVisible(),true,'The printed story must remain available');
+      await page.screenshot({path:'test-results/reader-speech-fallback-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Read-aloud recovery must not overflow the tablet viewport');
+      await page.screenshot({path:'test-results/reader-speech-fallback-820.png',fullPage:true});
+      await button('Got it').click();await page.getByRole('status').filter({hasText:recovery}).waitFor({state:'detached'});
+      await page.setViewportSize({width:390,height:844});
+    });
     await check('Homework: upload/remove and the typed question reaches shared Archie',async()=>{
       await goto('/homework');await page.locator('input[type=file]').setInputFiles({name:'question.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a7p0AAAAASUVORK5CYII=','base64')});await page.getByAltText('Your homework reference').waitFor();await button('Remove photo').click();await page.getByRole('textbox').fill('What is half of 12?');await button('Get help with this question').click();await page.getByRole('dialog').waitFor();await page.waitForFunction(()=>document.querySelector('[aria-label="Your question for Archie"]').value==='What is half of 12?');assert.equal(await page.getByLabel('Your question for Archie').inputValue(),'What is half of 12?');await button('Send question').click();await page.getByRole('log').getByText(/half of 12 is 6/i).waitFor();await button('Close Ask Archie').click();
     });
