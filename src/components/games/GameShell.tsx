@@ -41,6 +41,8 @@ export interface GameShellControls {
 
 interface GameShellProps {
   title: string;
+  /** Stable catalogue/route ID used by progress, history and parent reports. */
+  gameSlug?: string;
   emoji: string;
   subject: 'maths' | 'spelling' | 'reading' | 'science' | 'art';
   ageGroups: string[];
@@ -71,9 +73,9 @@ function calcStars(score: number): number {
   return 0;
 }
 
-export default function GameShell({ title, emoji, subject, ageGroups, children, currentQuestion, currentOptions }: GameShellProps) {
+export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, subject, ageGroups, children, currentQuestion, currentOptions }: GameShellProps) {
   // Preserve existing saved game IDs; the new title has a typographic apostrophe.
-  const gameSlug = title === 'Archie’s Adventure Trail' ? 'archie-adventure-trail' : title.toLowerCase().replace(/\s+/g, '-');
+  const gameSlug = canonicalGameSlug ?? (title === 'Archie’s Adventure Trail' ? 'archie-adventure-trail' : title.toLowerCase().replace(/\s+/g, '-'));
   const navigate = useNavigate();
   const { session } = useSession();
   const { setGameContext, clearGameContext, openArchie } = useArchieContext();

@@ -90,7 +90,7 @@ export default function EarthSpaceGame() {
         <meta name="twitter:image" content="https://sodafom.uk/og-image.png" />
       </Helmet>
       <h1 className="sr-only">Earth & Space — Science Game for Kids — Sodafom</h1>
-      <GameShell title="Earth & Space" emoji="🌍" subject="science" ageGroups={['9–11', '12–13']}>
+      <GameShell title="Earth & Space" gameSlug="earth-space" emoji="🌍" subject="science" ageGroups={['9–11', '12–13']}>
         {(oc: (r: GameResult) => void) => (
           <LevelledQuizEngine
             gameSlug="earth-space"

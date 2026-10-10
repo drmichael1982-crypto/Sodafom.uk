@@ -434,6 +434,7 @@ export default function SudokuGame() {
       </h1>
       <GameShell
         title="Number Sudoku"
+        gameSlug="sudoku"
         emoji="🧩"
         subject="maths"
         ageGroups={['5–7', '8–10', '11–13']}

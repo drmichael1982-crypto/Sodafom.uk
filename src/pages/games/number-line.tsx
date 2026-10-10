@@ -107,7 +107,7 @@ export default function NumberLine() {
       <h1 className="absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0" style={{ clip: 'rect(0,0,0,0)' }}>
         Number Line — Maths Game for Kids — Sodafom
       </h1>
-      <GameShell title="Number Line Jump" emoji="📏" subject="maths" ageGroups={['5–7', '8–10']} currentQuestion={currentQuestion}>
+      <GameShell title="Number Line Jump" gameSlug="number-line" emoji="📏" subject="maths" ageGroups={['5–7', '8–10']} currentQuestion={currentQuestion}>
         {(onComplete) => <NumberLineInner onComplete={onComplete} onQuestionChange={setCurrentQuestion} />}
       </GameShell>
     </>
