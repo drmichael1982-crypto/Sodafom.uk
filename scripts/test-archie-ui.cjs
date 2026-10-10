@@ -121,7 +121,12 @@ const results=[];
     await check('One shared Ask Archie: local maths, close, context and navigation',async()=>{
       await button('Ask Archie').click();assert.equal(await page.getByRole('dialog').count(),1);
       await page.getByLabel('Your question for Archie').fill('What is 8 plus 4?');await button('Send question').click();await page.getByRole('log').getByText(/8 plus 4 is 12/i).waitFor();await button('Listen to Archie').waitFor({state:'visible'});await button('Listen to Archie').click();
-      await button('Close Ask Archie').click();await goto('/lesson');const spokenWord=await studyWord();await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
+      await button('Close Ask Archie').click();await goto('/lesson');const spokenWord=await studyWord();
+      await page.evaluate(()=>{
+        Object.defineProperty(window,'SpeechRecognition',{configurable:true,value:undefined});
+        Object.defineProperty(window,'webkitSpeechRecognition',{configurable:true,value:undefined});
+      });
+      await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
       // This exercises the typed fallback in the spoken-lesson UI, not microphone recognition.
       const typedFallbackMessage='Voice conversation is not supported here. Type your question to Archie below.';
       const typedFallbackStatus=page.getByRole('status').filter({hasText:typedFallbackMessage});
