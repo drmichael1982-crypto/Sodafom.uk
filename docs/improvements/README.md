@@ -2,7 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
-1. [Teacher desktop gate-layout regression — 10 October 2026](2026-10-10-teacher-desktop-gate-layout.md): reproduces the deployed unlocked-teacher clipping, adds the missing 1440×900 settled-geometry assertion and records the candidate’s clear desktop artifact without hiding the two test-development failures.
+1. [Teacher desktop gate-layout regression — 10 October 2026](2026-10-10-teacher-desktop-gate-layout.md): reproduces the deployed unlocked-teacher clipping, adds the missing 1440×900 settled-geometry assertion, reconciles the current `534a317` target and repairs its stale `/preview-admin` browser check without hiding the earlier test-development failures.
 1. [Current target reconciliation and live visual review — 10 October 2026](2026-10-10-current-target-reconciliation.md): reconciles the newest deployed parent/timed-maths repairs into PR #81, records the full live game walkthrough and distinguishes the deployed desktop teacher clipping from clear candidate phone/tablet captures.
 1. [Reading Quest speech recovery — 10 October 2026](2026-10-10-reading-quest-speech-recovery.md): replaces Reading Quest's silent direct browser-speech failure with the shared calm recovery path, preserves the printed passage and focus, and records the pending hosted phone/tablet evidence without overstating completion.
 1. [Phonics Parrot speech recovery — 10 October 2026](2026-10-10-phonics-speech-recovery.md): uses the shared read-aloud recovery, preserves the printed sound and verifies settled phone/tablet captures instead of a transient entrance frame.
@@ -33,6 +33,6 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 23. [Bingo feedback and breaks — 7 October 2026](2026-10-07-bingo-feedback.md): accurate first-try scoring, hints, pause/resume and prior-run evidence.
 24. [Game access — 7 October 2026](2026-10-07-game-access.md): preceding freeze/age-discovery repair and historical starting evidence.
 
-Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `47e1e7f`; candidate pushes do not imply deployment.
+Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `534a317`; candidate pushes do not imply deployment.
 
-Next bounded priority after the final teacher-layout run: walk through the newly deployed parent summaries and a complete Sudoku round at phone/tablet widths, then verify saved-age tutoring with synthetic data only. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority after the final reconciled browser run: walk through the newly deployed parent summaries and a complete Sudoku round at phone/tablet widths, then verify saved-age tutoring with synthetic data only. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.

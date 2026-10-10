@@ -22,6 +22,13 @@ function getStripe(): Stripe {
 
 export default async function handler(req: Request, res: Response) {
   try {
+    // Checkout details are part of the payment surface. Keep the endpoint
+    // closed in the free release even if a Stripe key remains configured.
+    if (getSecret('SODAFOM_PAYMENTS_ENABLED') !== 'true') {
+      res.status(403).json({ success: false, error: 'Payments are disabled while Sodafom is free.' });
+      return;
+    }
+
     const { sessionId } = req.params;
     const sid = Array.isArray(sessionId) ? sessionId[0] : sessionId;
 

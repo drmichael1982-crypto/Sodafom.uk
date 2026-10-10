@@ -3,7 +3,6 @@ import { ArchieHistory, ArchieHome, ArchieWorld, ArchieGames, ArchieLesson, Arch
 import ArchieQuests from '@/pages/archie/ArchieQuests';
 import ArchiePrivacy from '@/pages/archie/ArchiePrivacy';
 import ArchieClockLab from '@/pages/archie/ArchieClockLab';
-import ArchiePreviewAdmin from '@/pages/archie/ArchiePreviewAdmin';
 import { RouteObject } from "react-router";
 import { lazy } from 'react';
 const ArchieCourses = lazy(() => import('@/pages/archie/ArchieCourses'));
@@ -218,7 +217,10 @@ export const routes: RouteObject[] = [
   { path: '/world', element: <ArchieWorld /> },
   { path: '/artwork', element: <ArchieArtworkGallery /> },
   { path: '/time-lab', element: <ArchieClockLab /> },
-  { path: '/preview-admin', element: <ArchiePreviewAdmin /> },
+  // The old device-only PIN page looked like an administration surface even
+  // though it had no server authority. Keep every admin-looking URL behind
+  // the same authenticated owner dashboard instead.
+  { path: '/preview-admin', element: <Navigate to="/admin" replace /> },
   { path: '/admin/payments', element: <PaymentSettingsPage /> },
   { path: '/admin', element: <AdminOverviewPage /> },
   { path: '/quests', element: <ArchieQuests /> },

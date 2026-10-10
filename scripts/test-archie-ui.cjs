@@ -69,11 +69,10 @@ const results=[];
     return word.trim();
   };
   const escapeRegex=text=>text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const unlockPreviewControls=async()=>{
-    await page.getByLabel('Preview code',{exact:true}).fill('1182');
-    await button('Open preview controls').click();
-    await page.getByRole('heading',{name:'Stripe and pricing preparation',exact:true}).waitFor();
-    await page.getByText('Payments are off in this school preview.',{exact:true}).waitFor();
+  const assertProtectedOwnerRedirect=async()=>{
+    await page.waitForURL(base+'/admin');
+    await page.getByRole('heading',{name:'Your learning app',exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Preview code',{exact:true}).count(),0,'The retired device PIN must not remain on the protected owner route');
   };
   fs.mkdirSync('test-results',{recursive:true});
   try{
@@ -442,13 +441,9 @@ const results=[];
         await page.setViewportSize({width:viewport.width,height:viewport.height});
         for(const route of routes){
           console.log('LAYOUT ROUTE '+route);await goto(route);
+          if(route==='/preview-admin')await assertProtectedOwnerRedirect();
           const dimensions=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
           assert.ok(dimensions.document<=dimensions.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' overflows: '+JSON.stringify(dimensions));
-          if(route==='/preview-admin'){
-            await unlockPreviewControls();
-            const unlocked=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
-            assert.ok(unlocked.document<=unlocked.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' unlocked overflows: '+JSON.stringify(unlocked));
-          }
           if(route==='/parents'||route==='/settings'||route==='/teacher'){
             await unlockGrownUpArea();
             const unlocked=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));

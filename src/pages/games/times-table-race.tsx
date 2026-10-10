@@ -36,7 +36,7 @@ function makeOptions(answer: number): number[] {
   return [...opts].sort(() => Math.random() - 0.5);
 }
 
-function TimesTablePlay({ onComplete, level, onLevelChange, onQuestionChange }: {
+export function TimesTablePlay({ onComplete, level, onLevelChange, onQuestionChange }: {
   onComplete: (r: GameResult) => void;
   level: number;
   onLevelChange: (stars: number) => void;
@@ -133,23 +133,25 @@ function TimesTablePlay({ onComplete, level, onLevelChange, onQuestionChange }: 
   const timerPct = (timeLeft / timePerQ) * 100;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-amber-50 to-background">
-      <div className="w-full max-w-md mb-2 flex justify-between items-center">
-        <p className="text-xs font-bold text-muted-foreground">Q {round + 1}/{TOTAL_ROUNDS} · ⭐ {correct}</p>
-        <LevelBadge level={level} />
-      </div>
-
-      {/* Timer bar */}
-      <div className="w-full max-w-md mb-3">
-        <div className="h-3 bg-muted rounded-full overflow-hidden">
-          <motion.div className={`h-full rounded-full transition-colors ${timerPct > 50 ? 'bg-green-500' : timerPct > 25 ? 'bg-yellow-400' : 'bg-red-500'}`}
-            animate={{ width: `${timerPct}%` }} transition={{ duration: 0.5 }} />
+    <div aria-label="Times Table Race game" className="flex h-full min-h-0 w-full max-w-md mx-auto flex-col items-center overflow-y-auto overscroll-contain px-4 py-4 bg-gradient-to-b from-amber-50 to-background">
+      <div data-testid="times-table-race-status" className="sticky top-0 z-10 w-full bg-amber-50/95 pb-3 pt-1">
+        <div className="mb-2 flex w-full justify-between items-center">
+          <p className="text-xs font-bold text-muted-foreground">Q {round + 1}/{TOTAL_ROUNDS} · ⭐ {correct}</p>
+          <LevelBadge level={level} />
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-0.5 font-bold">{timeLeft}s</p>
+
+        {/* Keep the countdown visible while short landscape screens scroll. */}
+        <div className="w-full">
+          <div className="h-3 bg-muted rounded-full overflow-hidden">
+            <motion.div className={`h-full rounded-full transition-colors ${timerPct > 50 ? 'bg-green-500' : timerPct > 25 ? 'bg-yellow-400' : 'bg-red-500'}`}
+              animate={{ width: `${timerPct}%` }} transition={{ duration: 0.5 }} />
+          </div>
+          <p className="text-center text-xs text-muted-foreground mt-0.5 font-bold">{timeLeft}s</p>
+        </div>
       </div>
 
       {/* Race track */}
-      <div className="w-full max-w-md bg-gray-100 rounded-full h-10 mb-4 relative overflow-hidden border-2 border-gray-200">
+      <div className="w-full shrink-0 bg-gray-100 rounded-full h-10 mb-4 relative overflow-hidden border-2 border-gray-200">
         <div className="absolute inset-0 flex items-center px-2">
           {[...Array(10)].map((_, i) => <div key={i} className="flex-1 border-r border-gray-300 h-full" />)}
         </div>

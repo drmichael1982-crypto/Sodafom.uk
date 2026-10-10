@@ -4,6 +4,7 @@ import { Star, Volume2, VolumeX, Play, Lock, Zap } from 'lucide-react';
 import { useNavigate } from "react-router";
 import { games } from 'virtual:content';
 import { isDemoGameId, useSubscription } from '@/hooks/useSubscription';
+import { isGameForAgeBand } from '@/lib/archie/game-age';
 const GAME_ROUTES = new Map<string, string>([
   ['game-number-pop', '/games/number-pop'],
   ['game-times-table-race', '/games/times-table-race'],
@@ -139,7 +140,7 @@ export default function GamesSection() {
     subscribed
   } = useSubscription();
   const isVisible = (game: typeof games.games[number]) => {
-    const ageOk = selectedAge === AGE_ALL || game.ageGroups.includes(selectedAge);
+    const ageOk = selectedAge === AGE_ALL || isGameForAgeBand(selectedAge, game.ageGroups);
     const catId = selectedCat.replace('cat-', '');
     const catOk = selectedCat === 'cat-all' || game.subject === catId;
     return ageOk && catOk;

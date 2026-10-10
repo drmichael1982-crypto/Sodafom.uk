@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult } from '@/components/games/GameShell';
@@ -54,16 +54,20 @@ export default function PhonicsParrotGame() {
   );
 }
 
-function PhonicsParrotPlay({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
+export function PhonicsParrotPlay({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
   const { speak, stop, playing } = useVoice();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [chosen, setChosen] = useState<string | null>(null);
-  const [q] = useState(() => PHONICS_SETS.sort(() => Math.random() - 0.5));
+  const [q] = useState(() => [...PHONICS_SETS].sort(() => Math.random() - 0.5));
+  const choiceLocked = useRef(false);
+  const completionSent = useRef(false);
 
   const item = q[round % q.length];
-  const others = PHONICS_SETS.filter(p => p.letter !== item.letter).sort(() => Math.random() - 0.5).slice(0, 3);
-  const options = [...others.map(p => ({ word: p.word, emoji: p.emoji })), { word: item.word, emoji: item.emoji }].sort(() => Math.random() - 0.5);
+  const options = useMemo(() => {
+    const others = PHONICS_SETS.filter(p => p.letter !== item.letter).sort(() => Math.random() - 0.5).slice(0, 3);
+    return [...others.map(p => ({ word: p.word, emoji: p.emoji })), { word: item.word, emoji: item.emoji }].sort(() => Math.random() - 0.5);
+  }, [item]);
 
   // Report current question to Archie
   useEffect(() => { onQuestionChange?.(`${item.example} — which word starts with the sound "${item.letter}"?`); }, [round, item, onQuestionChange]);
@@ -71,7 +75,8 @@ function PhonicsParrotPlay({ onComplete, onQuestionChange }: { onComplete: (r: G
   const soundCardId = `phonics-sound-${round}`;
 
   const pick = (word: string) => {
-    if (chosen) return;
+    if (choiceLocked.current || completionSent.current) return;
+    choiceLocked.current = true;
     setChosen(word);
     const isRight = word === item.word;
     if (isRight) setCorrect(c => c + 1);
@@ -79,10 +84,15 @@ function PhonicsParrotPlay({ onComplete, onQuestionChange }: { onComplete: (r: G
       const next = round + 1;
       if (next >= TOTAL_ROUNDS) {
         const newCorrect = correct + (isRight ? 1 : 0);
-        onComplete({ score: Math.round((newCorrect / TOTAL_ROUNDS) * 100), correct: newCorrect, total: TOTAL_ROUNDS, stars: 0 });
+        if (completionSent.current) return;
+        completionSent.current = true;
+        const score = Math.round((newCorrect / TOTAL_ROUNDS) * 100);
+        const stars = score >= 90 ? 3 : score >= 60 ? 2 : score >= 30 ? 1 : 0;
+        onComplete({ score, correct: newCorrect, total: TOTAL_ROUNDS, stars });
       } else {
         setRound(next);
         setChosen(null);
+        choiceLocked.current = false;
       }
     }, 1000);
   };

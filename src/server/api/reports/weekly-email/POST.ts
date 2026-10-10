@@ -7,17 +7,35 @@ import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { sql } from 'drizzle-orm';
 import { sendEmail } from '@/server/email';
+import { getAuth } from '@/lib/auth/auth';
+
+interface ChildRow {
+  id: number;
+  name: string;
+  total_stars: number;
+  avatar_emoji: string;
+}
+
+interface SubjectStatsRow {
+  games_played: number;
+  stars_this_week: number;
+  top_subject: string;
+}
 
 export default async function handler(req: Request, res: Response) {
-  const userId = (req as Request & { userId?: string }).userId;
-  if (!userId) return res.status(401).json({ error: 'Unauthorised' });
-
   try {
+    const session = await getAuth().api.getSession({ headers: req.headers as Record<string, string> });
+    if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
+
+    const userId = session.user.id;
+
     // Fetch all children for this user
-    const children = await db.execute(
-      sql`SELECT id, name, total_stars, avatar_emoji FROM children WHERE user_id = ${userId}`
-    );
-    const childRows = (children as unknown as { rows: { id: number; name: string; total_stars: number; avatar_emoji: string }[] }).rows ?? [];
+    const children = await db.execute(sql`
+      SELECT id, name, total_stars, avatar_emoji
+      FROM children
+      WHERE parent_id = ${userId}
+    `);
+    const childRows = children[0] as unknown as ChildRow[];
 
     if (childRows.length === 0) {
       return res.status(200).json({ sent: false, reason: 'No children found' });
@@ -30,34 +48,31 @@ export default async function handler(req: Request, res: Response) {
 
     const childStats = await Promise.all(
       childRows.map(async (child) => {
-        const stats = await db.execute(sql`
+        const statsResult = await db.execute(sql`
           SELECT
-            COUNT(*) as games_played,
-            COALESCE(SUM(stars_earned), 0) as stars_this_week,
-            subject as top_subject
-          FROM game_plays
+            subject AS top_subject,
+            COUNT(*) AS games_played,
+            COALESCE(SUM(stars_earned), 0) AS stars_this_week
+          FROM activity_sessions
           WHERE child_id = ${child.id}
-            AND played_at >= ${weekStart.toISOString()}
+            AND completed_at >= ${weekStart.toISOString()}
           GROUP BY subject
           ORDER BY COUNT(*) DESC
-          LIMIT 1
         `);
-        const row = ((stats as unknown as { rows: { games_played: number; stars_this_week: number; top_subject: string }[] }).rows ?? [])[0];
+        const subjectStats = statsResult[0] as unknown as SubjectStatsRow[];
         return {
           name: child.name,
           avatarEmoji: child.avatar_emoji,
           totalStars: child.total_stars,
-          gamesThisWeek: Number(row?.games_played ?? 0),
-          starsThisWeek: Number(row?.stars_this_week ?? 0),
-          topSubject: row?.top_subject ?? null,
+          gamesThisWeek: subjectStats.reduce((sum, row) => sum + Number(row.games_played ?? 0), 0),
+          starsThisWeek: subjectStats.reduce((sum, row) => sum + Number(row.stars_this_week ?? 0), 0),
+          topSubject: subjectStats[0]?.top_subject ?? null,
         };
       })
     );
 
-    // Fetch parent email
-    const userRow = await db.execute(sql`SELECT email, name FROM "user" WHERE id = ${userId}`);
-    const parent = ((userRow as unknown as { rows: { email: string; name: string }[] }).rows ?? [])[0];
-    if (!parent?.email) return res.status(400).json({ error: 'No email found' });
+    const parent = session.user;
+    if (!parent.email) return res.status(400).json({ error: 'No email found' });
 
     const totalStarsThisWeek = childStats.reduce((sum, c) => sum + c.starsThisWeek, 0);
     const totalGamesThisWeek = childStats.reduce((sum, c) => sum + c.gamesThisWeek, 0);

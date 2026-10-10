@@ -44,3 +44,17 @@ it('renders the signed-in parent\'s children from the API array and their camelC
   expect(screen.getByText('⭐12')).toBeInTheDocument();
   await waitFor(() => expect(fetch).toHaveBeenCalledWith('/parent/dashboard?childId=7', { credentials: 'include' }));
 });
+
+it('shows a safe error card when one child progress request fails', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url === '/children') return { ok: true, json: async () => [{ id: 7, name: 'Ava', ageGroup: '8-10', totalStars: 12 }] };
+    if (url === '/parent/dashboard?childId=7') return { ok: false, status: 503, json: async () => ({ error: 'Unavailable' }) };
+    throw new Error(`Unexpected fetch: ${url}`);
+  }));
+
+  render(<MemoryRouter><ParentDashboardInner /></MemoryRouter>);
+
+  expect(await screen.findByText('Could not load this learner’s progress.')).toBeInTheDocument();
+  expect(screen.queryByText('No children added yet')).not.toBeInTheDocument();
+});

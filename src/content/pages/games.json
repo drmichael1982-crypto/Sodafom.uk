@@ -43,8 +43,9 @@
       "emoji": "🎈",
       "description": "Pop the balloons with the right answers before they float away! Great for counting and quick maths.",
       "ageGroups": [
-        "4–6",
-        "5–7"
+        "5–7",
+        "8–10",
+        "11–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -64,6 +65,7 @@
       "emoji": "🏎️",
       "description": "Race against the clock to answer times table questions. The faster you answer, the faster your car goes!",
       "ageGroups": [
+        "5–7",
         "8–10",
         "11–13"
       ],
@@ -85,6 +87,7 @@
       "emoji": "🍕",
       "description": "Slice the pizza into the right fractions and serve your customers before they get hungry!",
       "ageGroups": [
+        "5–7",
         "8–10",
         "11–13"
       ],
@@ -106,9 +109,9 @@
       "emoji": "🔷",
       "description": "Sort 2D and 3D shapes into the right boxes before the conveyor belt runs out of space!",
       "ageGroups": [
-        "4–6",
         "5–7",
-        "8–10"
+        "8–10",
+        "11–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -288,7 +291,8 @@
       "description": "Cast spelling spells by unscrambling letters to form the correct word. Each correct spell earns you a star!",
       "ageGroups": [
         "5–7",
-        "8–10"
+        "8–10",
+        "11–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -308,6 +312,7 @@
       "emoji": "🐝",
       "description": "Listen to the word, then type it correctly to help the bee collect honey. Tap the speaker to hear it again!",
       "ageGroups": [
+        "5–7",
         "8–10",
         "11–13"
       ],
@@ -329,8 +334,9 @@
       "emoji": "🔍",
       "description": "Find the tricky words hidden in the picture. Tap each one to hear it read aloud and spell it out!",
       "ageGroups": [
-        "4–6",
-        "5–7"
+        "5–7",
+        "8–10",
+        "11–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -372,7 +378,6 @@
       "emoji": "🦜",
       "description": "Help Pip the Parrot learn new sounds! Tap the letters to hear their sounds and build words together.",
       "ageGroups": [
-        "4–6",
         "5–7"
       ],
       "difficulty": "Easy",
@@ -393,6 +398,7 @@
       "emoji": "🗺️",
       "description": "Go on a reading adventure! Read the passage, answer questions, and unlock the next chapter of the story.",
       "ageGroups": [
+        "5–7",
         "8–10",
         "11–13"
       ],
@@ -457,6 +463,7 @@
       "emoji": "🧩",
       "description": "Fill the 4×4 grid so every row, column and 2×2 box contains 1, 2, 3 and 4. A brilliant logic puzzle for young mathematicians!",
       "ageGroups": [
+        "5–7",
         "8–10",
         "11–13"
       ],
@@ -653,7 +660,6 @@
       "emoji": "🎨",
       "description": "Pick a colour and tap the matching number to fill in the picture. A fun creative activity that teaches colours and number recognition!",
       "ageGroups": [
-        "4–6",
         "5–7"
       ],
       "difficulty": "Easy",
@@ -675,7 +681,7 @@
       "isNew": true,
       "description": "Fill the number grid using logic and deduction. A brilliant puzzle that sharpens number skills and problem-solving for all ages!",
       "ageGroups": [
-        "8–10",
+        "7–10",
         "11–13"
       ],
       "difficulty": "Hard",
@@ -741,7 +747,6 @@
       "isNew": true,
       "description": "Sort the numbers into odd and even buckets before the timer runs out. How fast can you sort them all?",
       "ageGroups": [
-        "4–6",
         "5–7",
         "8–10"
       ],
@@ -810,8 +815,8 @@
       "isNew": true,
       "description": "Pop the balloon that shows the correct hundreds, tens or units digit. Master place value with this fun game!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "5–7",
+        "8–10"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -922,7 +927,8 @@
       "ageGroups": [
         "4–6",
         "5–7",
-        "8–10"
+        "8–10",
+        "11–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -943,8 +949,8 @@
       "isNew": true,
       "description": "Identify acute, obtuse and right angles hidden in shapes and real-world objects. Become an angle expert!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -987,8 +993,8 @@
       "isNew": true,
       "description": "Count the squares to find the area of each shape. Then use the formula to calculate bigger areas!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -1009,8 +1015,8 @@
       "isNew": true,
       "description": "Read bar charts, pictograms and tally charts to answer questions. Become a data detective!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -1097,7 +1103,8 @@
       "isNew": true,
       "description": "Order temperatures on a thermometer and solve problems with negative numbers. Perfect for ages 10+!",
       "ageGroups": [
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -1140,9 +1147,8 @@
       "isNew": true,
       "description": "Complete the symmetrical pattern by reflecting shapes across the mirror line. Create beautiful symmetrical art!",
       "ageGroups": [
-        "5–7",
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1209,8 +1215,7 @@
       "description": "Drag the numbers into the correct order from smallest to largest. Whole numbers, decimals and fractions!",
       "ageGroups": [
         "5–7",
-        "8–10",
-        "11–13"
+        "7–9"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1231,8 +1236,8 @@
       "isNew": true,
       "description": "Find the missing number in each equation. Inverse operations, algebra basics and number puzzles!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "6–8",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -1253,8 +1258,8 @@
       "isNew": true,
       "description": "Snap when two cards show the same answer! Quick mental maths in a classic card game format.",
       "ageGroups": [
-        "5–7",
-        "8–10"
+        "7–9",
+        "10–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1275,7 +1280,7 @@
       "isNew": true,
       "description": "Scale up the recipe using ratios and proportions. How much flour do you need for 12 cakes instead of 4?",
       "ageGroups": [
-        "11–13"
+        "10–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -1296,7 +1301,8 @@
       "isNew": true,
       "description": "Identify prime numbers on the grid and cross out the composites. Can you find all the primes up to 100?",
       "ageGroups": [
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -1338,8 +1344,7 @@
       "isNew": true,
       "description": "A mixed bag of maths questions across all topics. The ultimate maths challenge for top mathematicians!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "10–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -1361,7 +1366,7 @@
       "description": "Tap the letter to hear its sound, then find the picture that starts with that sound. Great for early readers!",
       "ageGroups": [
         "4–6",
-        "5–7"
+        "7–8"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1383,7 +1388,7 @@
       "description": "Find the word that rhymes! Listen to the word and pick the matching rhyme from the options.",
       "ageGroups": [
         "4–6",
-        "5–7"
+        "7–9"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1470,8 +1475,8 @@
       "isNew": true,
       "description": "Choose the correct spelling — there/their/they're, to/too/two, your/you're and more tricky homophones!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "10–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -1492,8 +1497,8 @@
       "isNew": true,
       "description": "Join two words together to make a compound word! Sunshine, football, rainbow — how many can you make?",
       "ageGroups": [
-        "5–7",
-        "8–10"
+        "7–9",
+        "10–11"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1536,7 +1541,6 @@
       "isNew": true,
       "description": "Group words that belong to the same family — cat, bat, hat, mat. Build word family trees!",
       "ageGroups": [
-        "4–6",
         "5–7",
         "8–10"
       ],
@@ -1560,7 +1564,8 @@
       "description": "Fill in the missing letters to complete the word. The picture gives you a clue — can you spell it?",
       "ageGroups": [
         "5–7",
-        "8–10"
+        "8–10",
+        "11–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1603,8 +1608,8 @@
       "isNew": true,
       "description": "Identify the silent letter in each word — knight, wrap, gnome. Master these tricky spelling patterns!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "10–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -1625,8 +1630,8 @@
       "isNew": true,
       "description": "Decide if the word needs a double letter or not — rabbit or rabit? Butter or buter? Spell it right!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "6–8",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -1647,6 +1652,7 @@
       "isNew": true,
       "description": "Sort words by their vowel sound — long a, short a, oo, ow and more. A fun phonics sorting game!",
       "ageGroups": [
+        "4–6",
         "5–7",
         "8–10"
       ],
@@ -1669,8 +1675,8 @@
       "isNew": true,
       "description": "Snap when you see a correctly spelled word! Quick-fire spelling in a classic card game format.",
       "ageGroups": [
-        "5–7",
-        "8–10"
+        "8–10",
+        "11–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1691,8 +1697,8 @@
       "isNew": true,
       "description": "Use the letter tiles to build as many words as possible. Score points for longer words!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "5–7",
+        "8–10"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -1713,8 +1719,8 @@
       "isNew": true,
       "description": "Put the words in alphabetical order before the time runs out. Race to the top of the dictionary!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "10–13"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -1735,8 +1741,8 @@
       "isNew": true,
       "description": "Match the contraction to the two words it comes from — can't = can not, I'm = I am. All aboard!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "6–8",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -1757,9 +1763,8 @@
       "isNew": true,
       "description": "Make the word plural using the right rule — add s, es, ies or change the word entirely!",
       "ageGroups": [
-        "5–7",
-        "8–10",
-        "11–13"
+        "6–8",
+        "9–11"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1780,8 +1785,8 @@
       "isNew": true,
       "description": "Match the word to its picture in this memory card game. Flip, remember and match!",
       "ageGroups": [
-        "4–6",
-        "5–7"
+        "6–8",
+        "9–11"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1846,7 +1851,6 @@
       "isNew": true,
       "description": "Put the story pictures in the right order to retell the tale. What happened first, next and last?",
       "ageGroups": [
-        "4–6",
         "5–7",
         "8–10"
       ],
@@ -1869,8 +1873,8 @@
       "isNew": true,
       "description": "Find the clues in the text to answer the detective questions. Inference and deduction skills!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -1914,7 +1918,8 @@
       "description": "Spot all the nouns in the sentence and tap them! Common nouns, proper nouns and collective nouns.",
       "ageGroups": [
         "5–7",
-        "8–10"
+        "8–10",
+        "11–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -1958,8 +1963,8 @@
       "isNew": true,
       "description": "Describe the pictures using adjectives! Colour, size, shape and feeling words to bring stories to life.",
       "ageGroups": [
-        "5–7",
-        "8–10"
+        "7–9",
+        "10–13"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -2024,8 +2029,8 @@
       "isNew": true,
       "description": "Read or listen to short passages, find the clues and answer comprehension questions at your own pace. No reading timer.",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -2046,8 +2051,8 @@
       "isNew": true,
       "description": "Read the poem and answer questions about rhyme, rhythm and meaning. Explore different types of poetry!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2068,8 +2073,8 @@
       "isNew": true,
       "description": "Identify the text type — is it a letter, a recipe, a newspaper article or a story? Sort them correctly!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2090,8 +2095,8 @@
       "isNew": true,
       "description": "Follow the reading map through a non-fiction text. Answer questions at each checkpoint to move forward!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2134,8 +2139,8 @@
       "isNew": true,
       "description": "Add the speech marks in the right places. Who is saying what? Direct speech made easy!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2178,8 +2183,8 @@
       "isNew": true,
       "description": "Explore short passages and choose clear phrasing, meaningful pauses and expression. Practise aloud if you like; no voice score or time limit.",
       "ageGroups": [
-        "5–7",
-        "8–10"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -2200,8 +2205,8 @@
       "isNew": true,
       "description": "Read a short extract and write a mini book review. What did you like? Who would you recommend it to?",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2222,6 +2227,7 @@
       "isNew": true,
       "description": "Mark off the reading features on your bingo card as you spot them in the text. First to BINGO wins!",
       "ageGroups": [
+        "5–7",
         "8–10",
         "11–13"
       ],
@@ -2244,9 +2250,8 @@
       "isNew": true,
       "description": "Map out the beginning, middle and end of the story. Identify characters, setting and plot!",
       "ageGroups": [
-        "5–7",
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -2267,8 +2272,8 @@
       "isNew": true,
       "description": "The ultimate reading challenge! Mixed comprehension, grammar and vocabulary questions across all levels.",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -2382,8 +2387,8 @@
       "isNew": true,
       "description": "Explore the planets of our solar system! Order them from the Sun and learn amazing facts about each one.",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2404,8 +2409,8 @@
       "isNew": true,
       "description": "Build food chains by connecting producers, consumers and predators. Who eats who in the wild?",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2426,8 +2431,8 @@
       "isNew": true,
       "description": "Sort materials into solid, liquid and gas. Then explore what happens when they change state!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2448,8 +2453,8 @@
       "isNew": true,
       "description": "Investigate push, pull, gravity and friction in the virtual forces lab. Predict and test!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -2470,8 +2475,8 @@
       "isNew": true,
       "description": "Build a working circuit! Connect the battery, bulb and switch to light up the room.",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -2493,7 +2498,7 @@
       "description": "Label the parts of a plant and learn what each part does. Roots, stem, leaves, flower and seed!",
       "ageGroups": [
         "5–7",
-        "8–10"
+        "7–9"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -2514,9 +2519,8 @@
       "isNew": true,
       "description": "Put the life cycle stages in the right order — butterfly, frog, plant and human life cycles!",
       "ageGroups": [
-        "5–7",
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -2538,7 +2542,7 @@
       "description": "Identify weather types, read weather maps and predict tomorrow's weather. Become a meteorologist!",
       "ageGroups": [
         "5–7",
-        "8–10"
+        "7–9"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -2559,8 +2563,8 @@
       "isNew": true,
       "description": "Identify igneous, sedimentary and metamorphic rocks. Use the clues to classify each rock sample!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -2581,8 +2585,8 @@
       "isNew": true,
       "description": "Explore how light travels and creates shadows. Predict shadow shapes and learn about reflection!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2603,8 +2607,8 @@
       "isNew": true,
       "description": "Investigate how sound travels, what makes sounds louder and how we hear. A sonic science adventure!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2626,7 +2630,7 @@
       "description": "Sort materials by their properties — hard or soft, magnetic or not, transparent or opaque!",
       "ageGroups": [
         "5–7",
-        "8–10"
+        "7–9"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -2647,8 +2651,8 @@
       "isNew": true,
       "description": "Drag the bones into the right place to build a human skeleton. Learn the names of major bones!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2670,7 +2674,7 @@
       "description": "Sort foods into the right food groups and build a balanced meal. Learn about nutrition and healthy choices!",
       "ageGroups": [
         "5–7",
-        "8–10"
+        "7–9"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -2691,8 +2695,8 @@
       "isNew": true,
       "description": "Explore minibeasts and their microhabitats. Where does each creature live and why?",
       "ageGroups": [
-        "5–7",
-        "8–10"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Easy",
       "readAloud": true,
@@ -2713,8 +2717,8 @@
       "isNew": true,
       "description": "Test which materials are magnetic and which are not. Explore north and south poles and magnetic fields!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2735,8 +2739,8 @@
       "isNew": true,
       "description": "Follow a water droplet through evaporation, condensation and precipitation. Label the water cycle!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "7–9",
+        "9–11"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2757,8 +2761,8 @@
       "isNew": true,
       "description": "Use branching keys to classify animals and plants. Answer yes/no questions to identify each organism!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -2779,8 +2783,8 @@
       "isNew": true,
       "description": "Explore the Earth, Moon and Sun system. Day and night, seasons and the phases of the Moon!",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Medium",
       "readAloud": true,
@@ -2801,7 +2805,8 @@
       "isNew": true,
       "description": "Explore adaptation and evolution. How do animals change over time to survive in their environment?",
       "ageGroups": [
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -2822,8 +2827,8 @@
       "isNew": true,
       "description": "The ultimate science quiz! Questions across biology, chemistry, physics and earth science for all levels.",
       "ageGroups": [
-        "8–10",
-        "11–13"
+        "9–11",
+        "12–13"
       ],
       "difficulty": "Hard",
       "readAloud": true,
@@ -2835,6 +2840,69 @@
         "Quiz"
       ],
       "slug": "science-quiz"
+    },
+    {
+      "id": "game-archie-adventure-trail",
+      "title": "Archie’s Adventure Trail",
+      "subject": "maths",
+      "emoji": "🎲",
+      "description": "Roll, solve eight maths clues and explore a colourful trail at your own pace. Use hints, retry safely and pause whenever you need.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Adaptive",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Maths",
+        "Problem solving"
+      ],
+      "slug": "archie-adventure-trail"
+    },
+    {
+      "id": "game-star-trail",
+      "title": "Star Trail",
+      "subject": "maths",
+      "emoji": "🌉",
+      "description": "Follow an original star-garden board, solve eight maths clues and cross friendly bridges. Take your time, use hints and pause whenever you need.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Adaptive",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Maths",
+        "Problem solving"
+      ],
+      "slug": "star-trail"
+    },
+    {
+      "id": "game-number-planets",
+      "title": "Number Planets",
+      "subject": "maths",
+      "emoji": "🪐",
+      "description": "Choose an answer planet, explore the solar system and complete a calm eight-round space mission.",
+      "ageGroups": [
+        "5–7",
+        "8–10",
+        "11–13"
+      ],
+      "difficulty": "Adaptive",
+      "readAloud": true,
+      "featured": false,
+      "color": "gold",
+      "skills": [
+        "Maths",
+        "Problem solving"
+      ],
+      "slug": "number-planets"
     }
   ],
   "readAloudBanner": {
