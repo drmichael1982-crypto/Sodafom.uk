@@ -33,16 +33,26 @@ export interface ChildTutorProfile {
   profileSetupComplete?: boolean;
 }
 
+export type TutorMemoryChild = {
+  id: string | number;
+  name?: string;
+  ageGroup?: ChildTutorProfile['ageGroup'];
+};
+
 const MEMORY_KEY = 'sodafom_tutor_memory';
 
-function activeChild(): { id: string; name?: string; ageGroup?: ChildTutorProfile['ageGroup'] } | null {
+function normaliseChild(value: TutorMemoryChild | null): { id: string; name?: string; ageGroup?: ChildTutorProfile['ageGroup'] } | null {
+  const id = typeof value?.id === 'number' || typeof value?.id === 'string' ? String(value.id).trim() : '';
+  if (!id) return null;
+  const ageGroup = value?.ageGroup === '5-7' || value?.ageGroup === '8-10' || value?.ageGroup === '11-13'
+    ? value.ageGroup : undefined;
+  return { id, name: typeof value?.name === 'string' ? value.name.trim() : undefined, ageGroup };
+}
+
+function activeChild(): ReturnType<typeof normaliseChild> {
   try {
     const parsed = JSON.parse(localStorage.getItem('sodafom_active_child') || 'null') as Record<string, unknown> | null;
-    const id = typeof parsed?.id === 'number' || typeof parsed?.id === 'string' ? String(parsed.id).trim() : '';
-    if (!id) return null;
-    const ageGroup = parsed?.ageGroup === '5-7' || parsed?.ageGroup === '8-10' || parsed?.ageGroup === '11-13'
-      ? parsed.ageGroup : undefined;
-    return { id, name: typeof parsed?.name === 'string' ? parsed.name.trim() : undefined, ageGroup };
+    return normaliseChild(parsed as TutorMemoryChild | null);
   } catch { return null; }
 }
 
@@ -86,12 +96,11 @@ function loadTopics(value: unknown): Record<string, TopicProgress> {
   return topics;
 }
 
-export function loadTutorMemory(): ChildTutorProfile {
+function loadTutorMemoryFor(child: ReturnType<typeof normaliseChild>): ChildTutorProfile {
   if (typeof window === 'undefined') {
     return { topics: {} };
   }
   try {
-    const child = activeChild();
     const raw = localStorage.getItem(memoryKey(child));
     if (raw) {
       const parsed = JSON.parse(raw);
@@ -100,8 +109,9 @@ export function loadTutorMemory(): ChildTutorProfile {
       const storedName = typeof parsed.childName === 'string' && parsed.childName.trim() ? parsed.childName : undefined;
       const legacyName = localStorage.getItem(childNameKey(child)) ?? undefined;
       return {
-        childName: storedName || (setupComplete ? undefined : legacyName),
-        ageGroup: parsed.ageGroup === '5-7' || parsed.ageGroup === '11-13' ? parsed.ageGroup : '8-10',
+        childName: storedName || (setupComplete ? undefined : legacyName || child?.name),
+        ageGroup: parsed.ageGroup === '5-7' || parsed.ageGroup === '8-10' || parsed.ageGroup === '11-13'
+          ? parsed.ageGroup : child?.ageGroup ?? '8-10',
         schoolYear: typeof parsed.schoolYear === 'string' ? parsed.schoolYear : 'Year 4',
         preferredTutor: parsed.preferredTutor === 'soda' || parsed.preferredTutor === 'bella' || parsed.preferredTutor === 'rocky'
           ? parsed.preferredTutor
@@ -117,7 +127,6 @@ export function loadTutorMemory(): ChildTutorProfile {
     }
   } catch { /* ignore */ }
 
-  const child = activeChild();
   const storedName = localStorage.getItem(childNameKey(child));
   return {
     childName: storedName || child?.name || undefined,
@@ -127,6 +136,15 @@ export function loadTutorMemory(): ChildTutorProfile {
     readAloudPreference: true,
     topics: {}
   };
+}
+
+export function loadTutorMemory(): ChildTutorProfile {
+  return loadTutorMemoryFor(activeChild());
+}
+
+/** Read one learner's local tutor record without changing the globally active child. */
+export function loadTutorMemoryForChild(child: TutorMemoryChild): ChildTutorProfile {
+  return loadTutorMemoryFor(normaliseChild(child));
 }
 
 export function saveTutorMemory(profile: ChildTutorProfile): void {
@@ -211,8 +229,7 @@ export function getRecentLessonSummary(): string | null {
   return `Recently${name}, you were practising ${profile.recentTopic} in ${profile.recentSubject}. Shall we continue?`;
 }
 
-export function getWeakAndStrongTopics(): { weak: string[]; strong: string[] } {
-  const profile = loadTutorMemory();
+export function getWeakAndStrongTopics(profile = loadTutorMemory()): { weak: string[]; strong: string[] } {
   const weak: string[] = [];
   const strong: string[] = [];
 

@@ -309,7 +309,13 @@ function ChildCard({ childId }: { childId: number }) {
 
       <div className="p-6 flex flex-col gap-6">
         {/* 1-to-1 Child Tutor Report */}
-        <ParentTutorReport />
+        <ParentTutorReport child={{
+          id: child.id,
+          name: child.name,
+          ageGroup: child.age_group === '5-7' || child.age_group === '8-10' || child.age_group === '11-13'
+            ? child.age_group
+            : undefined,
+        }} />
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">

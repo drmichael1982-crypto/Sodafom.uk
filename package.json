@@ -27,7 +27,8 @@
     "start:legacy": "node dist/server.bundle.mjs",
     "seed:legacy": "tsx scripts/run-education-cloud-seed.ts",
     "test:archie:ui": "node scripts/test-archie-ui.cjs",
-    "test:archie:sudoku": "node scripts/test-sudoku-journey.cjs"
+    "test:archie:sudoku": "node scripts/test-sudoku-journey.cjs",
+    "test:archie:parent-isolation": "node scripts/test-parent-tutor-isolation.cjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.43",
