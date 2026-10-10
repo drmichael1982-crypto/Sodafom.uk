@@ -3,7 +3,7 @@
 ## State rechecked before work
 
 - Continued draft PR #81 on `improve/archie-learning-20261007`; no production branch was merged or deployed.
-- Rechecked the remote target from repository evidence. `test/archie-2026-10-02` had advanced to `5a63b8358f89ad62b6e2c10c57f3458dd25a2225` (`Send shared game links to the catalogue`). The candidate was one commit behind, so it was reconciled as two-parent merge `e52c33bc2ef9dba2ede4a9048b839ed09ede3949` before this improvement. PR #81 is draft, open and mergeable against that exact target.
+- Rechecked the remote target from repository evidence. `test/archie-2026-10-02` had advanced to `5a63b8358f89ad62b6e2c10c57f3458dd25a2225` (`Send shared game links to the catalogue`). The candidate was one commit behind, so it was reconciled as two-parent merge `e52c33bc2ef9dba2ede4a9048b839ed09ede3949` before this improvement. PR #81 remains draft and open. A final commit comparison reports the candidate 80 commits ahead, zero behind, with `5a63b835` as its exact merge base; GitHub's PR metadata had not regenerated a merge commit after the documentation-only push, so this note does not claim a final mergeability state.
 - Railway deployment `ecf2d076-8b74-483b-ac3b-31014d507bfd` is `SUCCESS` on target commit `5a63b835`, created 9 October 2026 at 23:48:58 UTC. The current public test URL is `https://archie-learning-test-production.up.railway.app/`. The candidate commit was not deployed. The separate `sodafom797` service was not changed.
 - Current CI was checked before implementation. No candidate failure was inferred from an older report; the new run below is the authoritative check for this code.
 
