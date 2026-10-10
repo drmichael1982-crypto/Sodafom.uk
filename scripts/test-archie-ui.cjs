@@ -216,7 +216,7 @@ const results=[];
     });
     await check('Parents: gate, saved year group, sound, large text, setup status and progress',async()=>{
       await openParents();await page.getByLabel('School year').selectOption('2');
-      await checkbox('Larger text on menus and books').check();await checkbox('Read aloud and sound').uncheck();
+      await checkbox('Larger text on menus and books').check();const soundSetting=checkbox('Read aloud and sound');await soundSetting.focus();await page.waitForFunction(()=>{const element=document.activeElement;if(!(element instanceof HTMLElement))return false;const box=element.getBoundingClientRect();return box.bottom>0&&box.top<innerHeight&&box.right>0&&box.left<innerWidth;});await soundSetting.uncheck();
       await button('Save learning settings').click();await page.reload();await unlockGrownUpArea();
       assert.equal(await page.getByLabel('School year').inputValue(),'2');
       assert.equal(await checkbox('Larger text on menus and books').isChecked(),true);
