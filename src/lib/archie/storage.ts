@@ -8,8 +8,10 @@ const LOCAL_PROFILE_KEY = 'sodafom_archie_local_profile_v1';
 const GAME_STARS_KEY = 'sodafom_game_stars';
 const SCOPED_GAME_STARS_PREFIX = 'sodafom_game_stars:profile:';
 const SCOPED_STICKERS_PREFIX = 'sodafom_archie_stickers:profile:';
+const SCOPED_LEARNER_SETTINGS_PREFIX = 'sodafom_archie_settings:profile:';
 const DEFAULT: SavedData = { settings: { year: 4, sound: true, largeText: false, onlineHelp: false }, activities: [], stickers: [] };
 let cachedRaw: string | null | undefined;
+let cachedLearnerRaw: string | null | undefined;
 let cached = DEFAULT;
 let memoryOnly = false;
 let memoryProfileId = 'device-memory';
@@ -52,6 +54,30 @@ export function scopedGameStarsKey(profile = currentProgressProfile()): string {
 
 export function scopedStickersKey(profile = currentProgressProfile()): string {
   return `${SCOPED_STICKERS_PREFIX}${profile.id}`;
+}
+
+export function scopedLearnerSettingsKey(profile = currentProgressProfile()): string {
+  return `${SCOPED_LEARNER_SETTINGS_PREFIX}${profile.id}`;
+}
+
+type LearnerSettings = Pick<Settings, 'childNickname' | 'year'>;
+
+function parseLearnerSettings(raw: string | null): LearnerSettings | null {
+  try {
+    const parsed: unknown = raw ? JSON.parse(raw) : null;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+    const value = parsed as { childNickname?: unknown; year?: unknown };
+    if (![1,2,3,4,5,6,7,8,9].includes(Number(value.year))) return null;
+    return {
+      childNickname: typeof value.childNickname === 'string' ? value.childNickname.trim().slice(0, 30) : '',
+      year: Number(value.year),
+    };
+  } catch { return null; }
+}
+
+export function readScopedLearnerSettings(profile = currentProgressProfile()): LearnerSettings | null {
+  if (typeof window === 'undefined') return null;
+  return parseLearnerSettings(localStorage.getItem(scopedLearnerSettingsKey(profile)));
 }
 
 function parseStickers(raw: string | null): string[] {
@@ -110,12 +136,15 @@ function read(): SavedData {
   try {
     const profileId = currentProgressProfile().id;
     const raw = localStorage.getItem(KEY);
-    if (raw === cachedRaw && profileId === cachedProfileId) return cached;
+    const learnerRaw = localStorage.getItem(scopedLearnerSettingsKey());
+    if (raw === cachedRaw && learnerRaw === cachedLearnerRaw && profileId === cachedProfileId) return cached;
     cachedRaw = raw;
+    cachedLearnerRaw = learnerRaw;
     cachedProfileId = profileId;
     const data = JSON.parse(raw || 'null');
+    const learnerSettings = parseLearnerSettings(learnerRaw);
     cached = data ? {
-      settings: { childNickname: typeof data.settings?.childNickname === 'string' ? data.settings.childNickname.trim().slice(0,30) : '', year: [1,2,3,4,5,6,7,8,9].includes(data.settings?.year) ? data.settings.year : 4,
+      settings: { childNickname: learnerSettings?.childNickname ?? (typeof data.settings?.childNickname === 'string' ? data.settings.childNickname.trim().slice(0,30) : ''), year: learnerSettings?.year ?? ([1,2,3,4,5,6,7,8,9].includes(data.settings?.year) ? data.settings.year : 4),
         sound: data.settings?.sound !== false, largeText: data.settings?.largeText === true, onlineHelp: data.settings?.onlineHelp === true },
       activities: Array.isArray(data.activities) ? data.activities.filter((v: Activity) => v && typeof v.id === 'string' && typeof v.title === 'string' && ['book','lesson'].includes(v.kind) && Number.isFinite(v.stars) && Number.isInteger(v.stars) && v.stars >= 0 && v.stars <= 3 && typeof v.date === 'string' && (v.profileId === undefined || typeof v.profileId === 'string')).slice(-5000) : [],
       stickers: Array.isArray(data.stickers) ? data.stickers.filter((s: unknown) => typeof s === 'string') : [],
@@ -130,10 +159,48 @@ function subscribe(fn: () => void) {
   return () => { subscribers.delete(fn); window.removeEventListener('storage', fn); window.removeEventListener('sodafom:active-child-changed', fn); };
 }
 export function updateSavedData(update: (previous: SavedData) => SavedData) {
-  cached = update(read());
-  try { cachedRaw = JSON.stringify(cached); localStorage.setItem(KEY, cachedRaw); }
+  const previous = read();
+  const next = update(previous);
+  try {
+    if (next.settings.year !== previous.settings.year || next.settings.childNickname !== previous.settings.childNickname) {
+      localStorage.setItem(scopedLearnerSettingsKey(), JSON.stringify({
+        childNickname: (next.settings.childNickname ?? '').trim().slice(0, 30),
+        year: [1,2,3,4,5,6,7,8,9].includes(next.settings.year) ? next.settings.year : previous.settings.year,
+      }));
+    }
+    const rawDevice = JSON.parse(localStorage.getItem(KEY) || 'null') as Partial<SavedData> | null;
+    const legacySettings = rawDevice?.settings ?? DEFAULT.settings;
+    const persisted: SavedData = {
+      ...next,
+      settings: {
+        childNickname: legacySettings.childNickname,
+        year: [1,2,3,4,5,6,7,8,9].includes(legacySettings.year) ? legacySettings.year : DEFAULT.settings.year,
+        sound: next.settings.sound,
+        largeText: next.settings.largeText,
+        onlineHelp: next.settings.onlineHelp,
+      },
+    };
+    cachedRaw = JSON.stringify(persisted);
+    localStorage.setItem(KEY, cachedRaw);
+    cachedLearnerRaw = localStorage.getItem(scopedLearnerSettingsKey());
+    cached = next;
+  }
   catch { memoryOnly = true; }
   subscribers.forEach(fn => fn());
+}
+function setCurrentSettings(settings: Partial<Settings>) {
+  if (Object.prototype.hasOwnProperty.call(settings, 'year') || Object.prototype.hasOwnProperty.call(settings, 'childNickname')) {
+    const current = read().settings;
+    const year = settings.year ?? current.year;
+    try {
+      localStorage.setItem(scopedLearnerSettingsKey(), JSON.stringify({
+        childNickname: (settings.childNickname ?? current.childNickname ?? '').trim().slice(0, 30),
+        year: [1,2,3,4,5,6,7,8,9].includes(year) ? year : current.year,
+      }));
+      cachedLearnerRaw = undefined;
+    } catch { memoryOnly = true; }
+  }
+  updateSavedData(data => ({ ...data, settings: { ...data.settings, ...settings } }));
 }
 export function useArchieData() {
   const data = useSyncExternalStore(subscribe, read, () => DEFAULT);
@@ -141,12 +208,13 @@ export function useArchieData() {
   const activities = data.activities.filter(activity => activity.profileId === progressProfile.id);
   const legacyActivities = data.activities.filter(activity => !activity.profileId);
   const stickers = readScopedStickers(progressProfile);
-  const setSettings = useCallback((settings: Partial<Settings>) => updateSavedData(d => ({ ...d, settings: { ...d.settings, ...settings } })), []);
+  const hasLearnerSettings = readScopedLearnerSettings(progressProfile) !== null;
+  const setSettings = useCallback((settings: Partial<Settings>) => setCurrentSettings(settings), []);
   const complete = useCallback((activity: Omit<Activity, 'date' | 'profileId'>) => {
     const profileId = currentProgressProfile().id;
     updateSavedData(d => d.activities.some(a => a.id === activity.id && a.profileId === profileId) ? d : { ...d, activities: [...d.activities, { ...activity, profileId, date: new Date().toISOString() }] });
   }, []);
-  return { ...data, activities, legacyActivities, legacyStickers: data.stickers, stickers, progressProfile, setSettings, complete };
+  return { ...data, activities, legacyActivities, legacyStickers: data.stickers, stickers, progressProfile, hasLearnerSettings, setSettings, complete };
 }
 export function isSoundEnabled() { return read().settings.sound; }
 export function readGameStars(): number {

@@ -2,14 +2,21 @@ import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router';
 import './AgeExperience.css';
 import { useVoice } from '@/lib/voice-context';
-import { useArchieData } from '@/lib/archie/storage';
+import { currentProgressProfile, useArchieData } from '@/lib/archie/storage';
 
 const AGE_KEY = 'sodafom_learning_age';
+const SCOPED_AGE_PREFIX = 'sodafom_learning_age:profile:';
+export function scopedLearningAgeKey(): string { return `${SCOPED_AGE_PREFIX}${currentProgressProfile().id}`; }
 export function readLearningAge(): number | null {
-  try { const raw = localStorage.getItem(AGE_KEY); const age = Number(raw); return raw && Number.isInteger(age) && age >= 5 && age <= 13 ? age : null; } catch { return null; }
+  try {
+    const scopedRaw = localStorage.getItem(scopedLearningAgeKey());
+    const raw = scopedRaw ?? localStorage.getItem(AGE_KEY);
+    const age = Number(raw);
+    return raw && Number.isInteger(age) && age >= 5 && age <= 13 ? age : null;
+  } catch { return null; }
 }
 export function saveLearningAge(age: number | null): boolean {
-  try { if (age === null) localStorage.removeItem(AGE_KEY); else if (Number.isInteger(age) && age >= 5 && age <= 13) localStorage.setItem(AGE_KEY, String(age)); else return false; return true; } catch { return false; }
+  try { if (age === null) localStorage.removeItem(scopedLearningAgeKey()); else if (Number.isInteger(age) && age >= 5 && age <= 13) localStorage.setItem(scopedLearningAgeKey(), String(age)); else return false; return true; } catch { return false; }
 }
 export function experienceBand(age: number | null, year: number): 'starter' | 'explorer' | 'challenger' {
   if (age !== null) return age <= 7 ? 'starter' : age <= 9 ? 'explorer' : 'challenger';

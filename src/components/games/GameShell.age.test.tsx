@@ -149,6 +149,7 @@ describe('preview legacy-account request isolation',()=>{
   it.each(['finish','recordCompletion'] as const)('keeps preview %s local despite a stale active child',async(mode)=>{
     const savedChild=JSON.stringify(staleChild);
     localStorage.setItem('sodafom_active_child',savedChild);
+    saveYear(1);
     show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['5–7']}>
       {(finish,controls)=> <button onClick={()=>mode==='finish'?finish(result):controls.recordCompletion(result)}>Complete preview round</button>}
     </GameShell>);

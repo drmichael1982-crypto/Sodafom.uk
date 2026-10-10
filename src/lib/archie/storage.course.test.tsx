@@ -1,6 +1,6 @@
 import { renderHook, act, cleanup } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
-import { claimScopedSticker, currentProgressProfile, scopedStickersKey, useArchieData } from './storage';
+import { claimScopedSticker, currentProgressProfile, scopedLearnerSettingsKey, scopedStickersKey, useArchieData } from './storage';
 afterEach(()=>{cleanup();localStorage.clear();});
 it('keeps a multi-year course record beyond 500 lessons and never awards a repeat twice',()=>{
   localStorage.setItem('sodafom_active_child',JSON.stringify({id:12,name:'Synthetic learner'}));
@@ -47,4 +47,34 @@ it('keeps collected stickers with the selected learner and preserves older share
     window.dispatchEvent(new Event('sodafom:active-child-changed'));
   });
   expect(result.current.stickers).toEqual(['book']);
+});
+it('keeps practice year and nickname with each learner while device access settings stay shared',()=>{
+  localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{childNickname:'Older nickname',year:4,sound:true,largeText:false,onlineHelp:true},activities:[],stickers:[]}));
+  localStorage.setItem('sodafom_active_child',JSON.stringify({id:21,name:'Mia'}));
+  const {result}=renderHook(()=>useArchieData());
+  expect(result.current.hasLearnerSettings).toBe(false);
+  expect(result.current.settings.year).toBe(4);
+  act(()=>result.current.setSettings({childNickname:'Older nickname',year:4}));
+  expect(result.current.hasLearnerSettings).toBe(true);
+  act(()=>result.current.setSettings({childNickname:'Mia',year:2,sound:false,largeText:true}));
+  expect(result.current.hasLearnerSettings).toBe(true);
+  expect(JSON.parse(localStorage.getItem(scopedLearnerSettingsKey())!)).toEqual({childNickname:'Mia',year:2});
+  expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings).toEqual({childNickname:'Older nickname',year:4,sound:false,largeText:true,onlineHelp:true});
+
+  act(()=>{
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:22,name:'Leo'}));
+    window.dispatchEvent(new Event('sodafom:active-child-changed'));
+  });
+  expect(result.current.hasLearnerSettings).toBe(false);
+  expect(result.current.settings).toEqual({childNickname:'Older nickname',year:4,sound:false,largeText:true,onlineHelp:true});
+  act(()=>result.current.setSettings({childNickname:'Leo',year:7}));
+  expect(result.current.settings.year).toBe(7);
+
+  act(()=>{
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:21,name:'Mia'}));
+    window.dispatchEvent(new Event('sodafom:active-child-changed'));
+  });
+  expect(result.current.settings).toEqual({childNickname:'Mia',year:2,sound:false,largeText:true,onlineHelp:true});
+  act(()=>result.current.complete({id:'mia-scoped',kind:'lesson',title:'Mia lesson',stars:2}));
+  expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year).toBe(4);
 });

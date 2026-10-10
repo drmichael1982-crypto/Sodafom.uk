@@ -10,7 +10,7 @@ vi.mock('@/pages/CartoonTheatrePage',()=>({EPISODES:[]}));
 vi.mock('@/components/SceneArtwork',()=>({default:()=>null,sceneForSubject:()=> 'maths',sceneArtworkPath:()=> '/assets/scenes/archie-jigsaw-maths-v2.webp'}));
 vi.mock('@/components/OrbitHome',()=>({default:()=>null}));
 import { ArchieGames } from './ArchiePages';
-import { updateSavedData } from '@/lib/archie/storage';
+import { scopedLearnerSettingsKey, updateSavedData } from '@/lib/archie/storage';
 import catalog from '@/lib/archie/game-catalog.json';
 import { isGameForYear } from '@/lib/archie/game-age';
 import { useChildAge } from '@/hooks/useChildAge';
@@ -21,6 +21,7 @@ function DifficultyProbe(){
 }
 const staleProfile={id:31,ageGroup:'11-13'};
 const saveYear=(year:number)=>updateSavedData(data=>({...data,settings:{...data.settings,year}}));
+const savedYear=()=>{const scoped=localStorage.getItem(scopedLearnerSettingsKey());return scoped?JSON.parse(scoped).year:JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year;};
 const show=(path='/games')=>render(<MemoryRouter initialEntries={[path]}><ArchieGames/><DifficultyProbe/></MemoryRouter>);
 const gameRoutes=(container:HTMLElement)=>Array.from(container.querySelectorAll<HTMLAnchorElement>('[data-game-link]')).map(link=>link.getAttribute('href'));
 const eligibleRoutes=(year:number)=>catalog.filter(game=>isGameForYear(year,game.ageGroups)).map(game=>game.route);
@@ -37,7 +38,7 @@ describe('selected-year game discovery and difficulty',()=>{
     saveYear(9);show(path);
     expect(screen.getByRole('combobox',{name:'My learning year'})).toHaveValue(String(year));
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent(group);
-    expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year).toBe(year);
+    expect(savedYear()).toBe(year);
   });
   it.each([
     {year:3,group:'5-7',tier:1},
@@ -63,7 +64,7 @@ describe('selected-year game discovery and difficulty',()=>{
     expect(gameRoutes(view.container)).toContain('/games/algebra-quest');
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent('11-13 · tier 3');
     chooseYear(9);expect(gameRoutes(view.container)).toEqual(eligibleRoutes(9));
-    expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year).toBe(9);
+    expect(savedYear()).toBe(9);
     view.unmount();show();
     expect(screen.getByRole('combobox',{name:'My learning year'})).toHaveValue('9');
     expect(screen.getByTestId('game-difficulty')).toHaveTextContent('11-13 · tier 3');
@@ -102,7 +103,7 @@ describe('selected-year game discovery and difficulty',()=>{
     expect(screen.getByRole('searchbox',{name:'Search games'})).toHaveFocus();
     expect(screen.getByRole('button',{name:'All games'})).toHaveAttribute('aria-pressed','true');
     expect(gameRoutes(view.container)).toEqual(eligibleRoutes(year));
-    expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year).toBe(year);
+    expect(savedYear()).toBe(year);
     expect(JSON.parse(localStorage.getItem('sodafom_active_child')!)).toEqual(staleProfile);
   });
   it('offers a game when either learner age in the school year matches its entry range',()=>{

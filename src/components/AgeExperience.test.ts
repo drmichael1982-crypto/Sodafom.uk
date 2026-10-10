@@ -15,11 +15,25 @@ describe('age-tailored home presentation', () => {
     expect(readLearningAge()).toBe(13);
     expect(saveLearningAge(14)).toBe(false);
     expect(saveLearningAge(5.5)).toBe(false);
+    saveLearningAge(null);
     localStorage.setItem('sodafom_learning_age','4');
     expect(readLearningAge()).toBeNull();
     saveLearningAge(7);
     saveLearningAge(null);
     expect(readLearningAge()).toBeNull();
     expect(experienceBand(null,4)).toBe('explorer');
+  });
+  it('keeps age presentation with the selected learner and uses the old device age only as a fallback', () => {
+    localStorage.setItem('sodafom_learning_age','9');
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:21,name:'Mia'}));
+    expect(readLearningAge()).toBe(9);
+    expect(saveLearningAge(6)).toBe(true);
+    expect(readLearningAge()).toBe(6);
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:22,name:'Leo'}));
+    expect(readLearningAge()).toBe(9);
+    expect(saveLearningAge(12)).toBe(true);
+    expect(readLearningAge()).toBe(12);
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:21,name:'Mia'}));
+    expect(readLearningAge()).toBe(6);
   });
 });
