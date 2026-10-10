@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Read-aloud recovery — 10 October 2026](2026-10-10-read-aloud-recovery.md): replaces silent speech-synthesis failure with a calm on-screen fallback, preserves focus and printed text, and records the tablet pager alignment defect found during direct visual review.
 1. [Voice fallback focus — 10 October 2026](2026-10-10-voice-fallback-focus.md): moves unsupported, denied, missing and failed microphone journeys into the typed Archie input with specific recovery guidance and verified phone/tablet focus.
 2. [Adult progress navigation — 10 October 2026](2026-10-10-adult-progress-navigation.md): keeps parent/teacher summary-to-detail progress handoffs in their adult context and verifies readable phone/tablet progress views.
 3. [Page-jigsaw identity strip and narrow-phone controls — 9 October 2026](2026-10-09-page-jigsaw-identity-strip.md): prevents the full-screen mode strip from clipping, repairs fixed jigsaw navigation targets at the 280px and short 320px boundaries, and keeps the tablet board inside the viewport.
@@ -29,4 +30,4 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 
 Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `faf0d7d`; candidate pushes do not imply deployment.
 
-Next bounded priority: inspect read-aloud and speech-synthesis unavailable/error recovery at phone/tablet widths, then fix only a newly reproduced defect. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: repair and measure the 820px reader pager alignment so the active story fills the page without exposing an adjacent screen, then return to direct speech-synthesis callers. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
