@@ -36,6 +36,21 @@ const results = [];
       const page = await browser.newPage({ viewport, reducedMotion: 'reduce' });
       page.on('pageerror', error => errors.push(String(error)));
       const button = name => page.getByRole('button', { name, exact: true });
+      const revealWithPager = async locator => {
+        for (let attempt = 0; attempt < 30; attempt++) {
+          const direction = await locator.evaluate(element => {
+            const viewport = element.closest('.app-screen-window')?.getBoundingClientRect();
+            const box = element.getBoundingClientRect();
+            if (!viewport) return 0;
+            if (box.left >= viewport.left - 1 && box.right <= viewport.right + 1) return 0;
+            return box.left < viewport.left ? -1 : 1;
+          });
+          if (direction === 0) return;
+          await button(direction < 0 ? '← Previous' : 'Next →').click();
+          await page.waitForTimeout(180);
+        }
+        throw new Error('Pager did not reveal the requested Word Scramble control');
+      };
       const goto = async route => { await page.goto(base + route); await page.getByRole('heading').first().waitFor(); };
       const chooseYear = year => page.getByRole('combobox', { name: 'My learning year', exact: true }).selectOption(String(year));
       const closeMovingReward = async screenshotPath => {
@@ -242,17 +257,21 @@ const results = [];
             await page.getByText('1/10', { exact: true }).waitFor();
             await page.waitForTimeout(2100);
             await page.getByText('1/10', { exact: true }).waitFor();
+            await revealWithPager(button('Clear'));
             await page.screenshot({ path: `${output}/word-scramble-retry-${viewport.width}.png`, fullPage: true });
             await button('Clear').click();
             await button(`Letter ${answer[0]}`).first().click();
+            await revealWithPager(button('Pause game'));
             await button('Pause game').click();
             await page.getByRole('status').filter({ hasText: 'Paused. Your letters are saved.' }).waitFor();
             assert.equal(await button(`Remove letter ${answer[0]}`).first().isDisabled(), true);
             for (const tile of await page.locator('button[aria-label^="Letter "]').all()) assert.equal(await tile.isDisabled(), true);
             await page.waitForTimeout(400); // inspect the settled paused state after retry feedback exits
+            await revealWithPager(button('Resume game'));
             await page.screenshot({ path: `${output}/word-scramble-paused-${viewport.width}.png`, fullPage: true });
             await button('Resume game').click();
             assert.equal(await button(`Remove letter ${answer[0]}`).first().isEnabled(), true);
+            await revealWithPager(button('Clear'));
             await button('Clear').click();
           }
           await chooseWordLetters(answer);
