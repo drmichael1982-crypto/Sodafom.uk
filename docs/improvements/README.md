@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Reader pager alignment — 10 October 2026](2026-10-10-reader-pager-alignment.md): repairs the one-tap pager action regression and develops the reader alignment fix, while recording the exact hosted geometry failure and unscheduled final browser check without overstating completion.
 1. [Read-aloud recovery — 10 October 2026](2026-10-10-read-aloud-recovery.md): replaces silent speech-synthesis failure with a calm on-screen fallback, preserves focus and printed text, and records the tablet pager alignment defect found during direct visual review.
 1. [Voice fallback focus — 10 October 2026](2026-10-10-voice-fallback-focus.md): moves unsupported, denied, missing and failed microphone journeys into the typed Archie input with specific recovery guidance and verified phone/tablet focus.
 2. [Adult progress navigation — 10 October 2026](2026-10-10-adult-progress-navigation.md): keeps parent/teacher summary-to-detail progress handoffs in their adult context and verifies readable phone/tablet progress views.
@@ -28,6 +29,6 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 23. [Bingo feedback and breaks — 7 October 2026](2026-10-07-bingo-feedback.md): accurate first-try scoring, hints, pause/resume and prior-run evidence.
 24. [Game access — 7 October 2026](2026-10-07-game-access.md): preceding freeze/age-discovery repair and historical starting evidence.
 
-Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `faf0d7d`; candidate pushes do not imply deployment.
+Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `13f0c79`; candidate pushes do not imply deployment.
 
-Next bounded priority: repair and measure the 820px reader pager alignment so the active story fills the page without exposing an adjacent screen, then return to direct speech-synthesis callers. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
+Next bounded priority: obtain a hosted Chromium run for `8415014`, keep the 820px story-edge and puzzle-overlap assertions strict, and inspect both rendered recovery captures. If it still fails, add live pager status/transform/width diagnostics before another product change. Keep Leonard's separate queue isolated; do not overwrite concurrent changes or merge/deploy.
