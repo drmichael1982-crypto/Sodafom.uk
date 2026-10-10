@@ -261,9 +261,13 @@ const results=[];
       await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/history-complete-820.png',fullPage:true});
 
       await page.setViewportSize({width:390,height:844});await goto('/');await button('Puzzles').click();await button('Fractions').click();
-      await page.getByRole('button',{name:'Fraction section 1'}).click();await button('Check the fraction').click();await button('Next fraction').click();
-      await page.getByRole('button',{name:'Fraction section 1'}).click();await button('Check the fraction').click();
-      await button('Practise the fractions again').waitFor();
+      for(let question=0;question<10;question++){
+        const checkFraction=button('Check the fraction');
+        if(await checkFraction.count()){await page.getByRole('button',{name:'Fraction section 1'}).click();await checkFraction.click();}
+        else{const diagram=await page.locator('.fraction-circle').getAttribute('aria-label');const match=diagram?.match(/(\d+) equal sections; (\d+) shaded/);assert.ok(match,`Fraction diagram must announce its parts (${diagram})`);await button(`${match[2]}/${match[1]}`).click();}
+        await button(question===9?'See my results':'Next question').click();
+      }
+      await page.getByRole('heading',{name:'Ten fractions explored!'}).waitFor();await button('Play ten more questions').waitFor();
       await page.screenshot({path:'test-results/fraction-complete-390.png',fullPage:true});
       await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/fraction-complete-820.png',fullPage:true});
 
