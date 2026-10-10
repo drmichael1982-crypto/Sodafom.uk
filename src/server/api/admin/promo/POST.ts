@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { db } from '../../../db/client';
 import { promoCodes } from '../../../db/schema';
-import { getAuth } from '@/lib/auth/auth';
+import { requireArchieOwnerSession } from '@/server/lib/archie-owner-session';
 import { randomBytes } from 'crypto';
 
 interface GeneratePromoRequest {
@@ -21,13 +21,7 @@ function generateCode(prefix?: string): string {
 
 export default async function handler(req: Request, res: Response) {
   try {
-    const auth = getAuth();
-    const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-
-    // Security: Only admins can generate codes
-    if (!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+    if (!await requireArchieOwnerSession(req, res)) return;
 
     const { prefix, count, description, accessDurationDays, maxUses, expiresAt } = req.body as GeneratePromoRequest;
 

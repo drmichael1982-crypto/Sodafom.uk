@@ -14,9 +14,7 @@
 import type { Request, Response } from 'express';
 import { createHmac } from 'crypto';
 import { getSecret } from '#airo/secrets';
-import { getAuth } from '@/lib/auth/auth';
-
-const MASTER_CODE = process.env.ADMIN_MASTER_CODE || '040718';
+import { requireArchieOwnerSession } from '@/server/lib/archie-owner-session';
 
 /** Returns ISO week number and year for a given date */
 function getISOWeek(date: Date): { week: number; year: number } {
@@ -27,7 +25,6 @@ function getISOWeek(date: Date): { week: number; year: number } {
   const week = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
   return { week, year: d.getUTCFullYear() };
 }
-
 /** Next Monday 00:00 UTC — when the current code expires */
 function nextMondayUTC(now: Date): Date {
   const d = new Date(now);
@@ -49,17 +46,7 @@ function generateWeekCode(week: number, year: number): string {
 }
 
 export default async function handler(req: Request, res: Response) {
-  const auth = getAuth();
-  const session = await auth.api.getSession({ headers: new Headers(req.headers as any) });
-
-  const masterCodeFromHeader = req.headers['x-admin-code'] as string | undefined;
-  const isMasterCodeValid = masterCodeFromHeader === MASTER_CODE;
-
-  // Allow access if user is a signed-in admin OR provides the correct master code
-  if (!(session?.user as { isAdmin?: boolean } | undefined)?.isAdmin && !isMasterCodeValid) {
-    res.status(401).json({ success: false, error: 'Authorisation required' });
-    return;
-  }
+  if (!await requireArchieOwnerSession(req, res)) return;
 
   const now = new Date();
   const { week, year } = getISOWeek(now);
@@ -86,16 +73,4 @@ export default async function handler(req: Request, res: Response) {
     hoursRemaining,
     generatedAt: now.toISOString(),
   });
-}
-
-/**
- * Exported helper — used by the stats endpoint to validate EITHER the
- * master code OR the current rolling code.
- */
-export function isValidAdminCode(code: string): boolean {
-  if (code === MASTER_CODE || code === '1182') return true;
-  const now = new Date();
-  const { week, year } = getISOWeek(now);
-  const rolling = generateWeekCode(week, year);
-  return code === rolling;
 }

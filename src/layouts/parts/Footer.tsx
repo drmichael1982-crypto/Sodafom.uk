@@ -1,104 +1,23 @@
 import { Link, useNavigate } from "react-router";
 import { Youtube, Lock, Instagram } from 'lucide-react';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
 
 // Hidden admin access logic (triggered by clicking the bottom copyright year)
 
 function AdminUnlock() {
-  const [open, setOpen] = useState(false);
-  const [value, setValue] = useState('');
-  const [shake, setShake] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-
-  function handleOpen() {
-    setOpen(true);
-    setValue('');
-    setTimeout(() => inputRef.current?.focus(), 60);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const response = await fetch(`${API_PREFIX}/admin/verify`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: value }),
-    }).catch(() => null);
-    if (response?.ok) {
-      setOpen(false);
-      navigate('/admin-panel');
-    } else {
-      setShake(true);
-      setValue('');
-      setTimeout(() => setShake(false), 600);
-      inputRef.current?.focus();
-    }
-  }
 
   return (
     <>
       {/* Tiny lock icon — barely visible, only for the owner */}
       <button
-        onClick={handleOpen}
+        onClick={() => navigate('/admin')}
         aria-label="Admin access"
         className="text-primary-foreground/20 hover:text-primary-foreground/50 transition-colors focus:outline-none"
       >
         <Lock size={12} />
       </button>
-
-      {/* Modal overlay */}
-      {open && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        >
-          <div
-            className="bg-card border border-border rounded-2xl shadow-2xl p-6 w-72 text-center"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-              <Lock size={18} className="text-primary" />
-            </div>
-            <p className="font-black text-foreground text-sm mb-1" style={{ fontFamily: 'var(--font-heading)' }}>
-              Admin Access
-            </p>
-            <p className="text-muted-foreground text-xs mb-4">Enter your access code to continue</p>
-            <form onSubmit={handleSubmit}>
-              <input
-                ref={inputRef}
-                type="password"
-                inputMode="numeric"
-                value={value}
-                onChange={e => setValue(e.target.value)}
-                placeholder="••••••"
-                maxLength={10}
-                className={`w-full text-center border-2 rounded-xl px-4 py-2.5 text-sm font-bold bg-background text-foreground outline-none transition-all mb-3
-                  ${shake ? 'border-destructive' : 'border-border focus:border-primary'}`}
-                style={shake ? { animation: 'shake 0.5s ease-in-out' } : undefined}
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  className="flex-1 py-2 rounded-xl text-sm font-bold bg-muted text-muted-foreground hover:bg-muted/80 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2 rounded-xl text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 transition-opacity"
-                >
-                  Unlock
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Shake keyframe injected via globals.css */}
     </>
   );
 }

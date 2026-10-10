@@ -8,17 +8,12 @@
 import type { Request, Response } from 'express';
 import { db } from '@/server/db/client';
 import { sql } from 'drizzle-orm';
-import { getSecret } from '#airo/secrets';
+import { requireArchieOwnerSession } from '@/server/lib/archie-owner-session';
 
 export default async function handler(req: Request, res: Response) {
   try {
-    const { email, adminKey } = req.body ?? {};
-
-    // Simple key check — use BETTER_AUTH_SECRET as the admin key
-    const secret = getSecret('BETTER_AUTH_SECRET');
-    if (!adminKey || adminKey !== secret) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
+    if (!await requireArchieOwnerSession(req, res)) return;
+    const { email } = req.body ?? {};
 
     if (!email || typeof email !== 'string') {
       return res.status(400).json({ error: 'Email required' });
@@ -46,6 +41,6 @@ export default async function handler(req: Request, res: Response) {
     res.json({ ok: true, deleted: trimmed });
   } catch (err) {
     console.error('[admin/reset-user]', err);
-    res.status(500).json({ error: String(err) });
+    res.status(500).json({ error: 'Could not reset user' });
   }
 }
