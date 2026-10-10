@@ -42,7 +42,7 @@ describe('bounded persistent owner game ideas', () => {
   it('denies other accounts and wrong origins, accepts owner drafts and reports invalid requests', async () => {
     const folder = await mkdtemp(join(tmpdir(), 'archie-ideas-api-'));
     const app = express();
-    const env = { ARCHIE_OWNER_USER_ID: 'owner', BETTER_AUTH_URL: 'https://app.example.test', ARCHIE_ADMIN_GAME_IDEAS_PATH: join(folder, 'ideas.json') };
+    const env = { ARCHIE_OWNER_USER_ID: ' owner ', BETTER_AUTH_URL: 'https://app.example.test', ARCHIE_ADMIN_GAME_IDEAS_PATH: join(folder, 'ideas.json') };
     app.use('/api/admin/game-ideas', createAdminGameIdeasRouter(async req => {
       const id = req.get('x-test-account'); return id ? { user: { id, isAdmin: true } } : null;
     }, env));

@@ -3,6 +3,7 @@ import { dirname, isAbsolute, relative, resolve } from 'node:path';
 import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { getPreviewParentSession, type PreviewParentSession } from './archie-parent-auth';
+import { requireArchieOwnerSession } from './archie-owner-session';
 
 type Environment = Record<string, string | undefined>;
 const subjects = ['maths', 'spelling', 'reading', 'science', 'art'] as const;
@@ -86,14 +87,7 @@ export function createAdminGameIdeasRouter(
   const router = Router();
   router.use(async (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
-    try {
-      const session = await resolveParent(req);
-      if (!session) { res.status(401).json({ error: 'Sign in to the owner account to view game ideas.' }); return; }
-      if (!env.ARCHIE_OWNER_USER_ID || session.user.isAdmin !== true || session.user.id !== env.ARCHIE_OWNER_USER_ID) {
-        res.status(403).json({ error: 'Only the server-authorized owner can manage game ideas.' }); return;
-      }
-      next();
-    } catch { res.status(503).json({ error: 'Owner account verification is unavailable.' }); }
+    if (await requireArchieOwnerSession(req, res, resolveParent, env)) next();
   });
   router.use(json({ limit: '8kb' }));
   router.get('/', async (_req, res) => {

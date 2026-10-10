@@ -4,6 +4,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { isIP } from 'node:net';
 import { getPreviewParentSession, type PreviewParentSession } from './archie-parent-auth';
+import { requireArchieOwnerSession } from './archie-owner-session';
 import type { AdminPaymentSettings, PaymentSettingsDraft } from '../../lib/archie/payment-settings';
 
 type Environment = Record<string, string | undefined>;
@@ -87,17 +88,8 @@ export function createAdminPaymentRouter(
 ) {
   const router = Router();
   router.use((_req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
-  async function owner(req: Request, res: Response): Promise<boolean> {
-    const session = await resolveParent(req);
-    if (!session) { res.status(401).json({ error: 'Sign in to the owner account to manage payment drafts.' }); return false; }
-    if (!env.ARCHIE_OWNER_USER_ID || session.user.isAdmin !== true || session.user.id !== env.ARCHIE_OWNER_USER_ID) {
-      res.status(403).json({ error: 'Only the server-authorized owner can manage payment drafts.' }); return false;
-    }
-    return true;
-  }
   router.use(async (req, res, next) => {
-    try { if (await owner(req, res)) next(); }
-    catch { res.status(503).json({ error: 'Owner account verification is unavailable. Payments remain off.' }); }
+    if (await requireArchieOwnerSession(req, res, resolveParent, env)) next();
   });
   router.use(json({ limit: '4kb' }));
   router.get('/', async (_req, res) => {

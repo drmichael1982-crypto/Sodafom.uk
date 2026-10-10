@@ -6,10 +6,13 @@
 import { LocalArchieResult } from '../archie-local';
 import { CURRICULUM_LESSONS, TopicLesson, LessonQuestion } from './curriculum';
 import { loadTutorMemory, recordQuestionAnswer, getRecentLessonSummary } from './memory';
+import { getActiveLearningProfile } from '../learning-age';
 
 
 function getActiveAgeGroup(): TopicLesson['ageGroup'] {
   if (typeof window === 'undefined') return '8-10';
+  const activeProfile = getActiveLearningProfile();
+  if (activeProfile?.ageGroup) return activeProfile.ageGroup;
   try {
     const app = JSON.parse(localStorage.getItem('sodafom_archie_design_v1') || '{}');
     const year = Number(app.settings?.year);
@@ -26,10 +29,11 @@ let activePendingQuestion: {
   topic: string;
   question: LessonQuestion;
   ageGroup: TopicLesson['ageGroup'];
+  learnerId: string | null;
 } | null = null;
 
 export function setActivePendingQuestion(subject: string, topic: string, question: LessonQuestion, ageGroup = getActiveAgeGroup()) {
-  activePendingQuestion = { subject, topic, question, ageGroup };
+  activePendingQuestion = { subject, topic, question, ageGroup, learnerId: getActiveLearningProfile()?.id ?? null };
 }
 
 export function getActivePendingQuestion() {
@@ -75,10 +79,11 @@ export function tryLocalTutor(input: string): LocalArchieResult | null {
   const memory = loadTutorMemory();
   const childName = memory.childName ? memory.childName : '';
   const activeAgeGroup = getActiveAgeGroup();
+  const activeLearnerId = getActiveLearningProfile()?.id ?? null;
 
-  // A question prepared for a different learner band must never be graded
-  // after a grown-up changes the saved school year.
-  if (activePendingQuestion && activePendingQuestion.ageGroup !== activeAgeGroup) {
+  // A question prepared for another child or learner band must never be graded
+  // after a grown-up switches profiles or changes the saved school year.
+  if (activePendingQuestion && (activePendingQuestion.ageGroup !== activeAgeGroup || activePendingQuestion.learnerId !== activeLearnerId)) {
     activePendingQuestion = null;
   }
 

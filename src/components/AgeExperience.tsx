@@ -3,14 +3,9 @@ import { Link } from 'react-router';
 import './AgeExperience.css';
 import { useVoice } from '@/lib/voice-context';
 import { useArchieData } from '@/lib/archie/storage';
+import { readLearningAge, resolveLearningAge, saveLearningAge } from '@/lib/learning-age';
 
-const AGE_KEY = 'sodafom_learning_age';
-export function readLearningAge(): number | null {
-  try { const raw = localStorage.getItem(AGE_KEY); const age = Number(raw); return raw && Number.isInteger(age) && age >= 5 && age <= 13 ? age : null; } catch { return null; }
-}
-export function saveLearningAge(age: number | null): boolean {
-  try { if (age === null) localStorage.removeItem(AGE_KEY); else if (Number.isInteger(age) && age >= 5 && age <= 13) localStorage.setItem(AGE_KEY, String(age)); else return false; return true; } catch { return false; }
-}
+export { readLearningAge, resolveLearningAge, saveLearningAge } from '@/lib/learning-age';
 export function experienceBand(age: number | null, year: number): 'starter' | 'explorer' | 'challenger' {
   if (age !== null) return age <= 7 ? 'starter' : age <= 9 ? 'explorer' : 'challenger';
   return year <= 3 ? 'starter' : year <= 5 ? 'explorer' : 'challenger';
@@ -22,7 +17,7 @@ const EXPERIENCES = {
 } as const;
 
 export default function AgeExperience({ year, askArchie, nickname }: { year: number; askArchie: () => void; nickname?: string }) {
-  const age = readLearningAge();
+  const age = resolveLearningAge();
   const band = experienceBand(age, year);
   return <ExperienceMission key={`${band}-${year}`} nickname={nickname} band={band} age={age} year={year} askArchie={askArchie}/>;
 }

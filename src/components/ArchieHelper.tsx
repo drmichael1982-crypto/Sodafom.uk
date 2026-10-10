@@ -15,6 +15,8 @@ import { blockedLearningText, FRIENDLY_REDIRECT, safeLearningReply } from '@/lib
 import { normaliseVoiceAnswer, submitGameVoiceAnswer } from '@/lib/archie/game-voice';
 import { coachLessonReply, guardPracticeReply, lessonContextForService, subjectMethod } from '@/lib/archie/lesson-coach';
 import { loadTutorMemory } from '@/lib/tutor/memory';
+import { resolveLearningAge } from '@/lib/learning-age';
+import { clearActivePendingQuestion } from '@/lib/tutor/engine';
 
 import type { CourseLesson, CourseSubject } from '@/lib/archie/course-types';
 
@@ -51,8 +53,8 @@ function cleanTutorText(text: string) {
 }
 export function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
-  const learningAge = Number(localStorage.getItem('sodafom_learning_age'));
-  if (Number.isInteger(learningAge) && learningAge >= 5 && learningAge <= 13) return learningAge;
+  const learningAge = resolveLearningAge();
+  if (learningAge !== null) return learningAge;
   try {
     const app = JSON.parse(localStorage.getItem('sodafom_archie_design_v1') || '{}');
     const year = Number(app.settings?.year);
@@ -168,6 +170,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   }, [location.pathname, location.search]);
   useEffect(() => {
     const resetForLearner = () => {
+      clearActivePendingQuestion();
       requestLessonVoice?.(null);
       stopVoiceConversation('Learner changed. Start a new conversation when you are ready.');
       pending.current?.abort(); pending.current = null; busyRef.current = false; setBusy(false);
@@ -179,6 +182,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   useEffect(() => {
     if (previousLearningYear.current === settings.year) return;
     previousLearningYear.current = settings.year;
+    clearActivePendingQuestion();
     requestLessonVoice?.(null);
     stopVoiceConversation('Learning year changed. Start a new conversation when you are ready.');
     setInput(''); setMessages([]);
