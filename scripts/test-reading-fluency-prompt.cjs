@@ -32,11 +32,17 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
         for (let attempt = 0; attempt < 30; attempt++) {
           const direction = await locator.evaluate(element => {
             const viewport = element.closest('.app-screen-window')?.getBoundingClientRect();
-            const box = element.getBoundingClientRect();
             if (!viewport) return 0;
-            const centre = box.left + box.width / 2;
-            if (centre >= viewport.left - 1 && centre <= viewport.right + 1) return 0;
-            return centre < viewport.left ? -1 : 1;
+            const fragments = [...element.getClientRects()];
+            const visible = fragments.some(box => {
+              const centreX = box.left + box.width / 2;
+              const centreY = box.top + box.height / 2;
+              return centreX >= viewport.left - 1 && centreX <= viewport.right + 1
+                && centreY >= viewport.top - 1 && centreY <= viewport.bottom + 1;
+            });
+            if (visible) return 0;
+            const first = fragments[0] || element.getBoundingClientRect();
+            return first.right < viewport.left ? -1 : 1;
           });
           if (direction === 0) return;
           await button(direction < 0 ? '← Previous' : 'Next →').click();
