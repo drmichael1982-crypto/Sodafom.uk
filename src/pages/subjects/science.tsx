@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import { motion } from 'motion/react';
 import { ChevronRight, Star, Play, FlaskConical, ArrowLeft } from 'lucide-react';
 import { games as _games } from 'virtual:content';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 
 const games = _games;
 const siteUrl = 'https://sodafom.uk';
@@ -106,9 +107,9 @@ export default function ScienceSubjectPage() {
                   className="flex items-center gap-2 px-7 py-3.5 rounded-full font-black text-base bg-white text-primary shadow-lg hover:scale-105 active:scale-95 transition-transform">
                   <Play size={18} className="fill-current" /> Play Science Games
                 </Link>
-                <Link to="/subscribe"
+                <Link to={OPEN_TESTING_MODE ? '/games?subject=science' : '/subscribe'}
                   className="flex items-center gap-2 px-7 py-3.5 rounded-full font-black text-base border-2 border-white/50 text-white hover:bg-white/20 transition-all">
-                  <Star size={16} /> Start Free Trial
+                  <Star size={16} /> {OPEN_TESTING_MODE ? 'Browse free games' : 'Start Free Trial'}
                 </Link>
               </div>
             </motion.div>
@@ -267,10 +268,10 @@ export default function ScienceSubjectPage() {
             <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
               <p className="text-6xl mb-4">🔬</p>
               <h2 className="text-3xl font-black text-primary-foreground mb-3" style={{ fontFamily: 'var(--font-heading)' }}>Ready to explore science?</h2>
-              <p className="text-primary-foreground/85 mb-7 font-semibold">Start your 7-day free trial — no card required. Cancel any time.</p>
-              <Link to="/subscribe"
+              <p className="text-primary-foreground/85 mb-7 font-semibold">{OPEN_TESTING_MODE ? 'Every science game is free during testing — choose one and start learning.' : 'Start your 7-day free trial — no card required. Cancel any time.'}</p>
+              <Link to={OPEN_TESTING_MODE ? '/games?subject=science' : '/subscribe'}
                 className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-black text-base bg-accent text-accent-foreground shadow-lg hover:scale-105 active:scale-95 transition-transform">
-                <Star size={18} className="fill-current" /> Start Free Trial
+                <Star size={18} className="fill-current" /> {OPEN_TESTING_MODE ? 'Play free now' : 'Start Free Trial'}
               </Link>
             </motion.div>
           </div>
