@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { rewards } from 'virtual:content';
 import { Helmet } from '@dr.pogodin/react-helmet';
@@ -353,7 +353,7 @@ function CharacterCard({
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-function RewardsContent() {
+export function RewardsContent() {
   const sessionData = useSession();
   const [children, setChildren] = useState<Child[]>([]);
   const [selectedChild, setSelectedChild] = useState<Child | null>(null);
@@ -368,6 +368,8 @@ function RewardsContent() {
   const [emailInput, setEmailInput] = useState('');
   const [emailSaving, setEmailSaving] = useState(false);
   const [emailSaved, setEmailSaved] = useState(false);
+  const selectedChildIdRef = useRef<Child['id'] | null>(null);
+  selectedChildIdRef.current = selectedChild?.id ?? null;
 
   useEffect(() => {
     if (!sessionData?.user) return;
@@ -381,48 +383,65 @@ function RewardsContent() {
       .catch(console.error);
   }, [sessionData]);
 
-  const fetchRewards = useCallback(async (child: Child) => {
+  const fetchRewards = useCallback(async (child: Child, signal: AbortSignal) => {
     setLoading(true);
     try {
       const [charsRes, milesRes] = await Promise.all([
-        fetch(`${API_PREFIX}/rewards/characters?childId=${child.id}`),
-        fetch(`${API_PREFIX}/rewards/milestones?childId=${child.id}`),
+        fetch(`${API_PREFIX}/rewards/characters?childId=${child.id}`, { signal }),
+        fetch(`${API_PREFIX}/rewards/milestones?childId=${child.id}`, { signal }),
       ]);
       const charsData = await charsRes.json() as { characters?: Character[] };
       const milesData = await milesRes.json() as { milestones?: Milestone[]; totalStars?: number };
+      if (signal.aborted || selectedChildIdRef.current !== child.id) return;
       setCharacters(charsData.characters ?? []);
       setMilestones(milesData.milestones ?? []);
       if (milesData.totalStars !== undefined) {
-        setSelectedChild((prev) => prev ? { ...prev, totalStars: milesData.totalStars! } : prev);
+        setSelectedChild((prev) => prev?.id === child.id ? { ...prev, totalStars: milesData.totalStars! } : prev);
         setChildren((prev) => prev.map((c) => c.id === child.id ? { ...c, totalStars: milesData.totalStars! } : c));
       }
     } catch (e) {
-      console.error(e);
+      if (!signal.aborted) console.error(e);
     } finally {
-      setLoading(false);
+      if (!signal.aborted && selectedChildIdRef.current === child.id) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    if (selectedChild) fetchRewards(selectedChild);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!selectedChild) return;
+    const controller = new AbortController();
+    setCharacters([]);
+    setMilestones([]);
+    setUnlocking(null);
+    setEquipping(null);
+    void fetchRewards(selectedChild, controller.signal);
+    return () => controller.abort();
   }, [selectedChild?.id, fetchRewards]);
 
   // Load reward_email for selected child
   useEffect(() => {
     if (!selectedChild) return;
-    fetch(`${API_PREFIX}/children/${selectedChild.id}/reward-email`, { credentials: 'include' })
+    const childId = selectedChild.id;
+    const controller = new AbortController();
+    setRewardEmail('');
+    setEmailInput('');
+    setEmailSaving(false);
+    setEmailSaved(false);
+    fetch(`${API_PREFIX}/children/${childId}/reward-email`, { credentials: 'include', signal: controller.signal })
       .then(r => r.ok ? r.json() : null)
       .then((d: { rewardEmail?: string } | null) => {
+        if (controller.signal.aborted || selectedChildIdRef.current !== childId) return;
         const email = d?.rewardEmail ?? '';
         setRewardEmail(email);
         setEmailInput(email);
       })
       .catch(() => {});
+    return () => controller.abort();
   }, [selectedChild?.id]);
 
   const handleSaveEmail = async () => {
     if (!selectedChild) return;
+    const childId = selectedChild.id;
+    const emailToSave = emailInput;
     setEmailSaving(true);
     setEmailSaved(false);
     try {
@@ -430,20 +449,24 @@ function RewardsContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ childId: selectedChild.id, email: emailInput }),
+        body: JSON.stringify({ childId, email: emailToSave }),
       });
       if (res.ok) {
-        setRewardEmail(emailInput);
-        setEmailSaved(true);
-        setTimeout(() => setEmailSaved(false), 3000);
+        if (selectedChildIdRef.current === childId) {
+          setRewardEmail(emailToSave);
+          setEmailSaved(true);
+          setTimeout(() => {
+            if (selectedChildIdRef.current === childId) setEmailSaved(false);
+          }, 3000);
+        }
       } else {
         const d = await res.json() as { error?: string };
-        showToast(d.error ?? 'Could not save email', 'error');
+        if (selectedChildIdRef.current === childId) showToast(d.error ?? 'Could not save email', 'error');
       }
     } catch {
-      showToast('Something went wrong', 'error');
+      if (selectedChildIdRef.current === childId) showToast('Something went wrong', 'error');
     } finally {
-      setEmailSaving(false);
+      if (selectedChildIdRef.current === childId) setEmailSaving(false);
     }
   };
 
@@ -454,12 +477,13 @@ function RewardsContent() {
 
   const handleUnlock = async (characterId: number) => {
     if (!selectedChild) return;
+    const childId = selectedChild.id;
     setUnlocking(characterId);
     try {
       const res = await fetch(`${API_PREFIX}/rewards/unlock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: selectedChild.id, characterId }),
+        body: JSON.stringify({ childId, characterId }),
       });
       const data = await res.json() as {
         success?: boolean;
@@ -468,47 +492,53 @@ function RewardsContent() {
         starsRemaining?: number;
       };
       if (data.success) {
-        showToast(`${data.character?.emoji} ${data.character?.name} unlocked! Tap "Use this character" to equip it.`, 'success');
-        setCharacters((prev) => prev.map((c) => c.id === characterId ? { ...c, unlocked: true } : c));
-        setSelectedChild((prev) => prev ? { ...prev, totalStars: data.starsRemaining ?? prev.totalStars } : prev);
-        setChildren((prev) => prev.map((c) => c.id === selectedChild.id ? { ...c, totalStars: data.starsRemaining ?? c.totalStars } : c));
+        setChildren((prev) => prev.map((c) => c.id === childId ? { ...c, totalStars: data.starsRemaining ?? c.totalStars } : c));
+        if (selectedChildIdRef.current === childId) {
+          showToast(`${data.character?.emoji} ${data.character?.name} unlocked! Tap "Use this character" to equip it.`, 'success');
+          setCharacters((prev) => prev.map((c) => c.id === characterId ? { ...c, unlocked: true } : c));
+          setSelectedChild((prev) => prev?.id === childId ? { ...prev, totalStars: data.starsRemaining ?? prev.totalStars } : prev);
+        }
       } else {
-        showToast(data.error ?? 'Could not unlock character', 'error');
+        if (selectedChildIdRef.current === childId) showToast(data.error ?? 'Could not unlock character', 'error');
       }
     } catch {
-      showToast('Something went wrong', 'error');
+      if (selectedChildIdRef.current === childId) showToast('Something went wrong', 'error');
     } finally {
-      setUnlocking(null);
+      if (selectedChildIdRef.current === childId) setUnlocking(null);
     }
   };
 
   const handleEquip = async (characterId: number) => {
     if (!selectedChild) return;
+    const childId = selectedChild.id;
+    const equipped = characters.find((c) => c.id === characterId);
     setEquipping(characterId);
     try {
       const res = await fetch(`${API_PREFIX}/rewards/set-character`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ childId: selectedChild.id, characterId }),
+        body: JSON.stringify({ childId, characterId }),
       });
       const data = await res.json() as { success?: boolean; error?: string };
       if (data.success) {
-        const equipped = characters.find((c) => c.id === characterId);
-        showToast(`${equipped?.emoji ?? '⭐'} ${equipped?.name ?? 'Character'} is now active!`, 'success');
-        setCharacters((prev) => prev.map((c) => ({ ...c, isActive: c.id === characterId })));
-        // Update the child's avatarEmoji in local state
         if (equipped) {
-          setSelectedChild((prev) => prev ? { ...prev, avatarEmoji: equipped.emoji } : prev);
-          setChildren((prev) => prev.map((c) => c.id === selectedChild.id ? { ...c, avatarEmoji: equipped.emoji } : c));
+          setChildren((prev) => prev.map((c) => c.id === childId ? { ...c, avatarEmoji: equipped.emoji } : c));
+        }
+        if (selectedChildIdRef.current === childId) {
+          showToast(`${equipped?.emoji ?? '⭐'} ${equipped?.name ?? 'Character'} is now active!`, 'success');
+          setCharacters((prev) => prev.map((c) => ({ ...c, isActive: c.id === characterId })));
+          if (equipped) {
+            setSelectedChild((prev) => prev?.id === childId ? { ...prev, avatarEmoji: equipped.emoji } : prev);
+          }
         }
       } else {
-        showToast(data.error ?? 'Could not equip character', 'error');
+        if (selectedChildIdRef.current === childId) showToast(data.error ?? 'Could not equip character', 'error');
       }
     } catch {
-      showToast('Something went wrong', 'error');
+      if (selectedChildIdRef.current === childId) showToast('Something went wrong', 'error');
     } finally {
-      setEquipping(null);
+      if (selectedChildIdRef.current === childId) setEquipping(null);
     }
   };
 
