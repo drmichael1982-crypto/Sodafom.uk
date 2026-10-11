@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
-import { motion, useReducedMotion } from 'motion/react';
+import { motion } from 'motion/react';
 import { ProtectedRoute, useSession } from '@/lib/auth/auth-client';
 import {
   Star, BookOpen, FlaskConical, Calculator, Pencil, Trophy,
@@ -14,6 +14,7 @@ import {
   UserPlus, Flame, Award, ExternalLink,
 } from 'lucide-react';
 import { ParentTutorReport } from '@/components/ParentTutorReport';
+import { normalizeChildrenResponse } from '@/lib/children-response';
 
 const SUBJECT_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   maths:    { label: 'Maths',    color: 'bg-blue-100 text-blue-700 border-blue-200',    icon: Calculator },
@@ -231,7 +232,6 @@ function FamilySummaryCard({ children }: { children: ChildSummary[] }) {
 
 
 function ChildCard({ childId }: { childId: number }) {
-  const reduceMotion = useReducedMotion();
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -274,13 +274,16 @@ function ChildCard({ childId }: { childId: number }) {
   if (!data) return null;
 
   const { child, totalGames, badgeCount, subjects, daily, recent } = data;
+  const tutorAgeGroup = child.age_group === '5-7' || child.age_group === '11-13'
+    ? child.age_group
+    : '8-10';
   const maxSubjectStars = Math.max(...subjects.map((s) => Number(s.stars)), 1);
 
   return (
     <motion.div
-      initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: reduceMotion ? 0 : 0.4 }}
+      transition={{ duration: 0.4 }}
       className="bg-card rounded-3xl border-2 border-border overflow-hidden shadow-sm"
     >
       {/* Header */}
@@ -310,13 +313,7 @@ function ChildCard({ childId }: { childId: number }) {
 
       <div className="p-6 flex flex-col gap-6">
         {/* 1-to-1 Child Tutor Report */}
-        <ParentTutorReport child={{
-          id: child.id,
-          name: child.name,
-          ageGroup: child.age_group === '5-7' || child.age_group === '8-10' || child.age_group === '11-13'
-            ? child.age_group
-            : undefined,
-        }} />
+        <ParentTutorReport childId={childId} childName={child.name} ageGroup={tutorAgeGroup} />
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
@@ -453,7 +450,10 @@ export function ParentDashboardInner() {
       })
       .then((d) => {
         console.log('ParentDashboard: Data loaded', d);
-        setChildren(Array.isArray(d) ? d as ChildSummary[] : []);
+        // Accept the current array response and the legacy envelope so a
+        // cached frontend cannot briefly clear a family's learner list while
+        // Railway revisions are rolling over.
+        setChildren(normalizeChildrenResponse(d));
       })
       .catch(err => {
         console.error('ParentDashboard: Load failed', err);
