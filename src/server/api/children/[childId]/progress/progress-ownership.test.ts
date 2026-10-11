@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   session: vi.fn(),
   select: vi.fn(),
+  execute: vi.fn(),
   insert: vi.fn(),
   update: vi.fn(),
 }));
@@ -12,7 +13,7 @@ vi.mock('@/lib/auth/auth', () => ({
   getAuth: () => ({ api: { getSession: mocks.session } }),
 }));
 vi.mock('../../../../db/client.js', () => ({
-  db: { select: mocks.select, insert: mocks.insert, update: mocks.update },
+  db: { select: mocks.select, execute: mocks.execute, insert: mocks.insert, update: mocks.update },
 }));
 
 import getProgress from './GET';
@@ -67,6 +68,46 @@ describe('child progress ownership boundary', () => {
     expect(res.json).toHaveBeenCalledWith({ error: 'Invalid score or duration' });
     expect(mocks.insert).not.toHaveBeenCalled();
     expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it('returns the parent hub summary after confirming child ownership', async () => {
+    childLookup([{ id: 7, totalStars: 42 }]);
+    mocks.execute
+      .mockResolvedValueOnce([[
+        { subject: 'maths', games_played: '3' },
+        { subject: 'reading', games_played: 2 },
+      ]])
+      .mockResolvedValueOnce([[{ current_streak: '4' }]])
+      .mockResolvedValueOnce([[{ badge_count: '6' }]]);
+
+    const res = response();
+    await getProgress({
+      headers: {},
+      params: { childId: '7' },
+      query: { summary: '1' },
+    } as any, res);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({
+      totalStars: 42,
+      streakDays: 4,
+      gamesThisWeek: 5,
+      badgeCount: 6,
+      topSubject: 'maths',
+    });
+    expect(mocks.execute).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not query summary records for another parent child', async () => {
+    const res = response();
+    await getProgress({
+      headers: {},
+      params: { childId: '7' },
+      query: { summary: '1' },
+    } as any, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(mocks.execute).not.toHaveBeenCalled();
   });
 });
 

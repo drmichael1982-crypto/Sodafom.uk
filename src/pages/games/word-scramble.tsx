@@ -275,7 +275,7 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
               <motion.button
                 whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                 onClick={() => speak(`Hint: ${entry.hint}`)}
-                className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                 aria-label="Read hint aloud"
               >
                 <Volume2 size={16} className="text-white" />
@@ -284,7 +284,7 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
                 <motion.button
                   whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                   onClick={() => { setShowHint(true); setHintsUsed(h => h + 1); speak(entry.hint); }}
-                  className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
+                  className="w-11 h-11 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                   aria-label="Show hint"
                 >
                   <Lightbulb size={16} className="text-white" />

@@ -255,7 +255,7 @@ export default function Header() {
                         { label: 'Daily Challenge',    href: '/daily-challenge',   icon: Trophy },
                         { label: 'My Subscription',    href: '/hub/subscription',  icon: Trophy },
                         { label: 'Notifications',      href: '/hub/notifications', icon: Trophy },
-                      ].map(({ label, href, icon: Icon }) => (
+                      ].filter(({ href }) => !researchMode || href !== '/hub/subscription').map(({ label, href, icon: Icon }) => (
                         <Link
                           key={href}
                           to={href}

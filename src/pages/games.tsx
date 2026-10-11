@@ -1494,7 +1494,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                         </span>
                         <div className="flex-1 text-left">
                           <p className="text-accent-foreground font-black text-sm leading-tight">Sign Up Free</p>
-                          <p className="text-accent-foreground/75 text-xs leading-tight">7-day free trial</p>
+                          <p className="text-accent-foreground/75 text-xs leading-tight">{researchMode ? 'Save your progress' : '7-day free trial'}</p>
                         </div>
                         <ChevronRight size={14} className="text-accent-foreground/70 shrink-0" />
                       </motion.button>
@@ -1519,8 +1519,8 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                     </motion.div>
                   )}
 
-                  {/* See Prices pill — always visible */}
-                  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: isAuthenticated ? 0.43 : 0.59 }}>
+                  {/* Keep future pricing available in paid mode, but do not advertise it in the free release. */}
+                  {!researchMode && <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: isAuthenticated ? 0.43 : 0.59 }}>
                     <motion.button
                       whileHover={{ scale: 1.04 }}
                       whileTap={{ scale: 0.96 }}
@@ -1536,10 +1536,10 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                       </div>
                       <ChevronRight size={14} className="text-white/70 shrink-0" />
                     </motion.button>
-                  </motion.div>
+                  </motion.div>}
 
                   {/* 3 — Cancel Subscription (destructive red, only when subscribed) */}
-                  {subscribed && cancelStep === 'idle' && (
+                  {!researchMode && subscribed && cancelStep === 'idle' && (
                     <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4, delay: 0.51 }}>
                       <motion.button
                         whileHover={{ scale: 1.04 }}
@@ -1560,7 +1560,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                   )}
 
                   {/* Cancel confirm step */}
-                  {subscribed && cancelStep === 'confirm' && (
+                  {!researchMode && subscribed && cancelStep === 'confirm' && (
                     <motion.div
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
@@ -1583,14 +1583,14 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                   )}
 
                   {/* Cancel loading */}
-                  {cancelStep === 'loading' && (
+                  {!researchMode && cancelStep === 'loading' && (
                     <div className="flex items-center justify-center gap-2 py-3 text-white text-xs font-bold">
                       <Loader2 size={14} className="animate-spin" /> Cancelling…
                     </div>
                   )}
 
                   {/* Cancel done */}
-                  {cancelStep === 'done' && (
+                  {!researchMode && cancelStep === 'done' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       className="rounded-2xl bg-card border-2 border-green-400 p-3 text-center">
                       <CheckCircle2 size={18} className="text-green-500 mx-auto mb-1" />
@@ -1599,7 +1599,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                   )}
 
                   {/* Cancel error */}
-                  {cancelStep === 'error' && (
+                  {!researchMode && cancelStep === 'error' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       className="rounded-2xl bg-card border-2 border-destructive/40 p-3 text-center">
                       <p className="text-destructive text-xs font-bold leading-snug">{cancelMsg}</p>
@@ -2029,7 +2029,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                 </div>
               ))}
             </div>
-            <motion.div
+            {!researchMode && <motion.div
               initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }} transition={{ duration: 0.45, delay: 0.4 }}
               className="text-center mt-8"
@@ -2041,7 +2041,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                 Start free — 7 days free <ChevronRight size={18} />
               </button>
               <p className="text-muted-foreground text-xs mt-2">No card required · Cancel anytime</p>
-            </motion.div>
+            </motion.div>}
           </div>
         </section>
 
@@ -2059,7 +2059,9 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                 { emoji: '🚫', label: 'Zero adverts', sub: 'No distractions' },
                 { emoji: '👶', label: 'Safe for children', sub: 'No external links' },
                 { emoji: '🏆', label: '118 games', sub: 'Always growing' },
-                { emoji: '⭐', label: '7-day free trial', sub: 'No card needed' },
+                researchMode
+                  ? { emoji: '⭐', label: 'Free access', sub: 'All games unlocked' }
+                  : { emoji: '⭐', label: '7-day free trial', sub: 'No card needed' },
               ].map((item, i) => (
                 <motion.div
                   key={item.label}
@@ -2427,7 +2429,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
 
       {/* ── PRICING MODAL ── */}
       <AnimatePresence>
-        {showPricing && (
+        {!researchMode && showPricing && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -2524,7 +2526,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
       </AnimatePresence>
 
       {/* ── MOBILE STICKY CTA BAR — shown only on mobile for non-subscribers ── */}
-      {!subscribed && (
+      {!researchMode && !subscribed && (
         <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

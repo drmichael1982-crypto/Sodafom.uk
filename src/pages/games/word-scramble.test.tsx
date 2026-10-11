@@ -18,6 +18,19 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+it('keeps the hint controls large enough to tap on a phone or tablet', () => {
+  render(<WordScrambleInner onComplete={vi.fn()} />);
+
+  expect(screen.getByRole('button', { name: 'Read hint aloud' })).toHaveClass('w-11', 'h-11');
+  const showHint = screen.getByRole('button', { name: 'Show hint' });
+  expect(showHint).toHaveClass('w-11', 'h-11');
+
+  fireEvent.click(showHint);
+
+  expect(screen.queryByRole('button', { name: 'Show hint' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Read hint aloud' })).toHaveClass('w-11', 'h-11');
+});
+
 it('includes the final correct word in a perfect ten-word result', async () => {
   const onComplete = vi.fn();
   render(<WordScrambleInner onComplete={onComplete} />);
