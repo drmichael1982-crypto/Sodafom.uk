@@ -68,7 +68,14 @@ const answers = {
         // Playwright's click waits for the button to be visible, stable and enabled. This
         // covers the short React/motion hand-off after resuming without a fixed delay.
         await correctAnswer.click();
-        await page.waitForTimeout(950);
+        if (index < 2) {
+          await page.waitForFunction(previousPrompt => {
+            const nextQuestion = document.querySelector('[data-reading-question]');
+            return nextQuestion?.textContent?.trim() !== previousPrompt;
+          }, prompt);
+        } else {
+          await page.getByText('You earned 2 stars!', { exact: true }).waitFor();
+        }
       }
 
       await page.getByText('You earned 2 stars!', { exact: true }).waitFor();
