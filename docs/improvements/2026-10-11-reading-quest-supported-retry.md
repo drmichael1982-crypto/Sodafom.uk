@@ -44,6 +44,7 @@ There is no single objectively best app. The relevant comparison here is narrow:
 - `npm run build` — passed (existing chunk-size and stale Browserslist-data warnings only).
 - Added a dedicated Chromium journey for 390×844 and 820×1180 that covers a deliberate wrong answer, evidence clue, pause/resume, corrected retry, all three questions, two-star/67% completion, navigation containment and screenshots.
 - Local execution of that browser journey was blocked because the shared Playwright Chromium binary disappeared from the runtime cache after build/test execution. The script is included in the hosted workflow so its result and captures can be checked from the exact pushed commit before this note is treated as final browser proof.
+- Hosted run #469 passed TypeScript, all 1,169 tests, the production build, all 15 established browser journeys, 130 game routes and the responsive layout sweep. The new journey then exposed an ambiguous test selector that read a different responsive `h2` instead of the visible game question. The app behavior had not failed; the selector is now bound to an explicit question marker and must pass a fresh hosted run before browser completion is claimed.
 
 ## Boundaries and next priority
 

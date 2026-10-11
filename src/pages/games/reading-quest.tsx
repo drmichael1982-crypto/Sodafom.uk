@@ -243,7 +243,7 @@ export function ReadingQuestPlay({ onComplete, onQuestionChange }: { onComplete:
             </div>
 
             <div className="text-4xl mb-3 text-center">🗺️</div>
-            <h2 className="text-xl font-black text-foreground mb-6 text-center" style={{ fontFamily: 'var(--font-heading)' }}>
+            <h2 data-reading-question className="text-xl font-black text-foreground mb-6 text-center" style={{ fontFamily: 'var(--font-heading)' }}>
               {passage.questions.at(qIdx)?.q}
             </h2>
 

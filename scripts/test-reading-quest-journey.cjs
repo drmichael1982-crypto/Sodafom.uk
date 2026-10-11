@@ -38,7 +38,8 @@ const answers = {
       await page.getByRole('button', { name: 'Answer questions 🎯', exact: true }).click();
 
       for (let index = 0; index < 3; index += 1) {
-        const prompt = (await page.getByRole('heading', { level: 2 }).innerText()).trim();
+        const question = page.locator('[data-reading-question]');
+        const prompt = (await question.innerText()).trim();
         const answer = answers[prompt];
         assert.ok(answer, `${viewport.label}: recognise the rendered reading prompt`);
 
@@ -49,7 +50,7 @@ const answers = {
           assert.ok(wrong, `${viewport.label}: choose an explicit wrong option`);
           await page.getByRole('button', { name: wrong, exact: true }).click();
           await page.getByRole('status').filter({ hasText: 'Good try. Keep this question and look for evidence.' }).waitFor();
-          assert.equal((await page.getByRole('heading', { level: 2 }).innerText()).trim(), prompt,
+          assert.equal((await question.innerText()).trim(), prompt,
             `${viewport.label}: wrong answer keeps the same question`);
           await page.getByRole('button', { name: 'Pause quest', exact: true }).click();
           await page.getByRole('status').filter({ hasText: 'Paused. Your question is saved.' }).waitFor();
