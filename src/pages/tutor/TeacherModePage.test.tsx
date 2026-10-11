@@ -102,6 +102,10 @@ describe("Teacher Mode", () => {
     show();
     expect(screen.getByLabelText("Nickname (optional)")).not.toBeRequired();
     expect(screen.getByText(/You do not need a real name/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ages 5-7" })).toHaveClass("min-h-11");
+    expect(screen.getByRole("button", { name: "Ages 8-10" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("checkbox", { name: "Auto Read Lessons Aloud" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Skip for now" }).parentElement).toHaveClass("flex-col", "sm:flex-row");
     fireEvent.click(screen.getByRole("button", { name: "Skip for now" }));
     expect(screen.getByRole("heading", { name: "Question A1" })).toBeInTheDocument();
     expect(screen.getByText("Ready to learn")).toBeInTheDocument();
@@ -118,6 +122,10 @@ describe("Teacher Mode", () => {
     show();
     expect(screen.getByText("Learning with Sophie")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open the full lesson library" })).toHaveAttribute("href", "/courses");
+    expect(screen.getByRole("button", { name: "Profile" })).toHaveClass("min-h-11");
+    expect(screen.getByRole("button", { name: "Parent Report" })).toHaveClass("min-h-11");
+    expect(screen.getByRole("group", { name: "Tutor controls" })).toHaveClass("justify-start", "sm:justify-end");
+    expect(screen.getByRole("button", { name: "Read" })).toHaveClass("min-h-11");
   });
 
   it("uses the active learner band when a legacy scoped profile has no saved age", () => {

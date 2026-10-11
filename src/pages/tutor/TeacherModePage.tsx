@@ -294,8 +294,8 @@ export default function TeacherModePage() {
       </Helmet>
 
       {/* Header */}
-      <header className="p-4 bg-white/90 backdrop-blur border-b border-yellow-200 sticky top-0 z-20 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <header className="p-3 sm:p-4 bg-white/90 backdrop-blur border-b border-yellow-200 sticky top-0 z-20 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <button
             onClick={() => { stopTts(); navigate('/'); }}
             aria-label="Back to home"
@@ -303,26 +303,26 @@ export default function TeacherModePage() {
           >
             <ArrowLeft size={20} />
           </button>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-base font-black text-gray-900 leading-tight flex items-center gap-2">
               1-to-1 Tutor <Award size={16} className="text-yellow-500" />
             </h1>
-            <p className="text-[11px] font-extrabold text-amber-700">
+            <p className="truncate text-[11px] font-extrabold text-amber-700">
               {profile.childName ? `Learning with ${profile.childName}` : 'Ready to learn'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:items-center">
           <button
             onClick={() => setShowProfileSetup(true)}
-            className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-xs rounded-full border border-amber-300 flex items-center gap-1.5"
+            className="min-h-11 justify-center px-3 py-2 bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-xs rounded-full border border-amber-300 flex items-center gap-1.5"
           >
             <Settings size={14} /> Profile
           </button>
           <button
             onClick={() => navigate('/parent-dashboard')}
-            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs rounded-full shadow flex items-center gap-1.5"
+            className="min-h-11 justify-center px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-extrabold text-xs rounded-full shadow flex items-center gap-1.5"
           >
             Parent Report
           </button>
@@ -334,7 +334,7 @@ export default function TeacherModePage() {
         <p className="text-xs font-bold text-amber-900 bg-white/80 border border-yellow-200 rounded-2xl p-3 flex flex-wrap items-center gap-2">
           <BookOpen size={16} aria-hidden="true" />
           This tutor has a few short practice lessons. The full curriculum, Years 1–9 in maths, English, history and science, is in the lesson library.
-          <Link to="/courses" className="underline font-black text-green-800">Open the full lesson library</Link>
+          <Link to="/courses" className="inline-flex min-h-11 items-center underline font-black text-green-800">Open the full lesson library</Link>
         </p>
         {status && <p role="status" className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 rounded-2xl p-3">{status}</p>}
         {showProfileSetup ? (
@@ -359,7 +359,7 @@ export default function TeacherModePage() {
                   <li key={lesson.id}>
                     <button
                       onClick={() => restartLessons(index)}
-                      className="w-full text-left px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-2xl text-xs font-bold text-amber-900"
+                      className="min-h-11 w-full text-left px-3 py-2 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-2xl text-xs font-bold text-amber-900"
                     >
                       Review {lesson.title} ({lesson.subject})
                     </button>
@@ -370,11 +370,11 @@ export default function TeacherModePage() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => restartLessons(0)}
-                className="px-4 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-amber-950 font-black text-xs rounded-2xl border-2 border-yellow-500"
+                className="min-h-11 px-4 py-2.5 bg-yellow-400 hover:bg-yellow-500 text-amber-950 font-black text-xs rounded-2xl border-2 border-yellow-500"
               >
                 Start again from the first lesson
               </button>
-              <Link to="/courses" className="px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-black text-xs rounded-2xl">
+              <Link to="/courses" className="inline-flex min-h-11 items-center px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-black text-xs rounded-2xl">
                 Go to the full lesson library
               </Link>
             </div>
@@ -387,8 +387,8 @@ export default function TeacherModePage() {
               </p>
             )}
             {/* Top Classroom Row: Mascot + Control Toolbar */}
-            <div className="flex items-center justify-between bg-white/80 p-4 rounded-3xl border-2 border-yellow-200 shadow-sm">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col items-stretch justify-between gap-4 bg-white/80 p-4 rounded-3xl border-2 border-yellow-200 shadow-sm sm:flex-row sm:items-center">
+              <div className="flex min-w-0 items-center gap-3">
                 <ArchieCharacter
                   size={90}
                   speaking={isSpeaking}
@@ -405,10 +405,10 @@ export default function TeacherModePage() {
               </div>
 
               {/* Toolbar Controls */}
-              <div className="flex flex-wrap gap-2 justify-end">
+              <div role="group" aria-label="Tutor controls" className="flex flex-wrap gap-2 justify-start sm:justify-end">
                 <button
                   onClick={() => speakText(`${currentLesson.explanation}. Question: ${currentQuestion?.question ?? ''}`)}
-                  className="p-2.5 bg-yellow-100 hover:bg-yellow-200 text-amber-900 rounded-2xl border border-yellow-300 font-bold text-xs flex items-center gap-1"
+                  className="min-h-11 p-2.5 bg-yellow-100 hover:bg-yellow-200 text-amber-900 rounded-2xl border border-yellow-300 font-bold text-xs flex items-center gap-1"
                   title="Read Aloud"
                 >
                   <Volume2 size={16} /> Read
@@ -416,7 +416,7 @@ export default function TeacherModePage() {
                 {isSpeaking && (
                   <button
                     onClick={() => { stopTts(); setIsSpeaking(false); }}
-                    className="p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-2xl border border-gray-300 font-bold text-xs"
+                    className="min-h-11 p-2.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-2xl border border-gray-300 font-bold text-xs"
                   >
                     Stop
                   </button>
@@ -426,7 +426,7 @@ export default function TeacherModePage() {
                     setShowHint(true);
                     if (currentQuestion) speakText(`Hint: ${currentQuestion.hint}`);
                   }}
-                  className="p-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-2xl border border-amber-300 font-bold text-xs flex items-center gap-1"
+                  className="min-h-11 p-2.5 bg-amber-100 hover:bg-amber-200 text-amber-900 rounded-2xl border border-amber-300 font-bold text-xs flex items-center gap-1"
                 >
                   <Lightbulb size={16} /> Hint
                 </button>
@@ -435,14 +435,14 @@ export default function TeacherModePage() {
                     setShowSimpler(true);
                     speakText(`Here is a simpler explanation: ${currentLesson.simplerExplanation}`);
                   }}
-                  className="p-2.5 bg-green-100 hover:bg-green-200 text-green-900 rounded-2xl border border-green-300 font-bold text-xs flex items-center gap-1"
+                  className="min-h-11 p-2.5 bg-green-100 hover:bg-green-200 text-green-900 rounded-2xl border border-green-300 font-bold text-xs flex items-center gap-1"
                 >
                   <RotateCcw size={16} /> Simpler
                 </button>
                 <button
                   onClick={handleVoiceCommandToggle}
                   aria-pressed={isListening}
-                  className={`p-2.5 rounded-2xl font-bold text-xs flex items-center gap-1 text-white shadow ${
+                  className={`min-h-11 p-2.5 rounded-2xl font-bold text-xs flex items-center gap-1 text-white shadow ${
                     isListening ? 'bg-red-500 animate-pulse' : 'bg-green-600 hover:bg-green-700'
                   }`}
                 >
@@ -480,7 +480,7 @@ export default function TeacherModePage() {
                 <button
                   ref={nextButtonRef}
                   onClick={handleNextQuestion}
-                  className="px-5 py-3 bg-yellow-400 hover:bg-yellow-500 text-amber-950 font-black text-sm rounded-2xl border-2 border-yellow-500 shadow flex items-center gap-2"
+                  className="min-h-11 px-5 py-3 bg-yellow-400 hover:bg-yellow-500 text-amber-950 font-black text-sm rounded-2xl border-2 border-yellow-500 shadow flex items-center gap-2"
                 >
                   {!isLastQuestion ? 'Next question' : !isLastLesson ? 'Next lesson' : 'Finish my lessons'} <ChevronRight size={18} />
                 </button>

@@ -47,7 +47,7 @@ export function ChildProfileManager({ onComplete, onCancel, isEditing = false }:
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="max-w-md mx-auto bg-white border-4 border-yellow-300 rounded-3xl p-6 shadow-2xl"
+      className="max-w-md mx-auto bg-white border-4 border-yellow-300 rounded-3xl p-4 shadow-2xl sm:p-6"
     >
       <div className="flex items-center gap-3 mb-6 border-b border-yellow-100 pb-4">
         <div className="w-12 h-12 rounded-full bg-yellow-400 flex items-center justify-center text-white shadow-md">
@@ -98,13 +98,14 @@ export function ChildProfileManager({ onComplete, onCancel, isEditing = false }:
               <button
                 key={ag}
                 type="button"
+                aria-pressed={ageGroup === ag}
                 onClick={() => {
                   setAgeGroup(ag);
                   if (ag === '5-7') setSchoolYear('Year 1-2');
                   if (ag === '8-10') setSchoolYear('Year 4');
                   if (ag === '11-13') setSchoolYear('Year 7');
                 }}
-                className={`py-2.5 px-2 rounded-2xl text-xs font-black border-2 transition-all ${
+                className={`min-h-11 py-2.5 px-2 rounded-2xl text-xs font-black border-2 transition-all ${
                   ageGroup === ag
                     ? 'bg-amber-400 border-amber-500 text-amber-950 shadow-md'
                     : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-amber-50'
@@ -131,8 +132,9 @@ export function ChildProfileManager({ onComplete, onCancel, isEditing = false }:
               <button
                 key={char.id}
                 type="button"
+                aria-pressed={tutor === char.id}
                 onClick={() => setTutor(char.id as any)}
-                className={`p-3 rounded-2xl border-2 flex items-center gap-2 text-left transition-all ${
+                className={`min-h-11 p-3 rounded-2xl border-2 flex items-center gap-2 text-left transition-all ${
                   tutor === char.id
                     ? 'bg-green-100 border-green-500 text-green-900 font-black shadow-md'
                     : 'bg-gray-50 border-gray-200 text-gray-700 font-bold hover:bg-gray-100'
@@ -146,26 +148,27 @@ export function ChildProfileManager({ onComplete, onCancel, isEditing = false }:
         </div>
 
         {/* Audio / Read Aloud Toggle */}
-        <div className="flex items-center justify-between bg-amber-50 border border-amber-200 p-3 rounded-2xl">
+        <label htmlFor="tutor-read-aloud" className="flex min-h-11 cursor-pointer items-center justify-between bg-amber-50 border border-amber-200 p-3 rounded-2xl">
           <div className="flex items-center gap-2">
             <Volume2 size={18} className="text-amber-700" />
             <span className="text-xs font-bold text-amber-900">Auto Read Lessons Aloud</span>
           </div>
           <input
+            id="tutor-read-aloud"
             type="checkbox"
             checked={readAloud}
             onChange={(e) => setReadAloud(e.target.checked)}
             className="w-5 h-5 accent-amber-500 rounded cursor-pointer"
           />
-        </div>
+        </label>
 
         {/* Action Buttons */}
-        <div className="flex gap-3 pt-2">
+        <div className="flex flex-col gap-3 pt-2 sm:flex-row">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 py-3 bg-gray-100 text-gray-600 font-black text-xs rounded-2xl border border-gray-300 hover:bg-gray-200"
+              className="min-h-11 flex-1 py-3 bg-gray-100 text-gray-600 font-black text-xs rounded-2xl border border-gray-300 hover:bg-gray-200"
             >
               Cancel
             </button>
@@ -174,14 +177,14 @@ export function ChildProfileManager({ onComplete, onCancel, isEditing = false }:
             <button
               type="button"
               onClick={handleSkip}
-              className="flex-1 py-3 bg-gray-100 text-gray-700 font-black text-xs rounded-2xl border border-gray-300 hover:bg-gray-200"
+              className="min-h-11 flex-1 py-3 bg-gray-100 text-gray-700 font-black text-xs rounded-2xl border border-gray-300 hover:bg-gray-200"
             >
               Skip for now
             </button>
           )}
           <button
             type="submit"
-            className="flex-1 py-3.5 bg-yellow-400 hover:bg-yellow-500 text-amber-950 font-black text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2 border-2 border-yellow-500 active:scale-95 transition-all"
+            className="min-h-11 flex-1 py-3.5 bg-yellow-400 hover:bg-yellow-500 text-amber-950 font-black text-xs rounded-2xl shadow-lg flex items-center justify-center gap-2 border-2 border-yellow-500 active:scale-95 transition-all"
           >
             <Check size={16} /> Save & Start Lesson
           </button>

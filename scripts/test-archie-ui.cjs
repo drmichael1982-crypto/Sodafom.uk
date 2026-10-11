@@ -465,12 +465,13 @@ const results=[];
             assert.ok(unlocked.document<=unlocked.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' unlocked overflows: '+JSON.stringify(unlocked));
             if(route==='/teacher'){
               assert.equal(await page.getByRole('heading',{name:'A grown-up needs to help here',exact:true}).count(),0,'The teacher gate must leave layout flow after unlock');
-              if(viewport.width===1440&&viewport.height===900){
-                const learning=page.getByRole('heading',{name:'Recent puzzle learning for this learner',exact:true});
-                await learning.waitFor();await page.waitForTimeout(500);
-                const geometry=await learning.evaluate(element=>{const screen=element.closest('.app-screen-window')?.getBoundingClientRect(),box=element.getBoundingClientRect();return screen?{screenLeft:screen.left,screenRight:screen.right,left:box.left,right:box.right}:null;});
-                assert.ok(geometry&&geometry.left>=geometry.screenLeft-1&&geometry.right<=geometry.screenRight+1,'desktop 1440x900 teacher content is clipped after unlock: '+JSON.stringify(geometry));
-                await page.screenshot({path:'test-results/teacher-unlocked-1440.png',fullPage:true});
+              assert.equal(await page.locator('.grown-up-unlocked').count(),0,'The retired gate wrapper must not combine teacher panels into one pager screen');
+              const learning=page.getByRole('heading',{name:'Recent puzzle learning for this learner',exact:true});
+              await learning.waitFor();await page.waitForTimeout(500);
+              const geometry=await learning.evaluate(element=>{const screen=element.closest('.app-screen-window')?.getBoundingClientRect(),panel=element.closest('.a-panel')?.getBoundingClientRect(),box=element.getBoundingClientRect();return screen&&panel?{screenLeft:screen.left,screenRight:screen.right,panelLeft:panel.left,panelRight:panel.right,left:box.left,right:box.right}:null;});
+              assert.ok(geometry&&geometry.panelLeft>=geometry.screenLeft-1&&geometry.panelRight<=geometry.screenRight+1&&geometry.left>=geometry.screenLeft-1&&geometry.right<=geometry.screenRight+1,viewport.label+' '+viewport.width+'x'+viewport.height+' teacher content is clipped after unlock: '+JSON.stringify(geometry));
+              if((viewport.width===390&&viewport.height===844)||(viewport.width===820&&viewport.height===1180)||(viewport.width===1440&&viewport.height===900)){
+                await page.screenshot({path:`test-results/teacher-unlocked-${viewport.width}.png`,fullPage:true});
               }
             }
           }
