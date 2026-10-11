@@ -52,6 +52,7 @@ export const schemas = {
       })),
       "games": z.array(z.object({
         "id": z.string(),
+        "slug": z.string().min(1),
         "title": z.string(),
         "subject": z.string(),
         "emoji": z.string(),
