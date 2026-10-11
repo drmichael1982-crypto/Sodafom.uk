@@ -1,10 +1,10 @@
 import type { Request, Response } from 'express';
 import { db } from '../../../../../db/client.js';
-import { gameLevels } from '../../../../../db/schema.js';
+import { children, gameLevels } from '../../../../../db/schema.js';
 import { eq, and } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
 
-// Every completed ten-question round advances a level, up to level 10.
+// Match device-first progression: weaker rounds repeat; 2â€“3 stars advance.
 
 export default async function handler(req: Request, res: Response) {
   try {
@@ -13,10 +13,19 @@ export default async function handler(req: Request, res: Response) {
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
 
     const childIdStr = Array.isArray(req.params.childId) ? req.params.childId[0] : req.params.childId;
-    const childId = parseInt(String(childIdStr), 10);
+    if (!/^\d+$/.test(childIdStr ?? '')) return res.status(400).json({ error: 'Invalid child ID' });
+    const childId = Number(childIdStr);
+    if (!Number.isSafeInteger(childId) || childId <= 0) return res.status(400).json({ error: 'Invalid child ID' });
     const gameSlug = Array.isArray(req.params.gameSlug) ? req.params.gameSlug[0] : req.params.gameSlug;
     const { stars } = req.body as { stars: number };
     if (!gameSlug || stars === undefined) return res.status(400).json({ error: 'Missing fields' });
+    if (!Number.isInteger(stars) || stars < 0 || stars > 3) return res.status(400).json({ error: 'Stars must be an integer from 0 to 3' });
+
+    const [ownedChild] = await db.select({ id: children.id })
+      .from(children)
+      .where(and(eq(children.id, childId), eq(children.parentId, session.user.id)))
+      .limit(1);
+    if (!ownedChild) return res.status(404).json({ error: 'Child not found' });
 
     const [existing] = await db.select()
       .from(gameLevels)
@@ -29,7 +38,7 @@ export default async function handler(req: Request, res: Response) {
     if (stars > bestStars) bestStars = stars;
 
     let newLevel = currentLevel;
-    if (currentLevel < 10) {
+    if (stars >= 2 && currentLevel < 10) {
       newLevel = currentLevel + 1;
       playsAtLevel = 0;
     }
@@ -47,3 +56,4 @@ export default async function handler(req: Request, res: Response) {
     res.status(500).json({ error: String(e) });
   }
 }
+×M:ã

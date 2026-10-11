@@ -74,6 +74,13 @@ describe('Local Tutoring Engine & Memory', () => {
       expect(tryLocalTutor('teach me grammar')?.text).toContain('Nouns and Verbs');
     });
 
+    it('uses the active child age group instead of a stale global school year', () => {
+      localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({ settings: { year: 8 } }));
+      localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 1, name: 'Mia', ageGroup: '5-7' }));
+      expect(tryLocalTutor('teach me percentages')).toBeNull();
+      expect(tryLocalTutor('teach me grammar')?.text).toContain('Nouns and Verbs');
+    });
+
     it('recognises British practise as a new lesson request rather than an answer', () => {
       tryLocalTutor('teach me fractions');
       const res = tryLocalTutor('practise grammar');
@@ -97,6 +104,15 @@ describe('Local Tutoring Engine & Memory', () => {
       tryLocalTutor('teach me fractions');
       expect(tryLocalTutor('10')?.text).toContain('Spot on');
       expect(loadTutorMemory().topics['maths:fractions']).toMatchObject({ totalAttempted: 1, totalCorrect: 1 });
+    });
+
+    it('does not carry a pending question to another child in the same age band', () => {
+      localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 1, name: 'Mia', ageGroup: '8-10' }));
+      expect(tryLocalTutor('quiz me on geography')?.text).toContain('Europe');
+
+      localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 2, name: 'Leo', ageGroup: '8-10' }));
+      expect(tryLocalTutor('hello')).toBeNull();
+      expect(loadTutorMemory().topics['geography:geography']).toBeUndefined();
     });
 
     it('teaches a Geography lesson locally', () => {

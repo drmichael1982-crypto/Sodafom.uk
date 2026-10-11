@@ -61,8 +61,12 @@ function activeProfileKey(): string {
   try {
     const active = localStorage.getItem('sodafom_active_child');
     const parsed = active ? JSON.parse(active) : null;
-    const id = typeof parsed?.id === 'string' ? parsed.id : null;
-    return id ? `sodafom_child_interests:${id}` : 'sodafom_child_interests:default';
+    const id = typeof parsed?.id === 'number' || typeof parsed?.id === 'string'
+      ? String(parsed.id).trim()
+      : '';
+    return id
+      ? `sodafom_child_interests:${encodeURIComponent(id)}`
+      : 'sodafom_child_interests:default';
   } catch {
     return 'sodafom_child_interests:default';
   }

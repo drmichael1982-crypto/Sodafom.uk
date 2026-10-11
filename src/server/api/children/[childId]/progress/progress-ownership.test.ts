@@ -16,7 +16,7 @@ vi.mock('../../../../db/client.js', () => ({
 }));
 
 import getProgress from './GET';
-import postProgress from './POST';
+import postProgress, { progressPercentage } from './POST';
 
 function response() {
   const res = { status: vi.fn(), json: vi.fn() } as any;
@@ -55,4 +55,36 @@ describe('child progress ownership boundary', () => {
     expect(mocks.insert).not.toHaveBeenCalled();
     expect(mocks.update).not.toHaveBeenCalled();
   });
+
+  it('rejects non-numeric progress before writing parent-visible records', async () => {
+    childLookup([{ id: 7 }]);
+    const res = response();
+    await postProgress({ headers: {}, params: { childId: '7' }, body: {
+      subject: 'maths', activityId: 'number-bonds', activityTitle: 'Number Bonds',
+      score: '10', maxScore: 10, durationSeconds: 30,
+    } } as any, res);
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Invalid score or duration' });
+    expect(mocks.insert).not.toHaveBeenCalled();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
 });
+
+describe('parent progress score normalisation', () => {
+  it.each([
+    [8, 10, 80],
+    [10, 10, 100],
+    [150, 100, 100],
+    [0, 10, 0],
+    [5, 0, 0],
+  ])('stores %s out of %s as %s percent', (score, maxScore, expected) => {
+    expect(progressPercentage(score, maxScore)).toBe(expected);
+  });
+
+  it('does not allow malformed scores to poison a parent report', () => {
+    expect(progressPercentage(Number.NaN, 10)).toBe(0);
+    expect(progressPercentage(5, Number.POSITIVE_INFINITY)).toBe(0);
+    expect(progressPercentage(-5, 10)).toBe(0);
+  });
+});
+×M:ã

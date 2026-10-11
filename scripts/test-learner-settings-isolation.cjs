@@ -121,7 +121,7 @@ async function saveLearner(page, { nickname, age, year }) {
     await page.getByRole('heading', { name: 'Practice settings for Leo', exact: true }).waitFor();
     assert.equal(await page.locator('#learning-settings select').first().inputValue(), '4');
     assert.equal(await page.locator('#learning-settings input[type="text"]').first().inputValue(), 'Older nickname');
-    assert.equal(await page.locator('#learning-settings input[type="number"]').first().inputValue(), '9');
+    assert.equal(await page.locator('#learning-settings input[type="number"]').first().inputValue(), '');
     assert.equal(await page.getByLabel('Read aloud and sound', { exact: true }).isChecked(), false);
     assert.equal(await page.getByLabel('Larger text on menus and books', { exact: true }).isChecked(), true);
     await saveLearner(page, { nickname: 'Leo', age: 12, year: 7 });
@@ -168,8 +168,8 @@ async function saveLearner(page, { nickname, age, year }) {
       device: JSON.parse(localStorage.getItem('sodafom_archie_design_v1')),
       mia: JSON.parse(localStorage.getItem('sodafom_archie_settings:profile:child:21')),
       leo: JSON.parse(localStorage.getItem('sodafom_archie_settings:profile:child:22')),
-      miaAge: localStorage.getItem('sodafom_learning_age:profile:child:21'),
-      leoAge: localStorage.getItem('sodafom_learning_age:profile:child:22'),
+      miaAge: localStorage.getItem('sodafom_learning_age:21'),
+      leoAge: localStorage.getItem('sodafom_learning_age:22'),
       savedLearning: JSON.parse(localStorage.getItem('sodafom_archie_learning_v1')),
     }));
     assert.deepEqual(stored.mia, { childNickname: 'Mia', year: 2 });

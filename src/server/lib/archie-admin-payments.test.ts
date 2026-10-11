@@ -46,7 +46,7 @@ describe('owner payment settings HTTP boundary', () => {
       const identity = req.get('x-fixture-identity');
       if (!identity || identity === 'anonymous') return null;
       return { user: { id: identity, isAdmin: identity === 'owner' || identity === 'different-admin' } };
-    }, { BETTER_AUTH_URL: origin, ARCHIE_OWNER_USER_ID: 'owner' }, new AdminPaymentSettingsStore(file)));
+    }, { BETTER_AUTH_URL: origin, ARCHIE_OWNER_USER_ID: ' owner ' }, new AdminPaymentSettingsStore(file)));
     await new Promise<void>((resolve, reject) => { server = app.listen(0, '127.0.0.1', error => error ? reject(error) : resolve()); });
     const address = server.address(); if (!address || typeof address === 'string') throw new Error('No address');
     base = `http://127.0.0.1:${address.port}/payments`;
@@ -92,3 +92,4 @@ describe('owner payment settings HTTP boundary', () => {
     await expect(disabled.save(draft)).rejects.toThrow('not configured');
   });
 });
+×M:ã

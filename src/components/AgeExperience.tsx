@@ -2,22 +2,10 @@ import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router';
 import './AgeExperience.css';
 import { useVoice } from '@/lib/voice-context';
-import { currentProgressProfile, useArchieData } from '@/lib/archie/storage';
+import { useArchieData } from '@/lib/archie/storage';
+import { readLearningAge, resolveLearningAge, saveLearningAge } from '@/lib/learning-age';
 
-const AGE_KEY = 'sodafom_learning_age';
-const SCOPED_AGE_PREFIX = 'sodafom_learning_age:profile:';
-export function scopedLearningAgeKey(): string { return `${SCOPED_AGE_PREFIX}${currentProgressProfile().id}`; }
-export function readLearningAge(): number | null {
-  try {
-    const scopedRaw = localStorage.getItem(scopedLearningAgeKey());
-    const raw = scopedRaw ?? localStorage.getItem(AGE_KEY);
-    const age = Number(raw);
-    return raw && Number.isInteger(age) && age >= 5 && age <= 13 ? age : null;
-  } catch { return null; }
-}
-export function saveLearningAge(age: number | null): boolean {
-  try { if (age === null) localStorage.removeItem(scopedLearningAgeKey()); else if (Number.isInteger(age) && age >= 5 && age <= 13) localStorage.setItem(scopedLearningAgeKey(), String(age)); else return false; return true; } catch { return false; }
-}
+export { readLearningAge, resolveLearningAge, saveLearningAge } from '@/lib/learning-age';
 export function experienceBand(age: number | null, year: number): 'starter' | 'explorer' | 'challenger' {
   if (age !== null) return age <= 7 ? 'starter' : age <= 9 ? 'explorer' : 'challenger';
   return year <= 3 ? 'starter' : year <= 5 ? 'explorer' : 'challenger';
@@ -29,7 +17,7 @@ const EXPERIENCES = {
 } as const;
 
 export default function AgeExperience({ year, askArchie, nickname }: { year: number; askArchie: () => void; nickname?: string }) {
-  const age = readLearningAge();
+  const age = resolveLearningAge();
   const band = experienceBand(age, year);
   return <ExperienceMission key={`${band}-${year}`} nickname={nickname} band={band} age={age} year={year} askArchie={askArchie}/>;
 }
@@ -92,3 +80,4 @@ function SequenceMission({band,onComplete,askArchie}:{band:keyof typeof EXPERIEN
  const puzzle=SEQUENCES[band];const [order,setOrder]=useState<number[]>([]);const [solved,setSolved]=useState(false);const [message,setMessage]=useState('Tap a scene for first, next and last.');
  return <div className={`age-mission age-sequence-mission ${solved?'age-mission-complete':''}`}><span className="age-mission-rocket" aria-hidden="true">{band==='challenger'?'ðŸ”¬':'ðŸŒ¼'}</span><h3>{puzzle.title}</h3><p>{puzzle.intro}</p><ol className="age-sequence-result" aria-label="Your story order">{[0,1,2].map(position=><li key={position}><strong>{['First','Next','Last'][position]}</strong><span>{order[position]===undefined?'Choose a sceneâ€¦':puzzle.steps[order[position]][1]}</span></li>)}</ol><div className="age-sequence-bank" aria-label="Story scenes">{[2,0,1].map(index=><button type="button" className="a-button" key={index} disabled={solved||order.includes(index)} onClick={()=>{setOrder(previous=>[...previous,index]);setMessage('Keep arranging, then check the order.');}}><span aria-hidden="true">{puzzle.steps[index][0]}</span>{puzzle.steps[index][1]}</button>)}</div><p role="status">{message}</p><div className="a-actions"><button type="button" className="a-button" disabled={solved} onClick={()=>{if(order.length!==3){setMessage('Choose all three scenes, then check.');return;}if(order.every((value,index)=>value===index)){setSolved(true);setMessage(puzzle.fact);onComplete();}else setMessage('Think about what must happen before the next step. Undo a scene or start again.');}}>Check the order</button><button type="button" className="a-button" disabled={solved||order.length===0} onClick={()=>setOrder(previous=>previous.slice(0,-1))}>Undo last scene</button><button type="button" className="a-button" onClick={()=>{setOrder([]);setSolved(false);setMessage('Tap a scene for first, next and last.');}}>Start the story again</button>{!solved&&<button type="button" className="a-button" onClick={()=>setMessage(puzzle.hint)}>Story clue</button>}<button type="button" className="a-button" onClick={askArchie}>Talk about this story with Archie</button></div></div>;
 }
+×M:ã

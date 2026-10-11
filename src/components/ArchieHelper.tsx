@@ -15,7 +15,8 @@ import { blockedLearningText, FRIENDLY_REDIRECT, safeLearningReply } from '@/lib
 import { normaliseVoiceAnswer, submitGameVoiceAnswer } from '@/lib/archie/game-voice';
 import { coachLessonReply, guardPracticeReply, lessonContextForService, subjectMethod } from '@/lib/archie/lesson-coach';
 import { loadTutorMemory } from '@/lib/tutor/memory';
-import { readLearningAge, scopedLearningAgeKey } from '@/components/AgeExperience';
+import { readLearningAge, resolveLearningAge } from '@/lib/learning-age';
+import { clearActivePendingQuestion } from '@/lib/tutor/engine';
 
 import type { CourseLesson, CourseSubject } from '@/lib/archie/course-types';
 
@@ -52,11 +53,11 @@ function cleanTutorText(text: string) {
 }
 export function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
-  const scopedAge = Number(localStorage.getItem(scopedLearningAgeKey()));
-  if (Number.isInteger(scopedAge) && scopedAge >= 5 && scopedAge <= 13) return scopedAge;
+  const exactAge = readLearningAge();
+  if (exactAge !== null) return exactAge;
   const learnerYear = readScopedLearnerSettings()?.year;
   if (learnerYear && learnerYear >= 1 && learnerYear <= 9) return learnerYear + 4;
-  const learningAge = readLearningAge();
+  const learningAge = resolveLearningAge();
   if (learningAge !== null) return learningAge;
   try {
     const app = JSON.parse(localStorage.getItem('sodafom_archie_design_v1') || '{}');
@@ -177,6 +178,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   }, [location.pathname, location.search]);
   useEffect(() => {
     const resetForLearner = () => {
+      clearActivePendingQuestion();
       requestLessonVoice?.(null);
       stopVoiceConversation('Learner changed. Start a new conversation when you are ready.');
       pending.current?.abort(); pending.current = null; busyRef.current = false; setBusy(false);
@@ -188,6 +190,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   useEffect(() => {
     if (previousLearningYear.current === settings.year) return;
     previousLearningYear.current = settings.year;
+    clearActivePendingQuestion();
     requestLessonVoice?.(null);
     stopVoiceConversation('Learning year changed. Start a new conversation when you are ready.');
     setInput(''); setMessages([]);

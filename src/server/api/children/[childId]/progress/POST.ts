@@ -55,9 +55,13 @@ async function checkAndAwardMilestones(childId: number, newTotal: number): Promi
 // 50–74% → 1 star
 // 75–89% → 2 stars
 // 90–100%→ 3 stars
+export function progressPercentage(score: number, maxScore: number): number {
+  if (!Number.isFinite(score) || !Number.isFinite(maxScore) || maxScore <= 0) return 0;
+  return Math.max(0, Math.min(100, (score / maxScore) * 100));
+}
+
 function calcStars(score: number, maxScore: number): number {
-  if (maxScore <= 0) return 0;
-  const pct = (score / maxScore) * 100;
+  const pct = progressPercentage(score, maxScore);
   if (pct >= 90) return 3;
   if (pct >= 75) return 2;
   if (pct >= 50) return 1;
@@ -87,6 +91,11 @@ export default async function handler(req: Request, res: Response) {
     const safeScore    = score ?? 0;
     const safeMax      = maxScore ?? 100;
     const safeDuration = durationSeconds ?? 0;
+    if (![safeScore, safeMax, safeDuration].every(value => typeof value === 'number' && Number.isFinite(value))
+      || safeScore < 0 || safeMax <= 0 || safeDuration < 0) {
+      return res.status(400).json({ error: 'Invalid score or duration' });
+    }
+    const scorePercent = progressPercentage(safeScore, safeMax);
     const starsEarned  = calcStars(safeScore, safeMax);
 
     // Insert activity session (with stars)
@@ -130,7 +139,7 @@ export default async function handler(req: Request, res: Response) {
 
     if (existing) {
       const newTotal = (existing.totalSessions ?? 0) + 1;
-      const newAvg   = (((Number(existing.avgScore) * (existing.totalSessions ?? 0)) + safeScore) / newTotal).toFixed(2);
+      const newAvg   = (((Number(existing.avgScore) * (existing.totalSessions ?? 0)) + scorePercent) / newTotal).toFixed(2);
       const newMins  = (existing.totalMinutes ?? 0) + Math.round(safeDuration / 60);
       await db.update(progressSummaries)
         .set({ totalSessions: newTotal, avgScore: newAvg, totalMinutes: newMins })
@@ -141,7 +150,7 @@ export default async function handler(req: Request, res: Response) {
         subject,
         weekStart,
         totalSessions: 1,
-        avgScore: String(safeScore.toFixed(2)),
+        avgScore: scorePercent.toFixed(2),
         totalMinutes: Math.round(safeDuration / 60),
       });
     }

@@ -34,6 +34,8 @@ it('opens the shared contextual helper from game help without starting speech or
     <ArchieHelper hideLauncher />
   </ArchieProvider></MemoryRouter></HelmetProvider>);
   const help = within(screen.getByRole('group', { name: 'Game help' })).getByRole('button', { name: 'Ask Archie' });
+  expect(screen.getByRole('group', { name: 'Game help' })).toHaveClass('game-help-bar');
+  expect(screen.getByRole('heading', { level: 1, name: 'Number Planets' }).closest('.game-title-bar')).not.toBeNull();
   expect(screen.getAllByRole('button', { name: 'Ask Archie' })).toHaveLength(1);
   help.focus();fireEvent.click(help);
   expect(screen.getByRole('dialog', { name: 'Ask Archie' })).toBeInTheDocument();

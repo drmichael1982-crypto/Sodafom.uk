@@ -5,6 +5,12 @@ import GameShell, { type GameResult, useChildAge } from '@/components/games/Game
 
 const TOTAL_ROUNDS = 10;
 
+export function buildTrickyWordResult(correct: number): GameResult {
+  const score = Math.round((correct / TOTAL_ROUNDS) * 100);
+  const stars = score >= 90 ? 3 : score >= 60 ? 2 : score >= 30 ? 1 : 0;
+  return { score, correct, total: TOTAL_ROUNDS, stars };
+}
+
 // Tricky words by tier
 const TRICKY_WORDS_TIER1 = [
   { word: 'the', hint: 'You use this word all the time!' },
@@ -104,7 +110,7 @@ export default function TrickyWordHuntGame() {
   );
 }
 
-function TrickyWordPlay({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
+export function TrickyWordPlay({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
   const { tier } = useChildAge();
   const wordList = tier === 1 ? TRICKY_WORDS_TIER1 : tier === 2 ? TRICKY_WORDS_TIER2 : TRICKY_WORDS_TIER3;
   const [round, setRound] = useState(0);
@@ -135,7 +141,7 @@ function TrickyWordPlay({ onComplete, onQuestionChange }: { onComplete: (r: Game
       const next = round + 1;
       if (next >= TOTAL_ROUNDS) {
         const newCorrect = correct + (isRight ? 1 : 0);
-        onComplete({ score: Math.round((newCorrect / TOTAL_ROUNDS) * 100), correct: newCorrect, total: TOTAL_ROUNDS, stars: 0 });
+        onComplete(buildTrickyWordResult(newCorrect));
       } else {
         setRound(next);
         setChosen(null);

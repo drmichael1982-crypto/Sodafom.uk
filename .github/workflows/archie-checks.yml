@@ -24,6 +24,9 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/api/health && break; sleep 1; done
           node scripts/test-archie-ui.cjs
           node scripts/test-page-picture-jigsaw.cjs
+          node scripts/test-short-landscape-help.cjs
+          test -f test-results/short-landscape-help/games-844x390.png
+          test -f test-results/short-landscape-help/library-844x390.png
       - name: Play simulated year-group games and spelling lessons
         run: |
           node scripts/test-archie-search-journey.cjs

@@ -44,6 +44,18 @@ describe('device-local interest themes', () => {
     expect(getChildInterests()).toEqual(['space']);
   });
 
+  it('keeps numeric child profiles separate instead of sharing the guest interests', () => {
+    localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 7 }));
+    saveChildInterest('space');
+    localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 8 }));
+    saveChildInterest('football');
+    expect(getChildInterests()).toEqual(['football']);
+
+    localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 7 }));
+    expect(getChildInterests()).toEqual(['space']);
+    expect(localStorage.getItem('sodafom_child_interests:default')).toBeNull();
+  });
+
   it('keeps explicit profanity out of the saved theme and answers locally', () => {
     const reply = tryRememberChildInterest('I like shit');
     expect(reply).toContain('school-ready');
