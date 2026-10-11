@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Spelling Snap supported retry and optional break — 11 October 2026](2026-10-11-spelling-snap-retry-break.md): keeps a mistaken contextual spelling sentence available for a meaning-guided correction, separates first-attempt accuracy from completion and adds a state-preserving optional break across Years 3–9 phone/tablet simulated journeys.
 1. [Game-route CI reconciliation — 11 October 2026](2026-10-11-game-route-ci-reconciliation.md): reconciles the latest deployed test target and restores the browser route check’s two-age school-year overlap calculation after a fresh target CI failure.
 1. [Current-target reconciliation and short-landscape access — 11 October 2026](2026-10-11-short-landscape-reconciliation.md): reconciles the current learner-isolation/parent-score target into PR #81 and keeps help, first activities and footer navigation reachable on 844×390 Games and Library routes with direct hosted captures.
 1. [Ask Archie learner age and memory isolation — 10 October 2026](2026-10-10-ask-archie-learner-memory.md): sends the selected learner’s scoped age to wider help, keeps saved question-and-answer pairs with that learner and clears only their memory while preserving other/older local records.
@@ -46,6 +47,6 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 23. [Bingo feedback and breaks — 7 October 2026](2026-10-07-bingo-feedback.md): accurate first-try scoring, hints, pause/resume and prior-run evidence.
 24. [Game access — 7 October 2026](2026-10-07-game-access.md): preceding freeze/age-discovery repair and historical starting evidence.
 
-Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `1de32e64a725f5425e629d08d83b069c24a5d77c`; candidate pushes do not imply deployment.
+Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `bdaca0a5-e152-46b8-9d8d-102fe36401e1` at target `a3b1079d4bf0b8ecab3c56ddb39ee3f3e5789904`; candidate pushes do not imply deployment.
 
-Next bounded priority: after rechecking the target, PR and Leonard's separate queue, evaluate and improve the current contextual Spelling Snap wrong-answer path with explicit supportive retry, optional pause/resume, completion and navigation coverage at phone/tablet widths. Do not merge/deploy.
+Next bounded priority: recheck the target, PR and Leonard's separate queue, then choose the next currently observed reading, voice or lesson failure for a complete phone/tablet walkthrough. Do not duplicate the verified Spelling Snap retry work and do not merge/deploy.
