@@ -34,7 +34,7 @@ const DEFAULT: SubscriptionState = {
   plan: null,
 };
 
-export function useSubscription(): SubscriptionState {
+export function useSubscription({ enabled = true }: { enabled?: boolean } = {}): SubscriptionState {
   const [state, setState] = useState<SubscriptionState>(DEFAULT);
   const [researchMode, setResearchMode] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -52,6 +52,18 @@ export function useSubscription(): SubscriptionState {
 
   React.useEffect(() => {
     let cancelled = false;
+
+    if (!enabled) {
+      setState({
+        loading: false,
+        subscribed: true,
+        status: 'active',
+        trialEndsAt: null,
+        daysLeft: null,
+        plan: 'promo',
+      });
+      return () => { cancelled = true; };
+    }
 
     // FOR TESTING: Always grant full access
     fetch(`${API_PREFIX}/subscription/trial-status`, { credentials: 'include' })
@@ -89,7 +101,7 @@ export function useSubscription(): SubscriptionState {
         }
       });
     return () => { cancelled = true; };
-  }, [researchMode]);
+  }, [enabled, researchMode]);
 
   return state;
 }

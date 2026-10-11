@@ -13,6 +13,7 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { User, Mail, CreditCard, Star, Gift, Copy, Check, ChevronRight, Trophy, Sparkles, Crown, Calendar, ArrowRight, Shield, XCircle, Lock, Eye, EyeOff, CheckCircle, AlertCircle, LogOut } from 'lucide-react';
 import CancelSubscriptionFlow from '@/components/CancelSubscriptionFlow';
 import { normalizeChildrenResponse, type ChildApiRecord } from '@/lib/children-response';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -200,7 +201,7 @@ function StarProgress({ stars }: { stars: number }) {
 // ── Profile inner (rendered once auth confirmed) ──────────────────────────────
 function ProfileInner() {
   const sessionData = useSession();
-  const { subscribed } = useSubscription();
+  const { subscribed } = useSubscription({ enabled: !OPEN_TESTING_MODE });
 
   const [children, setChildren] = useState<Child[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
@@ -235,13 +236,15 @@ function ProfileInner() {
       try {
         const [childRes, subRes] = await Promise.all([
           fetch(`${API_PREFIX}/children`),
-          fetch(`${API_PREFIX}/subscription`),
+          OPEN_TESTING_MODE ? Promise.resolve(null) : fetch(`${API_PREFIX}/subscription`),
         ]);
         const childData = normalizeChildrenResponse(await childRes.json());
         setChildren(childData);
 
-        const sd = await subRes.json() as SubData;
-        setSubData(sd);
+        if (subRes) {
+          const sd = await subRes.json() as SubData;
+          setSubData(sd);
+        }
 
         // Load milestones for each child
         const allMilestones: Milestone[] = [];
@@ -559,56 +562,73 @@ function ProfileInner() {
           </div>
         </motion.section>
 
-        {/* ── Subscription ────────────────────────────────────────────────── */}
+        {/* ── Access status ───────────────────────────────────────────────── */}
         <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
-            <CreditCard size={13} /> Subscription
+            {OPEN_TESTING_MODE ? <><Sparkles size={13} /> Free access</> : <><CreditCard size={13} /> Subscription</>}
           </h2>
-          <div className="bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col gap-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <div className="flex items-center gap-2">
-                <Crown size={16} className="text-yellow-500" />
-                <span className="font-black text-foreground">{planLabel}</span>
+          {OPEN_TESTING_MODE ? (
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col gap-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Crown size={16} className="text-yellow-500" />
+                  <span className="font-black text-foreground">All learning games are free</span>
+                </div>
+                <span className="text-xs font-bold px-2.5 py-1 rounded-full border bg-green-100 text-green-800 border-green-300">
+                  Active
+                </span>
               </div>
-              <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${planColour}`}>
-                {subscribed ? 'Active' : 'Inactive'}
-              </span>
+              <p className="text-sm text-muted-foreground">
+                Sodafom is free during public testing. No payment, subscription or cancellation is needed.
+              </p>
             </div>
-            {trialEndDate && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar size={13} />
-                <span>Trial ends <strong className="text-foreground">{trialEndDate}</strong></span>
+          ) : (
+            <div className="bg-card border border-border rounded-2xl p-5 shadow-sm flex flex-col gap-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <Crown size={16} className="text-yellow-500" />
+                  <span className="font-black text-foreground">{planLabel}</span>
+                </div>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${planColour}`}>
+                  {subscribed ? 'Active' : 'Inactive'}
+                </span>
               </div>
-            )}
-            {renewDate && !trialEndDate && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar size={13} />
-                <span>Renews <strong className="text-foreground">{renewDate}</strong></span>
-              </div>
-            )}
-            {!subscribed && (
-              <Link
-                to="/subscribe"
-                className="flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 active:scale-95 transition-all"
-              >
-                <Sparkles size={14} /> Upgrade to full access <ArrowRight size={14} />
-              </Link>
-            )}
-            {subscribed && !cancelled && (
-              <button
-                onClick={() => setShowCancel(true)}
-                className="flex items-center justify-center gap-2 py-2 rounded-xl border border-border text-muted-foreground font-bold text-xs hover:border-destructive hover:text-destructive transition-colors"
-              >
-                <XCircle size={13} /> Cancel subscription
-              </button>
-            )}
-            {cancelled && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground font-bold">
-                <XCircle size={14} className="text-destructive" />
-                Cancellation scheduled — access continues until period end
-              </div>
-            )}
-          </div>
+              {trialEndDate && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar size={13} />
+                  <span>Trial ends <strong className="text-foreground">{trialEndDate}</strong></span>
+                </div>
+              )}
+              {renewDate && !trialEndDate && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Calendar size={13} />
+                  <span>Renews <strong className="text-foreground">{renewDate}</strong></span>
+                </div>
+              )}
+              {!subscribed && (
+                <Link
+                  to="/subscribe"
+                  className="flex items-center justify-center gap-2 py-3 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 active:scale-95 transition-all"
+                >
+                  <Sparkles size={14} /> Upgrade to full access <ArrowRight size={14} />
+                </Link>
+              )}
+              {subscribed && !cancelled && (
+                <button
+                  onClick={() => setShowCancel(true)}
+                  className="flex items-center justify-center gap-2 py-2 rounded-xl border border-border text-muted-foreground font-bold text-xs hover:border-destructive hover:text-destructive transition-colors"
+                >
+                  <XCircle size={13} /> Cancel subscription
+                </button>
+              )}
+              {cancelled && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground font-bold">
+                  <XCircle size={14} className="text-destructive" />
+                  Cancellation scheduled — access continues until period end
+                </div>
+              )}
+            </div>
+          )}
         </motion.section>
 
         {/* ── Children & stars ────────────────────────────────────────────── */}
@@ -731,7 +751,7 @@ function ProfileInner() {
               { label: 'All games',       href: '/games',    icon: Star },
               { label: 'Rewards',         href: '/rewards',  icon: Gift },
               { label: 'Subscription',    href: '/subscribe',icon: CreditCard },
-            ].map(({ label, href, icon: Icon }) => (
+            ].filter(({ href }) => !OPEN_TESTING_MODE || href !== '/subscribe').map(({ label, href, icon: Icon }) => (
               <Link
                 key={href}
                 to={href}
@@ -748,7 +768,7 @@ function ProfileInner() {
         </motion.section>
 
       </div>
-      {showCancel && (
+      {!OPEN_TESTING_MODE && showCancel && (
         <CancelSubscriptionFlow
           onClose={() => setShowCancel(false)}
           onCancelled={() => { setCancelled(true); setShowCancel(false); }}
@@ -765,7 +785,9 @@ export default function ProfilePage() {
       <Helmet>
         <title>My Profile — Sodafom</title>
         <meta name="robots" content="noindex, nofollow" />
-        <meta name="description" content="Manage your Sodafom account, subscription, children's progress and reward codes." />
+        <meta name="description" content={OPEN_TESTING_MODE
+          ? "Manage your Sodafom account, children's progress and reward codes."
+          : "Manage your Sodafom account, subscription, children's progress and reward codes."} />
         <link rel="canonical" href="https://sodafom.uk/hub/profile" />
       </Helmet>
       <ProtectedRoute redirectTo="/hub/login">

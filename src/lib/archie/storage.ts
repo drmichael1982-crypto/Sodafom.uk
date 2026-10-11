@@ -4,35 +4,98 @@ export type Settings = { childNickname?: string; year: number; sound: boolean; l
 export type Activity = { id: string; kind: 'lesson' | 'book'; title: string; stars: number; date: string };
 export type SavedData = { settings: Settings; activities: Activity[]; stickers: string[] };
 const KEY = 'sodafom_archie_design_v1';
+const PROGRESS_KEY = 'sodafom_archie_progress';
 const DEFAULT: SavedData = { settings: { year: 4, sound: true, largeText: false, onlineHelp: false }, activities: [], stickers: [] };
-let cachedRaw: string | null | undefined;
+let cachedSignature: string | undefined;
 let cached = DEFAULT;
 let memoryOnly = false;
 const subscribers = new Set<() => void>();
+
+function activeChildId(): string | null {
+  try {
+    const child = JSON.parse(localStorage.getItem('sodafom_active_child') || 'null') as Record<string, unknown> | null;
+    const id = typeof child?.id === 'number' || typeof child?.id === 'string' ? String(child.id).trim() : '';
+    return id || null;
+  } catch { return null; }
+}
+
+function childProgressKey(childId: string): string {
+  return `${PROGRESS_KEY}:${encodeURIComponent(childId)}`;
+}
+
+function settingsFrom(value: unknown): Settings {
+  const data = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  return {
+    childNickname: typeof data.childNickname === 'string' ? data.childNickname.trim().slice(0, 30) : '',
+    year: [1,2,3,4,5,6,7,8,9].includes(data.year as number) ? data.year as number : 4,
+    sound: data.sound !== false,
+    largeText: data.largeText === true,
+    onlineHelp: data.onlineHelp === true,
+  };
+}
+
+function activitiesFrom(value: unknown): Activity[] {
+  return Array.isArray(value) ? value.filter((v: Activity) => v && typeof v.id === 'string' && typeof v.title === 'string' && ['book','lesson'].includes(v.kind) && Number.isFinite(v.stars) && Number.isInteger(v.stars) && v.stars >= 0 && v.stars <= 3 && typeof v.date === 'string').slice(-5000) : [];
+}
+
+function stickersFrom(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((s: unknown): s is string => typeof s === 'string') : [];
+}
+
+function parsedRecord(raw: string | null): Record<string, unknown> {
+  const value = JSON.parse(raw || 'null');
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
 function read(): SavedData {
   if (memoryOnly) return cached;
   try {
-    const raw = localStorage.getItem(KEY);
-    if (raw === cachedRaw) return cached;
-    cachedRaw = raw;
-    const data = JSON.parse(raw || 'null');
-    cached = data ? {
-      settings: { childNickname: typeof data.settings?.childNickname === 'string' ? data.settings.childNickname.trim().slice(0,30) : '', year: [1,2,3,4,5,6,7,8,9].includes(data.settings?.year) ? data.settings.year : 4,
-        sound: data.settings?.sound !== false, largeText: data.settings?.largeText === true, onlineHelp: data.settings?.onlineHelp === true },
-      activities: Array.isArray(data.activities) ? data.activities.filter((v: Activity) => v && typeof v.id === 'string' && typeof v.title === 'string' && ['book','lesson'].includes(v.kind) && Number.isFinite(v.stars) && Number.isInteger(v.stars) && v.stars >= 0 && v.stars <= 3 && typeof v.date === 'string').slice(-5000) : [],
-      stickers: Array.isArray(data.stickers) ? data.stickers.filter((s: unknown) => typeof s === 'string') : [],
-    } : DEFAULT;
+    const childId = activeChildId();
+    const baseRaw = localStorage.getItem(KEY);
+    const progressRaw = childId ? localStorage.getItem(childProgressKey(childId)) : null;
+    const signature = `${childId ?? 'guest'}\u0000${baseRaw ?? ''}\u0000${progressRaw ?? ''}`;
+    if (signature === cachedSignature) return cached;
+    cachedSignature = signature;
+    const base = parsedRecord(baseRaw);
+    const progress = childId ? parsedRecord(progressRaw) : base;
+    cached = {
+      settings: settingsFrom(base.settings),
+      activities: activitiesFrom(progress.activities),
+      stickers: stickersFrom(progress.stickers),
+    };
   } catch { cached = DEFAULT; }
   return cached;
 }
 function subscribe(fn: () => void) {
   subscribers.add(fn);
   window.addEventListener('storage', fn);
-  return () => { subscribers.delete(fn); window.removeEventListener('storage', fn); };
+  window.addEventListener('sodafom:active-child-changed', fn);
+  return () => {
+    subscribers.delete(fn);
+    window.removeEventListener('storage', fn);
+    window.removeEventListener('sodafom:active-child-changed', fn);
+  };
 }
 export function updateSavedData(update: (previous: SavedData) => SavedData) {
-  cached = update(read());
-  try { cachedRaw = JSON.stringify(cached); localStorage.setItem(KEY, cachedRaw); }
+  const next = update(read());
+  cached = next;
+  try {
+    const childId = activeChildId();
+    if (childId) {
+      const baseRaw = localStorage.getItem(KEY);
+      const base = parsedRecord(baseRaw);
+      localStorage.setItem(KEY, JSON.stringify({
+        ...base,
+        settings: next.settings,
+        activities: activitiesFrom(base.activities),
+        stickers: stickersFrom(base.stickers),
+      }));
+      localStorage.setItem(childProgressKey(childId), JSON.stringify({ activities: next.activities, stickers: next.stickers }));
+    } else {
+      localStorage.setItem(KEY, JSON.stringify(next));
+    }
+    cachedSignature = undefined;
+  }
   catch { memoryOnly = true; }
   subscribers.forEach(fn => fn());
 }

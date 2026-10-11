@@ -69,7 +69,7 @@ function buildQuestion(table: number, usedMultipliers: Set<number>): TestQuestio
   return { table, multiplier, answer, options };
 }
 
-function TimesTablesInner({ onComplete }: { onComplete: (result: GameResult) => void }) {
+export function TimesTablesInner({ onComplete }: { onComplete: (result: GameResult) => void }) {
   const [selectedTable, setSelectedTable] = useState(2);
   const [mode, setMode] = useState<Mode>('browse');
   const [highlightRow, setHighlightRow] = useState<number | null>(null);
@@ -126,7 +126,7 @@ function TimesTablesInner({ onComplete }: { onComplete: (result: GameResult) => 
               key={t}
               whileTap={{ scale: 0.85 }}
               onClick={() => { setSelectedTable(t); setHighlightRow(null); }}
-              className="w-10 h-10 rounded-xl font-black text-sm border-2 transition-all"
+              className="w-11 h-11 rounded-xl font-black text-sm border-2 transition-all"
               style={
                 t === selectedTable
                   ? { backgroundColor: tableColour(t), borderColor: tableBorder(t), color: 'hsl(var(--primary-foreground))' }
@@ -147,7 +147,8 @@ function TimesTablesInner({ onComplete }: { onComplete: (result: GameResult) => 
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => speakWholeTable(selectedTable)}
-            className="p-2 rounded-full border-2 border-border hover:border-primary transition-all"
+            className="min-w-11 min-h-11 p-2 rounded-full border-2 border-border hover:border-primary transition-all"
+            aria-label="Read whole table aloud"
             title="Read whole table aloud"
           >
             <Volume2 className="w-4 h-4" />
@@ -180,7 +181,7 @@ function TimesTablesInner({ onComplete }: { onComplete: (result: GameResult) => 
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={e => { e.stopPropagation(); speakFact(selectedTable, m); }}
-                  className="ml-3 p-1.5 rounded-full hover:bg-muted transition-all"
+                  className="ml-3 min-w-11 min-h-11 p-1.5 rounded-full hover:bg-muted transition-all"
                   aria-label={`Read ${selectedTable} times ${m}`}
                 >
                   <Volume2 className="w-3.5 h-3.5 text-muted-foreground" />
@@ -239,7 +240,7 @@ function TimesTablesInner({ onComplete }: { onComplete: (result: GameResult) => 
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => speak(`What is ${question.table} times ${question.multiplier}?`)}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="min-h-11 px-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
             <Volume2 className="w-4 h-4" /> Hear the question
           </motion.button>
@@ -283,7 +284,7 @@ function TimesTablesInner({ onComplete }: { onComplete: (result: GameResult) => 
       <motion.button
         whileTap={{ scale: 0.95 }}
         onClick={() => { setMode('browse'); setFeedback(null); }}
-        className="text-sm text-muted-foreground underline"
+        className="min-h-11 px-3 text-sm text-muted-foreground underline"
       >
         Back to table
       </motion.button>

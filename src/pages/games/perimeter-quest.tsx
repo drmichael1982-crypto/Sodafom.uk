@@ -29,10 +29,10 @@ const L2: QuizQuestion[] = [
   { question: 'A square has perimeter 64 cm. What is its side length?', options: ['16 cm','12 cm','20 cm','8 cm'], answer: '16 cm' },
   { question: 'Perimeter of a triangle with sides 11, 14, and 17 cm?', options: ['42 cm','38 cm','46 cm','34 cm'], answer: '42 cm' },
 ];
-const L3: QuizQuestion[] = [
+export const PERIMETER_LEVEL_3_QUESTIONS: QuizQuestion[] = [
   { question: 'Circumference of a circle with radius 7 cm? (π ≈ 3.14)', options: ['43.96 cm','21.98 cm','87.92 cm','14 cm'], answer: '43.96 cm' },
   { question: 'Circumference of a circle with diameter 10 cm? (π ≈ 3.14)', options: ['31.4 cm','15.7 cm','62.8 cm','10 cm'], answer: '31.4 cm' },
-  { question: 'Perimeter of a compound shape: 10×6 rectangle with a 3×3 square removed from one corner?', options: ['38 cm','32 cm','44 cm','36 cm'], answer: '38 cm' },
+  { question: 'Perimeter of a compound shape: 10×6 rectangle with a 3×3 square removed from one corner?', options: ['38 cm','32 cm','44 cm','36 cm'], answer: '32 cm' },
   { question: 'Circumference of a circle with radius 5 cm? (π ≈ 3.14)', options: ['31.4 cm','15.7 cm','62.8 cm','10 cm'], answer: '31.4 cm' },
   { question: 'Perimeter of a semicircle with diameter 8 cm? (π ≈ 3.14)', options: ['20.56 cm','12.56 cm','25.12 cm','16 cm'], answer: '20.56 cm' },
   { question: 'Circumference of a circle with diameter 14 cm? (π ≈ 3.14)', options: ['43.96 cm','21.98 cm','87.92 cm','28 cm'], answer: '43.96 cm' },
@@ -43,8 +43,8 @@ const L3: QuizQuestion[] = [
   { question: 'Perimeter of a compound shape: L-shape with outer dimensions 10×8 and inner cut 4×3?', options: ['34 cm','30 cm','38 cm','32 cm'], answer: '34 cm' },
   { question: 'Circumference of a circle with radius 12 cm? (π ≈ 3.14)', options: ['75.36 cm','37.68 cm','150.72 cm','24 cm'], answer: '75.36 cm' },
 ];
-const L4 = L3;
-const L5 = L3;
+const L4 = PERIMETER_LEVEL_3_QUESTIONS;
+const L5 = PERIMETER_LEVEL_3_QUESTIONS;
 
 export default makeGame({
   slug: 'perimeter-quest',
@@ -54,5 +54,5 @@ export default makeGame({
   ageGroups: ['8–10', '11–13'],
   description: 'Calculate perimeters of shapes — from simple rectangles to circles!',
   accentClass: 'bg-primary',
-  questionsByLevel: [L1, L2, L3, L4, L5],
+  questionsByLevel: [L1, L2, PERIMETER_LEVEL_3_QUESTIONS, L4, L5],
 });
