@@ -91,6 +91,11 @@ const answers = {
       await resultButton.click();
       await page.getByRole('heading', { name: /Good try/ }).waitFor();
       await page.getByText('Final score: 67%', { exact: true }).waitFor();
+      // The accessible final score is intentionally available immediately, while the
+      // large visible counter eases up from zero. Wait for what a child can actually
+      // see so the visual artifact cannot capture a blank or intermediate score.
+      await page.waitForFunction(() => Array.from(document.querySelectorAll('[aria-hidden="true"].tabular-nums'))
+        .some(element => element.textContent?.trim() === '67%'));
       await page.screenshot({ path: `test-results/reading-quest/complete-${viewport.label}.png`, fullPage: true });
       await page.close();
       console.log(`PASS Reading Quest ${viewport.label} retry, break and completion`);
