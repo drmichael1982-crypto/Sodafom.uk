@@ -105,6 +105,25 @@ export function SpellingSnapPlay({ onComplete, onQuestionChange }: { onComplete:
           </motion.button>
         ))}
       </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+        <button
+          type="button"
+          onClick={() => setShowHint(true)}
+          disabled={paused || feedback === 'correct'}
+          aria-pressed={showHint}
+          className="min-h-12 rounded-xl border-2 border-blue-300 bg-blue-50 px-3 py-2 font-black text-blue-950 disabled:opacity-60"
+        >
+          Show meaning hint
+        </button>
+        <button
+          type="button"
+          onClick={() => setPaused(value => !value)}
+          disabled={feedback === 'correct'}
+          className="min-h-12 rounded-xl border-2 border-blue-800 bg-blue-700 px-3 py-2 font-black text-white disabled:opacity-60"
+        >
+          {paused ? 'Resume game' : 'Pause game'}
+        </button>
+      </div>
       <AnimatePresence>
         {feedback && <motion.div id="spelling-snap-feedback" initial={{ scale: 0.96 }} animate={{ scale: 1 }} exit={{ opacity: 0 }}
           role="status" aria-live="polite"
@@ -127,25 +146,6 @@ export function SpellingSnapPlay({ onComplete, onQuestionChange }: { onComplete:
           <p className="text-sm font-bold text-blue-900">Take a break and resume whenever you are ready.</p>
         </div>
       )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-        <button
-          type="button"
-          onClick={() => setShowHint(true)}
-          disabled={paused || feedback === 'correct'}
-          aria-pressed={showHint}
-          className="min-h-12 rounded-xl border-2 border-blue-300 bg-blue-50 px-3 py-2 font-black text-blue-950 disabled:opacity-60"
-        >
-          Show meaning hint
-        </button>
-        <button
-          type="button"
-          onClick={() => setPaused(value => !value)}
-          disabled={feedback === 'correct'}
-          className="min-h-12 rounded-xl border-2 border-blue-800 bg-blue-700 px-3 py-2 font-black text-white disabled:opacity-60"
-        >
-          {paused ? 'Resume game' : 'Pause game'}
-        </button>
-      </div>
     </div>
   );
 }
