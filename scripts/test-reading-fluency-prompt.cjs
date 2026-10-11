@@ -93,6 +93,7 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
       await page.getByText('9 correct out of 10 questions', { exact: true }).waitFor();
       assert.equal(await page.getByText('Final score: 90%', { exact: true }).count(), 1,
         `${viewport.label}: corrected practice reports first-attempt accuracy`);
+      await page.waitForTimeout(1800);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true,
         `${viewport.label}: completed result stays within the viewport`);
       await page.screenshot({
