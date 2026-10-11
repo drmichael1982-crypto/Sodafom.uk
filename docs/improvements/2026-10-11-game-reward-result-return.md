@@ -6,8 +6,8 @@ Date: 11 October 2026
 
 - Improvement branch: `improve/archie-learning-20261007`
 - Current children’s test target: `test/archie-2026-10-02`
-- Target head inspected: `79ba0f7e76dfa95c249c97fdd0b0b02adf3cc353` (`fix: isolate tutor state when switching learners`)
-- Target work retained in the candidate merge: the preceding duplicate-answer-bank integrity work and the latest teacher-mode learner-switch isolation.
+- Target head inspected initially: `79ba0f7e76dfa95c249c97fdd0b0b02adf3cc353` (`fix: isolate tutor state when switching learners`).
+- The target advanced during validation to `ae10eb5098586504bed606aab007d0795a9b1ae1` (`fix: restore subject game links in free mode`). Its game-slug schema, subject-link repairs and tests were non-overlapping and were retained in two-parent merge commit `4eda1bc6b732aad5682a7c76af76a3657e4532cf`.
 - Draft PR: <https://github.com/drmichael1982-crypto/Sodafom.uk/pull/81>
 - This work does not touch `sodafom797`, deferred 3D work, payments, credentials or production.
 
@@ -54,6 +54,7 @@ The result-oriented exit label is an original interface proposal, not a statutor
 - Direct inspection of run 489's focused phone/tablet artifact confirmed that `See my result` was clear, readable and unclipped in both viewports. It also exposed an evidence-timing problem: the accessible final value was ready before the animated visible value, so screenshots caught a blank phone score and an intermediate `10%` tablet score. The browser journey now waits for the rendered `67%` counter before capturing the result. This is a test-evidence correction, not a scoring change.
 - GitHub Actions run 493 passed on final code commit `ada2ff70954c0fbce6fdaa925c2f34eb788ec3a5`: TypeScript, 162 files / 1,173 unit tests, production build, hosted Chromium install, route/button journeys, focused Reading Quest phone/tablet journeys, the simulated all-years game/spelling matrix and artifact upload. Run: <https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38140058802>
 - Final artifact `11702806655` was inspected directly. Both reward captures show the new result-oriented control without clipping. Both result captures visibly show `67%`, `2 correct out of 3 questions` and one star; the phone keeps the main actions reachable on its vertical surface and the tablet shows the complete result card without horizontal overflow.
+- After the target advanced, combined-branch GitHub Actions run 496 passed again at merge commit `4eda1bc6b732aad5682a7c76af76a3657e4532cf`: TypeScript, 164 files / 1,178 tests, production build, all 130 linked game routes, 15 core journeys, Reading Quest phone/tablet completion, the complete simulated year-group matrix and artifact upload. Run: <https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38141322215>
 
 Local Playwright execution was blocked because this runtime could not download its Chromium binary from the external CDN. This is an environment limitation, not reported as a product failure; the repository’s GitHub workflow installs Chromium and executes the journey.
 
