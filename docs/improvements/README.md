@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Teacher summary pager reflow — 11 October 2026](2026-10-11-teacher-summary-pager-reflow.md): reproduces the current live post-gate clipping, constrains the learner puzzle summary to one app-screen, reconciles the latest parent API target and verifies the exact candidate across the full hosted matrix.
 1. [Grown-up dashboard launcher clearance — 11 October 2026](2026-10-11-phone-archie-launcher.md): records the failed 56 px overlap attempt, keeps the child-facing launcher off grown-up pages, preserves its branded compact state elsewhere and renders parent reports immediately when reduced motion is requested.
 1. [Child progress race reconciliation — 11 October 2026](2026-10-11-child-progress-race-reconciliation.md): combines the latest abortable learner-progress requests with the existing defensive learner-scoped tutor report, responsive adult cards and 44 px controls while preserving both branch histories.
 1. [Reading Quest supported retry and optional break — 11 October 2026](2026-10-11-reading-quest-supported-retry.md): replaces forced wrong-answer auto-advance with evidence clues, a state-preserving re-read/break path and first-attempt scoring, with dedicated phone/tablet browser coverage awaiting the exact pushed workflow.
@@ -51,6 +52,6 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 23. [Bingo feedback and breaks — 7 October 2026](2026-10-07-bingo-feedback.md): accurate first-try scoring, hints, pause/resume and prior-run evidence.
 24. [Game access — 7 October 2026](2026-10-07-game-access.md): preceding freeze/age-discovery repair and historical starting evidence.
 
-Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. Railway deployment `433361be-8957-484d-b9dd-0c29df27e84c` succeeded on observed target `60b7e162f281553070a6769883f0158682482e1c`; current candidate code head `4611d280379eb20b1a15c2bdf7be4081e68c899b` is not deployed.
+Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. Railway deployment `adb7c982-6b81-4bd5-800c-e0d8a5832844` succeeded on observed target `9199ad0e66103ea826e1c3a2e30fc8b07261c2de`; current tested candidate application head `911d201efbc3c0152762643a8654fd48739d78d9` plus documentation is not deployed.
 
-Next bounded priority: reproduce and repair the deployed teacher post-gate clipping with settled desktop/phone/tablet geometry, then exercise Reading Speed through wrong answer, hint/retry, pause/resume, completion/reward and navigation. Do not duplicate verified storage, Reading Fluency, Spelling Snap or Reading Quest work and do not merge/deploy.
+Next bounded priority: exercise Reading Speed through instructions, wrong answer, hint/retry, pause/resume, progression, completion/reward and return navigation at phone/tablet widths. Do not duplicate verified storage, Reading Fluency, Spelling Snap or Reading Quest work and do not merge/deploy.
