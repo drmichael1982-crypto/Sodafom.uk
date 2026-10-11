@@ -1,6 +1,6 @@
 import { renderHook, act, cleanup } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
-import { claimScopedSticker, currentProgressProfile, scopedLearnerSettingsKey, scopedStickersKey, useArchieData } from './storage';
+import { claimScopedSticker, currentProgressProfile, scopedLearnerSettingsKey, useArchieData } from './storage';
 afterEach(()=>{cleanup();localStorage.clear();});
 it('keeps a multi-year course record beyond 500 lessons and never awards a repeat twice',()=>{
   localStorage.setItem('sodafom_active_child',JSON.stringify({id:12,name:'Synthetic learner'}));
@@ -33,7 +33,7 @@ it('keeps collected stickers with the selected learner and preserves older share
   act(()=>claimScopedSticker('book'));
   expect(result.current.stickers).toEqual(['book']);
   expect(result.current.legacyStickers).toEqual(['legacy-key']);
-  expect(JSON.parse(localStorage.getItem(scopedStickersKey())!)).toEqual(['book']);
+  expect(JSON.parse(localStorage.getItem('sodafom_archie_progress:21')!).stickers).toEqual(['book']);
   act(()=>{
     localStorage.setItem('sodafom_active_child',JSON.stringify({id:22,name:'Leo'}));
     window.dispatchEvent(new Event('sodafom:active-child-changed'));

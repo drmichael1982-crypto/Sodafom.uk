@@ -10,17 +10,22 @@ import { BADGE_DEFS, type BadgeStats } from '@/lib/badges';
 
 interface ProgressRow {
   subject: string;
-  stars: number;
+  stars: number | string;
   completed_at: string;
 }
 
 interface ReferralRow {
-  cnt: number;
+  cnt: number | string;
 }
 
 interface StreakRow {
-  current_streak: number;
-  max_streak: number;
+  current_streak: number | string;
+  max_streak: number | string;
+}
+
+interface ChildRow {
+  id: number;
+  total_stars: number | string;
 }
 
 export default async function handler(req: Request, res: Response) {
@@ -28,20 +33,33 @@ export default async function handler(req: Request, res: Response) {
     const session = await getAuth().api.getSession({ headers: req.headers as Record<string, string> });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
 
-    const childId = req.query['childId'] as string | undefined;
-    if (!childId) return res.status(400).json({ error: 'childId required' });
+    const childIdParam = Array.isArray(req.query.childId) ? req.query.childId[0] : req.query.childId;
+    if (!childIdParam) return res.status(400).json({ error: 'childId required' });
+    if (typeof childIdParam !== 'string' || !/^\d+$/.test(childIdParam)) {
+      return res.status(400).json({ error: 'Invalid child ID' });
+    }
+    const childId = Number(childIdParam);
+    if (!Number.isSafeInteger(childId) || childId <= 0) {
+      return res.status(400).json({ error: 'Invalid child ID' });
+    }
 
-    // Verify child belongs to this user
+    // Verify child belongs to this parent before reading any learning records.
     const childRows = await db.execute(sql`
-      SELECT id FROM children WHERE id = ${childId} AND user_id = ${session.user.id} LIMIT 1
+      SELECT id, total_stars
+      FROM children
+      WHERE id = ${childId} AND parent_id = ${session.user.id}
+      LIMIT 1
     `);
-    if (!(childRows[0] as unknown as { id: string }[]).length) {
+    const ownedChildren = childRows[0] as unknown as ChildRow[];
+    if (!ownedChildren.length) {
       return res.status(404).json({ error: 'Child not found' });
     }
 
-    // Fetch progress rows
+    // Fetch the same current progress records written by game completion.
     const progressRows = (await db.execute(sql`
-      SELECT subject, stars, completed_at FROM child_progress WHERE child_id = ${childId}
+      SELECT subject, stars_earned AS stars, completed_at
+      FROM activity_sessions
+      WHERE child_id = ${childId}
     `))[0] as unknown as ProgressRow[];
 
     // Fetch streak
@@ -59,14 +77,14 @@ export default async function handler(req: Request, res: Response) {
     // Build stats
     const stats: BadgeStats = {
       gamesPlayed: progressRows.length,
-      totalStars: progressRows.reduce((sum, r) => sum + (r.stars ?? 0), 0),
+      totalStars: Number(ownedChildren[0]?.total_stars ?? 0),
       currentStreak: Number(streak.current_streak),
       maxStreak: Number(streak.max_streak),
       mathsGames: progressRows.filter(r => r.subject?.toLowerCase() === 'maths').length,
       readingGames: progressRows.filter(r => r.subject?.toLowerCase() === 'reading').length,
       spellingGames: progressRows.filter(r => r.subject?.toLowerCase() === 'spelling').length,
       scienceGames: progressRows.filter(r => r.subject?.toLowerCase() === 'science').length,
-      perfectGames: progressRows.filter(r => r.stars >= 3).length,
+      perfectGames: progressRows.filter(r => Number(r.stars) >= 3).length,
       referrals,
     };
 

@@ -90,7 +90,11 @@ function BadgesContent() {
     const child = JSON.parse(raw) as { id: string };
 
     fetch(`${API_PREFIX}/badges?childId=${child.id}`, { credentials: 'include' })
-      .then(r => r.json())
+      .then(async r => {
+        const data = await r.json() as { badges?: unknown; stats?: unknown };
+        if (!r.ok || !Array.isArray(data.badges) || !data.stats) throw new Error('Invalid badge response');
+        return data as { badges: Badge[]; stats: BadgeStats };
+      })
       .then((data: { badges: Badge[]; stats: BadgeStats }) => {
         setBadges(data.badges);
         setStats(data.stats);
