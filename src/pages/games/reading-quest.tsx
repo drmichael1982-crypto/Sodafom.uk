@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
+import { starsForPercentage } from '@/lib/game-scoring';
 import { useVoice } from '@/lib/voice-context';
 
 interface Passage {
@@ -176,7 +177,7 @@ export function ReadingQuestPlay({ onComplete, onQuestionChange }: { onComplete:
       if (next >= total) {
         const score = Math.round((nextFirstTryCorrect / total) * 100);
         completionSent.current = true;
-        onComplete({ score, correct: nextFirstTryCorrect, total, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 });
+        onComplete({ score, correct: nextFirstTryCorrect, total, stars: starsForPercentage(score) });
       } else {
         setQIdx(next);
         setChosen(null);

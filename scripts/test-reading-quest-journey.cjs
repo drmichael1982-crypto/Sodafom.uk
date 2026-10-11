@@ -74,11 +74,11 @@ const answers = {
             return nextQuestion?.textContent?.trim() !== previousPrompt;
           }, prompt);
         } else {
-          await page.getByText('You earned 2 stars!', { exact: true }).waitFor();
+          await page.getByText('You earned 1 star!', { exact: true }).waitFor();
         }
       }
 
-      await page.getByText('You earned 2 stars!', { exact: true }).waitFor();
+      await page.getByText('You earned 1 star!', { exact: true }).waitFor();
       assert.equal(await page.getByText('Final score: 67%', { exact: true }).count(), 1,
         `${viewport.label}: result retains first-try accuracy`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true,

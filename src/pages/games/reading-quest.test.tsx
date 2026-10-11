@@ -115,7 +115,7 @@ describe('Reading Quest supported recovery', () => {
       act(() => vi.advanceTimersByTime(900));
     }
 
-    expect(onComplete).toHaveBeenCalledExactlyOnceWith({ score: 67, correct: 2, total: 3, stars: 2 });
+    expect(onComplete).toHaveBeenCalledExactlyOnceWith({ score: 67, correct: 2, total: 3, stars: 1 });
     act(() => vi.advanceTimersByTime(900));
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
