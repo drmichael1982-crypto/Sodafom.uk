@@ -22,7 +22,9 @@ vi.mock('virtual:content',()=>({games:{games:[
 ]}}));
 import GameShell, {type GameResult, type GameShellControls} from './GameShell';
 import { updateSavedData } from '@/lib/archie/storage';
+import { gameStarsStorageKey } from '@/lib/game-stars';
 const result:GameResult={score:100,correct:8,total:8,stars:3};
+const storedStars=()=>JSON.parse(localStorage.getItem(gameStarsStorageKey())!);
 const saveYear=(year:number)=>updateSavedData(data=>({...data,settings:{...data.settings,year,sound:false}}));
 function Route(){return <span data-testid="route">{useLocation().pathname}</span>;}
 const show=(children:React.ReactNode)=>render(<HelmetProvider><MemoryRouter initialEntries={['/games/test']}><Route/>{children}</MemoryRouter></HelmetProvider>);
@@ -92,7 +94,7 @@ describe('preview direct-route age guard',()=>{
     fireEvent.click(screen.getByRole('button',{name:'Record spelling set'}));
     expect(screen.getByRole('button',{name:'Record spelling set'})).toBeInTheDocument();
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('spelling','spelling-bee');
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-spelling-bee':3});
+    expect(storedStars()).toEqual({'game-spelling-bee':3});
   });
   it('uses the canonical catalogue slug when the display title differs from the game route',()=>{
     show(<GameShell title="Number Grid" gameSlug="number-puzzle" emoji="1" subject="maths" ageGroups={['5–7']}>
@@ -101,7 +103,7 @@ describe('preview direct-route age guard',()=>{
     expect(JSON.parse(localStorage.getItem('sodafom_last_played')!)).toMatchObject({id:'game-number-puzzle',slug:'number-puzzle',title:'Number Grid'});
     fireEvent.click(screen.getByRole('button',{name:'Finish canonical game'}));
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('maths','number-puzzle');
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-number-puzzle':3});
+    expect(storedStars()).toEqual({'game-number-puzzle':3});
   });
   it.each(['oops','[]','null'])('repairs a damaged %s star record when the child completes a scored game',saved=>{
     localStorage.setItem('sodafom_game_stars',saved);
@@ -109,7 +111,7 @@ describe('preview direct-route age guard',()=>{
       {complete=> <button onClick={()=>complete(result)}>Finish repaired round</button>}
     </GameShell>);
     fireEvent.click(screen.getByRole('button',{name:'Finish repaired round'}));
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+    expect(storedStars()).toEqual({'game-starter':3});
   });
   it('keeps valid scores when it saves a new best result',()=>{
     localStorage.setItem('sodafom_game_stars',JSON.stringify({'game-counting':2}));
@@ -117,7 +119,7 @@ describe('preview direct-route age guard',()=>{
       {complete=> <button onClick={()=>complete(result)}>Finish merged round</button>}
     </GameShell>);
     fireEvent.click(screen.getByRole('button',{name:'Finish merged round'}));
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-counting':2,'game-starter':3});
+    expect(storedStars()).toEqual({'game-counting':2,'game-starter':3});
   });
   it('normalises point-based results for the child while preserving raw account progress',async()=>{
     mocks.preview=false;
@@ -128,7 +130,7 @@ describe('preview direct-route age guard',()=>{
     await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Finish points round'}));});
     expect(await screen.findByText('75%')).toBeInTheDocument();
     expect(screen.getByText('You earned 2 stars!')).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':2});
+    expect(storedStars()).toEqual({'game-starter':2});
     const progress=vi.mocked(fetch).mock.calls.find(([url])=>url==='/children/42/progress');
     expect(JSON.parse(String(progress?.[1]?.body))).toMatchObject({score:90,maxScore:120});
   });
@@ -138,7 +140,7 @@ describe('preview direct-route age guard',()=>{
     </GameShell>);
     fireEvent.click(screen.getByRole('button',{name:'Finish full points round'}));
     expect(await screen.findByText('100%')).toBeInTheDocument();
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+    expect(storedStars()).toEqual({'game-starter':3});
   });
 });
 
@@ -147,14 +149,14 @@ describe('preview legacy-account request isolation',()=>{
   it.each(['finish','recordCompletion'] as const)('keeps preview %s local despite a stale active child',async(mode)=>{
     const savedChild=JSON.stringify(staleChild);
     localStorage.setItem('sodafom_active_child',savedChild);
-    show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['5–7']}>
+    show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['11–13']}>
       {(finish,controls)=> <button onClick={()=>mode==='finish'?finish(result):controls.recordCompletion(result)}>Complete preview round</button>}
     </GameShell>);
     expect(fetch).not.toHaveBeenCalled();
     await act(async()=>{fireEvent.click(screen.getByRole('button',{name:'Complete preview round'}));});
     expect(fetch).not.toHaveBeenCalled();
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('maths','starter');
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+    expect(storedStars()).toEqual({'game-starter':3});
     expect(localStorage.getItem('sodafom_active_child')).toBe(savedChild);
     expect(JSON.parse(localStorage.getItem('sodafom_last_played')!).id).toBe('game-starter');
   });
@@ -175,6 +177,6 @@ describe('preview legacy-account request isolation',()=>{
     expect(rewards?.[1]).toMatchObject({method:'POST',credentials:'include',headers:{'Content-Type':'application/json'}});
     expect(JSON.parse(String(rewards?.[1]?.body))).toEqual({childId:42});
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('maths','starter');
-    expect(JSON.parse(localStorage.getItem('sodafom_game_stars')!)).toEqual({'game-starter':3});
+    expect(storedStars()).toEqual({'game-starter':3});
   });
 });

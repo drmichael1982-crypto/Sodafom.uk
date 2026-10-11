@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useSession, LogoutButton } from '@/lib/auth/auth-client';
 import { ProtectedRoute } from '@/lib/auth/auth-client';
 import { useSubscription } from '@/hooks/useSubscription';
-import { setActiveChild, type AgeGroup } from '@/hooks/useChildAge';
+import { getActiveChild, setActiveChild, type AgeGroup } from '@/hooks/useChildAge';
 import { Plus, Trash2, BookOpen, Calculator, Pencil, TrendingUp, ChevronRight, Users, Award, Star, Sparkles, Play, Bell, Trophy, Zap, RotateCcw, CreditCard } from 'lucide-react';
 import StreakBadge from '@/components/StreakTracker';
 import PushNotificationBanner from '@/components/PushNotificationBanner';
@@ -15,6 +15,7 @@ import ChildSwitcher from '@/components/ChildSwitcher';
 import HubStatsBar from '@/components/HubStatsBar';
 import { games as _games } from 'virtual:content';
 import { API_PREFIX } from '@/lib/config';
+import { readGameStarMap } from '@/lib/game-stars';
 
 type WeeklyChallenge = { gameId: string; title: string; emoji: string; tagline: string; prize: string };
 const games = _games as typeof _games & { weeklyChallenge?: WeeklyChallenge };
@@ -30,14 +31,12 @@ const SUBJECT_PB_META: Record<string, { label: string; emoji: string; colour: st
   science: { label: 'Science', emoji: '🔬', colour: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
 };
 
-function PersonalBestCard() {
+function PersonalBestCard({ activeChildId }: { activeChildId: number | null }) {
   const [pbData, setPbData] = useState<Record<string, { stars: number; gameName: string }>>({});
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem('sodafom_game_stars');
-      if (!raw) return;
-      const starMap: Record<string, number> = JSON.parse(raw) as Record<string, number>;
+      const starMap = readGameStarMap();
       // Map game slug keys back to subjects using games content
       const subjectBest: Record<string, { stars: number; gameName: string }> = {};
       for (const game of games.games) {
@@ -52,7 +51,7 @@ function PersonalBestCard() {
       }
       setPbData(subjectBest);
     } catch { /* ignore */ }
-  }, []);
+  }, [activeChildId]);
 
   const entries = Object.entries(pbData);
   if (entries.length === 0) return null;
@@ -93,22 +92,19 @@ function PersonalBestCard() {
   );
 }
 
-function WeeklyGoalCard() {
+function WeeklyGoalCard({ childId }: { childId: number | null }) {
   const [gamesThisWeek, setGamesThisWeek] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch(`${API_PREFIX}/children`, { credentials: 'include' })
-      .then(r => r.ok ? r.json() : [])
-      .then((children: { id: number }[]) => {
-        if (!Array.isArray(children) || !children.length) return;
-        return fetch(`${API_PREFIX}/children/${children[0].id}/progress?summary=1`, { credentials: 'include' });
-      })
+    setGamesThisWeek(null);
+    if (!childId) return;
+    fetch(`${API_PREFIX}/children/${childId}/progress?summary=1`, { credentials: 'include' })
       .then(r => (r && r.ok) ? r.json() : null)
       .then((prog: { gamesThisWeek?: number } | null) => {
         if (prog?.gamesThisWeek !== undefined) setGamesThisWeek(prog.gamesThisWeek);
       })
       .catch(() => {});
-  }, []);
+  }, [childId]);
 
   if (gamesThisWeek === null) return null;
 
@@ -536,6 +532,12 @@ function HubDashboard() {
     try { const s = localStorage.getItem('sodafom_active_child'); return s ? JSON.parse(s).id : null; } catch { return null; }
   });
 
+  useEffect(() => {
+    const syncActiveChild = () => setActiveChildIdState(getActiveChild()?.id ?? null);
+    window.addEventListener('sodafom:active-child-changed', syncActiveChild);
+    return () => window.removeEventListener('sodafom:active-child-changed', syncActiveChild);
+  }, []);
+
   // Last-played game from localStorage
   const [lastPlayed, setLastPlayed] = useState<{ id: string; title: string; emoji: string; slug: string; subject: string } | null>(null);
   useEffect(() => {
@@ -551,7 +553,15 @@ function HubDashboard() {
       const data = await response.json();
       const list: Child[] = Array.isArray(data) ? data : [];
       setChildren(list);
-      setActiveChildIdState(current => current ?? list[0]?.id ?? null);
+      const stored = getActiveChild();
+      const selected = list.find(child => child.id === stored?.id) ?? list[0] ?? null;
+      setActiveChildIdState(selected?.id ?? null);
+      setActiveChild(selected ? {
+        id: selected.id,
+        name: selected.name,
+        ageGroup: selected.ageGroup as AgeGroup,
+        avatarEmoji: selected.avatarEmoji,
+      } : null);
     } finally {
       setLoading(false);
     }
@@ -572,6 +582,7 @@ function HubDashboard() {
     // Show the returned learner immediately, then reload the authoritative
     // server list. This keeps the counter, switcher and learner cards in sync.
     setChildren(prev => prev.some(existing => existing.id === child.id) ? prev : [...prev, child]);
+    setActiveChild({ id: child.id, name: child.name, ageGroup: child.ageGroup as AgeGroup, avatarEmoji: child.avatarEmoji });
     setActiveChildIdState(child.id);
     setShowAdd(false);
     loadChildren().catch(() => {});
@@ -607,6 +618,7 @@ function HubDashboard() {
                   children={children}
                   activeChildId={activeChildId}
                   onAddChild={() => setShowAdd(true)}
+                  onSelect={setActiveChildIdState}
                 />
               )}
             </div>
@@ -688,7 +700,7 @@ function HubDashboard() {
           </motion.div>
 
           {/* Quick stats row */}
-          <HubStatsBar />
+          <HubStatsBar activeChildId={activeChildId} />
 
           {/* Learner stats row */}
           <motion.div variants={stagger} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -724,7 +736,7 @@ function HubDashboard() {
           </motion.div>
 
           {/* Weekly goal progress card */}
-          <WeeklyGoalCard />
+          <WeeklyGoalCard childId={activeChildId} />
 
           {/* Daily Challenge card */}
           <motion.div variants={fadeUp} initial="hidden" animate="visible" className="mb-6">
@@ -849,7 +861,7 @@ function HubDashboard() {
           </motion.div>
 
           {/* Personal Best trophy card */}
-          <PersonalBestCard />
+          <PersonalBestCard activeChildId={activeChildId} />
 
           {/* Recommended for you */}
           <motion.div variants={fadeUp} initial="hidden" animate="visible" className="mb-6">

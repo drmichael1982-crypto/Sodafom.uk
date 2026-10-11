@@ -25,6 +25,7 @@ import SceneArtwork, { sceneForSubject } from '@/components/SceneArtwork';
 import '@/pages/archie/sodafom-polish.css';
 import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
 import { starsForPercentage } from '@/lib/game-scoring';
+import { saveBestGameStars } from '@/lib/game-stars';
 
 export interface GameResult {
   score: number; // 0–100
@@ -162,22 +163,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
     recordGameCompletion(subject, slug);
     if(r.total>0)setRewardOpen(true);
 
-    try {
-      const k = `game-${gameSlug}`;
-      const raw = localStorage.getItem('sodafom_game_stars');
-      const parsed: unknown = raw ? JSON.parse(raw) : {};
-      const map: Record<string, unknown> = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
-      const previous = map[k];
-      const previousStars = typeof previous === 'number' && Number.isInteger(previous) && previous >= 0 && previous <= 3 ? previous : 0;
-      if (previousStars < stars) {
-        map[k] = stars;
-        localStorage.setItem('sodafom_game_stars', JSON.stringify(map));
-      }
-    } catch {
-      try {
-        if (stars > 0) localStorage.setItem('sodafom_game_stars', JSON.stringify({ [`game-${gameSlug}`]: stars }));
-      } catch { /* storage is unavailable */ }
-    }
+    saveBestGameStars(`game-${gameSlug}`, stars);
 
     const activeChild = getActiveChild();
     if (!ARCHIE_PREVIEW && activeChild?.id) {

@@ -354,6 +354,8 @@ export function ArchieParents({ settingsOnly = false }: { settingsOnly?: boolean
   const [notice,setNotice]=useState('');
   const [connection,setConnection]=useState('Not checked yet.');
   const [checking,setChecking]=useState(false);
+  useEffect(()=>{setYear(settings.year);setChildNickname(settings.childNickname ?? '');},[settings.year,settings.childNickname]);
+  useEffect(()=>{const refreshAge=()=>setLearningAge(String(readLearningAge() ?? ''));window.addEventListener('sodafom:active-child-changed',refreshAge);return()=>window.removeEventListener('sodafom:active-child-changed',refreshAge);},[]);
   useLearning(settingsOnly?'Settings':'Parents');
   async function checkConnection() {
     setChecking(true);setConnection('Checking…');

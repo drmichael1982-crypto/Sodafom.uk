@@ -10,8 +10,8 @@ const guestActivity: Activity = {
   date: '2026-10-11T00:00:00.000Z',
 };
 
-function selectChild(id: number | string, name = 'Learner') {
-  localStorage.setItem('sodafom_active_child', JSON.stringify({ id, name, ageGroup: '8-10' }));
+function selectChild(id: number | string, name = 'Learner', ageGroup = '8-10') {
+  localStorage.setItem('sodafom_active_child', JSON.stringify({ id, name, ageGroup }));
   window.dispatchEvent(new Event('sodafom:active-child-changed'));
 }
 
@@ -33,47 +33,51 @@ beforeEach(() => {
   }));
 });
 
-describe('child-scoped Archie activity and sticker storage', () => {
-  it('isolates sibling progress, rerenders on child changes and retains shared settings', () => {
-    selectChild(1, 'Mia');
+describe('child-scoped Archie learning storage', () => {
+  it('isolates sibling profile and progress while retaining shared device preferences', () => {
+    selectChild(1, 'Mia', '5-7');
     const { result } = renderHook(() => useArchieData());
 
     expect(result.current.activities).toEqual([]);
     expect(result.current.stickers).toEqual([]);
-    expect(result.current.settings.year).toBe(4);
+    expect(result.current.settings).toMatchObject({ year: 2, childNickname: 'Mia', sound: true });
 
     act(() => {
+      result.current.setSettings({ year: 3, childNickname: 'Mimi', sound: false });
       result.current.complete({ id: 'quest-maths-1', kind: 'lesson', title: 'Mia maths quest', stars: 1 });
       updateSavedData(data => ({ ...data, stickers: [...data.stickers, 'gold-key'] }));
     });
     expect(result.current.activities.map(item => item.id)).toEqual(['quest-maths-1']);
     expect(result.current.stickers).toEqual(['gold-key']);
 
-    act(() => selectChild(2, 'Leo'));
+    act(() => selectChild(2, 'Leo', '11-13'));
     expect(result.current.activities).toEqual([]);
     expect(result.current.stickers).toEqual([]);
-    expect(result.current.settings.year).toBe(4);
+    expect(result.current.settings).toMatchObject({ year: 8, childNickname: 'Leo', sound: false });
 
     act(() => {
-      result.current.setSettings({ year: 7 });
+      result.current.setSettings({ year: 7, childNickname: 'Leo learner' });
       result.current.complete({ id: 'course-science-2', kind: 'lesson', title: 'Leo science lesson', stars: 2 });
     });
     expect(result.current.settings.year).toBe(7);
     expect(result.current.activities.map(item => item.id)).toEqual(['course-science-2']);
 
-    act(() => selectChild(1, 'Mia'));
-    expect(result.current.settings.year).toBe(7);
+    act(() => selectChild(1, 'Mia', '5-7'));
+    expect(result.current.settings).toMatchObject({ year: 3, childNickname: 'Mimi', sound: false });
     expect(result.current.activities.map(item => item.id)).toEqual(['quest-maths-1']);
     expect(result.current.stickers).toEqual(['gold-key']);
 
     expect(JSON.parse(localStorage.getItem('sodafom_archie_progress:1') || '{}')).toMatchObject({
+      settings: { year: 3, childNickname: 'Mimi' },
       activities: [expect.objectContaining({ id: 'quest-maths-1' })],
       stickers: ['gold-key'],
     });
     expect(JSON.parse(localStorage.getItem('sodafom_archie_progress:2') || '{}')).toMatchObject({
+      settings: { year: 7, childNickname: 'Leo learner' },
       activities: [expect.objectContaining({ id: 'course-science-2' })],
       stickers: [],
     });
+    expect(savedBase().settings).toMatchObject({ year: 4, childNickname: '', sound: false });
   });
 
   it('keeps legacy progress guest-only and restores it when no child is selected', () => {

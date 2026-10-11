@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
+import { totalGameStars } from '@/lib/game-stars';
 
 export type Settings = { childNickname?: string; year: number; sound: boolean; largeText: boolean; onlineHelp: boolean };
 export type Activity = { id: string; kind: 'lesson' | 'book'; title: string; stars: number; date: string };
@@ -11,11 +12,18 @@ let cached = DEFAULT;
 let memoryOnly = false;
 const subscribers = new Set<() => void>();
 
-function activeChildId(): string | null {
+type ActiveChildProfile = { id: string; name: string; ageGroup: string };
+
+function activeChild(): ActiveChildProfile | null {
   try {
     const child = JSON.parse(localStorage.getItem('sodafom_active_child') || 'null') as Record<string, unknown> | null;
     const id = typeof child?.id === 'number' || typeof child?.id === 'string' ? String(child.id).trim() : '';
-    return id || null;
+    if (!id) return null;
+    return {
+      id,
+      name: typeof child?.name === 'string' ? child.name.trim().slice(0, 30) : '',
+      ageGroup: typeof child?.ageGroup === 'string' ? child.ageGroup.replace('–', '-').trim() : '',
+    };
   } catch { return null; }
 }
 
@@ -31,6 +39,30 @@ function settingsFrom(value: unknown): Settings {
     sound: data.sound !== false,
     largeText: data.largeText === true,
     onlineHelp: data.onlineHelp === true,
+  };
+}
+
+function defaultYearForAgeGroup(ageGroup: string): number {
+  if (ageGroup === '5-7') return 2;
+  if (ageGroup === '11-13') return 8;
+  return 5;
+}
+
+function settingsForChild(value: unknown, child: ActiveChildProfile, shared: Settings): Settings {
+  const data = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+  const learner = data.settings && typeof data.settings === 'object'
+    ? data.settings as Record<string, unknown>
+    : {};
+  return {
+    sound: shared.sound,
+    largeText: shared.largeText,
+    onlineHelp: shared.onlineHelp,
+    year: [1,2,3,4,5,6,7,8,9].includes(learner.year as number)
+      ? learner.year as number
+      : defaultYearForAgeGroup(child.ageGroup),
+    childNickname: typeof learner.childNickname === 'string'
+      ? learner.childNickname.trim().slice(0, 30)
+      : child.name,
   };
 }
 
@@ -50,7 +82,8 @@ function parsedRecord(raw: string | null): Record<string, unknown> {
 function read(): SavedData {
   if (memoryOnly) return cached;
   try {
-    const childId = activeChildId();
+    const child = activeChild();
+    const childId = child?.id ?? null;
     const baseRaw = localStorage.getItem(KEY);
     const progressRaw = childId ? localStorage.getItem(childProgressKey(childId)) : null;
     const signature = `${childId ?? 'guest'}\u0000${baseRaw ?? ''}\u0000${progressRaw ?? ''}`;
@@ -59,7 +92,7 @@ function read(): SavedData {
     const base = parsedRecord(baseRaw);
     const progress = childId ? parsedRecord(progressRaw) : base;
     cached = {
-      settings: settingsFrom(base.settings),
+      settings: child ? settingsForChild(progress, child, settingsFrom(base.settings)) : settingsFrom(base.settings),
       activities: activitiesFrom(progress.activities),
       stickers: stickersFrom(progress.stickers),
     };
@@ -80,17 +113,29 @@ export function updateSavedData(update: (previous: SavedData) => SavedData) {
   const next = update(read());
   cached = next;
   try {
-    const childId = activeChildId();
+    const childId = activeChild()?.id ?? null;
     if (childId) {
       const baseRaw = localStorage.getItem(KEY);
       const base = parsedRecord(baseRaw);
+      const baseSettings = settingsFrom(base.settings);
+      const progress = parsedRecord(localStorage.getItem(childProgressKey(childId)));
       localStorage.setItem(KEY, JSON.stringify({
         ...base,
-        settings: next.settings,
+        settings: {
+          ...baseSettings,
+          sound: next.settings.sound,
+          largeText: next.settings.largeText,
+          onlineHelp: next.settings.onlineHelp,
+        },
         activities: activitiesFrom(base.activities),
         stickers: stickersFrom(base.stickers),
       }));
-      localStorage.setItem(childProgressKey(childId), JSON.stringify({ activities: next.activities, stickers: next.stickers }));
+      localStorage.setItem(childProgressKey(childId), JSON.stringify({
+        ...progress,
+        settings: { year: next.settings.year, childNickname: next.settings.childNickname ?? '' },
+        activities: next.activities,
+        stickers: next.stickers,
+      }));
     } else {
       localStorage.setItem(KEY, JSON.stringify(next));
     }
@@ -107,6 +152,5 @@ export function useArchieData() {
 }
 export function isSoundEnabled() { return read().settings.sound; }
 export function readGameStars(): number {
-  try { return Object.values(JSON.parse(localStorage.getItem('sodafom_game_stars') || '{}')).reduce<number>((sum, n) => sum + (typeof n === 'number' && Number.isFinite(n) ? Math.max(0,Math.min(n,3)) : 0), 0); }
-  catch { return 0; }
+  return totalGameStars();
 }

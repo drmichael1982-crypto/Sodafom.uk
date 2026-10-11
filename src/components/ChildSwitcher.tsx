@@ -19,9 +19,10 @@ interface ChildSwitcherProps {
   children: Child[];
   activeChildId: number | null;
   onAddChild: () => void;
+  onSelect?: (childId: number) => void;
 }
 
-export default function ChildSwitcher({ children, activeChildId, onAddChild }: ChildSwitcherProps) {
+export default function ChildSwitcher({ children, activeChildId, onAddChild, onSelect }: ChildSwitcherProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -44,6 +45,7 @@ export default function ChildSwitcher({ children, activeChildId, onAddChild }: C
       ageGroup: child.ageGroup as AgeGroup,
       avatarEmoji: child.avatarEmoji,
     });
+    onSelect?.(child.id);
     setOpen(false);
   }
 

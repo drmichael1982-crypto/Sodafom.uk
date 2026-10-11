@@ -22,23 +22,23 @@ const L2: QuizQuestion[] = [
   { question: 'Unscramble: OOLSCH (a place to learn)', options: ['school','scohol','shoocl','scoohl'], answer: 'school' },
   { question: 'Unscramble: DRIFNE (someone you like)', options: ['friend','finder','fridge','fender'], answer: 'friend' },
   { question: 'Unscramble: TNHIG (opposite of day)', options: ['night','thing','tying','hting'], answer: 'night' },
-  { question: 'Unscramble: ELPEP (people)', options: ['people','peepl','pepel','peple'], answer: 'people' },
+  { question: 'Unscramble: POEPEL (more than one person)', options: ['people','pepper','purple','pencil'], answer: 'people' },
   { question: 'Unscramble: EATRH (the planet)', options: ['earth','heart','hater','rathe'], answer: 'earth' },
   { question: 'Unscramble: RETAW (H₂O)', options: ['water','tawer','wrate','rawet'], answer: 'water' },
   { question: 'Unscramble: OUSHE (a building)', options: ['house','shove','hoves','ohesu'], answer: 'house' },
   { question: 'Unscramble: TNPLA (it grows)', options: ['plant','plnat','panlt','tplan'], answer: 'plant' },
-  { question: 'Unscramble: IRCLE (a round shape)', options: ['circle','clire','irlce','recil'], answer: 'circle' },
-  { question: 'Unscramble: RNEAT (to learn)', options: ['earnt','learn','reant','trane'], answer: 'earnt' },
-  { question: 'Unscramble: SEATL (not early)', options: ['least','steal','tales','slate'], answer: 'least' },
+  { question: 'Unscramble: CEIRCL (a round shape)', options: ['circle','cereal','centre','curling'], answer: 'circle' },
+  { question: 'Unscramble: AELNR (to gain knowledge)', options: ['learn','later','clear','nearby'], answer: 'learn' },
+  { question: 'Unscramble: AELT (not early)', options: ['late','tale','teal','deal'], answer: 'late' },
 ];
 const L3: QuizQuestion[] = [
-  { question: 'Unscramble: IELST (a place to sleep)', options: ['islet','tiles','stile','lites'], answer: 'islet' },
-  { question: 'Unscramble: EART (4 possible answers)', options: ['rate','tear','tare','all of these'], answer: 'all of these' },
-  { question: 'Unscramble: ODWL', options: ['wold','word','wild','dowl'], answer: 'wold' },
+  { question: 'Unscramble: WILLOP (you rest your head on it)', options: ['pillow','willow','follow','yellow'], answer: 'pillow' },
+  { question: 'Unscramble: EART (to rip)', options: ['tear','rate','tare','earn'], answer: 'tear' },
+  { question: 'Unscramble: DORW (a unit of language)', options: ['word','world','work','wore'], answer: 'word' },
   { question: 'Unscramble: TNEILS (to hear)', options: ['listen','silent','tinsel','enlist'], answer: 'listen' },
-  { question: 'Unscramble: RNAEGL (a country)', options: ['England','langer','glaner','nregal'], answer: 'England' },
+  { question: 'Unscramble: LADNGEN (a country in the UK)', options: ['England','Ireland','Iceland','Finland'], answer: 'England' },
   { question: 'Unscramble: AERTCEH (in school)', options: ['teacher','cheater','treache','hectare'], answer: 'teacher' },
-  { question: 'Unscramble: RNBDEA (a flag)', options: ['banner','bander','braned','ranbed'], answer: 'banner' },
+  { question: 'Unscramble: ABNNER (a flag or sign)', options: ['banner','branch','border','button'], answer: 'banner' },
   { question: 'Unscramble: ELTAB (furniture)', options: ['table','bleat','blate','tabel'], answer: 'table' },
   { question: 'Unscramble: NRPTI (to make copies)', options: ['print','tprin','pinrt','rnpit'], answer: 'print' },
   { question: 'Unscramble: LBCAK (a colour)', options: ['black','blcak','bcalk','klacb'], answer: 'black' },
@@ -46,33 +46,35 @@ const L3: QuizQuestion[] = [
   { question: 'Unscramble: RNFOT (the front)', options: ['front','ftnor','rnoft','tronf'], answer: 'front' },
 ];
 const L4: QuizQuestion[] = [
-  { question: 'Unscramble: AEPRST (to separate)', options: ['repost','repast','tapers','drapes'], answer: 'repast' },
+  { question: 'Unscramble: AEPRSTAE (to divide or keep apart)', options: ['separate','operate','prepare','repeat'], answer: 'separate' },
   { question: 'Unscramble: LAERTS (to change)', options: ['alters','alerts','stelar','restal'], answer: 'alters' },
   { question: 'Unscramble: SRTEA (a feeling)', options: ['tears','stare','rates','aster'], answer: 'tears' },
   { question: 'Unscramble: AELRN (to study)', options: ['learn','renal','laner','earln'], answer: 'learn' },
-  { question: 'Unscramble: IESRP (a cost)', options: ['price','spire','prise','ripes'], answer: 'price' },
+  { question: 'Unscramble: CIRPE (a cost)', options: ['price','piece','prize','press'], answer: 'price' },
   { question: 'Unscramble: TNEAM (intended)', options: ['meant','ament','mante','etnam'], answer: 'meant' },
-  { question: 'Unscramble: RNPIG (spring season)', options: ['spring','pring','grpin','nrpig'], answer: 'spring' },
+  { question: 'Unscramble: RSPING (the season after winter)', options: ['spring','string','sprint','singer'], answer: 'spring' },
   { question: 'Unscramble: AEPRS (to save)', options: ['spare','reaps','pears','rapes'], answer: 'spare' },
   { question: 'Unscramble: TRSAE (to look hard)', options: ['stare','tears','rates','aster'], answer: 'stare' },
   { question: 'Unscramble: EALRG (big)', options: ['large','glare','lager','regal'], answer: 'large' },
-  { question: 'Unscramble: RNPTI (to make copies)', options: ['print','tprin','pinrt','rnpit'], answer: 'print' },
-  { question: 'Unscramble: AELRST (to change)', options: ['alters','alerts','stelar','restal'], answer: 'alters' },
+  { question: 'Unscramble: OBRSVEE (to watch carefully)', options: ['observe','reserve','deserve','reverse'], answer: 'observe' },
+  { question: 'Unscramble: GNAHCE (to make different)', options: ['change','chance','chain','charge'], answer: 'change' },
 ];
 const L5: QuizQuestion[] = [
-  { question: 'Unscramble: AEPRST (to separate)', options: ['repost','repast','tapers','drapes'], answer: 'repast' },
-  { question: 'Unscramble: AELRST (to change)', options: ['alters','alerts','stelar','restal'], answer: 'alters' },
-  { question: 'Unscramble: AEPRST (to separate)', options: ['repost','repast','tapers','drapes'], answer: 'repast' },
-  { question: 'Unscramble: AEIMRST (a sailor)', options: ['maestri','semitar','imarets','smartie'], answer: 'smartie' },
-  { question: 'Unscramble: AEPRSTU (a meadow)', options: ['pasture','uprates','repaust','tapeurs'], answer: 'pasture' },
-  { question: 'Unscramble: AELMNST (a feeling)', options: ['laments','mantles','stamen','alment'], answer: 'laments' },
-  { question: 'Unscramble: AEINRST (a country)', options: ['nastier','retains','retsina','stainer'], answer: 'retains' },
-  { question: 'Unscramble: AELPRST (to plaster)', options: ['plaster','psalter','stapler','replats'], answer: 'plaster' },
-  { question: 'Unscramble: AEINRSTU (a country)', options: ['urinates','ruinates','trainuse','austrine'], answer: 'urinates' },
-  { question: 'Unscramble: AELMNRST (a monster)', options: ['entralms','sternmal','entralms','entralms'], answer: 'entralms' },
-  { question: 'Unscramble: AELMNRSTU (a monster)', options: ['entralmus','sternmalu','entralmus','entralmus'], answer: 'entralmus' },
-  { question: 'Unscramble: AELMNRSTUV (a monster)', options: ['entralmusv','sternmaluv','entralmusv','entralmusv'], answer: 'entralmusv' },
+  { question: 'Unscramble: SILYSANA (a careful study of information)', options: ['analysis','analogy','answer','accuracy'], answer: 'analysis' },
+  { question: 'Unscramble: MOONSTARER (a scientist who studies space)', options: ['astronomer','researcher','navigator','meteorologist'], answer: 'astronomer' },
+  { question: 'Unscramble: ACIDTIRONY (a book that explains word meanings)', options: ['dictionary','directory','documentary','vocabulary'], answer: 'dictionary' },
+  { question: 'Unscramble: UPREADSE (to convince someone)', options: ['persuade','preserve','prepare','pursue'], answer: 'persuade' },
+  { question: 'Unscramble: CLUECATAL (to work out using numbers)', options: ['calculate','calibrate','collect','translate'], answer: 'calculate' },
+  { question: 'Unscramble: HOTPOGRAPH (a picture made with a camera)', options: ['photograph','paragraph','autograph','graphite'], answer: 'photograph' },
+  { question: 'Unscramble: PREMATUREET (a measure of how hot or cold something is)', options: ['temperature','measurement','thermometer','atmosphere'], answer: 'temperature' },
+  { question: 'Unscramble: MOVERNGETN (the group that runs a country)', options: ['government','movement','agreement','department'], answer: 'government' },
+  { question: 'Unscramble: QUAKERTHEA (a sudden shaking of the ground)', options: ['earthquake','aftershock','landslide','eruption'], answer: 'earthquake' },
+  { question: 'Unscramble: BRACELETE (to mark a happy occasion)', options: ['celebrate','decorate','remember','congratulate'], answer: 'celebrate' },
+  { question: 'Unscramble: VUNREADTE (an exciting experience)', options: ['adventure','departure','discovery','journey'], answer: 'adventure' },
+  { question: 'Unscramble: GLOWKNEDE (facts and understanding)', options: ['knowledge','learning','evidence','wisdom'], answer: 'knowledge' },
 ];
+
+export const ANAGRAM_QUESTION_BANKS = [L1, L2, L3, L4, L5];
 
 export default function AnagramAttack() {
   return (
@@ -93,7 +95,7 @@ export default function AnagramAttack() {
             gameSlug="anagram-attack"
             title="Anagram Attack"
             emoji="🔀"
-            questionsByLevel={[L1, L2, L3, L4, L5]}
+            questionsByLevel={ANAGRAM_QUESTION_BANKS}
             accentClass="bg-secondary"
             onComplete={oc}
           />
