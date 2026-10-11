@@ -66,6 +66,18 @@ it('opens in-flow game-menu help with its subject context without starting voice
   expect(help).toBeEnabled();
 });
 
+it('offers a contained scroll surface without pager controls for reading-heavy games', () => {
+  render(<HelmetProvider><MemoryRouter><ArchieProvider>
+    <GameShell title="Reading Quest" emoji="Map" subject="reading" ageGroups={['8–10']} screenMode="scroll">
+      {() => <button>Answer from passage</button>}
+    </GameShell>
+  </ArchieProvider></MemoryRouter></HelmetProvider>);
+  expect(screen.getByRole('region', { name: 'Reading Quest play area' })).toContainElement(
+    screen.getByRole('button', { name: 'Answer from passage' }),
+  );
+  expect(screen.queryByRole('navigation', { name: 'Page screens' })).not.toBeInTheDocument();
+});
+
 it('hands focus from Finish to results, then from Replay to the restarted game title', async () => {
   vi.stubGlobal('matchMedia', () => ({ matches: true }));
   render(<HelmetProvider><MemoryRouter><ArchieProvider>

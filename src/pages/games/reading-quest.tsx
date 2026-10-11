@@ -95,7 +95,7 @@ export default function ReadingQuestGame() {
         Reading Quest — Reading Game for Kids — Sodafom
       </h1>
 
-      <GameShell title="Reading Quest" emoji="🗺️" subject="reading" ageGroups={['5–7', '8–10', '11–13']} currentQuestion={currentQuestion}>
+      <GameShell title="Reading Quest" emoji="🗺️" subject="reading" ageGroups={['5–7', '8–10', '11–13']} currentQuestion={currentQuestion} screenMode="scroll">
         {(onComplete) => <ReadingQuestPlay onComplete={onComplete} onQuestionChange={setCurrentQuestion} />}
       </GameShell>
     </>
@@ -192,7 +192,7 @@ export function ReadingQuestPlay({ onComplete, onQuestionChange }: { onComplete:
   const progressPct = Math.round((answeredCount / total) * 100);
 
   return (
-    <div data-reading-quest-play className="flex-1 flex flex-col items-center justify-start p-3 sm:p-6 bg-gradient-to-b from-green-50 to-background max-w-2xl mx-auto w-full">
+    <div className="flex-1 flex flex-col items-center justify-start p-3 sm:p-6 bg-gradient-to-b from-green-50 to-background max-w-2xl mx-auto w-full">
       <AnimatePresence mode="wait">
         {phase === 'read' && (
           <motion.div key="read" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full">

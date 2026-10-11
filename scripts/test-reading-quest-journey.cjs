@@ -58,8 +58,8 @@ const answers = {
             `${viewport.label}: pause stops answering`);
           await page.screenshot({ path: `test-results/reading-quest/retry-break-${viewport.label}.png`, fullPage: true });
           await page.getByRole('button', { name: 'Resume quest', exact: true }).click();
-          const previousScreen = page.getByRole('button', { name: /Previous/ });
-          if (await previousScreen.isEnabled()) await previousScreen.click();
+          assert.equal(await page.getByRole('navigation', { name: 'Page screens' }).count(), 0,
+            `${viewport.label}: reading play uses one contained vertical surface`);
         }
 
         await page.getByRole('button', { name: answer, exact: true }).click();

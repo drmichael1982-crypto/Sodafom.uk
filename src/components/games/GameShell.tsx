@@ -51,6 +51,8 @@ interface GameShellProps {
   children: (onComplete: (result: GameResult) => void, controls: GameShellControls) => React.ReactNode;
   currentQuestion?: string;
   currentOptions?: string[];
+  /** Use contained vertical scrolling for reading-heavy games instead of paged columns. */
+  screenMode?: 'pager' | 'scroll';
 }
 
 const subjectColors: Record<string, { bg: string; text: string; light: string }> = {
@@ -68,7 +70,7 @@ const ageConfig: Record<string, { badge: string; icon: string }> = {
   '11–13':{ badge: 'bg-purple-600 text-white',        icon: '🏆' },
 };
 
-export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, subject, ageGroups, children, currentQuestion, currentOptions }: GameShellProps) {
+export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, subject, ageGroups, children, currentQuestion, currentOptions, screenMode = 'pager' }: GameShellProps) {
   // Preserve existing saved game IDs; the new title has a typographic apostrophe.
   const gameSlug = canonicalGameSlug ?? (title === 'Archie’s Adventure Trail' ? 'archie-adventure-trail' : title.toLowerCase().replace(/\s+/g, '-'));
   const navigate = useNavigate();
@@ -314,7 +316,11 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
           {result
             ? <ResultScreen key="result" result={result} focusOrigin={resultFocusOriginRef.current} onReplay={handleReplay} onHome={() => navigate('/')} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: `/games/${nextGame.slug}` } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
             : <motion.div ref={handleGamePanelMount} key={`game-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
-                <AppScreenPager>{children(handleComplete, { recordCompletion })}</AppScreenPager>
+                {screenMode === 'scroll'
+                  ? <div role="region" aria-label={`${title} play area`} className="game-scroll-window flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-contain">
+                      {children(handleComplete, { recordCompletion })}
+                    </div>
+                  : <AppScreenPager>{children(handleComplete, { recordCompletion })}</AppScreenPager>}
               </motion.div>
           }
         </AnimatePresence>
