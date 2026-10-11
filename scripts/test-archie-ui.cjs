@@ -467,7 +467,10 @@ const results=[];
               assert.equal(await page.getByRole('heading',{name:'A grown-up needs to help here',exact:true}).count(),0,'The teacher gate must leave layout flow after unlock');
               assert.equal(await page.locator('.grown-up-unlocked').count(),0,'The retired gate wrapper must not combine teacher panels into one pager screen');
               const learning=page.getByRole('heading',{name:'Recent puzzle learning for this learner',exact:true});
-              await learning.waitFor();await revealWithPager(learning);await page.waitForTimeout(500);
+              await learning.waitFor();
+              const direction=await learning.evaluate(element=>{const screen=element.closest('.app-screen-window')?.getBoundingClientRect(),box=element.getBoundingClientRect();if(!screen)return 0;if(box.left>=screen.left-1&&box.right<=screen.right+1)return 0;return box.left<screen.left?-1:1;});
+              if(direction){const control=button(direction<0?'← Previous':'Next →');assert.equal(await control.isEnabled(),true,'The teacher summary pager direction must have an enabled control');await control.click();}
+              await page.waitForTimeout(500);
               const geometry=await learning.evaluate(element=>{const screen=element.closest('.app-screen-window')?.getBoundingClientRect(),panel=element.closest('.a-panel')?.getBoundingClientRect(),box=element.getBoundingClientRect();return screen&&panel?{screenLeft:screen.left,screenRight:screen.right,panelLeft:panel.left,panelRight:panel.right,left:box.left,right:box.right}:null;});
               assert.ok(geometry&&geometry.panelLeft>=geometry.screenLeft-1&&geometry.panelRight<=geometry.screenRight+1&&geometry.left>=geometry.screenLeft-1&&geometry.right<=geometry.screenRight+1,viewport.label+' '+viewport.width+'x'+viewport.height+' teacher content is clipped after unlock: '+JSON.stringify(geometry));
               if((viewport.width===390&&viewport.height===844)||(viewport.width===820&&viewport.height===1180)||(viewport.width===1440&&viewport.height===900)){
