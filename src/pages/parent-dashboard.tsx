@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ProtectedRoute, useSession } from '@/lib/auth/auth-client';
 import {
   Star, BookOpen, FlaskConical, Calculator, Pencil, Trophy,
@@ -231,6 +231,7 @@ function FamilySummaryCard({ children }: { children: ChildSummary[] }) {
 
 
 function ChildCard({ childId }: { childId: number }) {
+  const reduceMotion = useReducedMotion();
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -277,9 +278,9 @@ function ChildCard({ childId }: { childId: number }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: reduceMotion ? 0 : 0.4 }}
       className="bg-card rounded-3xl border-2 border-border overflow-hidden shadow-sm"
     >
       {/* Header */}
