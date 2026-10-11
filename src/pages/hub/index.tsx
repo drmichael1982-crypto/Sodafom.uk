@@ -224,6 +224,27 @@ export function normalizeHubChildren(value: unknown): Child[] {
   return normalizeChildrenResponse(value);
 }
 
+export function HubLearnerLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div role="alert" className="mb-5 rounded-2xl border border-destructive/30 bg-destructive/5 p-5 sm:flex sm:items-center sm:justify-between sm:gap-4">
+      <div>
+        <h3 className="font-black text-foreground">Could not load your learners</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Check your connection, then try again. Your saved learner profiles have not been removed.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground sm:mt-0 sm:w-auto"
+      >
+        <RotateCcw size={16} aria-hidden="true" />
+        Try again
+      </button>
+    </div>
+  );
+}
+
 // ── Config ───────────────────────────────────────────────────────────────────
 const AGE_GROUPS = [{
   value: '5-7',
@@ -532,6 +553,7 @@ function HubDashboard() {
 
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [activeChildId, setActiveChildIdState] = useState<number | null>(() => {
     try { const s = localStorage.getItem('sodafom_active_child'); return s ? JSON.parse(s).id : null; } catch { return null; }
@@ -552,6 +574,8 @@ function HubDashboard() {
     } catch { /* ignore */ }
   }, []);
   const loadChildren = useCallback(async () => {
+    setLoading(true);
+    setLoadError(false);
     try {
       const response = await fetch(`${API_PREFIX}/children`, { credentials: 'include' });
       if (!response.ok) throw new Error(`Could not load learners (${response.status})`);
@@ -567,13 +591,15 @@ function HubDashboard() {
         ageGroup: selected.ageGroup as AgeGroup,
         avatarEmoji: selected.avatarEmoji,
       } : null);
+    } catch {
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    loadChildren().catch(() => setLoading(false));
+    void loadChildren();
   }, [loadChildren]);
   const handleDelete = async (id: number) => {
     if (!confirm('Remove this learner?')) return;
@@ -590,7 +616,7 @@ function HubDashboard() {
     setActiveChild({ id: child.id, name: child.name, ageGroup: child.ageGroup as AgeGroup, avatarEmoji: child.avatarEmoji });
     setActiveChildIdState(child.id);
     setShowAdd(false);
-    loadChildren().catch(() => {});
+    void loadChildren();
   };
   const firstName = user?.name?.split(' ')[0] ?? 'there';
   return <>
@@ -918,9 +944,11 @@ function HubDashboard() {
             </motion.button>
           </div>
 
+          {!loading && loadError && <HubLearnerLoadError onRetry={() => void loadChildren()} />}
+
           {loading ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {[1, 2, 3].map(i => <div key={i} className="bg-card rounded-2xl border border-border h-52 animate-pulse" />)}
-            </div> : children.length === 0 ? <motion.div initial={{
+            </div> : children.length === 0 ? !loadError && <motion.div initial={{
           opacity: 0,
           scale: 0.95
         }} animate={{
