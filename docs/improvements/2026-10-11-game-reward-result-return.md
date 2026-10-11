@@ -13,7 +13,7 @@ Date: 11 October 2026
 
 ## Current deployed evidence
 
-Railway deployment `06eea751-d395-49c9-a44f-b940499b0c87` was `SUCCESS` on target commit `79ba0f7e76dfa95c249c97fdd0b0b02adf3cc353`, with no pending work. The separate `sodafom797` service was not changed.
+Railway deployment `e5232f76-1661-43da-ae16-213b2774d781` was rechecked as `SUCCESS` on the final target commit `ae10eb5098586504bed606aab007d0795a9b1ae1` (`fix: restore subject game links in free mode`). The prior `79ba0f7e...` deployment had been removed after replacement. The separate `sodafom797` service was not changed.
 
 A direct Chromium walkthrough of the deployed app covered the home picture playground, game selection, a complete three-question Reading Quest, its reward, the scored result, lessons, the parent gate and the teacher gate. The home retained the blue/gold identity, pale picture-world treatment and blond, green-eyed Archie. The lesson and adult pages retained large controls, clear headings and privacy-aware gates.
 
