@@ -2,10 +2,10 @@
 
 ## Repository and deployment evidence
 
-- The current children’s target was resolved from the remote branch, open draft PR and Railway rather than guessed: `test/archie-2026-10-02` at `45533827a33d977a649d80fa6efdc119604a3927` (`Protect certificates during child switching`). This is newer than reference `be917c8e6cdb99156a63b38f8d12792babeb31c4`.
-- Railway deployment `eff26ac5-0055-44be-ac3d-84694a3b8687` is `SUCCESS` on that exact target. It completed at 2026-10-11T15:17:10Z. No deployment, environment, variable or credential was changed in this run.
-- The exact target was merged without conflict into continued branch `improve/archie-learning-20261007` by `8b7a2cb3dbfdea4bdce6d568bfa6a3b363686c47`. The bounded candidate head is `7bc7d45fb79a6b75d981a3ed619b322386c647bd`; the final application-code change is `fd6af4897d3c3ea2eba01bd516a463e2a009b7cc`. Draft PR [#81](https://github.com/drmichael1982-crypto/Sodafom.uk/pull/81) remains open and draft; nothing was merged to the test branch or deployed.
-- The target change protects certificates during child switching and does not overlap the shared quiz break or Reading Fluency journey files.
+- The children’s target was resolved from the remote branch, open draft PR and Railway rather than guessed. The improvement was built and tested against `test/archie-2026-10-02` at `45533827a33d977a649d80fa6efdc119604a3927` (`Protect certificates during child switching`), newer than reference `be917c8e6cdb99156a63b38f8d12792babeb31c4`.
+- Railway deployment `eff26ac5-0055-44be-ac3d-84694a3b8687` was `SUCCESS` on that exact target and completed at 2026-10-11T15:17:10Z. No deployment, environment, variable or credential was changed in this run.
+- The tested target was merged without conflict into continued branch `improve/archie-learning-20261007` by `8b7a2cb3dbfdea4bdce6d568bfa6a3b363686c47`. The bounded candidate head is `7bc7d45fb79a6b75d981a3ed619b322386c647bd`; the final application-code change is `fd6af4897d3c3ea2eba01bd516a463e2a009b7cc`. Draft PR [#81](https://github.com/drmichael1982-crypto/Sodafom.uk/pull/81) remains open and draft; nothing was merged to the test branch or deployed.
+- Final remote recheck: the target advanced after verification to `5f25afff4ff553f871df7fb9c3ef6600ca095a4d` (`Isolate local tutor reports by learner`). It changes five parent/tutor report files. A no-deploy merge attempt was stopped and aborted when it produced conflicts in those five files because the cumulative improvement branch already has related work. GitHub now reports PR #81 as open, draft, unmerged and not currently mergeable. This target movement is the current integration blocker; no conflict side was discarded.
 
 ## Bounded improvement
 
@@ -36,4 +36,4 @@ The deployed Railway target was opened directly at Reading Fluency. It retains t
 
 Production, the test deployment, payments, credentials, deferred 3D work and the separate `sodafom797` project were not changed. Leonard’s external queue is not visible in this runtime, so no active-worker coordination claim is made. Physical-device touch/layout, real microphone and audible speech, hardware screen readers, live accounts/email/payments and outcomes with real children remain unverified.
 
-Next: recheck the current target and PR, then run a complete Reading Speed phone/tablet journey covering instructions, wrong answer, hint/retry, pause/resume, progression, completion/reward and navigation. Real-device microphone and audible-speech validation remains a separate explicit blocker.
+Next: reconcile the new target's learner-scoped tutor-report changes with the cumulative branch before further feature work, rerun the combined CI and inspect its artifact, then run a complete Reading Speed phone/tablet journey covering instructions, wrong answer, hint/retry, pause/resume, progression, completion/reward and navigation. Real-device microphone and audible-speech validation remains a separate explicit blocker.
