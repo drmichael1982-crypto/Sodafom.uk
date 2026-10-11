@@ -17,6 +17,7 @@ const results=[];
   const button=name=>page.getByRole('button',{name,exact:true});
   const link=name=>page.getByRole('link',{name,exact:true});
   const checkbox=name=>page.getByRole('checkbox',{name,exact:true});
+  const revealWithPager=async locator=>{for(let attempt=0;attempt<30;attempt++){const direction=await locator.evaluate(element=>{const viewport=element.closest('.app-screen-window')?.getBoundingClientRect(),box=element.getBoundingClientRect();if(!viewport)return 0;if(box.left>=viewport.left-1&&box.right<=viewport.right+1)return 0;return box.left<viewport.left?-1:1;});if(direction===0)return;await button(direction<0?'← Previous':'Next →').click();await page.waitForTimeout(180);}throw new Error('Pager did not reveal the requested control');};
   // Follow the instruction displayed to the adult; never unlock through storage or events.
   const unlockGrownUpArea=async({rejectWrongAnswer=false}={})=>{
     const title='A grown-up needs to help here';
@@ -33,6 +34,8 @@ const results=[];
     assert.ok(words.length>=2,'The visible gate sentence must contain the requested words');
     await page.getByLabel('Grown-up answer',{exact:true}).fill(words.at(-1)+' '+words[1]);
     await button('Continue with a grown-up').click();
+    await page.getByLabel('Grown-up area opened',{exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Grown-up area opened',{exact:true}).evaluate(element=>element===document.activeElement),true,'Unlock confirmation must receive focus and announce that the area opened');
     await page.getByLabel('School year').waitFor();
     assert.equal(await page.getByRole('heading',{name:title,exact:true}).count(),0);
   };
@@ -44,7 +47,8 @@ const results=[];
   const isEligible=(game,year)=>game.ageGroups.some(group=>{
     const match=group.trim().match(/^(\d+)\s*[–-]\s*(\d+)$/);
     assert.ok(match,'Catalogue must advertise a clear age range: '+game.title);
-    return year+4>=Number(match[1])&&year+4<=Number(match[2]);
+    const schoolYearAges=[year+4,Math.min(year+5,13)];
+    return schoolYearAges[0]<=Number(match[2])&&Number(match[1])<=schoolYearAges[1];
   });
   const assertGameIntersection=async(year,subject='all',query='')=>{
     const expected=catalog.filter(game=>isEligible(game,year)&&(subject==='all'||game.subject===subject)&&
@@ -66,11 +70,10 @@ const results=[];
     return word.trim();
   };
   const escapeRegex=text=>text.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-  const unlockPreviewControls=async()=>{
-    await page.getByLabel('Preview code',{exact:true}).fill('1182');
-    await button('Open preview controls').click();
-    await page.getByRole('heading',{name:'Stripe and pricing preparation',exact:true}).waitFor();
-    await page.getByText('Payments are off in this school preview.',{exact:true}).waitFor();
+  const assertProtectedOwnerRedirect=async()=>{
+    await page.waitForURL(base+'/admin');
+    await page.getByRole('heading',{name:'Your learning app',exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Preview code',{exact:true}).count(),0,'The retired device PIN must not remain on the protected owner route');
   };
   fs.mkdirSync('test-results',{recursive:true});
   try{
@@ -119,8 +122,23 @@ const results=[];
     await check('One shared Ask Archie: local maths, close, context and navigation',async()=>{
       await button('Ask Archie').click();assert.equal(await page.getByRole('dialog').count(),1);
       await page.getByLabel('Your question for Archie').fill('What is 8 plus 4?');await button('Send question').click();await page.getByRole('log').getByText(/8 plus 4 is 12/i).waitFor();await button('Listen to Archie').waitFor({state:'visible'});await button('Listen to Archie').click();
-      await button('Close Ask Archie').click();await goto('/lesson');const spokenWord=await studyWord();await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
+      await button('Close Ask Archie').click();await goto('/lesson');const spokenWord=await studyWord();
+      await page.evaluate(()=>{
+        Object.defineProperty(window,'SpeechRecognition',{configurable:true,value:undefined});
+        Object.defineProperty(window,'webkitSpeechRecognition',{configurable:true,value:undefined});
+      });
+      await button('Start spoken lesson').click();await page.getByText('Helping with My spelling lesson').waitFor();
       // This exercises the typed fallback in the spoken-lesson UI, not microphone recognition.
+      const typedFallbackMessage='Voice conversation is not supported here. Type your question to Archie below.';
+      const typedFallbackStatus=page.getByRole('status').filter({hasText:typedFallbackMessage});
+      await typedFallbackStatus.waitFor();
+      assert.equal(await typedFallbackStatus.textContent(),typedFallbackMessage,'Unsupported voice recognition must explain the typed fallback');
+      assert.equal(await page.getByLabel('Your question for Archie').evaluate(element=>element===document.activeElement),true,'Unsupported voice recognition must focus the typed fallback');
+      await page.screenshot({path:'test-results/spoken-lesson-typed-fallback-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Typed voice fallback must not overflow the tablet viewport');
+      await page.screenshot({path:'test-results/spoken-lesson-typed-fallback-820.png',fullPage:true});
+      await page.setViewportSize({width:390,height:844});
       await page.getByLabel('Your question for Archie').fill(spokenWord);await button('Send question').click();await page.getByRole('log').getByText(new RegExp('spelled '+escapeRegex(spokenWord)+' correctly','i')).waitFor();
       await button('Close Ask Archie').click();
       await page.getByRole('heading',{level:1,name:/Step 1 of 7/}).waitFor();
@@ -162,17 +180,54 @@ const results=[];
       assert.equal(studied.length,7,'All seven displayed study words were attempted');
       assert.equal(new Set(studied.map(word=>word.toLowerCase())).size,7,'Each spelling step has its own study word');
       await page.getByRole('heading',{name:'3 stars earned'}).waitFor();await link('See my rewards').click();await button('Collect sticker').first().click();await button('Collected ✓').first().waitFor();await page.reload();await button('Collected ✓').first().waitFor();
+      await page.evaluate(()=>{localStorage.setItem('sodafom_active_child',JSON.stringify({id:'browser-second-learner',name:'Second learner'}));window.dispatchEvent(new Event('sodafom:active-child-changed'));});
+      await page.reload();assert.equal(await button('Collected ✓').count(),0,'A different learner must not inherit the first learner\'s sticker');
+      await page.screenshot({path:'test-results/sticker-isolation-second-learner-390.png',fullPage:true});
+      await page.evaluate(()=>{localStorage.removeItem('sodafom_active_child');window.dispatchEvent(new Event('sodafom:active-child-changed'));});
+      await page.setViewportSize({width:820,height:1180});await page.reload();await button('Collected ✓').first().waitFor();
+      await page.screenshot({path:'test-results/sticker-isolation-original-learner-820.png',fullPage:true});
+      await page.setViewportSize({width:390,height:844});
     });
     await check('Books: reader pagination, read aloud and completion saved once',async()=>{
       await goto('/library');await page.getByRole('link',{name:/Archie and the Lost Key/}).click();await button('Read aloud').click();
       for(let i=0;i<3;i++)await button('Next page').click();await button('Finish book • Earn 1 star').click();assert.equal(await button('Book completed ✓').isDisabled(),true);await button('Previous').click();await button('Next page').click();assert.equal(await button('Book completed ✓').isDisabled(),true);
+    });
+    await check('Reader: unavailable speech keeps the story visible and gives a calm on-screen recovery',async()=>{
+      await goto('/reader/lost-key');
+      await page.evaluate(()=>Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:undefined}));
+      const readAloud=button('Read aloud');await readAloud.click();
+      const recovery='Read aloud is not available on this device. Keep reading on the screen, or ask a grown-up to check the sound settings.';
+      await page.getByRole('status').filter({hasText:recovery}).waitFor();
+      assert.equal(await readAloud.evaluate(element=>element===document.activeElement),true,'Read-aloud failure must leave keyboard focus on the retry control');
+      assert.equal(await page.getByText(/Archie found a tiny golden key/).isVisible(),true,'The printed story must remain available');
+      try{await page.waitForFunction(()=>{const windowElement=document.querySelector('.app-screen-window');const story=document.querySelector('.a-reader');const puzzle=document.querySelector('.learning-jigsaw');if(!windowElement||!story||!puzzle)return false;const viewport=windowElement.getBoundingClientRect(),storyBox=story.getBoundingClientRect(),puzzleBox=puzzle.getBoundingClientRect();return windowElement.scrollLeft===0&&storyBox.left>=viewport.left-1&&storyBox.right<=viewport.right+1&&!(puzzleBox.right>viewport.left+1&&puzzleBox.left<viewport.right-1);},undefined,{timeout:2000});}catch(error){const phoneGeometry=await page.evaluate(()=>{const windowElement=document.querySelector('.app-screen-window');const flow=document.querySelector('.app-screen-flow');const story=document.querySelector('.a-reader');const puzzle=document.querySelector('.learning-jigsaw');const status=document.querySelector('.app-screen-controls [role="status"]');const readControl=document.querySelector('[aria-controls^="reader-story-"]');if(!windowElement||!flow||!story||!puzzle)throw new Error('Reader pager geometry is missing');const viewport=windowElement.getBoundingClientRect(),storyBox=story.getBoundingClientRect(),puzzleBox=puzzle.getBoundingClientRect();return{nativeScroll:windowElement.scrollLeft,windowWidth:windowElement.clientWidth,flowWidth:flow.scrollWidth,transform:getComputedStyle(flow).transform,pagerStatus:status?.textContent?.trim(),controlledId:readControl?.getAttribute('aria-controls'),activeControl:document.activeElement?.textContent?.trim(),storyLeft:storyBox.left-viewport.left,storyRight:viewport.right-storyBox.right,puzzleLeft:puzzleBox.left-viewport.left,puzzleRight:viewport.right-puzzleBox.right,puzzleOverlaps:puzzleBox.right>viewport.left+1&&puzzleBox.left<viewport.right-1};});throw new Error(`Phone reader did not settle on its printed story (${JSON.stringify(phoneGeometry)})`,{cause:error});}
+      await page.screenshot({path:'test-results/reader-speech-fallback-390.png',fullPage:true});
+      await button('Got it').click();await page.getByRole('status').filter({hasText:recovery}).waitFor({state:'detached'});
+      await page.setViewportSize({width:820,height:1180});
+      await goto('/reader/lost-key');
+      await page.evaluate(()=>Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:undefined}));
+      const tabletReadAloud=button('Read aloud');await tabletReadAloud.click();
+      await page.getByRole('status').filter({hasText:recovery}).waitFor();
+      assert.equal(await tabletReadAloud.evaluate(element=>element===document.activeElement),true,'Tablet read-aloud failure must leave keyboard focus on the retry control');
+      assert.equal(await page.getByText(/Archie found a tiny golden key/).isVisible(),true,'The printed tablet story must remain available');
+      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Read-aloud recovery must not overflow the tablet viewport');
+      await page.waitForFunction(()=>{const windowElement=document.querySelector('.app-screen-window');const story=document.querySelector('.a-reader');const puzzle=document.querySelector('.learning-jigsaw');if(!windowElement||!story||!puzzle)return false;const viewport=windowElement.getBoundingClientRect(),storyBox=story.getBoundingClientRect(),puzzleBox=puzzle.getBoundingClientRect();return windowElement.scrollLeft===0&&storyBox.left>=viewport.left-1&&storyBox.right<=viewport.right+1&&!(puzzleBox.right>viewport.left+1&&puzzleBox.left<viewport.right-1);},undefined,{timeout:2000});
+      const readerGeometry=await page.evaluate(()=>{const windowElement=document.querySelector('.app-screen-window');const flow=document.querySelector('.app-screen-flow');const story=document.querySelector('.a-reader');const puzzle=document.querySelector('.learning-jigsaw');const status=document.querySelector('.app-screen-controls [role="status"]');const readControl=document.querySelector('[aria-controls^="reader-story-"]');if(!windowElement||!flow||!story||!puzzle)throw new Error('Reader pager geometry is missing');const viewport=windowElement.getBoundingClientRect(),storyBox=story.getBoundingClientRect(),puzzleBox=puzzle.getBoundingClientRect();return{nativeScroll:windowElement.scrollLeft,windowWidth:windowElement.clientWidth,flowWidth:flow.scrollWidth,transform:getComputedStyle(flow).transform,pagerStatus:status?.textContent?.trim(),controlledId:readControl?.getAttribute('aria-controls'),activeControl:document.activeElement?.textContent?.trim(),storyLeft:storyBox.left-viewport.left,storyRight:viewport.right-storyBox.right,puzzleLeft:puzzleBox.left-viewport.left,puzzleRight:viewport.right-puzzleBox.right,puzzleOverlaps:puzzleBox.right>viewport.left+1&&puzzleBox.left<viewport.right-1};});
+      assert.equal(readerGeometry.nativeScroll,0,'Focused tablet controls must not leave a hidden native pager scroll');
+      assert.ok(readerGeometry.storyLeft>=-1&&readerGeometry.storyRight>=-1,`Tablet story must fit the active pager screen (${JSON.stringify(readerGeometry)})`);
+      assert.equal(readerGeometry.puzzleOverlaps,false,`The preceding puzzle screen must not remain visible (${JSON.stringify(readerGeometry)})`);
+      await page.screenshot({path:'test-results/reader-speech-fallback-820.png',fullPage:true});
+      await button('Got it').click();await page.getByRole('status').filter({hasText:recovery}).waitFor({state:'detached'});
+      await page.setViewportSize({width:390,height:844});
     });
     await check('Homework: upload/remove and the typed question reaches shared Archie',async()=>{
       await goto('/homework');await page.locator('input[type=file]').setInputFiles({name:'question.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a7p0AAAAASUVORK5CYII=','base64')});await page.getByAltText('Your homework reference').waitFor();await button('Remove photo').click();await page.getByRole('textbox').fill('What is half of 12?');await button('Get help with this question').click();await page.getByRole('dialog').waitFor();await page.waitForFunction(()=>document.querySelector('[aria-label="Your question for Archie"]').value==='What is half of 12?');assert.equal(await page.getByLabel('Your question for Archie').inputValue(),'What is half of 12?');await button('Send question').click();await page.getByRole('log').getByText(/half of 12 is 6/i).waitFor();await button('Close Ask Archie').click();
     });
     await check('Parents: gate, saved year group, sound, large text, setup status and progress',async()=>{
       await openParents();await page.getByLabel('School year').selectOption('2');
-      await checkbox('Larger text on menus and books').check();await checkbox('Read aloud and sound').uncheck();
+      await page.getByRole('heading',{name:'Practice for local learner on this device',exact:true}).waitFor();
+      await page.getByText('Learner-scoped history:',{exact:true}).waitFor();
+      await checkbox('Larger text on menus and books').check();const soundSetting=checkbox('Read aloud and sound');await revealWithPager(soundSetting);await soundSetting.uncheck();
       await button('Save learning settings').click();await page.reload();await unlockGrownUpArea();
       assert.equal(await page.getByLabel('School year').inputValue(),'2');
       assert.equal(await checkbox('Larger text on menus and books').isChecked(),true);
@@ -189,13 +244,80 @@ const results=[];
       assert.equal(typeof status.message,'string');assert.ok(status.message.trim(),'Setup status must explain its configuration');
       await page.getByText(status.message,{exact:true}).waitFor();
       assert.equal(await checkbox('Allow online learning help').isChecked(),false,'Checking setup must not enable online help');
-      await checkbox('Read aloud and sound').check();
+      const restoredSoundSetting=checkbox('Read aloud and sound');await revealWithPager(restoredSoundSetting);await restoredSoundSetting.check();
       await link('Try the lesson').click();await page.getByRole('heading',{level:1,name:/My spelling lesson.*Year 2/}).waitFor();
       await openParents();await page.getByLabel('School year').selectOption('4');await checkbox('Larger text on menus and books').uncheck();await button('Save learning settings').click();
       await openParents();await page.getByLabel('School year').selectOption('9');await button('Save learning settings').click();
       await link('Try the lesson').click();await page.getByRole('heading',{level:1,name:/My spelling lesson.*Year 9/}).waitFor();
       await openParents();await page.getByLabel('School year').selectOption('4');await button('Save learning settings').click();
-      await link('View progress').click();await page.getByText('Year 4 spelling',{exact:true}).waitFor();
+      await link('View progress').click();await page.waitForURL(base+'/progress?from=parents');await page.getByText('Year 4 spelling',{exact:true}).waitFor();
+      await page.getByRole('heading',{level:1,name:'local learner progress',exact:true}).waitFor();
+      await page.getByRole('heading',{name:'Learner-scoped history',exact:true}).waitFor();
+      assert.equal(await page.getByRole('heading',{level:1,name:'My progress',exact:true}).count(),0,'Parent detail must identify the learner profile whose progress is shown');
+      const parentBack=page.getByRole('link',{name:'Back to parents and learning',exact:true});
+      assert.equal(await parentBack.getAttribute('href'),'/parents','Parent progress must provide a direct return to the protected parent area');
+      await page.screenshot({path:'test-results/parent-progress-390.png',fullPage:true});
+      await page.locator('.a-tabs').getByRole('link',{name:'Rewards',exact:true}).click();await page.waitForURL(base+'/rewards?from=parents');
+      assert.equal(await page.getByRole('link',{name:'Back to parents and learning',exact:true}).getAttribute('href'),'/parents','Adult return context must survive progress tabs');
+      await page.locator('.a-tabs').getByRole('link',{name:'Progress',exact:true}).click();await page.waitForURL(base+'/progress?from=parents');
+      await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/parent-progress-820.png',fullPage:true});
+      await page.getByRole('link',{name:'Back to parents and learning',exact:true}).click();await page.getByRole('heading',{name:'A grown-up needs to help here',exact:true}).waitFor();
+    });
+    await check('History and Fraction completions appear once in the teacher device summary',async()=>{
+      await openParents();await page.getByLabel('School year').selectOption('1');await button('Save learning settings').click();
+      await page.setViewportSize({width:390,height:844});await goto('/history');
+      await button('The Thames').click();await page.getByText('Try another answer. Ask Archie for a clue if you need one.',{exact:true}).waitFor();
+      for(const answer of ['The Nile','Royal tombs','Hieroglyphs','A pharaoh','Evidence','Ancient Egypt'])await button(answer).click();
+      await page.getByText('You completed Ancient Egypt!',{exact:false}).waitFor();
+      await page.screenshot({path:'test-results/history-complete-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/history-complete-820.png',fullPage:true});
+
+      await page.setViewportSize({width:390,height:844});await goto('/');await button('Puzzles').click();await button('Fractions').click();
+      for(let question=0;question<10;question++){
+        const checkFraction=button('Check the fraction');
+        if(await checkFraction.count()){await page.getByRole('button',{name:'Fraction section 1'}).click();await checkFraction.click();}
+        else{const diagram=await page.locator('.fraction-circle').getAttribute('aria-label');const match=diagram?.match(/(\d+) equal sections; (\d+) shaded/);assert.ok(match,`Fraction diagram must announce its parts (${diagram})`);await button(`${match[2]}/${match[1]}`).click();}
+        await button(question===9?'See my results':'Next question').click();
+      }
+      await page.getByRole('heading',{name:'Ten fractions explored!'}).waitFor();await button('Play ten more questions').waitFor();
+      await page.screenshot({path:'test-results/fraction-complete-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/fraction-complete-820.png',fullPage:true});
+
+      await page.setViewportSize({width:390,height:844});await goto('/teacher');await unlockGrownUpArea();
+      const puzzleSummary=page.getByRole('heading',{name:'Recent puzzle learning for this learner',exact:true});await puzzleSummary.waitFor();
+      await page.getByRole('heading',{name:'Maths · Year 1',exact:true}).waitFor();
+      await page.getByRole('heading',{name:'History · Year not recorded',exact:true}).waitFor();
+      await page.getByText('History records have no saved year, so none is guessed.',{exact:false}).waitFor();
+      await page.getByText('Ancient Egypt history picture puzzle',{exact:true}).waitFor();
+      await page.getByText('Fractions · 10 questions · 10 first-try answers',{exact:true}).waitFor();
+      const savedIds=await page.evaluate(()=>JSON.parse(localStorage.getItem('sodafom_archie_design_v1')||'{"activities":[]}').activities.map(activity=>activity.id));
+      assert.equal(savedIds.filter(id=>id==='history-jigsaw-egypt').length,1,'History completion must be stored once');
+      assert.equal(savedIds.filter(id=>/^fraction-picture-1-/.test(id)).length,1,'Fraction completion must be stored once');
+      await link('Open learner progress').click();await page.waitForURL(base+'/progress?from=teacher');
+      await page.getByText('Ancient Egypt history picture puzzle',{exact:true}).waitFor();
+      await page.getByRole('heading',{level:1,name:'local learner progress',exact:true}).waitFor();
+      await page.getByRole('heading',{name:'Learner-scoped history',exact:true}).waitFor();
+      const teacherBack=page.getByRole('link',{name:'Back to teacher lessons',exact:true});
+      assert.equal(await teacherBack.getAttribute('href'),'/teacher','Teacher progress must provide a direct return to the protected teacher area');
+      await page.setViewportSize({width:390,height:844});await page.screenshot({path:'test-results/teacher-progress-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});await page.screenshot({path:'test-results/teacher-progress-820.png',fullPage:true});
+      await teacherBack.click();await unlockGrownUpArea();
+      const pager=page.getByRole('navigation',{name:'Page screens',exact:true});
+      const pagerStatus=pager.getByRole('status');
+      const previous=pager.getByRole('button',{name:'← Previous',exact:true});
+      const next=pager.getByRole('button',{name:'Next →',exact:true});
+      while(!await previous.isDisabled()){await previous.click();await page.waitForTimeout(180);}
+      await next.click();await page.waitForTimeout(180);
+      await pagerStatus.getByText(/Screen 2 of \d+/).waitFor();
+      await page.evaluate(()=>window.scrollTo(0,0));
+      await page.screenshot({path:'test-results/teacher-puzzle-learning-390.png',fullPage:true});
+      await next.click();await page.waitForTimeout(180);
+      await pagerStatus.getByText(/Screen 3 of \d+/).waitFor();
+      await page.evaluate(()=>window.scrollTo(0,0));
+      await page.screenshot({path:'test-results/teacher-puzzle-learning-history-390.png',fullPage:true});
+      await page.setViewportSize({width:820,height:1180});
+      while(!await previous.isDisabled()){await previous.click();await page.waitForTimeout(180);}
+      await page.screenshot({path:'test-results/teacher-puzzle-learning-820.png',fullPage:true});
     });
     await check('Cartoons: selection, play/pause, next, restart and return',async()=>{
       await goto('/cartoons');await page.getByRole('button',{name:/The Number Island/}).click();await button('Pause').click();await button('Play').click();await button('Next scene').click();await page.getByText('Scene 2 of 3',{exact:true}).waitFor();await button('Restart').click();await page.getByText('Scene 1 of 3',{exact:true}).waitFor();await button('Read this scene').click();await page.getByRole('button',{name:/All episodes/}).click();
@@ -204,7 +326,10 @@ const results=[];
       await goto('/games');await chooseGameYear(4);
       await assertGameIntersection(4);
       assert.equal(await button('Browse all ages').count(),0,'Age bypass must not return');
-      assert.equal(await page.getByRole('combobox',{name:'My learning year',exact:true}).locator('option').count(),9,'All nine school years remain selectable');
+      const yearSelect=page.getByRole('combobox',{name:'My learning year',exact:true});
+      assert.equal(await yearSelect.locator('option').count(),9,'All nine school years remain selectable');
+      assert.deepEqual(await yearSelect.locator('optgroup').evaluateAll(groups=>groups.map(group=>group.label)),['Main pathway · ages 5–12','Optional older extensions'],'Core and extension years must be clearly grouped');
+      await page.getByText("Archie's main pathway is ages 5–12. Year 8 can include age 12; choose Years 8–9 with a grown-up for optional older content.",{exact:true}).waitFor();
       for(const route of ['/games/star-trail','/games/number-planets'])assert.equal(await page.locator(`[data-game-link][href="${route}"]`).count(),1);
       await button('Spelling').click();await page.waitForURL(base+'/games?subject=spelling');
       await assertGameIntersection(4,'spelling');
@@ -214,9 +339,75 @@ const results=[];
       await button('All games').click();await assertGameIntersection(1);
       await chooseGameYear(7);await assertGameIntersection(7);
       await chooseGameYear(4);await assertGameIntersection(4);
-      await page.getByLabel('Search games').fill('Number Pop');await assertGameIntersection(4,'all','Number Pop');
-      await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/number-pop');
-      await button('Ask Archie').waitFor();assert.equal(await button('Ask Archie').count(),1);await button('Ask Archie').click();await page.getByText(/Helping with Number Pop/).waitFor();await button('Close Ask Archie').click();
+      await page.getByLabel('Search games').fill('Phonics Parrot');await assertGameIntersection(4,'all','Phonics Parrot');
+      assert.equal(await page.locator('[data-game-link]').count(),0,'Phonics Parrot must stay hidden for Year 4');
+      await page.getByText('No games match those filters for Year 4. Try a shorter search or choose another subject.',{exact:true}).waitFor();
+      await button('Show Year 4 games').click();await assertGameIntersection(4);
+      assert.equal(await page.getByRole('combobox',{name:'My learning year',exact:true}).inputValue(),'4','Reset must preserve the selected year');
+      assert.equal(await page.getByLabel('Search games').evaluate(input=>input===document.activeElement),true,'Reset returns keyboard focus to search');
+      await chooseGameYear(3);await page.getByLabel('Search games').fill('Phonics Parrot');await assertGameIntersection(3,'all','Phonics Parrot');
+      await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/phonics-parrot');
+      await button('Ask Archie').waitFor();assert.equal(await button('Ask Archie').count(),1);await button('Ask Archie').click();await page.getByText(/Helping with Phonics Parrot/).waitFor();await button('Close Ask Archie').click();
+    });
+    await check('Phonics Parrot: unavailable speech keeps the printed sound and gives calm recovery',async()=>{
+      const recovery='Read aloud is not available on this device. Keep reading on the screen, or ask a grown-up to check the sound settings.';
+      const checkViewport=async(width,height,label)=>{
+        await page.setViewportSize({width,height});
+        await goto('/games');await chooseGameYear(1);
+        await page.getByLabel('Search games').fill('Phonics Parrot');await assertGameIntersection(1,'all','Phonics Parrot');
+        await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/phonics-parrot');
+        await page.evaluate(()=>Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:undefined}));
+        const hear=button('Hear the sound');
+        const controlledId=await hear.getAttribute('aria-controls');
+        assert.ok(controlledId,'The hear control must name its printed sound card');
+        const soundCard=page.locator('#'+controlledId);
+        await hear.click();
+        await page.getByRole('status').filter({hasText:recovery}).waitFor();
+        assert.equal(await hear.evaluate(element=>element===document.activeElement),true,label+' speech failure must retain retry focus');
+        assert.equal(await soundCard.isVisible(),true,label+' printed phonics sound must remain visible');
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,label+' recovery must not overflow');
+        await page.waitForFunction(id=>{
+          const panel=document.querySelector('.game-app-area > div');const card=document.getElementById(id);
+          if(!panel||!card)return false;
+          const panelStyle=getComputedStyle(panel);const cardStyle=getComputedStyle(card);
+          const cardTransform=cardStyle.transform;
+          return panelStyle.opacity==='1'&&cardStyle.opacity==='1'&&(cardTransform==='none'||cardTransform==='matrix(1, 0, 0, 1, 0, 0)');
+        },controlledId);
+        await page.screenshot({path:`test-results/phonics-speech-fallback-${width}.png`,fullPage:true});
+        await button('Got it').click();await page.getByRole('status').filter({hasText:recovery}).waitFor({state:'detached'});
+      };
+      await checkViewport(390,844,'Phone');
+      await checkViewport(820,1180,'Tablet');
+      await page.setViewportSize({width:390,height:844});
+    });
+    await check('Reading Quest: unavailable speech keeps the passage and gives calm recovery',async()=>{
+      const recovery='Read aloud is not available on this device. Keep reading on the screen, or ask a grown-up to check the sound settings.';
+      const checkViewport=async(width,height,label)=>{
+        await page.setViewportSize({width,height});
+        await goto('/games');await chooseGameYear(4);
+        await page.getByLabel('Search games').fill('Reading Quest');await assertGameIntersection(4,'all','Reading Quest');
+        await page.locator('[data-game-link]').click();await page.waitForURL(base+'/games/reading-quest');
+        await page.evaluate(()=>Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:undefined}));
+        const read=button('Read passage aloud');
+        const controlledId=await read.getAttribute('aria-controls');
+        assert.ok(controlledId,'The read-aloud control must name its printed passage');
+        const passageCard=page.locator('#'+controlledId);
+        assert.ok((await passageCard.innerText()).trim().length>80,label+' passage must stay meaningfully visible');
+        await read.click();
+        await page.getByRole('status').filter({hasText:recovery}).waitFor();
+        assert.equal(await read.evaluate(element=>element===document.activeElement),true,label+' speech failure must retain retry focus');
+        assert.equal(await passageCard.isVisible(),true,label+' printed passage must remain visible');
+        assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,label+' recovery must not overflow');
+        await page.waitForFunction(id=>{
+          const panel=document.querySelector('.game-app-area > div');const card=document.getElementById(id);
+          return !!panel&&!!card&&getComputedStyle(panel).opacity==='1'&&getComputedStyle(card).opacity==='1';
+        },controlledId);
+        await page.screenshot({path:`test-results/reading-quest-speech-fallback-${width}.png`,fullPage:true});
+        await button('Got it').click();await page.getByRole('status').filter({hasText:recovery}).waitFor({state:'detached'});
+      };
+      await checkViewport(390,844,'Phone');
+      await checkViewport(820,1180,'Tablet');
+      await page.setViewportSize({width:390,height:844});
     });
     await check(`All ${catalog.length} linked game routes render without a crash or home redirect`,async()=>{
       assert.equal(new Set(catalog.map(game=>game.route)).size,catalog.length,'Game routes must be distinct');
@@ -238,7 +429,7 @@ const results=[];
     });
     }
     await check('Phone, foldable, tablet and landscape layouts: no horizontal overflow',async()=>{
-      const routes=['/','/world','/games','/courses','/lesson','/library','/reader/lost-key','/homework','/cartoons','/stickers','/rewards','/progress','/parents','/settings','/teacher','/class','/time-lab','/preview-admin','/artwork','/privacy'];
+      const routes=['/','/world','/games','/courses','/lesson','/library','/reader/lost-key','/homework','/history','/cartoons','/stickers','/rewards','/progress','/parents','/settings','/teacher','/class','/time-lab','/preview-admin','/artwork','/privacy'];
       const viewports=[
         {width:280,height:653,label:'narrow phone'},
         {width:320,height:640,label:'small phone'},
@@ -265,17 +456,23 @@ const results=[];
         await page.setViewportSize({width:viewport.width,height:viewport.height});
         for(const route of routes){
           console.log('LAYOUT ROUTE '+route);await goto(route);
+          if(route==='/preview-admin')await assertProtectedOwnerRedirect();
           const dimensions=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
           assert.ok(dimensions.document<=dimensions.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' overflows: '+JSON.stringify(dimensions));
-          if(route==='/preview-admin'){
-            await unlockPreviewControls();
-            const unlocked=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
-            assert.ok(unlocked.document<=unlocked.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' unlocked overflows: '+JSON.stringify(unlocked));
-          }
-          if(route==='/parents'||route==='/settings'){
+          if(route==='/parents'||route==='/settings'||route==='/teacher'){
             await unlockGrownUpArea();
             const unlocked=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
             assert.ok(unlocked.document<=unlocked.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' unlocked overflows: '+JSON.stringify(unlocked));
+            if(route==='/teacher'){
+              assert.equal(await page.getByRole('heading',{name:'A grown-up needs to help here',exact:true}).count(),0,'The teacher gate must leave layout flow after unlock');
+              if(viewport.width===1440&&viewport.height===900){
+                const learning=page.getByRole('heading',{name:'Recent puzzle learning for this learner',exact:true});
+                await learning.waitFor();await page.waitForTimeout(500);
+                const geometry=await learning.evaluate(element=>{const screen=element.closest('.app-screen-window')?.getBoundingClientRect(),box=element.getBoundingClientRect();return screen?{screenLeft:screen.left,screenRight:screen.right,left:box.left,right:box.right}:null;});
+                assert.ok(geometry&&geometry.left>=geometry.screenLeft-1&&geometry.right<=geometry.screenRight+1,'desktop 1440x900 teacher content is clipped after unlock: '+JSON.stringify(geometry));
+                await page.screenshot({path:'test-results/teacher-unlocked-1440.png',fullPage:true});
+              }
+            }
           }
         }
       }

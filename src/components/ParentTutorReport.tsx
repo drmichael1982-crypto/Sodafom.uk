@@ -1,11 +1,16 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { Award, CheckCircle, AlertTriangle, TrendingUp, BookOpen, Clock, ShieldCheck, UserCheck } from 'lucide-react';
-import { loadTutorMemory, getWeakAndStrongTopics, ChildTutorProfile } from '@/lib/tutor/memory';
+import { Award, CheckCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { loadTutorMemory, loadTutorMemoryForChild, getWeakAndStrongTopics } from '@/lib/tutor/memory';
+import type { ChildTutorProfile } from '@/lib/tutor/memory';
 
-export function ParentTutorReport() {
-  const profile: ChildTutorProfile = loadTutorMemory();
-  const { weak, strong } = getWeakAndStrongTopics();
+type ParentTutorReportProps = {
+  child?: { id: string | number; name: string; ageGroup?: ChildTutorProfile['ageGroup'] };
+};
+
+export function ParentTutorReport({ child }: ParentTutorReportProps = {}) {
+  const profile = child ? loadTutorMemoryForChild(child) : loadTutorMemory();
+  const { weak, strong } = getWeakAndStrongTopics(profile);
+  const learnerName = child?.name || profile.childName;
+  const ageLabel = (profile.ageGroup ?? child?.ageGroup ?? '8-10').replace('-', '–');
 
   const totalTopics = Object.keys(profile.topics).length;
   const greenCount = Object.values(profile.topics).filter(t => t.status === 'GREEN').length;
@@ -13,7 +18,7 @@ export function ParentTutorReport() {
   const redCount = Object.values(profile.topics).filter(t => t.status === 'RED').length;
 
   return (
-    <div className="bg-white border-2 border-yellow-200 rounded-3xl p-6 shadow-xl space-y-6">
+    <div className="bg-white border-2 border-yellow-200 rounded-3xl p-6 shadow-xl space-y-6" data-tutor-report-child-id={child?.id}>
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-100 pb-4">
         <div>
@@ -21,7 +26,7 @@ export function ParentTutorReport() {
             Child Tutor Progress Report <Award className="text-yellow-500" size={20} />
           </h2>
           <p className="text-xs font-bold text-gray-500">
-            {profile.childName ? `Report for ${profile.childName}` : 'Guest Child Profile'} • Level {profile.ageGroup ?? '8-10'}
+            {learnerName ? `Report for ${learnerName}` : 'Guest Child Profile'} • {profile.schoolYear ?? 'Year not set'} • ages {ageLabel}
           </p>
         </div>
         <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full border border-emerald-300">
@@ -96,7 +101,7 @@ export function ParentTutorReport() {
       <div className="p-3 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between text-xs font-extrabold text-gray-600">
         <div className="flex items-center gap-2">
           <ShieldCheck size={16} className="text-green-600" />
-          <span>Device-Only Local Memory • COPPA Safe</span>
+          <span>Device-only local tutor memory</span>
         </div>
         <span>Total Topics Attempted: {totalTopics}</span>
       </div>

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult, useChildAge } from '@/components/games/GameShell';
+import { useVoice } from '@/lib/voice-context';
 
 interface Passage {
   title: string;
@@ -103,6 +104,7 @@ export default function ReadingQuestGame() {
 
 function ReadingQuestPlay({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
   const { tier } = useChildAge();
+  const { speak, stop, playing } = useVoice();
   const pool = PASSAGES.filter(p => p.tier === tier);
   const activePool = pool.length > 0 ? pool : PASSAGES.filter(p => p.tier === 2);
   // Shuffle each question's options once on mount so the correct answer isn't always first
@@ -130,17 +132,12 @@ function ReadingQuestPlay({ onComplete, onQuestionChange }: { onComplete: (r: Ga
       onQuestionChange?.(`Read the passage: "${passage.title}" — then answer the comprehension questions.`);
     }
   }, [phase, qIdx, passage, onQuestionChange]);
+  useEffect(() => () => stop(), [stop]);
   const total = passage.questions.length;
-
-  const speakPassage = () => {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(passage.text);
-    u.rate = 0.85;
-    window.speechSynthesis.speak(u);
-  };
+  const passageCardId = 'reading-quest-passage';
 
   const goToQuiz = () => {
+    stop();
     // Reset quiz state cleanly each time the user enters the quiz phase
     setQIdx(0);
     setChosen(null);
@@ -185,15 +182,19 @@ function ReadingQuestPlay({ onComplete, onQuestionChange }: { onComplete: (r: Ga
               <h2 className="text-2xl font-black text-foreground" style={{ fontFamily: 'var(--font-heading)' }}>{passage.title}</h2>
             </div>
 
-            <div className="bg-card rounded-2xl p-6 border-2 border-border shadow-sm mb-4 leading-relaxed">
+            <div id={passageCardId} className="bg-card rounded-2xl p-6 border-2 border-border shadow-sm mb-4 leading-relaxed">
               <p className="text-foreground text-base">{passage.text}</p>
             </div>
 
             <div className="flex gap-3 mb-6">
               <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-                onClick={speakPassage}
+                type="button"
+                aria-controls={passageCardId}
+                aria-pressed={playing}
+                aria-label={playing ? 'Stop reading aloud' : 'Read passage aloud'}
+                onClick={() => playing ? stop() : speak(`read:reading-quest:${passage.title}`, passage.text)}
                 className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold bg-primary/10 text-primary border border-primary/20">
-                🔊 Read aloud
+                🔊 {playing ? 'Stop reading' : 'Read aloud'}
               </motion.button>
               <motion.button whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
                 onClick={goToQuiz}

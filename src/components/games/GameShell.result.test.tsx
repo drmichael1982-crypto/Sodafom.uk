@@ -16,7 +16,19 @@ it('waits for the child to replay and does not call 90% a perfect score',()=>{
   expect(replay).not.toHaveBeenCalled();
   expect(screen.queryByText(/Perfect score/i)).not.toBeInTheDocument();
   expect(screen.queryByText('All correct!')).not.toBeInTheDocument();
+  expect(screen.queryByText('You got every question right!')).not.toBeInTheDocument();
+  expect(screen.getByText('Your practice earned three stars!')).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button',{name:'Play another round'}));expect(replay).toHaveBeenCalledTimes(1);
+});
+it('uses readable reward colours on the maths result screen',()=>{
+  render(<MemoryRouter><ResultScreen result={{score:100,correct:5,total:5,stars:3}} onReplay={vi.fn()} onHome={vi.fn()} gameTitle="Maths Bingo" subject="maths" nextGame={null} navigate={vi.fn()}/></MemoryRouter>);
+  act(()=>vi.advanceTimersByTime(1600));
+  const banner=screen.getByText(/Three stars earned/).parentElement!;
+  expect(banner).toHaveStyle({color:'#172554'});
+  expect(screen.getByRole('button',{name:/View Certificate/})).toHaveStyle({color:'#172554'});
+  const encouragement=screen.getByText(/Well done for practising/).closest('div')!;
+  expect(encouragement).toHaveClass('bg-blue-50','border-blue-200','text-blue-950');
+  expect(screen.getByText(/All correct/)).toHaveClass('text-yellow-900');
 });
 it('does not start result audio when the child has turned sound off',()=>{
   localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:4,sound:false},activities:[],stickers:[]}));
@@ -48,3 +60,4 @@ it('leaves focus alone while a native dialog is open',()=>{
   render(<><dialog open aria-label="Ask Archie"><input aria-label="Tutor question" /></dialog><MemoryRouter><ResultScreen result={{score:80,correct:8,total:10,stars:2}} focusOrigin={origin} onReplay={vi.fn()} onHome={vi.fn()} gameTitle="Number Pop" subject="maths" nextGame={null} navigate={vi.fn()}/></MemoryRouter></>);
   expect(document.body).toHaveFocus();
 });
+

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult } from '@/components/games/GameShell';
+import { useVoice } from '@/lib/voice-context';
 
 const TOTAL_ROUNDS = 10;
 
@@ -54,6 +55,7 @@ export default function PhonicsParrotGame() {
 }
 
 export function PhonicsParrotPlay({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
+  const { speak, stop, playing } = useVoice();
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [chosen, setChosen] = useState<string | null>(null);
@@ -69,15 +71,8 @@ export function PhonicsParrotPlay({ onComplete, onQuestionChange }: { onComplete
 
   // Report current question to Archie
   useEffect(() => { onQuestionChange?.(`${item.example} — which word starts with the sound "${item.letter}"?`); }, [round, item, onQuestionChange]);
-
-  const speakSound = () => {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(item.letter + '... ' + item.example);
-    u.rate = 0.7;
-    u.pitch = 1.2;
-    window.speechSynthesis.speak(u);
-  };
+  useEffect(() => () => stop(), [stop]);
+  const soundCardId = `phonics-sound-${round}`;
 
   const pick = (word: string) => {
     if (choiceLocked.current || completionSent.current) return;
@@ -127,6 +122,7 @@ export function PhonicsParrotPlay({ onComplete, onQuestionChange }: { onComplete
 
       {/* Sound card */}
       <motion.div
+        id={soundCardId}
         key={round}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -137,12 +133,16 @@ export function PhonicsParrotPlay({ onComplete, onQuestionChange }: { onComplete
       </motion.div>
 
       <motion.button
+        type="button"
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.92 }}
-        onClick={speakSound}
+        aria-controls={soundCardId}
+        aria-pressed={playing}
+        aria-label={playing ? 'Stop the sound' : 'Hear the sound'}
+        onClick={() => playing ? stop() : speak('read:phonics-parrot', `${item.letter}. ${item.example}`)}
         className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary/10 text-primary font-bold mb-6"
       >
-        🔊 Hear the sound
+        🔊 {playing ? 'Stop the sound' : 'Hear the sound'}
       </motion.button>
 
       <p className="text-base font-black text-foreground mb-4" style={{ fontFamily: 'var(--font-heading)' }}>

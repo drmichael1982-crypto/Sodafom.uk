@@ -18,7 +18,7 @@ export { useChildAge } from '@/hooks/useChildAge';
 export type { AgeGroup } from '@/hooks/useChildAge';
 import { getActiveChild } from '@/hooks/useChildAge';
 import { API_PREFIX, ARCHIE_PREVIEW } from '@/lib/config';
-import { isSoundEnabled, useArchieData } from '@/lib/archie/storage';
+import { isSoundEnabled, recordScopedGameStars, useArchieData } from '@/lib/archie/storage';
 import { isGameForYear } from '@/lib/archie/game-age';
 import { games as gamesContent } from 'virtual:content';
 import SceneArtwork, { sceneForSubject } from '@/components/SceneArtwork';
@@ -168,22 +168,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
     recordGameCompletion(subject, slug);
     if(r.total>0)setRewardOpen(true);
 
-    try {
-      const k = `game-${gameSlug}`;
-      const raw = localStorage.getItem('sodafom_game_stars');
-      const parsed: unknown = raw ? JSON.parse(raw) : {};
-      const map: Record<string, unknown> = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed as Record<string, unknown> : {};
-      const previous = map[k];
-      const previousStars = typeof previous === 'number' && Number.isInteger(previous) && previous >= 0 && previous <= 3 ? previous : 0;
-      if (previousStars < stars) {
-        map[k] = stars;
-        localStorage.setItem('sodafom_game_stars', JSON.stringify(map));
-      }
-    } catch {
-      try {
-        if (stars > 0) localStorage.setItem('sodafom_game_stars', JSON.stringify({ [`game-${gameSlug}`]: stars }));
-      } catch { /* storage is unavailable */ }
-    }
+    recordScopedGameStars(`game-${gameSlug}`, stars);
 
     const activeChild = getActiveChild();
     if (!ARCHIE_PREVIEW && activeChild?.id) {
@@ -477,11 +462,12 @@ export function ResultScreen({
   };
   const headline = headlineMap[result.stars] ?? headlineMap[0];
 
-  // Subject-keyed gradient using semantic CSS vars via inline style
+  // High-contrast subject banners. The maths gold keeps the established
+  // palette but uses navy text; the darker literacy gradients use white.
   const gradientStyle: Record<string, React.CSSProperties> = {
-    maths:    { background: 'linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent) / 0.7))' },
-    spelling: { background: 'linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary) / 0.7))' },
-    reading:  { background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' },
+    maths:    { background: 'linear-gradient(135deg, #facc15, #fde68a)', color: '#172554' },
+    spelling: { background: 'linear-gradient(135deg, #be123c, #881337)', color: '#ffffff' },
+    reading:  { background: 'linear-gradient(135deg, #166534, #14532d)', color: '#ffffff' },
   };
   const bannerStyle = gradientStyle[subject] ?? gradientStyle['reading'];
 
@@ -492,6 +478,7 @@ export function ResultScreen({
       <CertificateModal open={showCert} onClose={() => setShowCert(false)} gameTitle={gameTitle} subject={subject} stars={result.stars} />
 
       <motion.div
+        data-result-screen
         initial={{ opacity: 0, scale: 0.88, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 22 }}
@@ -507,13 +494,13 @@ export function ResultScreen({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -16 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="mb-4 rounded-2xl text-white text-center py-3 px-5 shadow-lg"
+                className="mb-4 rounded-2xl text-center py-3 px-5 shadow-lg"
                 style={bannerStyle}
               >
                 <p className="font-black text-lg tracking-wide" style={{ fontFamily: 'var(--font-heading)' }}>
                   ⭐ Three stars earned! ⭐
                 </p>
-                <p className="text-sm opacity-90 font-bold">{result.correct===result.total?'You got every question right!':'Your practice earned three stars!'}</p>
+                <p className="text-sm opacity-90 font-bold">{result.score===100?'You got every question right!':'Your practice earned three stars!'}</p>
               </motion.div>
             )}
           </AnimatePresence>
@@ -571,9 +558,10 @@ export function ResultScreen({
               transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
               className="bg-muted rounded-2xl p-4 mb-5"
             >
-              <div className="text-5xl font-black text-primary mb-1 tabular-nums">
+              <div aria-hidden="true" className="text-5xl font-black text-primary mb-1 tabular-nums">
                 {animatedScore}%
               </div>
+              <span className="sr-only">Final score: {result.score}%</span>
               <div className="text-muted-foreground text-sm font-bold">
                 {result.correct} correct out of {result.total} questions
               </div>
@@ -589,7 +577,7 @@ export function ResultScreen({
               >
                 <Trophy size={16} />
                 You earned {result.stars} star{result.stars !== 1 ? 's' : ''}!
-                {result.score === 100 && <span className="ml-1 text-yellow-600">🏆 All correct!</span>}
+                {result.score === 100 && <span className="ml-1 text-yellow-900">🏆 All correct!</span>}
               </motion.div>
             )}
 
@@ -599,7 +587,7 @@ export function ResultScreen({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.3 }}
-                className="flex items-center justify-center gap-2 bg-primary/5 border border-primary/20 rounded-xl p-2.5 mb-4 text-xs font-bold text-primary"
+                className="flex items-center justify-center gap-2 bg-blue-50 border border-blue-200 rounded-xl p-2.5 mb-4 text-xs font-bold text-blue-950"
               >
                 <Zap size={13} /> Well done for practising. Come back whenever you are ready.
               </motion.div>
@@ -615,7 +603,7 @@ export function ResultScreen({
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setShowCert(true)}
-                className="relative z-20 w-full flex min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl text-white font-black mb-4 shadow-md hover:shadow-lg transition-shadow"
+                className="relative z-20 w-full flex min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl font-black mb-4 shadow-md hover:shadow-lg transition-shadow"
                 style={bannerStyle}
               >
                 🏆 View Certificate
@@ -763,3 +751,4 @@ export function ResultScreen({
     </>
   );
 }
+

@@ -77,16 +77,17 @@ function speak(text: string) {
 
 // ── Letter tile ───────────────────────────────────────────────────────────────
 function LetterTile({
-  letter, used, onClick, size = 'md',
+  letter, used, paused, onClick, size = 'md',
 }: {
-  letter: string; used: boolean; onClick: () => void; size?: 'sm' | 'md';
+  letter: string; used: boolean; paused: boolean; onClick: () => void; size?: 'sm' | 'md';
 }) {
   const dim = size === 'md' ? 'w-12 h-12 text-xl' : 'w-10 h-10 text-lg';
   return (
     <motion.button
       whileHover={used ? {} : { scale: 1.12, y: -3 }}
       whileTap={used ? {} : { scale: 0.9 }}
-      onClick={used ? undefined : onClick}
+      onClick={used || paused ? undefined : onClick}
+      disabled={used || paused}
       className={`word-jigsaw-piece ${dim} rounded-xl font-black border-2 flex items-center justify-center select-none transition-all
         ${used
           ? 'bg-muted border-border text-muted-foreground/30 cursor-default'
@@ -101,9 +102,9 @@ function LetterTile({
 
 // ── Answer slot ───────────────────────────────────────────────────────────────
 function AnswerSlot({
-  letter, phase, index, onClick,
+  letter, phase, paused, index, onClick,
 }: {
-  letter: string | null; phase: 'answering' | 'correct' | 'wrong'; index: number; onClick: () => void;
+  letter: string | null; phase: 'answering' | 'correct' | 'wrong'; paused: boolean; index: number; onClick: () => void;
 }) {
   const filled = letter !== null;
   const borderColor = phase === 'correct'
@@ -119,10 +120,11 @@ function AnswerSlot({
       key={`slot-${index}-${letter}`}
       initial={filled ? { scale: 0.7, opacity: 0 } : {}}
       animate={{ scale: 1, opacity: 1 }}
-      onClick={filled && phase === 'answering' ? onClick : undefined}
+      onClick={filled && phase !== 'correct' && !paused ? onClick : undefined}
+      disabled={!filled || phase === 'correct' || paused}
       className={`word-jigsaw-piece w-12 h-12 rounded-xl border-2 flex items-center justify-center font-black text-xl transition-all
         ${borderColor}
-        ${filled && phase === 'answering' ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}
+        ${filled && phase !== 'correct' && !paused ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}
       `}
       aria-label={filled ? `Remove letter ${letter}` : 'Empty slot'}
     >
@@ -151,6 +153,8 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
   const [showHint, setShowHint] = useState(false);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [streak, setStreak] = useState(0);
+  const [hadWrongAttempt, setHadWrongAttempt] = useState(false);
+  const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const entry = wordList[qIdx];
@@ -164,11 +168,13 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
     setAnswerSrcIdx(Array(entry.word.length).fill(null));
     setPhase('answering');
     setShowHint(false);
+    setHadWrongAttempt(false);
+    setPaused(false);
     speak(`Unscramble the letters to spell a word. Hint: ${entry.hint}`);
   }, [qIdx, entry.word, entry.hint]);
 
   const placeLetter = useCallback((srcIdx: number) => {
-    if (phase !== 'answering') return;
+    if (phase === 'correct' || paused) return;
     if (usedIndices.includes(srcIdx)) return;
     const firstEmpty = answer.findIndex(a => a === null);
     if (firstEmpty === -1) return;
@@ -184,7 +190,7 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
     if (newAnswer.every(a => a !== null)) {
       const word = newAnswer.join('');
       const isCorrect = word === entry.word;
-      const pts = isCorrect ? (showHint ? 5 : 10) : 0;
+      const pts = isCorrect ? (showHint || hadWrongAttempt ? 5 : 10) : 0;
       const finalScore = score + pts;
       const finalCorrect = correctCount + (isCorrect ? 1 : 0);
       if (isCorrect) {
@@ -195,15 +201,16 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
         speak(`Correct! The word is ${entry.word.toLowerCase()}.`);
       } else {
         setStreak(0);
+        setHadWrongAttempt(true);
         setPhase('wrong');
-        speak(`Not quite. The word was ${entry.word.toLowerCase()}.`);
+        speak('Not quite yet. Move a letter or clear the answer, then try the same word again.');
       }
-      timerRef.current = setTimeout(() => advance(finalScore, finalCorrect), isCorrect ? 1400 : 2000);
+      if (isCorrect) timerRef.current = setTimeout(() => advance(finalScore, finalCorrect), 1400);
     }
-  }, [phase, usedIndices, answer, answerSrcIdx, scrambled, entry.word, showHint, score, correctCount]);
+  }, [phase, paused, usedIndices, answer, answerSrcIdx, scrambled, entry.word, showHint, hadWrongAttempt, score, correctCount]);
 
   const removeLetter = useCallback((slotIdx: number) => {
-    if (phase !== 'answering') return;
+    if (phase === 'correct' || paused) return;
     const srcIdx = answerSrcIdx[slotIdx];
     if (srcIdx === null) return;
     const newAnswer = [...answer];
@@ -213,12 +220,14 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
     setAnswer(newAnswer);
     setAnswerSrcIdx(newSrc);
     setUsedIndices(prev => prev.filter(i => i !== srcIdx));
-  }, [phase, answer, answerSrcIdx]);
+    setPhase('answering');
+  }, [phase, paused, answer, answerSrcIdx]);
 
   const clearAnswer = useCallback(() => {
     setAnswer(Array(entry.word.length).fill(null));
     setAnswerSrcIdx(Array(entry.word.length).fill(null));
     setUsedIndices([]);
+    setPhase('answering');
   }, [entry.word.length]);
 
   function advance(finalScore = score, finalCorrect = correctCount) {
@@ -280,12 +289,19 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
               >
                 <Volume2 size={16} className="text-white" />
               </motion.button>
-              {!showHint && phase === 'answering' && (
+              {phase !== 'correct' && (
                 <motion.button
                   whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
-                  onClick={() => { setShowHint(true); setHintsUsed(h => h + 1); speak(entry.hint); }}
+                  onClick={() => {
+                    if (!showHint) {
+                      setShowHint(true);
+                      setHintsUsed(h => h + 1);
+                    }
+                    speak(entry.hint);
+                  }}
                   className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-colors"
                   aria-label="Show hint"
+                  aria-pressed={showHint}
                 >
                   <Lightbulb size={16} className="text-white" />
                 </motion.button>
@@ -294,6 +310,17 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
           </div>
 
           <div className="px-5 py-5 flex flex-col items-center gap-5">
+            <p className="text-sm font-bold text-foreground text-center max-w-md">
+              Tap each letter to build the word. If it does not fit, change your answer and try the same word again.
+            </p>
+
+            {paused && (
+              <div className="w-full rounded-xl border-2 border-blue-300 bg-blue-50 px-4 py-3 text-center" role="status">
+                <p className="font-black text-blue-900">Paused. Your letters are saved.</p>
+                <p className="text-sm font-bold text-blue-800">Take a break and resume whenever you are ready.</p>
+              </div>
+            )}
+
             {/* Hint */}
             <AnimatePresence>
               {showHint && (
@@ -318,6 +345,7 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
                     key={i}
                     letter={letter}
                     phase={phase}
+                    paused={paused}
                     index={i}
                     onClick={() => removeLetter(i)}
                   />
@@ -331,6 +359,7 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                   className="flex items-center gap-2 bg-green-100 border border-green-300 rounded-xl px-4 py-2.5 w-full"
+                  role="status"
                 >
                   <CheckCircle2 size={18} className="text-green-600 shrink-0" />
                   <p className="font-black text-green-800 text-sm">
@@ -342,10 +371,11 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
                   className="flex items-center gap-2 bg-red-100 border border-red-300 rounded-xl px-4 py-2.5 w-full"
+                  role="status"
                 >
                   <XCircle size={18} className="text-red-500 shrink-0" />
                   <p className="font-black text-red-800 text-sm">
-                    The word was <span className="text-red-700 uppercase">{entry.word}</span>
+                    Not quite yet. Remove a letter or clear your answer, then try this word again.
                   </p>
                 </motion.div>
               )}
@@ -360,6 +390,7 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
                     key={i}
                     letter={letter}
                     used={usedIndices.includes(i)}
+                    paused={paused}
                     onClick={() => placeLetter(i)}
                   />
                 ))}
@@ -371,10 +402,18 @@ export function WordScrambleInner({ onComplete }: { onComplete: (r: GameResult) 
               <motion.button
                 whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                 onClick={clearAnswer}
-                disabled={phase !== 'answering' || answer.every(a => a === null)}
+                disabled={phase === 'correct' || paused || answer.every(a => a === null)}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-muted text-muted-foreground font-bold text-sm border border-border disabled:opacity-40 hover:bg-muted/80 transition-colors"
               >
                 <RotateCcw size={13} /> Clear
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+                onClick={() => setPaused(value => !value)}
+                disabled={phase === 'correct'}
+                className="min-h-11 px-4 py-2 rounded-xl bg-blue-700 text-white font-black text-sm border-2 border-blue-800 disabled:opacity-40"
+              >
+                {paused ? 'Resume game' : 'Pause game'}
               </motion.button>
               <p className="text-xs text-muted-foreground">Hints: <span className="font-black">{hintsUsed}</span></p>
             </div>

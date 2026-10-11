@@ -402,7 +402,7 @@ describe("child lesson adventure", () => {
       </MemoryRouter>,
     );
     expect(
-      screen.getByRole("option", { name: "Year 9 · age 13" }),
+      screen.getByRole("option", { name: "Year 9 · age 13 · optional extension" }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("option", { name: /Year 9.*14/ }),

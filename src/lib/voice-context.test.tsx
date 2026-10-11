@@ -111,10 +111,27 @@ describe('speech-engine failure fallback',()=>{
     const {result}=renderHook(()=>useVoice(),{wrapper:VoiceProvider});
     act(()=>result.current.speak('lesson','Read the lesson'));
     expect(result.current.playing).toBe(false);expect(synthesis.speak).toHaveBeenCalledOnce();
+    expect(result.current.voiceNotice).toBe('Archie could not read that aloud. Try the Read aloud button again, or keep reading on the screen.');
   });
-  it('finishes cleanly when the utterance API is missing',()=>{
+  it('explains the on-screen fallback when the utterance API is missing',()=>{
     vi.stubGlobal('SpeechSynthesisUtterance',undefined);
-    const ended=vi.fn();ttsSpeak('Read the lesson',ended);
-    expect(ended).toHaveBeenCalledOnce();expect(synthesis.speak).not.toHaveBeenCalled();
+    const {result}=renderHook(()=>useVoice(),{wrapper:VoiceProvider});
+    act(()=>result.current.speak('lesson','Read the lesson'));
+    expect(result.current.playing).toBe(false);expect(synthesis.speak).not.toHaveBeenCalled();
+    expect(result.current.voiceNotice).toBe('Read aloud is not available on this device. Keep reading on the screen, or ask a grown-up to check the sound settings.');
+    act(()=>result.current.dismissVoiceNotice());
+    expect(result.current.voiceNotice).toBeNull();
+  });
+  it('reports a speech-engine error but ignores an error raised after Stop',()=>{
+    voices=[ukVoice];const {result}=renderHook(()=>useVoice(),{wrapper:VoiceProvider});
+    act(()=>result.current.speak('lesson','Read the lesson'));
+    const failed=synthesis.speak.mock.calls[0][0] as Utterance;
+    act(()=>failed.onerror?.());
+    expect(result.current.voiceNotice).toBe('Archie could not read that aloud. Try the Read aloud button again, or keep reading on the screen.');
+    act(()=>result.current.speak('lesson','Try again'));
+    const stopped=synthesis.speak.mock.calls[1][0] as Utterance;
+    act(()=>result.current.stop());
+    act(()=>stopped.onerror?.());
+    expect(result.current.voiceNotice).toBeNull();
   });
 });

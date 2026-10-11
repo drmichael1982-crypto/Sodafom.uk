@@ -23,6 +23,18 @@ jobs:
           npm start > /tmp/archie-server.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/api/health && break; sleep 1; done
           node scripts/test-archie-ui.cjs
+          node scripts/test-page-picture-jigsaw.cjs
+          node scripts/test-short-landscape-help.cjs
+          test -f test-results/short-landscape-help/games-844x390.png
+          test -f test-results/short-landscape-help/library-844x390.png
+      - name: Play simulated year-group games and spelling lessons
+        run: |
+          node scripts/test-archie-search-journey.cjs
+          node scripts/test-learner-settings-isolation.cjs
+          test -f test-results/learner-settings-isolation/mia-phone.png
+          test -f test-results/learner-settings-isolation/mia-tablet.png
+          test -f test-results/learner-settings-isolation/ask-archie-memory-phone.png
+          test -f test-results/learner-settings-isolation/ask-archie-memory-tablet.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:

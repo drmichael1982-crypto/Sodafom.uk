@@ -12,6 +12,29 @@ afterEach(() => {
   age.tier = 1;
 });
 describe("Number Planets", () => {
+  it("keeps keyboard focus on hint and pause controls while preserving retry feedback", async () => {
+    const user = userEvent.setup();
+    render(<NumberPlanetsPlay onComplete={vi.fn()} />);
+    const question = makePlanetQuestion(1, 0);
+    const wrong = screen.getByRole("button", { name: "Answer " + question.options.find(value => value !== question.answer) });
+    wrong.focus();
+    await user.keyboard("{Enter}");
+    const hint = screen.getByRole("button", { name: "Show a hint" });
+    hint.focus();
+    await user.keyboard("{Enter}");
+    expect(hint).toHaveFocus();
+    expect(screen.getByRole("status")).toHaveTextContent(question.hint);
+    const pause = screen.getByRole("button", { name: "Pause mission" });
+    pause.focus();
+    await user.keyboard(" ");
+    const resume = screen.getByRole("button", { name: "Resume mission" });
+    expect(resume).toHaveFocus();
+    expect(screen.getByRole("heading", { name: "Time for a breather" })).toBeInTheDocument();
+    await user.keyboard("{Enter}");
+    expect(screen.getByRole("button", { name: "Pause mission" })).toHaveFocus();
+    expect(screen.getByRole("status")).toHaveTextContent(question.hint);
+    expect(screen.getByRole("button", { name: "Answer " + question.answer })).toBeEnabled();
+  });
   it.each([1, 2, 3])("keeps retry focus, follows correct answers to Next and announces the next question for age tier %i", async (tier) => {
     const user = userEvent.setup();
     age.tier = tier;

@@ -9,13 +9,13 @@ import { getRememberedChildName, tryLocalArchieResponse } from '@/lib/archie-loc
 import { tryRememberChildInterest } from '@/lib/interest-themes';
 import { answerFromDevice, answerLessonReply, saveLearningTurn } from '@/lib/archie/device-learning';
 import catalog from '@/lib/archie/game-catalog.json';
-import { useArchieData } from '@/lib/archie/storage';
+import { readScopedLearnerSettings, useArchieData } from '@/lib/archie/storage';
 import '@/pages/archie/archie.css';
 import { blockedLearningText, FRIENDLY_REDIRECT, safeLearningReply } from '@/lib/archie/learning-safety';
 import { normaliseVoiceAnswer, submitGameVoiceAnswer } from '@/lib/archie/game-voice';
 import { coachLessonReply, guardPracticeReply, lessonContextForService, subjectMethod } from '@/lib/archie/lesson-coach';
 import { loadTutorMemory } from '@/lib/tutor/memory';
-import { resolveLearningAge } from '@/lib/learning-age';
+import { readLearningAge, resolveLearningAge } from '@/lib/learning-age';
 import { clearActivePendingQuestion } from '@/lib/tutor/engine';
 
 import type { CourseLesson, CourseSubject } from '@/lib/archie/course-types';
@@ -53,6 +53,10 @@ function cleanTutorText(text: string) {
 }
 export function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
+  const exactAge = readLearningAge();
+  if (exactAge !== null) return exactAge;
+  const learnerYear = readScopedLearnerSettings()?.year;
+  if (learnerYear && learnerYear >= 1 && learnerYear <= 9) return learnerYear + 4;
   const learningAge = resolveLearningAge();
   if (learningAge !== null) return learningAge;
   try {
@@ -158,6 +162,10 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     setVoiceConversation(false);
     stop();
     setNotice(message);
+  }
+  function offerTypedFallback(message: string) {
+    stopVoiceConversation(message);
+    inputRef.current?.focus();
   }
   useEffect(() => {
     const route = `${location.pathname}${location.search || ''}`;
@@ -340,7 +348,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   useEffect(() => { sendRef.current = send; });
   function listenForConversation() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) { stopVoiceConversation('Voice conversation is not supported here. You can still type to Archie.'); return; }
+    if (!SpeechRecognition) { offerTypedFallback('Voice conversation is not supported here. Type your question to Archie below.'); return; }
     if (!conversationRef.current || busyRef.current || playingRef.current || recognition.current || !openRef.current || document.visibilityState === 'hidden') return;
     const listener = new SpeechRecognition(); recognition.current = listener;
     const listeningContext = contextKeyRef.current;
@@ -357,9 +365,11 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     listener.onerror = (event: any) => {
       if (recognition.current !== listener) return;
       if (event?.error === 'no-speech') { setNotice('I did not hear words. I can try again briefly; you can also stop or type.'); return; }
-      stopVoiceConversation(['not-allowed','service-not-allowed','audio-capture'].includes(event?.error)
-        ? 'Microphone access is unavailable. You can type to Archie or ask a grown-up to check microphone permission.'
-        : 'Voice conversation could not continue in this browser. You can still type to Archie.');
+      if (['not-allowed','service-not-allowed'].includes(event?.error))
+        offerTypedFallback('Microphone permission is off. Ask a grown-up to allow it in browser settings, or type to Archie below.');
+      else if (event?.error === 'audio-capture')
+        offerTypedFallback('No microphone is available. Type your question to Archie below.');
+      else offerTypedFallback('Voice conversation could not continue in this browser. Type your question to Archie below.');
     };
     listener.onend = () => {
       if (recognition.current !== listener) return;
@@ -377,7 +387,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
         if (recognition.current === listener) stopVoiceConversation('The microphone session ended. Press Start again, or type your question.');
       }, 20000);
     }
-    catch { stopVoiceConversation('The microphone could not start. You can still type to Archie.'); }
+    catch { offerTypedFallback('The microphone could not start. Type your question to Archie below.'); }
   }
   useEffect(() => {
     clearRestartTimer();
@@ -389,7 +399,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
   }, [voiceConversation, isOpen, busy, playing, listening]);
   function startVoiceConversation() {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) { setNotice('Voice conversation is not supported here. You can still type to Archie.'); return; }
+    if (!SpeechRecognition) { setNotice('Voice conversation is not supported here. Type your question to Archie below.'); inputRef.current?.focus(); return; }
     if (document.visibilityState === 'hidden') { setNotice('Return to this page, then press Start to talk.'); return; }
     clearRestartTimer(); retireMicrophone(); quietSessions.current = 0;
     conversationRef.current = true; setVoiceConversation(true);
@@ -403,15 +413,15 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     if (busyRef.current) return;
     if (listening) { recognition.current?.stop(); return; }
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) { setNotice('This browser does not support voice input. Please type your question.'); inputRef.current?.focus(); return; }
+    if (!SpeechRecognition) { setNotice('This browser does not support voice input. Type your question to Archie below.'); inputRef.current?.focus(); return; }
     stop();
     const listener = new SpeechRecognition(); recognition.current = listener;
     const listeningContext = contextKeyRef.current;
     listener.lang = 'en-GB'; listener.interimResults = false; listener.continuous = false;
     listener.onresult = (e: any) => { if (recognition.current !== listener || listeningContext !== contextKeyRef.current || !openRef.current) return; setInput(e.results?.[0]?.[0]?.transcript || ''); setNotice('Check your words, then tap Send.'); };
     listener.onend = () => { if (recognition.current !== listener) return; recognition.current = null; setListening(false); };
-    listener.onerror = () => { if (recognition.current !== listener) return; retireMicrophone(); setNotice('I could not hear you. You can type your question instead.'); };
-    try { listener.start(); setListening(true); } catch { retireMicrophone(); setNotice('The microphone is busy. Try typing your question.'); }
+    listener.onerror = () => { if (recognition.current !== listener) return; retireMicrophone(); setNotice('I could not hear you. Type your question to Archie below.'); inputRef.current?.focus(); };
+    try { listener.start(); setListening(true); } catch { retireMicrophone(); setNotice('The microphone is busy. Type your question to Archie below.'); inputRef.current?.focus(); }
   }
   return <>
     {!hideLauncher && !isOpen && <button className="archie-launcher" onClick={() => openArchie()} aria-label="Ask Archie"><MessageCircle size={23} aria-hidden="true"/> Ask Archie</button>}

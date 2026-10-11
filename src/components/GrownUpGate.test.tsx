@@ -21,7 +21,7 @@ describe('grown-up instruction gate',()=>{
     await user.keyboard('Privacy  Choose{Enter}');
     expect(screen.getByRole('button',{name:'Enable online help'})).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Grown-up area')).toHaveFocus();
+    expect(screen.getByLabelText('Grown-up area opened')).toHaveFocus();
     await user.tab();expect(screen.getByRole('button',{name:'Enable online help'})).toHaveFocus();
   });
   it('locks again on remount without retaining an answer or unlock in storage',async()=>{

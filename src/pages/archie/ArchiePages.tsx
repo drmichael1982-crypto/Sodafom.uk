@@ -6,8 +6,8 @@ import { useProgression } from '@/contexts/ProgressionContext';
 import { useVoice } from '@/lib/voice-context';
 import { API_PREFIX } from '@/lib/config';
 import { BOOKS, SPELLING_WORDS } from '@/lib/archie/books';
-import { clearSavedLearning, loadSavedLearning } from '@/lib/archie/device-learning';
-import { useArchieData, updateSavedData, readGameStars } from '@/lib/archie/storage';
+import { clearSavedLearningForActiveProfile, loadSavedLearning, loadSavedLearningForActiveProfile } from '@/lib/archie/device-learning';
+import { claimScopedSticker, useArchieData, updateSavedData, readGameStars, readLegacyGameStars, readScopedGameStars } from '@/lib/archie/storage';
 import catalog from '@/lib/archie/game-catalog.json';
 import { EPISODES } from '@/pages/CartoonTheatrePage';
 import './archie.css';
@@ -31,8 +31,9 @@ import ParentLearningReport from '@/components/ParentLearningReport';
 import AgeExperience, { readLearningAge, saveLearningAge } from '@/components/AgeExperience';
 import './sodafom-polish.css';
 import './archie-picture-home.css';
-import { isGameForYear, schoolYearAgeLabel } from '@/lib/archie/game-age';
+import { isGameForYear } from '@/lib/archie/game-age';
 import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
+import LearningYearOptions, { LEARNING_YEAR_SCOPE_NOTE } from '@/components/LearningYearOptions';
 
 export const ARCHIE_PATHS = ['/', '/world', '/quests', '/courses', '/games', '/lesson', '/library', '/reader', '/homework', '/stickers', '/rewards', '/progress', '/parents', '/settings', '/cartoons', '/privacy', '/artwork', '/teacher', '/class', '/time-lab', '/preview-admin', '/history', '/device-check', '/ask-archie', '/chat'];
 export function isArchiePage(path: string) { return ARCHIE_PATHS.includes(path) || path.startsWith('/reader/') || path.startsWith('/courses/'); }
@@ -51,11 +52,11 @@ function SoundButton() {
   const { stop } = useVoice();
   return <button className="a-button a-icon" aria-label={settings.sound ? 'Turn sound off' : 'Turn sound on'} aria-pressed={settings.sound} onClick={() => { setSettings({ sound: !settings.sound }); stop(); }}>{settings.sound ? <Volume2/> : <VolumeX/>}</button>;
 }
-export function Page({ title, intro, children, back = '/world', calm = false, scene, toolbar }: { title: string; intro?: string; children: ReactNode; back?: string; calm?: boolean; scene?: LearningScene; toolbar?: ReactNode }) {
+export function Page({ title, intro, children, back = '/world', backLabel, calm = false, scene, toolbar }: { title: string; intro?: string; children: ReactNode; back?: string; backLabel?: string; calm?: boolean; scene?: LearningScene; toolbar?: ReactNode }) {
   const { settings } = useArchieData();
   const { openArchie } = useArchieContext();
   return <main style={puzzleThemeStyle(title, scene)} className={`archie-app soda-page puzzle-themed age-${getArchieStage(settings.year)} ${settings.largeText ? 'archie-large' : ''} ${calm ? 'a-calm' : ''}`}><div className="a-page">
-    <header className="a-top"><Link className="a-button a-icon" to={back} aria-label={back === '/' ? 'Home' : 'Back to my world'}>{back === '/' ? <Home/> : <ArrowLeft/>}</Link><Link className="a-logo" to="/">SODAFOM<small>Learn • Play • Grow</small></Link><SoundButton/></header>
+    <header className="a-top"><Link className="a-button a-icon" to={back} aria-label={backLabel ?? (back === '/' ? 'Home' : 'Back to my world')}>{back === '/' ? <Home/> : <ArrowLeft/>}</Link><Link className="a-logo" to="/">SODAFOM<small>Learn • Play • Grow</small></Link><SoundButton/></header>
     <section className={`a-hero soda-hero ${calm ? 'soda-hero-calm' : ''}`}>
       <div className="a-hero-copy"><span className="a-eyebrow">{calm ? 'Learning with care' : 'Discover something brilliant'}</span><h1>{title}</h1>{intro && <p className="a-intro">{intro}</p>}</div>
       {!calm && <SceneArtwork scene={scene ?? sceneForSubject(title)} title={title} compact/>}
@@ -167,6 +168,8 @@ const WORLDS = [
   ['Library','📚','/library'], ['Homework','📝','/homework'], ['Cartoons','🎬','/cartoons'], ['Sticker book','🌟','/stickers'],
   ['Rewards','🏆','/rewards'], ['Parents','👪','/parents'],
   ['Class lessons','📘','/class'], ['Teacher lessons','📝','/teacher'],
+  ['Progress','📈','/progress'], ['Settings','⚙️','/settings'], ['Clock lab','🕰️','/time-lab'],
+  ['Artwork gallery','🎨','/artwork'], ['Privacy','🛡️','/privacy'],
 ];
 const PUZZLE_DESCRIPTIONS: Record<string,string> = {
   'Learning adventures':'Follow a 30-minute lesson', 'Learning quests':'Try a quick challenge',
@@ -174,6 +177,8 @@ const PUZZLE_DESCRIPTIONS: Record<string,string> = {
   Geography:'Explore our world', 'My lesson':'Practise on the whiteboard', Library:'Read or listen to a story', Homework:'Get help with your work',
   Cartoons:'Watch a story', 'Sticker book':'Collect your stickers', Rewards:'See your earned stars', Parents:'Learning and AI settings',
   'Class lessons':'Learn together in class', 'Teacher lessons':'Lesson plans for grown-ups', Games:'Choose a game', History:'Explore the past',
+  Progress:'See your learning journey', Settings:'Choose accessible learning controls', 'Clock lab':'Practise telling the time',
+  'Artwork gallery':'See your saved creations', Privacy:'Learn how your information is protected',
   'Adventure Trail':'Roll, solve and explore', 'Explore my world':'See every activity',
 };
 function PuzzleMenu({home=false}: {home?:boolean}) {
@@ -207,7 +212,13 @@ function PuzzleMenu({home=false}: {home?:boolean}) {
     return () => { disposed = true; observer.disconnect(); media.removeEventListener('change', load); image.onload = null; };
   }, [home]);
 
-  const items = home ? [...WORLDS, ['Games','🎮','/games'], ['History','🏰','/history'], ['Adventure Trail','🎲','/games/archie-adventure-trail'], ['Explore my world','🌍','/world'], ['Ask Archie','💬','/ask-archie'], ['Clock lab','🕒','/time-lab'], ['Progress','📈','/progress'], ['Artwork','🎨','/artwork'], ['Settings','⚙️','/settings'], ['Privacy','🔒','/privacy']] : WORLDS;
+  const candidates = home ? [...WORLDS, ['Games','🎮','/games'], ['History','🏰','/history'], ['Adventure Trail','🎲','/games/archie-adventure-trail'], ['Explore my world','🌍','/world'], ['Ask Archie','💬','/ask-archie'], ['Clock lab','🕒','/time-lab'], ['Progress','📈','/progress'], ['Artwork','🎨','/artwork'], ['Settings','⚙️','/settings'], ['Privacy','🔒','/privacy']] : WORLDS;
+  const routes = new Set<string>();
+  const items = candidates.filter(([, , route]) => {
+    if (routes.has(route)) return false;
+    routes.add(route);
+    return true;
+  });
   return <nav ref={pictureRef} className={`world-puzzle ${home ? 'home-picture-puzzle' : ''}`} aria-label={home ? 'Home activities' : 'Adventure picture activities'}>{items.map(([label,emoji,to]) => <Link key={to} className={`world-puzzle-piece ${home ? 'has-archie-picture' : ''}`} to={to}>
     {home && <ArchiePicturePiece label={label}/>}
     <svg className="world-puzzle-seam" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d="M100 0 V37 C88 32 88 53 100 48 V100 H63 C68 88 47 88 52 100 H0"/></svg>
@@ -224,6 +235,7 @@ export function ArchieGames() {
   const { settings } = useArchieData();
   const [params,setParams] = useSearchParams();
   const [query,setQuery] = useState('');
+  const searchInput = useRef<HTMLInputElement>(null);
   const subject = params.get('subject') || 'all';
   const linkedYear = yearForAgeBand(params.get('age'));
   const activeYear = linkedYear ?? settings.year;
@@ -231,13 +243,13 @@ export function ArchieGames() {
   const chooseYear = (year:number) => { const next=new URLSearchParams(params);next.delete('age');setParams(next);updateSavedData(d=>({...d,settings:{...d.settings,year}})); };
   const filtered = catalog.filter(g => isGameForYear(activeYear,g.ageGroups) && (subject === 'all' || g.subject === subject) && `${g.title} ${g.description}`.toLowerCase().includes(query.toLowerCase()));
   const toolbar = <div className="game-library-toolbar"><div className="game-library-filters">
-    <label className="a-field">My learning year<select value={activeYear} onChange={e=>chooseYear(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9].map(year=><option key={year} value={year}>Year {year} · {schoolYearAgeLabel(year)}</option>)}</select></label>
-    <label className="a-search"><Search aria-hidden="true"/><input type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
+    <div className="soda-year-choice"><label className="a-field">My learning year<select value={activeYear} onChange={e=>chooseYear(Number(e.target.value))}><LearningYearOptions/></select></label><p>{LEARNING_YEAR_SCOPE_NOTE}</p></div>
+    <label className="a-search"><Search aria-hidden="true"/><input ref={searchInput} type="search" aria-label="Search games" placeholder="Find a game…" value={query} onChange={e=>setQuery(e.target.value)}/></label>
     </div><div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
     <p role="status">{filtered.length} games for Year {activeYear}</p></div>;
   return <Page title="Choose a game" intro="Pick a picture and let's play." toolbar={toolbar}>
     <div className="a-grid">{filtered.map((g,i)=><Link key={g.id} to={g.route} className={`a-card colour-${i%4}`} data-game-link><SceneArtwork scene={sceneForSubject(g.subject,g.title)} title={g.title} compact/><h2>{g.title}</h2><p>{g.description}</p><small>Ages {g.ageGroups.join(', ')}</small><span className="a-play">Play game →</span></Link>)}</div>
-    {!filtered.length && <div className="a-panel"><p>No games match that search.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});}}>Show all games</button></div>}
+    {!filtered.length && <section className="a-panel" aria-labelledby="game-search-help"><h2 id="game-search-help">Let's find another game</h2><p>No games match those filters for Year {activeYear}. Try a shorter search or choose another subject.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});searchInput.current?.focus();}}>Show Year {activeYear} games</button></section>}
   </Page>;
 }
 export function ArchieLesson() {
@@ -279,7 +291,7 @@ export function ArchieLesson() {
   const advanceRef=useRef<()=>void>(()=>{}); advanceRef.current=next;
   useEffect(()=>{if(!isOpen||!voiceOnOpen||!correct||paused||remaining===0||finished)return;const timer=window.setTimeout(()=>advanceRef.current(),playing?8000:900);return()=>window.clearTimeout(timer);},[isOpen,voiceOnOpen,correct,playing,paused,remaining===0,finished,step]);
   if(finished) return <Page title="Brilliant learning!" back="/" intro="You completed all seven words."><div className="a-panel a-celebrate"><ArtIcon symbol="🌟"/><h2>3 stars earned</h2><p>Your lesson is saved on this device.</p><Link className="a-button" to="/rewards">See my rewards</Link><Link className="a-button" to="/games">Choose a game</Link></div></Page>;
-  if(compact) return <main className="compact-lesson puzzle-themed" style={puzzleThemeStyle("My spelling lesson")}><header><Link className="a-button" to="/" aria-label="Home"><Home/></Link><h1>My spelling lesson <small>Year {year} · Step {step+1} of {words.length} · {Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')} left</small></h1><SoundButton/></header><section className="compact-board" aria-label="Lesson whiteboard"><h2>{paused?'Lesson paused':hideWord?'Listen, then type':word}</h2>{trying && !paused && <form onSubmit={e=>{e.preventDefault();check();}}><input ref={input} aria-label="Your spelling" autoComplete="off" spellCheck={false} autoCapitalize="off" value={attempt} disabled={remaining===0||correct} onChange={e=>setAttempt(e.target.value)}/><button className="a-button" disabled={remaining===0||correct}>Check</button></form>}<p role="status">{correct && <span className="lesson-correct-tick" aria-label="Correct answer">✓</span>}{feedback || (paused?'Tap Resume lesson when you are ready.':'Hear the word, then try spelling it.')}</p></section><nav aria-label="Lesson actions"><button className="a-button" onClick={()=>{if(!paused)speak('read:lesson-word',word);}} aria-label="Hear the word">Hear the word</button><button className="a-button" onClick={()=>{if(!paused&&remaining>0){setTrying(true);setCorrect(false);setFeedback('');speak('read:lesson-word',word);}}}>Try spelling</button><button className="a-button" aria-label="Rubber: clear spelling" onClick={()=>{if(!paused&&remaining>0){setAttempt('');setCorrect(false);setTrying(true);setFeedback('Cleared. Have another go.');input.current?.focus();}}}>Rubber</button><button className="a-button" onClick={()=>openArchie(undefined,true)}>Start spoken lesson</button><button className="a-button" aria-label={paused?'Resume lesson':'Pause lesson'} onClick={()=>{setPaused(p=>!p);stop();}}>{paused?'Resume lesson':'Pause lesson'}</button><button className="a-button" onClick={next}>{step===6?'Finish lesson':'Next word'}</button></nav>{remaining===0 && <button className="a-button" onClick={()=>setRemaining(5*60)}>Practise for 5 more minutes</button>}</main>;
+  if(compact) return <main className="compact-lesson puzzle-themed" style={puzzleThemeStyle("My spelling lesson")}><header><Link className="a-button" to="/" aria-label="Home"><Home/></Link><h1>My spelling lesson <small>Year {year} · Step {step+1} of {words.length} · {Math.floor(remaining/60)}:{String(remaining%60).padStart(2,'0')} left</small></h1><SoundButton/></header><section className="compact-board" aria-label="Lesson whiteboard"><h2>{paused?'Lesson paused':hideWord?'Listen, then type':word}</h2>{trying && !paused && <form onSubmit={e=>{e.preventDefault();check();}}><input ref={input} aria-label="Your spelling" autoComplete="off" spellCheck={false} autoCapitalize="off" value={attempt} disabled={remaining===0||correct} onChange={e=>setAttempt(e.target.value)}/><button className="a-button" disabled={remaining===0||correct}>Check</button></form>}<p role="status">{correct && <span className="lesson-correct-tick" aria-label="Correct answer">✓</span>}{feedback || (paused?'Tap Resume lesson when you are ready.':trying?'Type the word you heard, then press Check.':'Look at the word. Tap Hear the word, then Try spelling. The word will hide.')}</p></section><nav aria-label="Lesson actions"><button className="a-button" onClick={()=>{if(!paused)speak('read:lesson-word',word);}} aria-label="Hear the word">Hear the word</button><button className="a-button" onClick={()=>{if(!paused&&remaining>0){setTrying(true);setCorrect(false);setFeedback('');speak('read:lesson-word',word);}}}>Try spelling</button><button className="a-button" aria-label="Rubber: clear spelling" onClick={()=>{if(!paused&&remaining>0){setAttempt('');setCorrect(false);setTrying(true);setFeedback('Cleared. Have another go.');input.current?.focus();}}}>Rubber</button><button className="a-button" onClick={()=>openArchie(undefined,true)}>Start spoken lesson</button><button className="a-button" aria-label={paused?'Resume lesson':'Pause lesson'} onClick={()=>{setPaused(p=>!p);stop();}}>{paused?'Resume lesson':'Pause lesson'}</button><button className="a-button" onClick={next}>{step===6?'Finish lesson':'Next word'}</button></nav>{remaining===0 && <button className="a-button" onClick={()=>setRemaining(5*60)}>Practise for 5 more minutes</button>}</main>;
   return <main className="art-stage" aria-label="My spelling lesson"><h1 className="sr-only">My spelling lesson</h1><div className="approved-art lesson-art">
     <img src="/assets/archie-approved/lesson.png" width="841" height="1870" alt="Archie beside a whiteboard in a colourful classroom."/>
     <ArtButton label="Home" x={18} y={58} w={190} h={96} to="/"/>
@@ -314,9 +326,10 @@ export function ArchieReader() {
   useEffect(()=>{setPage(0);return ()=>stop();},[bookId]);
   if(!book) return <Page title="Choose a story"><Link className="a-button" to="/library">Open the library</Link></Page>;
   const finished=activities.some(a=>a.id===`book-${book.id}`);
-  return <Page title={book.title} back="/" scene="reading"><Link className="a-button" to="/library">← All books</Link><LearningJigsaw key={`${book.id}-${currentPage}`} text={book.pages[currentPage]}/><article className="a-panel a-reader"><ArtIcon symbol={book.emoji}/><p>{book.pages[currentPage]}</p><small>Page {currentPage+1} of {book.pages.length}</small></article><div className="a-actions">
+  const storyId=`reader-story-${book.id}-${currentPage}`;
+  return <Page title={book.title} back="/" scene="reading"><Link className="a-button" to="/library">← All books</Link><LearningJigsaw key={`${book.id}-${currentPage}`} text={book.pages[currentPage]}/><article id={storyId} className="a-panel a-reader"><ArtIcon symbol={book.emoji}/><p>{book.pages[currentPage]}</p><small>Page {currentPage+1} of {book.pages.length}</small></article><div className="a-actions">
     <button className="a-button" disabled={currentPage===0} onClick={()=>{stop();setPage(p=>p-1);}}><ArrowLeft/> Previous</button>
-    <button className="a-button" onClick={()=>playing?stop():speak('read:book',book.pages[currentPage])}>{playing?<Pause/>:<Volume2/>}{playing?'Stop reading':'Read aloud'}</button>
+    <button className="a-button" aria-controls={storyId} onClick={()=>playing?stop():speak('read:book',book.pages[currentPage])}>{playing?<Pause/>:<Volume2/>}{playing?'Stop reading':'Read aloud'}</button>
     {currentPage<book.pages.length-1?<button className="a-button" onClick={()=>{stop();setPage(p=>p+1);}}>Next page <ArrowRight/></button>:<button className="a-button" disabled={finished} onClick={()=>complete({id:`book-${book.id}`,kind:'book',title:book.title,stars:1})}>{finished?'Book completed ✓':'Finish book • Earn 1 star'}</button>}
   </div>{finished&&<p role="status">Your reading star is saved. <Link to="/rewards">See your rewards</Link></p>}</Page>;
 }
@@ -336,24 +349,40 @@ export function ArchieHomework() {
 }
 const STICKERS = [{id:'key',emoji:'🔑',name:'Golden key',stars:1,art:'/assets/archie-approved/home.png'},{id:'book',emoji:'📘',name:'Book explorer',stars:3,art:'/assets/archie-approved/lesson.png'},{id:'castle',emoji:'🏰',name:'Castle explorer',stars:6,art:'/assets/cartoon/worlds/geography.png'},{id:'rocket',emoji:'🚀',name:'Star traveller',stars:10,art:'/assets/cartoon/worlds/science.png'},{id:'rainbow',emoji:'🌈',name:'Rainbow learner',stars:15,art:'/assets/cartoon/worlds/reading.png'},{id:'trophy',emoji:'🏆',name:'Learning champion',stars:25,art:'/assets/images/archie-character-v2.png'}];
 export function ArchieRewards({ stickers = false, progress = false }: { stickers?: boolean; progress?: boolean }) {
-  const { activities,stickers:claimed }=useArchieData();
+  const [params]=useSearchParams();
+  const { activities,legacyActivities,legacyStickers,settings,progressProfile,stickers:claimed }=useArchieData();
   const { completedGamesCount,level }=useProgression();
-  const stars=activities.reduce((sum,a)=>sum+a.stars,0)+readGameStars();
+  const source=params.get('from');
+  const adultSource=source==='parents'||source==='teacher'?source:null;
+  const legacyMode=adultSource!==null&&params.get('scope')==='legacy';
+  const shownActivities=legacyMode?legacyActivities:activities;
+  const shownGameStars=legacyMode?readLegacyGameStars():readScopedGameStars();
+  const shownStickers=legacyMode?legacyStickers:claimed;
+  const stars=shownActivities.reduce((sum,a)=>sum+a.stars,0)+Object.values(shownGameStars).reduce((sum,value)=>sum+value,0);
+  const learnerName=progressProfile.source==='active-child'?progressProfile.name:settings.childNickname?.trim()||progressProfile.name;
+  const adultView=adultSource!==null;
+  const sourceQuery=adultSource?`?from=${adultSource}${legacyMode?'&scope=legacy':''}`:'';
+  const back=adultSource==='parents'?'/parents':adultSource==='teacher'?'/teacher':'/world';
+  const backLabel=adultSource==='parents'?'Back to parents and learning':adultSource==='teacher'?'Back to teacher lessons':undefined;
   useLearning(stickers?'Sticker book':progress?'Progress':'Rewards');
-  return <Page title={stickers?'My sticker book':progress?'My progress':'My rewards'} intro="Your learning, saved on this device."><div className="a-stats"><div><strong>{stars}</strong><span>Stars earned</span></div><div><strong>{completedGamesCount}</strong><span>Games finished</span></div><div><strong>{level}</strong><span>Game level</span></div></div>
-    <div className="a-tabs"><Link className="a-button" to="/rewards">Rewards</Link><Link className="a-button" to="/stickers">Sticker book</Link><Link className="a-button" to="/progress">Progress</Link></div>
-    {progress?<div className="a-panel"><h2>Recent books and lessons</h2>{activities.length?activities.slice().reverse().map(a=><div className="a-activity" key={a.id}><strong>{a.title}</strong><span>{a.stars} ★ • {new Date(a.date).toLocaleDateString('en-GB')}</span></div>):<p>Complete a lesson or read a book to start your learning record.</p>}<Link className="a-button" to="/lesson">Start a lesson</Link></div>:<div className="a-grid">{STICKERS.map(s=><div key={s.id} className={`a-card ${claimed.includes(s.id)?'colour-0':'colour-3'}`}><div className={`a-sticker-art ${claimed.includes(s.id)?'is-earned':''}`}><img src={s.art} alt={claimed.includes(s.id)?`${s.name} sticker earned`:`${s.name} sticker preview`}/><span aria-hidden="true">{s.emoji}</span></div><h2>{s.name}</h2><p>{s.stars} stars to unlock</p><button className="a-button" disabled={stars<s.stars||claimed.includes(s.id)} onClick={()=>updateSavedData(d=>({...d,stickers:d.stickers.includes(s.id)?d.stickers:[...d.stickers,s.id]}))}>{claimed.includes(s.id)?'Collected ✓':stars>=s.stars?'Collect sticker':`${s.stars-stars} more stars`}</button></div>)}</div>}
+  const title=stickers?(legacyMode?'Older shared stickers':adultView?`${learnerName} sticker book`:'My sticker book'):progress?(legacyMode?'Older shared device progress':adultView?`${learnerName} progress`:'My progress'):'My rewards';
+  const intro=legacyMode?'Older records kept separately from learner profiles.':adultView?`Practice saved for ${learnerName} on this device.`:'Your learning, saved on this device.';
+  const adultGamesCount=Object.keys(shownGameStars).length;
+  return <Page title={title} intro={intro} back={back} backLabel={backLabel}>{adultView&&<aside className="a-panel" aria-label={legacyMode?'Older shared device progress scope':'Learner progress scope'}>{legacyMode?<><h2>Older shared device history</h2><p>These records were saved before learner profiles were separated. They may combine several people and have not been copied to {learnerName}.</p></>:<><h2>Learner-scoped history</h2><p>New game, book, lesson and sticker results are stored under {learnerName}’s local profile. Changing the selected child uses a different record.</p>{(legacyActivities.length>0||legacyStickers.length>0||Object.keys(readLegacyGameStars()).length>0)&&<Link className="a-button" to={`/progress?from=${adultSource}&scope=legacy`}>View older shared history</Link>}</>}</aside>}<div className="a-stats"><div><strong>{stars}</strong><span>{legacyMode?'Older shared stars':'Stars earned'}</span></div><div><strong>{adultView?adultGamesCount:completedGamesCount}</strong><span>{legacyMode?'Shared game records':adultView?'Games recorded':'Games finished'}</span></div><div><strong>{adultView?shownActivities.length:level}</strong><span>{adultView?'Books and lessons':'Game level'}</span></div></div>
+    <div className="a-tabs"><Link className="a-button" to={`/rewards${sourceQuery}`}>Rewards</Link><Link className="a-button" to={`/stickers${sourceQuery}`}>Sticker book</Link><Link className="a-button" to={`/progress${sourceQuery}`}>Progress</Link></div>
+    {progress?<div className="a-panel"><h2>{legacyMode?'Older shared learning':'Recent learning'}</h2>{shownActivities.length?shownActivities.slice().reverse().map(a=><div className="a-activity" key={`${a.profileId??'legacy'}-${a.id}`}><strong>{a.title}</strong><span>{a.stars} ★ • {new Date(a.date).toLocaleDateString('en-GB')}</span></div>):<p>{legacyMode?'No older shared books or lessons are stored.':'Complete a lesson or puzzle, or read a book, to start this learner record.'}</p>}<Link className="a-button" to="/lesson">Start a lesson</Link></div>:<div className="a-grid">{STICKERS.map(s=><div key={s.id} className={`a-card ${shownStickers.includes(s.id)?'colour-0':'colour-3'}`}><div className={`a-sticker-art ${shownStickers.includes(s.id)?'is-earned':''}`}><img src={s.art} alt={shownStickers.includes(s.id)?`${s.name} sticker earned`:`${s.name} sticker preview`}/><span aria-hidden="true">{s.emoji}</span></div><h2>{s.name}</h2><p>{s.stars} stars to unlock</p><button className="a-button" disabled={legacyMode||stars<s.stars||shownStickers.includes(s.id)} onClick={()=>claimScopedSticker(s.id,progressProfile)}>{shownStickers.includes(s.id)?'Collected ✓':legacyMode?'Not in older history':stars>=s.stars?'Collect sticker':`${s.stars-stars} more stars`}</button></div>)}</div>}
   </Page>;
 }
 export function ArchieParents({ settingsOnly = false }: { settingsOnly?: boolean }) {
   const { stop } = useVoice();
-  const {settings,setSettings}=useArchieData();
+  const {settings,setSettings,progressProfile,hasLearnerSettings}=useArchieData();
   const [year,setYear]=useState(settings.year);
   const [childNickname,setChildNickname]=useState(settings.childNickname ?? '');
   const [learningAge,setLearningAge]=useState<string>(()=>String(readLearningAge() ?? ''));
   const [notice,setNotice]=useState('');
   const [connection,setConnection]=useState('Not checked yet.');
   const [checking,setChecking]=useState(false);
+  useEffect(()=>{setYear(settings.year);setChildNickname(settings.childNickname??'');setLearningAge(String(readLearningAge()??''));},[progressProfile.id,settings.year,settings.childNickname]);
   useLearning(settingsOnly?'Settings':'Parents');
   async function checkConnection() {
     setChecking(true);setConnection('Checking…');
@@ -361,17 +390,21 @@ export function ArchieParents({ settingsOnly = false }: { settingsOnly?: boolean
     catch {setConnection('The online learning service is not connected. Built-in maths and spelling help still work.');}
     finally{setChecking(false);}
   }
-  return <GrownUpGate key={settingsOnly?'settings':'parents'} purpose="Choose learning settings, online help and saved memory" cancel={<Link className="a-button" to="/world">Back to learning</Link>}><Page title={settingsOnly?'Settings':'Parents & learning'} back="/" calm intro="Sign in, choose your child’s learning settings and connect optional AI help.">{!settingsOnly && <><nav className="a-actions parent-shortcuts" aria-label="Parent hub sections"><a className="a-button" href="#parent-account">1. Parent sign-in</a><a className="a-button" href="#parent-ai">2. Connect AI</a><a className="a-button" href="#learning-settings">3. Learning settings</a></nav><ParentAccountPanel/><ParentAIConnection/></>}<form id="learning-settings" className="a-panel" onSubmit={e=>{e.preventDefault();const ageSaved=saveLearningAge(learningAge===''?null:Number(learningAge));setSettings({year,childNickname:childNickname.trim().slice(0,30)});setNotice(ageSaved?'Your age presentation and learning year are saved. The next lesson will use this year group.':'The learning year is saved, but this browser could not save the age preference.');}}>
+  return <GrownUpGate key={settingsOnly?'settings':'parents'} purpose="Choose learning settings, online help and saved memory" cancel={<Link className="a-button" to="/world">Back to learning</Link>}><Page title={settingsOnly?'Settings':'Parents & learning'} back="/" calm intro="Sign in, choose your child’s learning settings and connect optional AI help.">{!settingsOnly && <><nav className="a-actions parent-shortcuts" aria-label="Parent hub sections"><a className="a-button" href="#parent-account">1. Parent sign-in</a><a className="a-button" href="#parent-ai">2. Connect AI</a><a className="a-button" href="#learning-settings">3. Learning settings</a></nav><ParentAccountPanel/><ParentAIConnection/></>}<form id="learning-settings" className="a-panel" onSubmit={e=>{e.preventDefault();const ageSaved=saveLearningAge(learningAge===''?null:Number(learningAge));setSettings({year,childNickname:childNickname.trim().slice(0,30)});setNotice(ageSaved?`${progressProfile.name}’s age presentation and learning year are saved. The next lesson will use this year group.`:`${progressProfile.name}’s learning year is saved, but this browser could not save the age preference.`);}}>
+    <h2>Practice settings for {progressProfile.name}</h2>
+    <p className="a-note">Nickname, age presentation and school year are saved for this learner. Sound, larger text and online learning help stay on this device for everyone who uses it.</p>
+    {!hasLearnerSettings&&<p className="a-note"><strong>Older shared setting:</strong> the device’s previous nickname and school year are shown until you save this learner’s choices.</p>}
     <label className="a-field">Child’s nickname (optional)<input type="text" maxLength={30} value={childNickname} onChange={e=>setChildNickname(e.target.value)} autoComplete="off" placeholder="A first name or nickname"/></label>
-    <p className="a-note">Archie remembers this nickname for greetings on this device. Use a nickname rather than a full name. It is not added to online AI requests.</p>
+    <p className="a-note">Archie remembers this nickname for this learner’s greetings on this device. Use a nickname rather than a full name. It is not added to online AI requests.</p>
     <label className="a-field">Child’s age (5–13, optional)<input type="number" min="5" max="13" step="1" value={learningAge} onChange={e=>setLearningAge(e.target.value)} placeholder="Enter age"/></label>
     <p className="a-note">Age changes the home adventures and question style. Choose the actual school year below for lessons: age alone cannot identify a year group because birthdays and England’s September school-year cut-off differ. No date of birth is needed.</p>
-    <label className="a-field">School year<select value={year} onChange={e=>setYear(Number(e.target.value))}>{[1,2,3,4,5,6,7,8,9].map(n=><option key={n} value={n}>Year {n}</option>)}</select></label>
+    <label className="a-field">School year<select value={year} onChange={e=>setYear(Number(e.target.value))}><LearningYearOptions/></select></label><p className="a-note">{LEARNING_YEAR_SCOPE_NOTE}</p>
     <p><strong>Lesson length:</strong> 30 minutes, with a pause button whenever you need it.</p><Link className="a-button" to="/privacy">Privacy information</Link>
-    <label className="a-check"><input type="checkbox" checked={settings.sound} onChange={e=>{setSettings({sound:e.target.checked});if(!e.target.checked)stop();}}/> Read aloud and sound</label>
-    <label className="a-check"><input type="checkbox" checked={settings.largeText} onChange={e=>setSettings({largeText:e.target.checked})}/> Larger text on menus and books</label>
+    <h3>Shared device access</h3>
+    <label className="a-check"><input aria-label="Read aloud and sound" type="checkbox" checked={settings.sound} onChange={e=>{setSettings({sound:e.target.checked});if(!e.target.checked)stop();}}/> Read aloud and sound for this device</label>
+    <label className="a-check"><input aria-label="Larger text on menus and books" type="checkbox" checked={settings.largeText} onChange={e=>setSettings({largeText:e.target.checked})}/> Larger text on menus and books for this device</label>
     <button className="a-button">Save learning settings</button><p role="status">{notice}</p>
-  </form>{!settingsOnly && <ParentLearningReport/>}<div className="a-panel"><h2>Archie’s learning helper</h2><p>Built-in help works first. Online help is off until a grown-up enables it on this device.</p><label className="a-check"><input type="checkbox" checked={settings.onlineHelp} onChange={e=>setSettings({onlineHelp:e.target.checked})}/> Allow online learning help</label><p className="a-note">When enabled, wider questions, recent chat and activity context may be sent to the app server and its configured AI provider. Do not include names, contact details or private information. AI answers can be wrong; check important learning with a grown-up. Turning this off keeps built-in maths, spelling and quests available.</p><p className="a-note">Microphone input is optional. Your browser or device speech service may process audio online; check its privacy settings before use.</p><button className="a-button" disabled={checking} onClick={checkConnection}>{checking?'Checking…':'Check AI setup'}</button><p role="status">{connection}</p></div>{!settingsOnly && <><ParentAIResources/></>}<div className="a-panel"><h2>Ask Archie memory on this device</h2><p>{loadSavedLearning().length} saved question-and-answer pairs. These stay in this browser on this device.</p><button className="a-button" onClick={()=>{if(window.confirm('Clear saved Ask Archie questions and answers from this device?')){clearSavedLearning();setNotice('Saved Ask Archie memory has been cleared from this device.');}}}>Clear saved Ask Archie memory</button><p role="status">{notice}</p></div><div className="a-actions"><Link className="a-button" to="/progress">View progress</Link><Link className="a-button" to="/lesson">Try the lesson</Link><Link className="a-button" to="/teacher">Teacher lessons by subject and year (including Maths)</Link><Link className="a-button" to="/class">Class lessons</Link></div><p className="a-note">Learning progress stays in this browser. Parent accounts need the configured account server; cross-device learning syncing and payments are not connected.</p></Page></GrownUpGate>;
+  </form>{!settingsOnly && <ParentLearningReport/>}<div className="a-panel"><h2>Archie’s learning helper</h2><p>Built-in help works first. Online help is off until a grown-up enables it on this device.</p><label className="a-check"><input type="checkbox" checked={settings.onlineHelp} onChange={e=>setSettings({onlineHelp:e.target.checked})}/> Allow online learning help</label><p className="a-note">When enabled, wider questions, recent chat and activity context may be sent to the app server and its configured AI provider. Recent chat is cleared when the selected learner or learning year changes. Do not include names, contact details or private information. AI answers can be wrong; check important learning with a grown-up. Turning this off keeps built-in maths, spelling and quests available.</p><p className="a-note">Microphone input is optional. Your browser or device speech service may process audio online; check its privacy settings before use.</p><button className="a-button" disabled={checking} onClick={checkConnection}>{checking?'Checking…':'Check AI setup'}</button><p role="status">{connection}</p></div>{!settingsOnly && <><ParentAIResources/></>}<div className="a-panel"><h2>Ask Archie memory for {progressProfile.name}</h2><p>{loadSavedLearningForActiveProfile().length} saved question-and-answer pairs for this learner. These stay in this browser and are not reused for another learner profile.</p>{loadSavedLearning().length>loadSavedLearningForActiveProfile().length&&<p className="a-note">Other learner or older default-profile memory is kept separately on this device.</p>}<button className="a-button" onClick={()=>{if(window.confirm(`Clear saved Ask Archie questions and answers for ${progressProfile.name}? Other learner profiles will be kept.`)){clearSavedLearningForActiveProfile();setNotice(`${progressProfile.name}’s saved Ask Archie memory has been cleared. Other learner profiles were kept.`);}}}>Clear {progressProfile.name}’s Ask Archie memory</button><p role="status">{notice}</p></div><div className="a-actions"><Link className="a-button" to="/progress?from=parents">View progress</Link><Link className="a-button" to="/lesson">Try the lesson</Link><Link className="a-button" to="/teacher">Teacher lessons by subject and year (including Maths)</Link><Link className="a-button" to="/class">Class lessons</Link></div><p className="a-note">Learning progress stays in this browser. Parent accounts need the configured account server; cross-device learning syncing and payments are not connected.</p></Page></GrownUpGate>;
 }
 export function ArchieCartoons() {
   const [episode,setEpisode]=useState<number|null>(null);

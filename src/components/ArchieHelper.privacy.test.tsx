@@ -51,6 +51,21 @@ describe('Archie online-help privacy default',()=>{
     expect(fetch).not.toHaveBeenCalled();
     expect(localStorage.getItem('sodafom_archie_learning_v1')).toBeNull();
   });
+  it('prefers the active learner age and year over older shared settings',()=>{
+    localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:4,sound:false,onlineHelp:true},activities:[],stickers:[]}));
+    localStorage.setItem('sodafom_learning_age','9');
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:1,name:'Mia',ageGroup:'5-7'}));
+    localStorage.setItem('sodafom_learning_age:1','6');
+    localStorage.setItem('sodafom_archie_settings:profile:child:1',JSON.stringify({childNickname:'Mia',year:2}));
+    localStorage.setItem('sodafom_learning_age:2','12');
+    localStorage.setItem('sodafom_archie_settings:profile:child:2',JSON.stringify({childNickname:'Leo',year:7}));
+    expect(getLearnerAge()).toBe(6);
+
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:2,name:'Leo',ageGroup:'11-13'}));
+    expect(getLearnerAge()).toBe(12);
+    localStorage.removeItem('sodafom_learning_age:2');
+    expect(getLearnerAge()).toBe(11);
+  });
   it('keeps online help off for existing saved settings without an opt-in',async()=>{
     localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:4,sound:false,largeText:false},activities:[],stickers:[]}));
     const fetch=vi.fn();vi.stubGlobal('fetch',fetch);

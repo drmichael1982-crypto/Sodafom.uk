@@ -47,6 +47,9 @@ function getProfileId(): string {
   } catch { /* keep a separate default device profile */ }
   return 'device-default';
 }
+function belongsToProfile(turn: SavedLearningTurn, profileId = getProfileId()): boolean {
+  return (turn.profileId || 'device-default') === profileId;
+}
 function normalise(value: string) { return value.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim(); }
 
 export function loadSavedLearning(): SavedLearningTurn[] {
@@ -56,6 +59,10 @@ export function loadSavedLearning(): SavedLearningTurn[] {
     if (!Array.isArray(rows)) return [];
     return rows.filter((x): x is SavedLearningTurn => x && typeof x.question === 'string' && typeof x.answer === 'string' && Number.isInteger(x.age) && (typeof x.profileId === 'string' || x.profileId === undefined)).slice(-MAX_TURNS);
   } catch { return []; }
+}
+export function loadSavedLearningForActiveProfile(): SavedLearningTurn[] {
+  const profileId = getProfileId();
+  return loadSavedLearning().filter(turn => belongsToProfile(turn, profileId));
 }
 export function saveLearningTurn(question: string, answer: string, age = 9): void {
   if (typeof window === 'undefined' || !question.trim() || !answer.trim()) return;
@@ -68,6 +75,15 @@ export function saveLearningTurn(question: string, answer: string, age = 9): voi
 }
 export function clearSavedLearning(): void {
   if (typeof window !== 'undefined') localStorage.removeItem(KEY);
+}
+export function clearSavedLearningForActiveProfile(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const profileId = getProfileId();
+    const otherProfiles = loadSavedLearning().filter(turn => !belongsToProfile(turn, profileId));
+    if (otherProfiles.length) localStorage.setItem(KEY, JSON.stringify(otherProfiles));
+    else localStorage.removeItem(KEY);
+  } catch { /* Clearing one profile must not make the parent page unusable. */ }
 }
 export function answerLessonReply(reply: string, prompt: string, subject: string | null): string | null {
   if (subject?.toLowerCase() !== 'spelling' || /\b(help|hint|repeat|explain)\b/i.test(reply)) return null;
@@ -82,7 +98,7 @@ export function answerFromDevice(question: string, age = 9): string | null {
   const q = normalise(question);
   if (!q) return null;
   const profileId = getProfileId();
-  const saved = loadSavedLearning().find(x => normalise(x.question) === q && x.age === age && (x.profileId || 'device-default') === profileId);
+  const saved = loadSavedLearning().find(x => normalise(x.question) === q && x.age === age && belongsToProfile(x, profileId));
   if (saved) return saved.answer;
   const entry = HISTORY.find(item => item.ages.includes(age as never) && item.keys.some(key => q.includes(key)));
   if (entry) return entry.answer;

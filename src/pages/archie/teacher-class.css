@@ -27,6 +27,13 @@
 .tc-options { padding-left: 1.2em; }
 .tc-correct { font-weight: 700; color: #0b5a1f; }
 .tc-detail svg, .tc-detail img { max-width: 100%; height: auto; }
+.tc-puzzle-groups { display: grid; gap: 8px; }
+.tc-puzzle-group { break-inside: avoid; min-width: 0; padding: 8px 10px; border: 2px solid #b8d1e9; border-radius: 16px; background: #f7fbff; }
+.tc-puzzle-group-heading { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; }
+.tc-puzzle-group-heading h3 { margin: 0; color: #173560; font-size: 1.05em; overflow-wrap: anywhere; }
+.tc-puzzle-group-heading > span { color: #35486e; font-size: .88em; font-weight: 800; }
+.tc-puzzle-group .a-activity { padding: 8px 0; }
+.tc-puzzle-group .a-activity:last-child { border-bottom: 0; padding-bottom: 4px; }
 
 /* Pupil class trail only: teacher plans retain their calm, plain layout. */
 .tc-class {
