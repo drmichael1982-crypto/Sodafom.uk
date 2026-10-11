@@ -27,7 +27,8 @@ it('keeps the hint controls large enough to tap on a phone or tablet', () => {
 
   fireEvent.click(showHint);
 
-  expect(screen.queryByRole('button', { name: 'Show hint' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Show hint' })).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'Show hint' })).toHaveClass('w-11', 'h-11');
   expect(screen.getByRole('button', { name: 'Read hint aloud' })).toHaveClass('w-11', 'h-11');
 });
 

@@ -12,6 +12,18 @@ const wordScrambleAnswers = [
   'PLANT', 'CLOUD', 'BREAD', 'TRAIN', 'SHARK', 'FLAME', 'GLOBE', 'STORM', 'PRIZE', 'BRAVE',
   'JUNGLE', 'CASTLE', 'PLANET', 'BRIDGE', 'FROZEN', 'FLIGHT', 'SPRING', 'TROPHY', 'WHISPER', 'BLANKET',
 ];
+const spellingSnapQuestions = [
+  { prompt: 'The children put ___ books away.', answer: 'their', wrong: 'there', hint: '“Their” shows belonging. “There” points to a place.' },
+  { prompt: 'Lack of sleep can ___ your concentration.', answer: 'affect', wrong: 'effect' },
+  { prompt: 'Everyone was invited ___ Sam.', answer: 'except', wrong: 'accept' },
+  { prompt: 'I do not know ___ it will rain.', answer: 'whether', wrong: 'weather' },
+  { prompt: 'The school ___ welcomed everyone.', answer: 'principal', wrong: 'principle' },
+  { prompt: 'The bicycle remained ___ at the traffic lights.', answer: 'stationary', wrong: 'stationery' },
+  { prompt: 'The blue scarf will ___ your coat.', answer: 'complement', wrong: 'compliment' },
+  { prompt: 'We ate apple crumble for ___.', answer: 'dessert', wrong: 'desert' },
+  { prompt: 'Football ___ starts at four.', answer: 'practice', wrong: 'practise' },
+  { prompt: 'Mum renewed her driving ___.', answer: 'licence', wrong: 'license' },
+];
 const eligible = (game, year) => game.ageGroups.some(range => {
   const [low, high] = range.split(/[–-]/).map(Number);
   const schoolYearAges = [year + 4, Math.min(year + 5, 13)];
@@ -287,6 +299,68 @@ const results = [];
         await page.screenshot({ path: `${output}/word-scramble-complete-${viewport.width}.png`, fullPage: true });
         await button('Back to games').click(); await page.waitForURL(base + '/games');
         results.push(`Year 4, ${viewport.width}px: Word Scramble → keyboard hint → wrong answer retained → retry → pause/resume with partial answer → 10 corrected words → three-star reward → menu`);
+
+        // Complete Spelling Snap in every eligible learning year. The deliberate
+        // mistake measures first-try accuracy while the corrected word completes
+        // the same sentence. These are simulated learner scenarios.
+        for (let year = 3; year <= 9; year++) {
+          await goto('/games'); await chooseYear(year);
+          await page.getByLabel('Search games', { exact: true }).fill('Spelling Snap');
+          await page.locator('[data-game-link][href="/games/spelling-snap"]').click();
+          await page.getByText('Choose a word. If it is not right, use the meaning hint and try the same sentence again.', { exact: true }).waitFor();
+          for (let round = 0; round < spellingSnapQuestions.length; round++) {
+            const item = spellingSnapQuestions[round];
+            await page.getByText(item.prompt, { exact: true }).waitFor();
+            if (round === 0) {
+              const hintButton = button('Show meaning hint');
+              await revealWithPager(hintButton);
+              await hintButton.focus();
+              await page.keyboard.press('Enter');
+              assert.equal(await hintButton.evaluate(element => element === document.activeElement), true, 'Spelling Snap hint keeps keyboard focus');
+              await page.getByRole('status').filter({ hasText: item.hint }).waitFor();
+
+              const pauseButton = button('Pause game');
+              await revealWithPager(pauseButton);
+              await pauseButton.focus();
+              await page.keyboard.press('Space');
+              await page.getByRole('status').filter({ hasText: 'Paused. Your sentence is saved.' }).waitFor();
+              assert.equal(await button(item.answer).isDisabled(), true, 'Spelling Snap answers are disabled during a break');
+              assert.equal(await button('Resume game').evaluate(element => element === document.activeElement), true, 'Spelling Snap pause keeps focus on Resume');
+              if (year === 3) await page.screenshot({ path: `${output}/spelling-snap-paused-year-${year}-${viewport.width}.png`, fullPage: true });
+              await page.keyboard.press('Enter');
+              assert.equal(await button('Pause game').evaluate(element => element === document.activeElement), true, 'Spelling Snap resume restores focus');
+              assert.equal(await page.getByText(item.prompt, { exact: true }).count(), 1, 'Spelling Snap pause preserves the sentence');
+
+              await revealWithPager(button(item.wrong));
+              await button(item.wrong).focus();
+              await page.keyboard.press('Enter');
+              await page.getByRole('status').filter({ hasText: 'Good try. Keep this sentence and choose again.' }).waitFor();
+              assert.equal(await page.getByText(item.prompt, { exact: true }).count(), 1, 'Wrong Spelling Snap answer retains the sentence');
+              assert.equal(await button(item.wrong).isDisabled(), true, 'The attempted spelling is clearly unavailable');
+              assert.equal(await button(item.answer).isEnabled(), true, 'The other spelling remains available for a retry');
+              await revealWithPager(button('Pause game'));
+              await button('Pause game').click();
+              await page.getByRole('status').filter({ hasText: 'Paused. Your sentence is saved.' }).waitFor();
+              await button('Resume game').click();
+              await page.getByRole('status').filter({ hasText: 'Good try. Keep this sentence and choose again.' }).waitFor();
+              if (year === 3) await page.screenshot({ path: `${output}/spelling-snap-retry-year-${year}-${viewport.width}.png`, fullPage: true });
+            }
+            await revealWithPager(button(item.answer));
+            await button(item.answer).click();
+            await page.getByRole('status').filter({ hasText: round === 0 ? 'You fixed it!' : 'Correct!' }).waitFor();
+            if (round < spellingSnapQuestions.length - 1) {
+              await page.getByText(spellingSnapQuestions[round + 1].prompt, { exact: true }).waitFor();
+            }
+          }
+          await closeMovingReward(year === 3 ? `${output}/moving-reward-spelling-snap-year-${year}-${viewport.width}.png` : null);
+          await page.getByText('9 correct out of 10 questions', { exact: true }).waitFor();
+          await page.getByText('Final score: 90%', { exact: true }).waitFor();
+          await page.getByText('⭐ Three stars earned! ⭐', { exact: true }).waitFor();
+          await page.waitForTimeout(1700);
+          if (year === 3) await page.screenshot({ path: `${output}/spelling-snap-complete-year-${year}-${viewport.width}.png`, fullPage: true });
+          await button('Back to games').click(); await page.waitForURL(base + '/games');
+          results.push(`Year ${year}, ${viewport.width}px: Spelling Snap → meaning hint → keyboard pause/resume → retained wrong answer → corrected retry → 9/10 first-try answers (90%, three stars) → menu`);
+        }
       }
       for (let year = 1; year <= (lessonsOnly ? 0 : 6); year++) {
         for (const retry of [false, true]) {
