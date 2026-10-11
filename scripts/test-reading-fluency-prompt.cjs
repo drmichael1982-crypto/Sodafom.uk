@@ -65,6 +65,13 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
         `${viewport.label}: pausing returns the reflowed break card to the first screen`);
       assert.equal(await page.locator('.app-screen-window').evaluate(element => element.scrollLeft), 0,
         `${viewport.label}: browser focus does not leave the paused card horizontally displaced`);
+      await page.waitForTimeout(250);
+      const pausedBounds = await page.getByRole('heading', { name: 'Game paused', exact: true }).locator('..').evaluate(element => {
+        const box = element.getBoundingClientRect();
+        return { left: box.left, right: box.right, viewportWidth: innerWidth };
+      });
+      assert.equal(pausedBounds.left >= 0 && pausedBounds.right <= pausedBounds.viewportWidth, true,
+        `${viewport.label}: the settled paused card is fully inside the viewport`);
       const topResume = page.getByRole('button', { name: 'Resume game', exact: true }).first();
       assert.equal(await topResume.evaluate(element => element === document.activeElement), true,
         `${viewport.label}: keyboard focus stays on pause/resume control`);
