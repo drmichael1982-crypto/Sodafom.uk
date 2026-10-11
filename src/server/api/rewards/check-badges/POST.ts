@@ -11,29 +11,20 @@ import { sql } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
 import { BADGE_DEFS, type BadgeStats } from '@/lib/badges';
 import { sendEmail } from '@/server/email';
+import { ensureRewardStorage } from '@/server/lib/reward-storage';
 
-interface ProgressRow { subject: string; stars: number }
+interface ProgressRow { subject: string; stars: number | string }
 interface StreakRow { current_streak: number; max_streak: number }
 interface ReferralRow { cnt: number }
-interface ChildRow { id: number; name: string; total_stars: number; reward_email: string | null; user_id: string }
+interface ChildRow { id: number; name: string; total_stars: number | string }
+interface RewardEmailRow { reward_email: string | null }
 interface AwardedRow { badge_id: string }
 
-// ── Ensure badge_awards table exists ─────────────────────────────────────────
-async function ensureTables() {
-  await db.execute(sql`
-    CREATE TABLE IF NOT EXISTS badge_awards (
-      id          INT AUTO_INCREMENT PRIMARY KEY,
-      child_id    INT NOT NULL,
-      badge_id    VARCHAR(100) NOT NULL,
-      awarded_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-      email_sent  TINYINT(1) DEFAULT 0,
-      UNIQUE KEY uq_child_badge (child_id, badge_id)
-    )
-  `);
-  // Add reward_email column to children if not present
-  await db.execute(sql`
-    ALTER TABLE children ADD COLUMN reward_email VARCHAR(255) NULL
-  `).catch(() => { /* column already exists */ });
+function parseChildId(value: unknown): number | null {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  if (typeof value === 'string' && !/^\d+$/.test(value)) return null;
+  const childId = Number(value);
+  return Number.isSafeInteger(childId) && childId > 0 ? childId : null;
 }
 
 // ── Build beautiful badge award email ────────────────────────────────────────
@@ -118,22 +109,32 @@ export default async function handler(req: Request, res: Response) {
     const session = await getAuth().api.getSession({ headers: req.headers as Record<string, string> });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
 
-    const { childId } = req.body ?? {};
-    if (!childId) return res.status(400).json({ error: 'childId required' });
+    const childId = parseChildId(req.body?.childId);
+    if (childId === null) return res.status(400).json({ error: 'Invalid child ID' });
 
-    await ensureTables();
-
-    // Verify child belongs to this user and get reward_email
+    // Verify ownership before touching progress, rewards, referrals or schema.
     const childRows = (await db.execute(sql`
-      SELECT id, name, total_stars, reward_email, user_id
-      FROM children WHERE id = ${childId} AND user_id = ${session.user.id} LIMIT 1
+      SELECT id, name, total_stars
+      FROM children
+      WHERE id = ${childId} AND parent_id = ${session.user.id}
+      LIMIT 1
     `))[0] as unknown as ChildRow[];
     const child = childRows[0];
     if (!child) return res.status(404).json({ error: 'Child not found' });
 
+    await ensureRewardStorage();
+
+    const rewardEmailRows = (await db.execute(sql`
+      SELECT reward_email FROM children
+      WHERE id = ${childId} AND parent_id = ${session.user.id}
+      LIMIT 1
+    `))[0] as unknown as RewardEmailRow[];
+
     // Fetch progress for badge evaluation
     const progressRows = (await db.execute(sql`
-      SELECT subject, stars FROM child_progress WHERE child_id = ${childId}
+      SELECT subject, stars_earned AS stars
+      FROM activity_sessions
+      WHERE child_id = ${childId}
     `))[0] as unknown as ProgressRow[];
 
     const streakRows = (await db.execute(sql`
@@ -147,14 +148,14 @@ export default async function handler(req: Request, res: Response) {
 
     const stats: BadgeStats = {
       gamesPlayed: progressRows.length,
-      totalStars: progressRows.reduce((s, r) => s + (r.stars ?? 0), 0),
+      totalStars: progressRows.reduce((sum, row) => sum + Number(row.stars ?? 0), 0),
       currentStreak: Number(streak.current_streak),
       maxStreak: Number(streak.max_streak),
       mathsGames: progressRows.filter(r => r.subject?.toLowerCase() === 'maths').length,
       readingGames: progressRows.filter(r => r.subject?.toLowerCase() === 'reading').length,
       spellingGames: progressRows.filter(r => r.subject?.toLowerCase() === 'spelling').length,
       scienceGames: progressRows.filter(r => r.subject?.toLowerCase() === 'science').length,
-      perfectGames: progressRows.filter(r => r.stars >= 3).length,
+      perfectGames: progressRows.filter(r => Number(r.stars) >= 3).length,
       referrals: Number(refRows[0]?.cnt ?? 0),
     };
 
@@ -171,7 +172,7 @@ export default async function handler(req: Request, res: Response) {
     const newBadges = BADGE_DEFS.filter(d => earnedIds.includes(d.id) && !awardedSet.has(d.id));
 
     const emailsSent: string[] = [];
-    const rewardEmail = child.reward_email;
+    const rewardEmail = rewardEmailRows[0]?.reward_email ?? null;
 
     for (const badge of newBadges) {
       // Record the award
@@ -186,7 +187,7 @@ export default async function handler(req: Request, res: Response) {
           const { html, text } = buildBadgeEmail(
             child.name,
             badge,
-            child.total_stars,
+            stats.totalStars,
             'https://sodafom.uk',
           );
           await sendEmail({
@@ -213,6 +214,6 @@ export default async function handler(req: Request, res: Response) {
     });
   } catch (err) {
     console.error('[check-badges] error:', err);
-    res.status(500).json({ error: String(err) });
+    res.status(500).json({ error: 'Failed to check badges' });
   }
 }
