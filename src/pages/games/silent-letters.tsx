@@ -24,7 +24,7 @@ const L2: QuizQuestion[] = [
   { question: 'Which word has a silent "n"?', options: ['autumn','antenna','annual','annex'], answer: 'autumn' },
   { question: 'Which word has a silent "u"?', options: ['guard','guru','gust','gull'], answer: 'guard' },
   { question: 'Which word has a silent "e"?', options: ['cake','cake (the e is silent)','cake (the a is silent)','cake (the c is silent)'], answer: 'cake (the e is silent)' },
-  { question: 'Which word has a silent "h"?', options: ['vehicle','hedge','harsh','harsh'], answer: 'vehicle' },
+  { question: 'Which word has a silent "h"?', options: ['vehicle','hedge','harsh','hotel'], answer: 'vehicle' },
   { question: 'Which word has a silent "t"?', options: ['listen','litter','letter','latter'], answer: 'listen' },
   { question: 'Which word has a silent "b"?', options: ['debt','debut','debate','debit'], answer: 'debt' },
   { question: 'Which word has a silent "g"?', options: ['sign','sing','sting','ring'], answer: 'sign' },

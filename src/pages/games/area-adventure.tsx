@@ -41,7 +41,7 @@ const L3: QuizQuestion[] = [
   { question: 'Area of a compound shape: 10×8 rectangle minus 3×3 square?', options: ['71','80','89','62'], answer: '71' },
   { question: 'Area of a trapezium with parallel sides 7 and 11, height 8?', options: ['72','36','144','56'], answer: '72' },
   { question: 'Area of a circle with radius 6? (π ≈ 3.14)', options: ['113.04','37.68','18.84','226.08'], answer: '113.04' },
-  { question: 'Area of a compound shape: 12×5 rectangle + 4×4 square?', options: ['76','60','76','80'], answer: '76' },
+  { question: 'Area of a compound shape: 12×5 rectangle + 4×4 square?', options: ['76','60','72','80'], answer: '76' },
 ];
 const L4 = L3;
 const L5 = L3;
