@@ -291,7 +291,7 @@ const stagger = {
 } as const;
 
 // ── Add Child Modal ───────────────────────────────────────────────────────────
-function AddChildModal({
+export function AddChildModal({
   onClose,
   onAdded
 }: {
@@ -344,8 +344,8 @@ function AddChildModal({
       scale: 0.92
     }} transition={{
       duration: 0.2
-    }} className="bg-card rounded-3xl p-8 w-full max-w-md shadow-2xl border border-border" onClick={e => e.stopPropagation()}>
-        <h2 className="text-2xl font-black text-foreground mb-6" style={{
+    }} role="dialog" aria-modal="true" aria-labelledby="add-learner-title" className="bg-card rounded-3xl p-5 sm:p-8 w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain shadow-2xl border border-border" onClick={e => e.stopPropagation()}>
+        <h2 id="add-learner-title" className="text-2xl font-black text-foreground mb-6" style={{
         fontFamily: 'var(--font-heading)'
       }}>
           Add a learner
@@ -355,7 +355,7 @@ function AddChildModal({
           <div>
             <label className="block text-sm font-bold text-foreground mb-2">Choose an avatar</label>
             <div className="flex flex-wrap gap-2">
-              {AVATARS.map(em => <button key={em} type="button" onClick={() => setAvatarEmoji(em)} className={`w-10 h-10 rounded-full text-xl flex items-center justify-center border-2 transition-all ${avatarEmoji === em ? 'border-primary bg-primary/10 scale-110' : 'border-border bg-muted'}`}>{em}</button>)}
+              {AVATARS.map(em => <button key={em} type="button" aria-label={`Choose ${em} avatar`} aria-pressed={avatarEmoji === em} onClick={() => setAvatarEmoji(em)} className={`w-11 h-11 rounded-full text-xl flex items-center justify-center border-2 transition-all ${avatarEmoji === em ? 'border-primary bg-primary/10 scale-110' : 'border-border bg-muted'}`}>{em}</button>)}
             </div>
           </div>
           {/* Name */}
@@ -367,7 +367,7 @@ function AddChildModal({
           <div>
             <label className="block text-sm font-bold text-foreground mb-2">Age group</label>
             <div className="flex gap-2">
-              {AGE_GROUPS.map(ag => <button key={ag.value} type="button" onClick={() => setAgeGroup(ag.value)} className={`flex-1 py-2 rounded-xl border-2 font-bold text-sm transition-all ${ageGroup === ag.value ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted text-foreground'}`}>
+              {AGE_GROUPS.map(ag => <button key={ag.value} type="button" onClick={() => setAgeGroup(ag.value)} className={`flex-1 min-h-11 py-2 rounded-xl border-2 font-bold text-sm transition-all ${ageGroup === ag.value ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-muted text-foreground'}`}>
                   {ag.icon} {ag.label}
                 </button>)}
             </div>
