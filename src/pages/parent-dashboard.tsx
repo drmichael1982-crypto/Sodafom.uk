@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ProtectedRoute, useSession } from '@/lib/auth/auth-client';
 import {
   Star, BookOpen, FlaskConical, Calculator, Pencil, Trophy,
@@ -232,6 +232,7 @@ function FamilySummaryCard({ children }: { children: ChildSummary[] }) {
 
 
 function ChildCard({ childId }: { childId: number }) {
+  const reduceMotion = useReducedMotion();
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -274,16 +275,13 @@ function ChildCard({ childId }: { childId: number }) {
   if (!data) return null;
 
   const { child, totalGames, badgeCount, subjects, daily, recent } = data;
-  const tutorAgeGroup = child.age_group === '5-7' || child.age_group === '11-13'
-    ? child.age_group
-    : '8-10';
   const maxSubjectStars = Math.max(...subjects.map((s) => Number(s.stars)), 1);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: reduceMotion ? 0 : 0.4 }}
       className="bg-card rounded-3xl border-2 border-border overflow-hidden shadow-sm"
     >
       {/* Header */}
@@ -313,7 +311,13 @@ function ChildCard({ childId }: { childId: number }) {
 
       <div className="p-6 flex flex-col gap-6">
         {/* 1-to-1 Child Tutor Report */}
-        <ParentTutorReport childId={childId} childName={child.name} ageGroup={tutorAgeGroup} />
+        <ParentTutorReport child={{
+          id: child.id,
+          name: child.name,
+          ageGroup: child.age_group === '5-7' || child.age_group === '8-10' || child.age_group === '11-13'
+            ? child.age_group
+            : undefined,
+        }} />
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
