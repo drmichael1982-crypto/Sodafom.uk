@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router';
 import { Star, Lock, CheckCircle, ChevronRight } from 'lucide-react';
 import { useSession } from '@/lib/auth/auth-client';
+import { normalizeChildrenResponse } from '@/lib/children-response';
 
 const siteUrl = 'https://sodafom.uk';
 
@@ -14,7 +15,7 @@ interface Child {
   name: string;
   totalStars: number;
   avatarEmoji: string | null;
-  activeCharacterId: number | null;
+  activeCharacterId?: number | null;
 }
 
 interface Character {
@@ -27,7 +28,7 @@ interface Character {
   category: string;
   sortOrder: number;
   unlocked: boolean;
-  active: boolean;
+  isActive: boolean;
 }
 
 interface GameLevelRow {
@@ -58,7 +59,7 @@ function StarBar({ filled, total = 5 }: { filled: number; total?: number }) {
 }
 
 // ── Star Bank Page ─────────────────────────────────────────────────────────────
-export default function StarBankPage() {
+export function StarBankPage() {
   const { isAuthenticated } = useSession();
   const [children, setChildren] = useState<Child[]>([]);
   const [activeChildId, setActiveChildId] = useState<number | null>(null);
@@ -67,28 +68,46 @@ export default function StarBankPage() {
   const [loading, setLoading] = useState(true);
   const [unlocking, setUnlocking] = useState<number | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const activeChildIdRef = useRef<number | null>(null);
+  activeChildIdRef.current = activeChildId;
 
   // Load children list
   useEffect(() => {
     if (!isAuthenticated) { setLoading(false); return; }
-    fetch(`${API_PREFIX}/children`, { credentials: 'include' })
+    const controller = new AbortController();
+    fetch(`${API_PREFIX}/children`, { credentials: 'include', signal: controller.signal })
       .then(r => r.ok ? r.json() : [])
-      .then((data: Child[]) => {
-        setChildren(data);
-        if (data.length > 0) setActiveChildId(data[0].id);
+      .then((data: unknown) => {
+        if (controller.signal.aborted) return;
+        const kids = normalizeChildrenResponse(data) as Child[];
+        setChildren(kids);
+        if (kids.length > 0) setActiveChildId(kids[0].id);
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
   }, [isAuthenticated]);
 
   // Load characters + game levels when active child changes
   useEffect(() => {
-    if (!activeChildId) return;
+    if (activeChildId === null) return;
+    const childId = activeChildId;
+    const controller = new AbortController();
+    setCharacters([]);
+    setGameLevels([]);
+    setUnlocking(null);
     Promise.all([
-      fetch(`${API_PREFIX}/rewards/characters?childId=${activeChildId}`, { credentials: 'include' }).then(r => r.ok ? r.json() : []),
-      fetch(`${API_PREFIX}/children/${activeChildId}/progress`, { credentials: 'include' }).then(r => r.ok ? r.json() : { recent: [] }),
-    ]).then(([chars, prog]) => {
-      setCharacters(chars as Character[]);
+      fetch(`${API_PREFIX}/rewards/characters?childId=${childId}`, { credentials: 'include', signal: controller.signal })
+        .then(r => r.ok ? r.json() : { characters: [] }),
+      fetch(`${API_PREFIX}/children/${childId}/progress`, { credentials: 'include', signal: controller.signal })
+        .then(r => r.ok ? r.json() : { recent: [] }),
+    ]).then(([charsPayload, prog]) => {
+      if (controller.signal.aborted || activeChildIdRef.current !== childId) return;
+      const payload = charsPayload as { characters?: Character[]; totalStars?: number };
+      setCharacters(Array.isArray(charsPayload) ? charsPayload as Character[] : payload.characters ?? []);
+      if (payload.totalStars !== undefined) {
+        setChildren(prev => prev.map(child => child.id === childId ? { ...child, totalStars: payload.totalStars! } : child));
+      }
       // Build per-game best stars from recent activity
       const bySlug: Record<string, GameLevelRow> = {};
       if (prog?.recent) {
@@ -100,42 +119,56 @@ export default function StarBankPage() {
       }
       setGameLevels(Object.values(bySlug));
     }).catch(() => {});
+    return () => controller.abort();
   }, [activeChildId]);
 
   const activeChild = children.find(c => c.id === activeChildId) ?? null;
 
   const handleUnlock = async (char: Character) => {
     if (!activeChild || char.unlocked || activeChild.totalStars < char.starCost) return;
+    const childId = activeChild.id;
     setUnlocking(char.id);
     try {
-      const res = await fetch(`${API_PREFIX}/rewards/characters/${char.id}/unlock`, {
+      const res = await fetch(`${API_PREFIX}/rewards/unlock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ childId: activeChildId }),
+        body: JSON.stringify({ childId, characterId: char.id }),
       });
       if (res.ok) {
-        setCharacters(prev => prev.map(c => c.id === char.id ? { ...c, unlocked: true } : c));
-        setChildren(prev => prev.map(c => c.id === activeChildId ? { ...c, totalStars: c.totalStars - char.starCost } : c));
-        setToast(`🎉 ${char.name} unlocked!`);
-        setTimeout(() => setToast(null), 3000);
+        const data = await res.json() as { success?: boolean; starsRemaining?: number };
+        if (data.success) {
+          setChildren(prev => prev.map(child => child.id === childId
+            ? { ...child, totalStars: data.starsRemaining ?? child.totalStars }
+            : child));
+          if (activeChildIdRef.current === childId) {
+            setCharacters(prev => prev.map(c => c.id === char.id ? { ...c, unlocked: true } : c));
+            setToast(`🎉 ${char.name} unlocked!`);
+            setTimeout(() => setToast(null), 3000);
+          }
+        }
       }
     } catch { /* ignore */ }
-    setUnlocking(null);
+    if (activeChildIdRef.current === childId) setUnlocking(null);
   };
 
   const handleEquip = async (char: Character) => {
     if (!activeChild || !char.unlocked) return;
+    const childId = activeChild.id;
     try {
-      await fetch(`${API_PREFIX}/rewards/characters/${char.id}/equip`, {
+      const res = await fetch(`${API_PREFIX}/rewards/set-character`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ childId: activeChildId }),
+        body: JSON.stringify({ childId, characterId: char.id }),
       });
-      setCharacters(prev => prev.map(c => ({ ...c, active: c.id === char.id })));
-      setToast(`✅ ${char.name} is now your avatar!`);
-      setTimeout(() => setToast(null), 2500);
+      if (!res.ok) return;
+      const data = await res.json() as { success?: boolean };
+      if (data.success && activeChildIdRef.current === childId) {
+        setCharacters(prev => prev.map(c => ({ ...c, isActive: c.id === char.id })));
+        setToast(`✅ ${char.name} is now your avatar!`);
+        setTimeout(() => setToast(null), 2500);
+      }
     } catch { /* ignore */ }
   };
 
@@ -210,7 +243,7 @@ export default function StarBankPage() {
                     <button
                       key={child.id}
                       onClick={() => setActiveChildId(child.id)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full font-black text-sm border-2 transition-all ${
+                      className={`flex min-h-11 items-center gap-2 px-4 py-2 rounded-full font-black text-sm border-2 transition-all ${
                         activeChildId === child.id
                           ? 'bg-primary text-primary-foreground border-primary'
                           : 'bg-card text-foreground border-border hover:border-primary'
@@ -328,7 +361,7 @@ export default function StarBankPage() {
                                 key={char.id}
                                 whileHover={char.unlocked ? { scale: 1.03 } : canAfford ? { scale: 1.02 } : {}}
                                 className={`relative bg-card border-2 rounded-2xl p-4 text-center shadow-sm transition-all ${
-                                  char.active
+                                  char.isActive
                                     ? 'border-accent shadow-accent/20 shadow-md'
                                     : char.unlocked
                                     ? 'border-green-400'
@@ -338,7 +371,7 @@ export default function StarBankPage() {
                                 }`}
                               >
                                 {/* Active badge */}
-                                {char.active && (
+                                {char.isActive && (
                                   <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] font-black px-2 py-0.5 rounded-full shadow">
                                     Active
                                   </span>
@@ -357,14 +390,14 @@ export default function StarBankPage() {
 
                                 {/* Action button */}
                                 {char.unlocked ? (
-                                  char.active ? (
+                                  char.isActive ? (
                                     <span className="inline-flex items-center gap-1 text-[10px] font-black text-accent">
                                       <CheckCircle size={11} /> Equipped
                                     </span>
                                   ) : (
                                     <button
                                       onClick={() => handleEquip(char)}
-                                      className="w-full py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-black hover:opacity-90 transition-opacity"
+                                      className="w-full min-h-11 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-black hover:opacity-90 transition-opacity"
                                     >
                                       Equip
                                     </button>
@@ -373,7 +406,7 @@ export default function StarBankPage() {
                                   <button
                                     onClick={() => handleUnlock(char)}
                                     disabled={isUnlocking}
-                                    className="w-full py-1.5 rounded-xl bg-accent text-accent-foreground text-xs font-black hover:opacity-90 transition-opacity disabled:opacity-60"
+                                    className="w-full min-h-11 py-1.5 rounded-xl bg-accent text-accent-foreground text-xs font-black hover:opacity-90 transition-opacity disabled:opacity-60"
                                   >
                                     {isUnlocking ? 'Unlocking…' : 'Unlock now!'}
                                   </button>
@@ -422,3 +455,5 @@ export default function StarBankPage() {
     </>
   );
 }
+
+export default StarBankPage;
