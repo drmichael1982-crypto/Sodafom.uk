@@ -58,6 +58,8 @@ const answers = {
             `${viewport.label}: pause stops answering`);
           await page.screenshot({ path: `test-results/reading-quest/retry-break-${viewport.label}.png`, fullPage: true });
           await page.getByRole('button', { name: 'Resume quest', exact: true }).click();
+          const previousScreen = page.getByRole('button', { name: /Previous/ });
+          if (await previousScreen.isEnabled()) await previousScreen.click();
         }
 
         await page.getByRole('button', { name: answer, exact: true }).click();

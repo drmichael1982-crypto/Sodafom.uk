@@ -192,7 +192,7 @@ export function ReadingQuestPlay({ onComplete, onQuestionChange }: { onComplete:
   const progressPct = Math.round((answeredCount / total) * 100);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-start p-6 bg-gradient-to-b from-green-50 to-background max-w-2xl mx-auto w-full">
+    <div data-reading-quest-play className="flex-1 flex flex-col items-center justify-start p-3 sm:p-6 bg-gradient-to-b from-green-50 to-background max-w-2xl mx-auto w-full">
       <AnimatePresence mode="wait">
         {phase === 'read' && (
           <motion.div key="read" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full">
