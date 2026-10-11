@@ -352,7 +352,9 @@ export function TeacherLessons() {
           </Link>
         }
       >
-        <DevicePuzzleLearning />
+        <div className="tc-pager-screen">
+          <DevicePuzzleLearning />
+        </div>
         <TeacherLessonList />
       </GrownUpGate>
       <p className="a-note">

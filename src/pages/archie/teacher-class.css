@@ -34,6 +34,17 @@
 .tc-puzzle-group-heading > span { color: #35486e; font-size: .88em; font-weight: 800; }
 .tc-puzzle-group .a-activity { padding: 8px 0; }
 .tc-puzzle-group .a-activity:last-child { border-bottom: 0; padding-bottom: 4px; }
+.app-screen-flow > .tc-pager-screen {
+  width: var(--app-screen-width);
+  max-width: 100%;
+  height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  break-inside: avoid;
+}
+.app-screen-flow > .tc-pager-screen > .a-panel { box-sizing: border-box; }
 
 /* Pupil class trail only: teacher plans retain their calm, plain layout. */
 .tc-class {

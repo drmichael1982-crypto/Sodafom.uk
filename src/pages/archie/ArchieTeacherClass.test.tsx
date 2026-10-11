@@ -115,7 +115,9 @@ describe("Teacher and Class Lessons Views", () => {
     await user.type(screen.getByLabelText(/Grown-up answer/i), "privacy choose");
     await user.click(screen.getByRole("button", { name: /Continue with a grown-up/i }));
 
-    expect(screen.getByRole("heading", { name: "Recent puzzle learning for this learner" })).toBeInTheDocument();
+    const puzzleHeading = screen.getByRole("heading", { name: "Recent puzzle learning for this learner" });
+    expect(puzzleHeading).toBeInTheDocument();
+    expect(puzzleHeading.closest(".tc-pager-screen")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Maths · Year 1" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Maths · Year 2" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "History · Year not recorded" })).toBeInTheDocument();
