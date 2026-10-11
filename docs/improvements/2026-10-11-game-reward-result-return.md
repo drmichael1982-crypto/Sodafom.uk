@@ -51,6 +51,9 @@ The result-oriented exit label is an original interface proposal, not a statutor
 - Archie production build: passed.
 - Script syntax and `git diff --check`: passed.
 - GitHub Actions run 489 found and documented a stale browser-helper expectation: unit, build and the focused Reading Quest browser journey passed, but the later year-group matrix still looked only for `Back to puzzle`. The helper was corrected to the game-specific label before rerunning the workflow.
+- Direct inspection of run 489's focused phone/tablet artifact confirmed that `See my result` was clear, readable and unclipped in both viewports. It also exposed an evidence-timing problem: the accessible final value was ready before the animated visible value, so screenshots caught a blank phone score and an intermediate `10%` tablet score. The browser journey now waits for the rendered `67%` counter before capturing the result. This is a test-evidence correction, not a scoring change.
+- GitHub Actions run 493 passed on final code commit `ada2ff70954c0fbce6fdaa925c2f34eb788ec3a5`: TypeScript, 162 files / 1,173 unit tests, production build, hosted Chromium install, route/button journeys, focused Reading Quest phone/tablet journeys, the simulated all-years game/spelling matrix and artifact upload. Run: <https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38140058802>
+- Final artifact `11702806655` was inspected directly. Both reward captures show the new result-oriented control without clipping. Both result captures visibly show `67%`, `2 correct out of 3 questions` and one star; the phone keeps the main actions reachable on its vertical surface and the tablet shows the complete result card without horizontal overflow.
 
 Local Playwright execution was blocked because this runtime could not download its Chromium binary from the external CDN. This is an environment limitation, not reported as a product failure; the repository’s GitHub workflow installs Chromium and executes the journey.
 
@@ -58,4 +61,4 @@ Local Playwright execution was blocked because this runtime could not download i
 
 All browser walkthroughs are simulated learner scenarios, not real-child testing. Physical phone/tablet touch, real-device microphone/audio, hardware screen readers, live accounts/payments and learning outcomes remain unverified.
 
-Next: inspect the exact CI reward and result screenshots, then continue with the next current lesson/game failure without duplicating this completed navigation fix.
+Next: reproduce the next current lesson/game failure with a complete phone/tablet learner journey, prioritising real broken routes or misleading feedback over cosmetic expansion.
