@@ -752,4 +752,3 @@ export function ResultScreen({
   );
 }
 
-×M:ã

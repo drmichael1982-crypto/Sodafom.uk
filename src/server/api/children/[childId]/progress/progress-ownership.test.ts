@@ -87,4 +87,3 @@ describe('parent progress score normalisation', () => {
     expect(progressPercentage(-5, 10)).toBe(0);
   });
 });
-×M:ã

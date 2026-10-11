@@ -69,4 +69,3 @@ describe('bounded persistent owner game ideas', () => {
     }
   });
 });
-×M:ã

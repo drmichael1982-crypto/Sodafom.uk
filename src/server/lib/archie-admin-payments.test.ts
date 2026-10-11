@@ -92,4 +92,3 @@ describe('owner payment settings HTTP boundary', () => {
     await expect(disabled.save(draft)).rejects.toThrow('not configured');
   });
 });
-×M:ã

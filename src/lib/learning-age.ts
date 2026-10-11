@@ -47,4 +47,3 @@ export function resolveLearningAge(): number | null {
   if (profile?.ageGroup === '11-13') return 12;
   return null;
 }
-×M:ã

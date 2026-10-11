@@ -52,4 +52,3 @@ const captureDir = path.resolve(process.env.ARCHIE_CAPTURE_DIR || 'test-results/
     console.log('Short landscape tutor help, activities and navigation passed on /games and /library.');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exit(1); });
-×M:ã
