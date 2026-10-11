@@ -75,7 +75,7 @@ export function SpellingSnapPlay({ onComplete, onQuestionChange }: { onComplete:
   }
 
   return (
-    <div className="flex flex-col items-center gap-4 p-4 max-w-lg mx-auto">
+    <div aria-label="Spelling Snap activity" className="h-full min-h-0 overflow-y-auto overscroll-contain flex flex-col items-center gap-4 p-4 max-w-lg mx-auto">
       <div className="w-full" aria-label="Spelling Snap progress">
         <div className="h-3 rounded-full bg-muted overflow-hidden">
           <motion.div className="h-full rounded-full bg-primary" animate={{ width: `${(round / TOTAL) * 100}%` }} />

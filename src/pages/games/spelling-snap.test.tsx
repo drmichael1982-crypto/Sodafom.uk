@@ -55,6 +55,7 @@ describe('Spelling Snap contextual questions', () => {
   it('offers a meaning hint without moving or scoring the question', () => {
     render(<SpellingSnapPlay onComplete={vi.fn()} />);
 
+    expect(screen.getByLabelText('Spelling Snap activity')).toHaveClass('h-full', 'min-h-0', 'overflow-y-auto', 'overscroll-contain');
     const hint = screen.getByRole('button', { name: 'Show meaning hint' });
     expect(hint.parentElement).toHaveClass('grid-cols-1', 'sm:grid-cols-2');
     fireEvent.click(hint);
