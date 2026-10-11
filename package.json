@@ -29,6 +29,7 @@
     "test:archie:ui": "node scripts/test-archie-ui.cjs",
     "test:archie:reading-quest": "node scripts/test-reading-quest-journey.cjs",
     "test:archie:reading-fluency": "node scripts/test-reading-fluency-prompt.cjs",
+    "test:archie:reading-speed": "node scripts/test-reading-speed-journey.cjs",
     "test:archie:sudoku": "node scripts/test-sudoku-journey.cjs",
     "test:archie:parent-isolation": "node scripts/test-parent-tutor-isolation.cjs",
     "test:archie:settings-isolation": "node scripts/test-learner-settings-isolation.cjs"

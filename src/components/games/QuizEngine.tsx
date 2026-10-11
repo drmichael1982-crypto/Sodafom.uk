@@ -27,6 +27,9 @@ interface QuizEngineProps {
   onQuestionChange?: (question: string, options?: string[]) => void; // reports current question text upward
   sessionKey?: string;
   answerReward?: 'snake' | 'word-monster' | 'robot';
+  /** Keep authored clues behind an optional learner action until they are needed. */
+  deferHint?: boolean;
+  hintButtonLabel?: string;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -42,6 +45,8 @@ export default function QuizEngine({
   onQuestionChange,
   sessionKey = title,
   answerReward = 'snake',
+  deferHint = false,
+  hintButtonLabel = 'Show hint',
 }: QuizEngineProps) {
   const [pool] = useState(() => {
     const unique = [...new Map(questions.map(q => [`${q.question}|${q.answer}`, q])).values()];
@@ -64,6 +69,7 @@ export default function QuizEngine({
   const [fitted, setFitted] = useState(0);
   const [tried, setTried] = useState<string[]>([]);
   const [paused, setPaused] = useState(false);
+  const [hintVisible, setHintVisible] = useState(false);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if(advanceTimer.current)clearTimeout(advanceTimer.current); }, []);
   const [done, setDone] = useState(false);
@@ -93,7 +99,10 @@ export default function QuizEngine({
     if (isCorrect) {
       if(tried.length===0)setCorrect(c => c + 1);
       setFitted(value=>value+1);
-    } else setTried(values=>[...values,opt]);
+    } else {
+      setTried(values=>[...values,opt]);
+      setHintVisible(true);
+    }
 
     const feedback = isCorrect
       ? `You chose ${opt}. That's correct! Well done.`
@@ -107,6 +116,7 @@ export default function QuizEngine({
         setIdx(i => i + 1);
         setSelected(null);
         setTried([]);
+        setHintVisible(false);
       }
     }, isCorrect && !reducedMotion ? 1900 : 900);
   }, [paused, selected, current, idx, pool.length, speak, reducedMotion, tried]);
@@ -200,7 +210,7 @@ export default function QuizEngine({
               <p className="font-black text-foreground text-lg leading-snug text-center">
                 {current.question}
               </p>
-              {current.hint && (
+              {current.hint && (!deferHint || hintVisible) && selected === null && (
                 <p className="text-muted-foreground text-xs text-center mt-1">{current.hint}</p>
               )}
             </div>
@@ -209,6 +219,17 @@ export default function QuizEngine({
           </div>
         </motion.div>
       </AnimatePresence>
+
+      {deferHint && current.hint && selected === null && (
+        <button
+          type="button"
+          aria-pressed={hintVisible}
+          onClick={() => setHintVisible(value => !value)}
+          className="mx-auto min-h-11 rounded-xl border-2 border-blue-300 bg-blue-50 px-5 py-2 font-black text-blue-950 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+        >
+          {hintVisible ? `Hide ${hintButtonLabel.replace(/^Show\s+/i, '').toLowerCase()}` : hintButtonLabel}
+        </button>
+      )}
 
       {/* Options */}
       <div key={`answers-${idx}`} className={`answer-snake-board grid grid-cols-1 sm:grid-cols-2 gap-3 ${feeding ? 'is-feeding' : ''} answer-reward-${answerReward}`}>

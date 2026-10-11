@@ -40,6 +40,8 @@ interface LevelledQuizEngineProps {
   accentClass?: string;
   onComplete: (result: GameResult) => void;
   onQuestionChange?: (question: string, options?: string[]) => void;
+  deferHint?: boolean;
+  hintButtonLabel?: string;
 }
 
 export default function LevelledQuizEngine({
@@ -51,6 +53,8 @@ export default function LevelledQuizEngine({
   accentClass = 'bg-primary',
   onComplete,
   onQuestionChange,
+  deferHint,
+  hintButtonLabel,
 }: LevelledQuizEngineProps) {
   const { level, loading, recordResult } = useGameLevel(gameSlug);
   const { tier } = useChildAge();
@@ -108,6 +112,8 @@ export default function LevelledQuizEngine({
         accentClass={accentClass}
         onComplete={handleComplete}
         onQuestionChange={onQuestionChange}
+        deferHint={deferHint}
+        hintButtonLabel={hintButtonLabel}
       />
     </div>
   );
