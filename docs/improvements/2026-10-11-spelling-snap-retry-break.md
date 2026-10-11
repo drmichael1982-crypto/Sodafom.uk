@@ -4,9 +4,9 @@
 
 - Repository: `drmichael1982-crypto/Sodafom.uk`.
 - Dedicated 2D improvement branch: `improve/archie-learning-20261007`; draft PR [#81](https://github.com/drmichael1982-crypto/Sodafom.uk/pull/81), targeting `test/archie-2026-10-02`.
-- Rechecked target before work: `a3b1079d4bf0b8ecab3c56ddb39ee3f3e5789904` (`Keep free learning private and measurable`), newer than reference `be917c8e6cdb99156a63b38f8d12792babeb31c4`.
+- Rechecked target before work: `a3b1079d4bf0b8ecab3c56ddb39ee3f3e5789904` (`Keep free learning private and measurable`), newer than reference `be917c8e6cdb99156a63b38f8d12792babeb31c4`. After the candidate passed, the target advanced independently to `bdc02e01abe2aedc87a57cfe071e7c64b79d4bb2` (`Correct learning records and free access UI`).
 - Reconciliation commit: `aa46e2e4a080f534150791fd303d882db4399892`; initial implementation commit: `b1d141faebdf1b267a6af9436105ebe4d0d3f1d0`; final verified code head: `404473d3a0340941474ec666eecf59b15f78ecf1`. This note is a following documentation-only commit.
-- Railway deployment `bdaca0a5-e152-46b8-9d8d-102fe36401e1` was `SUCCESS` and exactly matched target `a3b1079` when checked. This candidate was not deployed.
+- Railway deployment `e2450f46-6261-40f6-8b44-2641532a787a` is `SUCCESS` and exactly matches the newer target `bdc02e01`; Railway reports no staged changes or pending work. This candidate was not deployed.
 - Leonard's developer app remains the separate `drmichael1982-crypto/sodafom797` workstream. No Leonard source, 3D work, production setting, credential, paid service, payment or real child data was changed. An active Leonard worker queue was not observable.
 
 ## Fresh reproduction
@@ -72,4 +72,5 @@ Stripe Directory was consulted before any provider/organisation selection as req
 - Real-device touch, microphone/audio, speech services and hardware screen readers remain unverified.
 - Live accounts and payment readiness remain unverified and were not changed.
 - All browser learners are simulated. The full inherited game/year and course/teacher lesson matrix is still larger than this bounded change.
-- Next priority: recheck the current target/PR and extend complete phone/tablet walkthrough coverage to the next currently observed reading, voice or lesson failure rather than duplicating this verified Spelling Snap work.
+- Draft PR #81 currently reports a merge conflict after the target advanced. A local reconciliation attempt identified the overlap specifically in `src/lib/archie/storage.ts`; it was aborted without publishing or overwriting either implementation. The newer target's learning-record isolation must be reconciled deliberately with this branch's learner settings/game-star scoping and both test sets rerun.
+- Next priority: resolve that storage conflict and rerun the full hosted suite before extending complete phone/tablet walkthrough coverage to the next currently observed reading, voice or lesson failure.
