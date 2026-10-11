@@ -15,7 +15,7 @@ vi.mock('motion/react', async () => {
   return { motion, AnimatePresence: ({ children }: { children: React.ReactNode }) => children };
 });
 
-import { AddChildModal, normalizeHubChildren } from './index';
+import { AddChildModal, HubLearnerLoadError, normalizeHubChildren } from './index';
 
 describe('Parent Hub learner response', () => {
   it('keeps learners from the supported legacy response envelope', () => {
@@ -32,6 +32,18 @@ describe('Parent Hub learner response', () => {
       avatarEmoji: '🦊',
       totalStars: 12,
     }]);
+  });
+
+  it('distinguishes a failed learner request from an empty family', () => {
+    const onRetry = vi.fn();
+    render(<HubLearnerLoadError onRetry={onRetry} />);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Could not load your learners');
+    expect(screen.getByText(/profiles have not been removed/i)).toBeInTheDocument();
+    const retry = screen.getByRole('button', { name: 'Try again' });
+    expect(retry).toHaveClass('min-h-11');
+    fireEvent.click(retry);
+    expect(onRetry).toHaveBeenCalledOnce();
   });
 });
 
