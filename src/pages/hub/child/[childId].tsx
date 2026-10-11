@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { API_PREFIX } from '@/lib/config';
+import { normalizeChildrenResponse } from '@/lib/children-response';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { useParams, Link } from "react-router";
 import { motion } from 'motion/react';
@@ -108,7 +109,7 @@ const SUBJECT_CONFIG: Record<string, {
 const AGE_LABELS: Record<string, string> = {
   '5-7': '⭐ Ages 5–7',
   '8-10': '🚀 Ages 8–10',
-  '11-13': '🏆 Ages 11–12'
+  '11-13': '🏆 Ages 11–13'
 };
 const fadeUp = {
   hidden: {
@@ -301,12 +302,24 @@ function RecentBadgesStrip({ childId }: { childId: number }) {
   const [badges, setBadges] = useState<{ id: string; emoji: string; name: string; rarity: string }[]>([]);
 
   useEffect(() => {
-    fetch(`${API_PREFIX}/badges?childId=${childId}`, { credentials: 'include' })
-      .then(r => r.json())
+    const controller = new AbortController();
+    setBadges([]);
+
+    fetch(`${API_PREFIX}/badges?childId=${childId}`, {
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then(r => {
+        if (!r.ok) throw new Error(`Badges request failed (${r.status})`);
+        return r.json();
+      })
       .then((d: { badges: { id: string; emoji: string; name: string; rarity: string; earned: boolean }[] }) => {
+        if (controller.signal.aborted) return;
         setBadges((d.badges ?? []).filter(b => b.earned).slice(0, 6));
       })
       .catch(() => { /* silent */ });
+
+    return () => controller.abort();
   }, [childId]);
 
   return (
@@ -379,7 +392,7 @@ function SubjectSummaryCard({
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-function ChildProgressView() {
+export function ChildProgressView() {
   const {
     childId
   } = useParams<{
@@ -390,21 +403,58 @@ function ChildProgressView() {
   const [summaries, setSummaries] = useState<ProgressSummary[]>([]);
   const [totalStars, setTotalStars] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [activeSubject, setActiveSubject] = useState<string>('all');
   useEffect(() => {
-    if (!childId) return;
-    Promise.all([fetch(`${API_PREFIX}/children`, {
-      credentials: 'include'
-    }).then(r => r.json()), fetch(`${API_PREFIX}/children/${childId}/progress`, {
-      credentials: 'include'
-    }).then(r => r.json())]).then(([childrenData, progressData]) => {
-      const found = Array.isArray(childrenData) ? childrenData.find((c: Child) => c.id === parseInt(childId)) : null;
-      setChild(found ?? null);
-      setSessions(progressData.recent ?? []);
-      setSummaries(progressData.summaries ?? []);
-      setTotalStars(progressData.totalStars ?? 0);
+    const parsedChildId = Number(childId);
+    if (!Number.isSafeInteger(parsedChildId) || parsedChildId <= 0) {
+      setChild(null);
+      setSessions([]);
+      setSummaries([]);
+      setTotalStars(0);
+      setLoadError(false);
       setLoading(false);
-    }).catch(() => setLoading(false));
+      return;
+    }
+
+    const controller = new AbortController();
+    setChild(null);
+    setSessions([]);
+    setSummaries([]);
+    setTotalStars(0);
+    setActiveSubject('all');
+    setLoadError(false);
+    setLoading(true);
+
+    Promise.all([
+      fetch(`${API_PREFIX}/children`, {
+        credentials: 'include',
+        signal: controller.signal,
+      }).then(r => {
+        if (!r.ok) throw new Error(`Learners request failed (${r.status})`);
+        return r.json();
+      }),
+      fetch(`${API_PREFIX}/children/${parsedChildId}/progress`, {
+        credentials: 'include',
+        signal: controller.signal,
+      }).then(r => {
+        if (!r.ok) throw new Error(`Progress request failed (${r.status})`);
+        return r.json();
+      }),
+    ]).then(([childrenData, progressData]) => {
+      if (controller.signal.aborted) return;
+      const found = normalizeChildrenResponse(childrenData).find(c => c.id === parsedChildId);
+      setChild(found ?? null);
+      setSessions(Array.isArray(progressData?.recent) ? progressData.recent : []);
+      setSummaries(Array.isArray(progressData?.summaries) ? progressData.summaries : []);
+      setTotalStars(Number.isFinite(Number(progressData?.totalStars)) ? Number(progressData.totalStars) : 0);
+    }).catch(() => {
+      if (!controller.signal.aborted) setLoadError(true);
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
+
+    return () => controller.abort();
   }, [childId]);
   const filteredSessions = activeSubject === 'all' ? sessions : sessions.filter(s => s.subject === activeSubject);
   const totalSessions = sessions.length;
@@ -421,7 +471,8 @@ function ChildProgressView() {
     return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="text-5xl mb-4">😕</div>
-          <h2 className="text-xl font-black text-foreground mb-2">Learner not found</h2>
+          <h2 className="text-xl font-black text-foreground mb-2">{loadError ? 'Could not load progress' : 'Learner not found'}</h2>
+          {loadError && <p className="text-sm text-muted-foreground mb-3">Check your connection and try again.</p>}
           <Link to="/hub" className="text-primary font-bold hover:underline">← Back to Hub</Link>
         </div>
       </div>;
@@ -430,7 +481,7 @@ function ChildProgressView() {
       <Helmet>
         <title>{child.name}'s Progress — Sodafom Hub</title>
         <meta name="description" content={`Track ${child.name}'s learning progress across Maths, Spelling, and Reading on Sodafom.`} />
-        <link rel="canonical" href={`https://sodafom.com/hub/child/${child.id}`} />
+        <link rel="canonical" href={`https://sodafom.uk/hub/child/${child.id}`} />
         <meta name="robots" content="noindex" />
       </Helmet>
 
@@ -438,7 +489,7 @@ function ChildProgressView() {
         {/* Header */}
         <header className="bg-primary text-primary-foreground">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 py-5 flex items-center gap-4">
-            <Link to="/hub" className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors">
+            <Link to="/hub" aria-label="Back to parent hub" className="min-w-11 min-h-11 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors">
               <ArrowLeft size={18} />
             </Link>
             <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-2xl">
@@ -552,7 +603,7 @@ function ChildProgressView() {
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {['all', ...Object.keys(SUBJECT_CONFIG)].map(s => <button key={s} onClick={() => setActiveSubject(s)} className={`px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${activeSubject === s ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border hover:border-primary/40'}`}>
+              {['all', ...Object.keys(SUBJECT_CONFIG)].map(s => <button key={s} onClick={() => setActiveSubject(s)} className={`min-h-11 px-3 py-1.5 rounded-xl text-xs font-bold border-2 transition-all ${activeSubject === s ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border hover:border-primary/40'}`}>
                   {s === 'all' ? '🎮 All' : `${(Object.hasOwn(SUBJECT_CONFIG, s) ? SUBJECT_CONFIG[s as keyof typeof SUBJECT_CONFIG] : undefined)?.emoji ?? ''} ${(Object.hasOwn(SUBJECT_CONFIG, s) ? SUBJECT_CONFIG[s as keyof typeof SUBJECT_CONFIG] : undefined)?.label ?? s}`}
                 </button>)}
             </div>
@@ -574,7 +625,7 @@ function ChildProgressView() {
               year: 'numeric'
             });
             const mins = Math.round(session.durationSeconds / 60);
-            return <motion.div key={session.id} variants={fadeUp} className="bg-card rounded-2xl border border-border p-4 flex items-center gap-4">
+            return <motion.div key={session.id} variants={fadeUp} className="bg-card rounded-2xl border border-border p-4 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${cfg.bg} ${cfg.color}`}>
                       {cfg.icon}
                     </div>
@@ -587,7 +638,7 @@ function ChildProgressView() {
                       </div>
                       <ScoreBar score={session.score} max={session.maxScore} />
                     </div>
-                    <div className="text-right shrink-0">
+                    <div className="flex items-center justify-between gap-3 sm:block sm:text-right sm:shrink-0">
                       <div className="font-black text-foreground text-sm">{pct}%</div>
                       <StarRow count={session.starsEarned} size={13} />
                       <div className="text-xs text-muted-foreground mt-0.5">{mins > 0 ? `${mins} min` : date}</div>

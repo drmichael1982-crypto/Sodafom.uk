@@ -18,9 +18,9 @@ export function ParentTutorReport({ child }: ParentTutorReportProps = {}) {
   const redCount = Object.values(profile.topics).filter(t => t.status === 'RED').length;
 
   return (
-    <div className="bg-white border-2 border-yellow-200 rounded-3xl p-6 shadow-xl space-y-6" data-tutor-report-child-id={child?.id}>
+    <div className="bg-white border-2 border-yellow-200 rounded-3xl p-4 sm:p-6 shadow-xl space-y-6" data-tutor-report-child-id={child?.id}>
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+      <div className="flex flex-col gap-3 border-b border-gray-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
             Child Tutor Progress Report <Award className="text-yellow-500" size={20} />
@@ -29,13 +29,13 @@ export function ParentTutorReport({ child }: ParentTutorReportProps = {}) {
             {learnerName ? `Report for ${learnerName}` : 'Guest Child Profile'} • {profile.schoolYear ?? 'Year not set'} • ages {ageLabel}
           </p>
         </div>
-        <span className="px-3 py-1 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full border border-emerald-300">
+        <span className="self-start px-3 py-1 bg-emerald-100 text-emerald-800 font-extrabold text-xs rounded-full border border-emerald-300">
           OFFLINE / LOCAL TUTOR
         </span>
       </div>
 
       {/* RED / AMBER / GREEN Mastery Gauges */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="bg-emerald-50 border-2 border-emerald-200 rounded-2xl p-4 text-center">
           <span className="block text-2xl font-black text-emerald-700">{greenCount}</span>
           <span className="text-[11px] font-black uppercase text-emerald-800 tracking-wide">Green (Confident)</span>
@@ -98,7 +98,7 @@ export function ParentTutorReport({ child }: ParentTutorReportProps = {}) {
       </div>
 
       {/* Safety Banner */}
-      <div className="p-3 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-between text-xs font-extrabold text-gray-600">
+      <div className="p-3 bg-gray-50 border border-gray-200 rounded-2xl flex flex-col gap-2 text-xs font-extrabold text-gray-600 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <ShieldCheck size={16} className="text-green-600" />
           <span>Device-only local tutor memory</span>
