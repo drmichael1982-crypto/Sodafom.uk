@@ -1,6 +1,7 @@
 import {cleanup,fireEvent,render,screen} from '@testing-library/react';
 import {afterEach,expect,it,vi} from 'vitest';
-vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak:vi.fn()})}));
+const stop=vi.fn();
+vi.mock('@/lib/voice-context',()=>({useVoice:()=>({speak:vi.fn(),stop})}));
 vi.mock('@/components/games/ArchieGameHelper',()=>({default:()=>null}));
 vi.mock('@/components/games/ArchieReadAloudButton',()=>({default:()=>null}));
 import QuizEngine from './QuizEngine';
@@ -12,3 +13,5 @@ it('does not reward a wrong answer',()=>{render(<QuizEngine title="Snake test" e
 it('keeps a wrong answer on the question and lets the child correct it with a clue',()=>{render(<QuizEngine title="Second chance" emoji="⭐" questions={questions} onComplete={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'5'}));expect(screen.getByRole('alert')).toHaveTextContent('try a clue');fireEvent.click(screen.getByRole('button',{name:'Try again'}));expect(screen.getByRole('button',{name:'5'})).toBeDisabled();fireEvent.click(screen.getByRole('button',{name:'4'}));expect(screen.getByRole('status')).toHaveTextContent('Correct!');expect(screen.getByLabelText('1 picture pieces earned')).toBeInTheDocument();});
 
 it('gives word quizzes their own monster and keeps wrong attempts unrewarded',()=>{render(<QuizEngine title="Word monster" emoji="👾" answerReward="word-monster" questions={[{question:'Choose the word',options:['cat','cta'],answer:'cat'}]} onComplete={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'cta'}));expect(screen.queryByRole('status')).toBeNull();fireEvent.click(screen.getByRole('button',{name:'Try again'}));fireEvent.click(screen.getByRole('button',{name:'cat'}));expect(screen.getByRole('status')).toHaveTextContent('word monster');expect(document.querySelector('.answer-snake')).toHaveTextContent('👾');});
+
+it('pauses without losing the current question or a wrong-answer retry',()=>{render(<QuizEngine title="Pause practice" emoji="⭐" questions={questions} onComplete={()=>{}}/>);fireEvent.click(screen.getByRole('button',{name:'5'}));expect(screen.getByRole('alert')).toHaveTextContent('try a clue');const pause=screen.getByRole('button',{name:'Pause game'});pause.focus();fireEvent.click(pause);expect(stop).toHaveBeenCalled();expect(screen.getByRole('heading',{name:'Game paused'})).toBeInTheDocument();expect(screen.queryByText('What is 2 + 2?')).toBeNull();const resume=screen.getAllByRole('button',{name:'Resume game'})[0];expect(resume).toHaveFocus();fireEvent.click(resume);expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument();expect(screen.getByRole('alert')).toHaveTextContent('try a clue');fireEvent.click(screen.getByRole('button',{name:'Try again'}));expect(screen.getByRole('button',{name:'5'})).toBeDisabled();});
