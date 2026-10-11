@@ -64,6 +64,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function validAgeGroup(value: unknown): ChildTutorProfile['ageGroup'] | undefined {
+  return value === '5-7' || value === '8-10' || value === '11-13' ? value : undefined;
+}
+
+function defaultSchoolYear(ageGroup: ChildTutorProfile['ageGroup']): string {
+  if (ageGroup === '5-7') return 'Year 1-2';
+  if (ageGroup === '11-13') return 'Year 7';
+  return 'Year 4';
+}
+
 function safeCount(value: unknown, maximum = Number.MAX_SAFE_INTEGER): number {
   return Number.isSafeInteger(value) && (value as number) >= 0
     ? Math.min(value as number, maximum)
@@ -104,10 +114,16 @@ function loadTutorMemoryForScope(child: ReturnType<typeof activeChild>): ChildTu
       const setupComplete = parsed.profileSetupComplete === true;
       const storedName = typeof parsed.childName === 'string' && parsed.childName.trim() ? parsed.childName : undefined;
       const legacyName = localStorage.getItem(childNameKey(child)) ?? undefined;
+      // Older local tutor profiles did not save an age group. In that case the
+      // active parent profile is the authoritative fallback, rather than
+      // silently routing every learner to ages 8-10.
+      const ageGroup = validAgeGroup(parsed.ageGroup) ?? child?.ageGroup ?? '8-10';
       return {
         childName: storedName || (setupComplete ? undefined : legacyName),
-        ageGroup: parsed.ageGroup === '5-7' || parsed.ageGroup === '11-13' ? parsed.ageGroup : '8-10',
-        schoolYear: typeof parsed.schoolYear === 'string' ? parsed.schoolYear : 'Year 4',
+        ageGroup,
+        schoolYear: typeof parsed.schoolYear === 'string' && parsed.schoolYear.trim()
+          ? parsed.schoolYear
+          : defaultSchoolYear(ageGroup),
         preferredTutor: parsed.preferredTutor === 'soda' || parsed.preferredTutor === 'bella' || parsed.preferredTutor === 'rocky'
           ? parsed.preferredTutor
           : 'archie',
@@ -123,10 +139,11 @@ function loadTutorMemoryForScope(child: ReturnType<typeof activeChild>): ChildTu
   } catch { /* ignore */ }
 
   const storedName = localStorage.getItem(childNameKey(child));
+  const ageGroup = child?.ageGroup ?? '8-10';
   return {
     childName: storedName || child?.name || undefined,
-    ageGroup: child?.ageGroup ?? '8-10',
-    schoolYear: 'Year 4',
+    ageGroup,
+    schoolYear: defaultSchoolYear(ageGroup),
     preferredTutor: 'archie',
     readAloudPreference: true,
     topics: {}

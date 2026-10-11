@@ -120,6 +120,21 @@ describe("Teacher Mode", () => {
     expect(screen.getByRole("link", { name: "Open the full lesson library" })).toHaveAttribute("href", "/courses");
   });
 
+  it("uses the active learner band when a legacy scoped profile has no saved age", () => {
+    localStorage.setItem("sodafom_active_child", JSON.stringify({ id: 1, name: "Mia", ageGroup: "5-7" }));
+    localStorage.setItem("sodafom_tutor_memory:1", JSON.stringify({
+      childName: "Mia",
+      profileSetupComplete: true,
+      topics: {},
+    }));
+
+    show();
+
+    expect(screen.getByRole("heading", { name: "Question Y1" })).toBeInTheDocument();
+    expect(screen.getByText(/Level 5-7/)).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Question A1" })).not.toBeInTheDocument();
+  });
+
   it("waits for an explicit Next after a correct answer, with no timer, then shows an end screen instead of looping", () => {
     vi.useFakeTimers();
     named();
