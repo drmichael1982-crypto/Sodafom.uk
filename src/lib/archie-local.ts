@@ -29,16 +29,21 @@ export function getRememberedChildName(): string | null {
     const legacy = localStorage.getItem('sodafom_child_name')?.trim();
     if (legacy) return legacy;
   }
-  try {
-    const rawDesign = localStorage.getItem('sodafom_archie_design_v1');
-    if (rawDesign) {
-      const parsed = JSON.parse(rawDesign) as { settings?: { childNickname?: unknown } };
-      const nickname = typeof parsed.settings?.childNickname === 'string'
-        ? parsed.settings.childNickname.trim()
-        : '';
-      if (nickname) return nickname.slice(0, 30);
-    }
-  } catch { /* ignore damaged parent settings */ }
+  // The design settings pre-date child profiles, so their nickname is a
+  // profile-less/guest fallback only.  Reusing it while a child is selected
+  // can call a sibling by the wrong name.
+  if (!active) {
+    try {
+      const rawDesign = localStorage.getItem('sodafom_archie_design_v1');
+      if (rawDesign) {
+        const parsed = JSON.parse(rawDesign) as { settings?: { childNickname?: unknown } };
+        const nickname = typeof parsed.settings?.childNickname === 'string'
+          ? parsed.settings.childNickname.trim()
+          : '';
+        if (nickname) return nickname.slice(0, 30);
+      }
+    } catch { /* ignore damaged parent settings */ }
+  }
   return null;
 }
 

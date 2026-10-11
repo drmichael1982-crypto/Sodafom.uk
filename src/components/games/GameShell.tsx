@@ -24,6 +24,7 @@ import { games as gamesContent } from 'virtual:content';
 import SceneArtwork, { sceneForSubject } from '@/components/SceneArtwork';
 import '@/pages/archie/sodafom-polish.css';
 import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
+import { starsForPercentage } from '@/lib/game-scoring';
 
 export interface GameResult {
   score: number; // 0–100
@@ -65,13 +66,6 @@ const ageConfig: Record<string, { badge: string; icon: string }> = {
   '8–10': { badge: 'bg-blue-500 text-white',          icon: '🚀' },
   '11–13':{ badge: 'bg-purple-600 text-white',        icon: '🏆' },
 };
-
-function calcStars(score: number): number {
-  if (score >= 90) return 3;
-  if (score >= 75) return 2;
-  if (score >= 50) return 1;
-  return 0;
-}
 
 export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, subject, ageGroups, children, currentQuestion, currentOptions }: GameShellProps) {
   // Preserve existing saved game IDs; the new title has a typographic apostrophe.
@@ -159,7 +153,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
       ? r.maxScore
       : 100;
     const percentage = Math.round(Math.max(0, Math.min(100, (r.score / rawMaxScore) * 100)));
-    const stars = calcStars(percentage);
+    const stars = starsForPercentage(percentage);
     const durationSeconds = r.durationSeconds ?? Math.round((Date.now() - startTimeRef.current) / 1000);
     startTimeRef.current = Date.now();
 

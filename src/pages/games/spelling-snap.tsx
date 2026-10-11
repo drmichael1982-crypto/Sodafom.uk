@@ -1,31 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult } from '@/components/games/GameShell';
 
-const PAIRS = [
-  ['their','there'],['affect','effect'],['accept','except'],['weather','whether'],
-  ['principal','principle'],['stationary','stationery'],['complement','compliment'],
-  ['desert','dessert'],['practice','practise'],['licence','license'],
+interface SpellingSnapQuestion {
+  prompt: string;
+  answer: string;
+  options: [string, string];
+}
+
+export const SPELLING_SNAP_QUESTIONS: SpellingSnapQuestion[] = [
+  { prompt: 'The children put ___ books away.', answer: 'their', options: ['their', 'there'] },
+  { prompt: 'Lack of sleep can ___ your concentration.', answer: 'affect', options: ['affect', 'effect'] },
+  { prompt: 'Everyone was invited ___ Sam.', answer: 'except', options: ['accept', 'except'] },
+  { prompt: 'I do not know ___ it will rain.', answer: 'whether', options: ['weather', 'whether'] },
+  { prompt: 'The school ___ welcomed everyone.', answer: 'principal', options: ['principal', 'principle'] },
+  { prompt: 'The bicycle remained ___ at the traffic lights.', answer: 'stationary', options: ['stationary', 'stationery'] },
+  { prompt: 'The blue scarf will ___ your coat.', answer: 'complement', options: ['complement', 'compliment'] },
+  { prompt: 'We ate apple crumble for ___.', answer: 'dessert', options: ['desert', 'dessert'] },
+  { prompt: 'Football ___ starts at four.', answer: 'practice', options: ['practice', 'practise'] },
+  { prompt: 'Mum renewed her driving ___.', answer: 'licence', options: ['licence', 'license'] },
 ];
 
-function SnapInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
+function randomQuestion(): SpellingSnapQuestion {
+  return SPELLING_SNAP_QUESTIONS[Math.floor(Math.random() * SPELLING_SNAP_QUESTIONS.length)];
+}
+
+export function SpellingSnapPlay({ onComplete, onQuestionChange }: { onComplete: (r: GameResult) => void; onQuestionChange?: (q: string) => void }) {
   const [round, setRound] = useState(0);
   const [correct, setCorrect] = useState(0);
-
-  const [sentence, setSentence] = useState(() => {
-    const p = PAIRS[Math.floor(Math.random() * PAIRS.length)];
-    return { pair: p, answer: p[Math.floor(Math.random() * 2)] };
-  });
+  const [question, setQuestion] = useState(randomQuestion);
   const [feedback, setFeedback] = useState<'correct'|'wrong'|null>(null);
+  const completionSent = useRef(false);
   const TOTAL = 10;
 
   // Report current question to Archie
-  useEffect(() => { onQuestionChange?.(`Choose the correct word: ${sentence.pair.join(' or ')}?`); }, [sentence, onQuestionChange]);
+  useEffect(() => { onQuestionChange?.(`Choose the correct word for this sentence: ${question.prompt}`); }, [question, onQuestionChange]);
 
   function pick(word: string) {
-    if (feedback) return;
-    const isCorrect = word === sentence.answer;
+    if (feedback || completionSent.current) return;
+    const isCorrect = word === question.answer;
     setFeedback(isCorrect ? 'correct' : 'wrong');
     const nc = correct + (isCorrect ? 1 : 0);
     setTimeout(() => {
@@ -33,12 +47,12 @@ function SnapInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResul
       const nr = round + 1;
       if (nr >= TOTAL) {
         const score = Math.round((nc / TOTAL) * 100);
+        completionSent.current = true;
         onComplete({ score, correct: nc, total: TOTAL, stars: score >= 90 ? 3 : score >= 60 ? 2 : 1 });
       } else {
         setRound(nr);
         setCorrect(nc);
-        const p = PAIRS[Math.floor(Math.random() * PAIRS.length)];
-        setSentence({ pair: p, answer: p[Math.floor(Math.random() * 2)] });
+        setQuestion(randomQuestion());
       }
     }, 800);
   }
@@ -48,13 +62,13 @@ function SnapInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResul
       <p className="text-sm font-bold text-muted-foreground text-center">Which spelling is correct for this context?</p>
       <motion.div key={round} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
         className="bg-card border-2 border-border rounded-2xl p-5 w-full text-center">
-        <p className="text-lg font-bold">Choose the correct word from this pair:</p>
-        <p className="text-2xl font-black text-primary mt-2">{sentence.pair[0]} / {sentence.pair[1]}</p>
-        <p className="text-sm text-muted-foreground mt-2">The correct answer is: <strong>{sentence.answer}</strong></p>
+        <p className="text-lg font-bold">Choose the word that completes the sentence:</p>
+        <p className="text-2xl font-black text-primary mt-3">{question.prompt}</p>
       </motion.div>
       <div className="flex gap-3 w-full">
-        {sentence.pair.map(word => (
+        {question.options.map(word => (
           <motion.button key={word} whileTap={{ scale: 0.95 }} onClick={() => pick(word)}
+            disabled={!!feedback || completionSent.current}
             className="flex-1 py-4 rounded-2xl font-black text-lg border-2 border-border bg-card hover:border-primary transition-all">
             {word}
           </motion.button>
@@ -63,7 +77,7 @@ function SnapInner({ onComplete, onQuestionChange }: { onComplete: (r: GameResul
       <AnimatePresence>
         {feedback && <motion.p initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ opacity: 0 }}
           className={`text-xl font-black ${feedback === 'correct' ? 'text-primary' : 'text-secondary'}`}>
-          {feedback === 'correct' ? '✅ Correct!' : `❌ It was "${sentence.answer}"`}
+          {feedback === 'correct' ? '✅ Correct!' : `❌ It was "${question.answer}"`}
         </motion.p>}
       </AnimatePresence>
       <p className="text-xs text-muted-foreground">Round {round + 1}/{TOTAL}</p>
@@ -88,7 +102,7 @@ export default function SpellingSnap() {
         Spelling Snap — Spelling Game for Kids — Sodafom
       </h1>
       <GameShell title="Spelling Snap" emoji="🃏" subject="spelling" ageGroups={['8–10', '11–13']} currentQuestion={currentQuestion}>
-        {(oc) => <SnapInner onComplete={oc} onQuestionChange={setCurrentQuestion} />}
+        {(oc) => <SpellingSnapPlay onComplete={oc} onQuestionChange={setCurrentQuestion} />}
       </GameShell>
     </>
   );

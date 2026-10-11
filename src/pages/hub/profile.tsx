@@ -12,17 +12,12 @@ import { useSession, ProtectedRoute, signOut } from '@/lib/auth/auth-client';
 import { useSubscription } from '@/hooks/useSubscription';
 import { User, Mail, CreditCard, Star, Gift, Copy, Check, ChevronRight, Trophy, Sparkles, Crown, Calendar, ArrowRight, Shield, XCircle, Lock, Eye, EyeOff, CheckCircle, AlertCircle, LogOut } from 'lucide-react';
 import CancelSubscriptionFlow from '@/components/CancelSubscriptionFlow';
+import { normalizeChildrenResponse, type ChildApiRecord } from '@/lib/children-response';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface Child {
-  id: number;
-  name: string;
-  ageGroup: string;
-  avatarEmoji: string;
-  totalStars: number;
-}
+type Child = ChildApiRecord;
 
 interface Milestone {
   milestone: number;
@@ -242,15 +237,15 @@ function ProfileInner() {
           fetch(`${API_PREFIX}/children`),
           fetch(`${API_PREFIX}/subscription`),
         ]);
-        const childData = await childRes.json() as { children?: Child[] };
-        setChildren(childData.children ?? []);
+        const childData = normalizeChildrenResponse(await childRes.json());
+        setChildren(childData);
 
         const sd = await subRes.json() as SubData;
         setSubData(sd);
 
         // Load milestones for each child
         const allMilestones: Milestone[] = [];
-        for (const child of childData.children ?? []) {
+        for (const child of childData) {
           const mRes = await fetch(`${API_PREFIX}/rewards/milestones?childId=${child.id}`);
           const mData = await mRes.json() as { milestones?: Milestone[] };
           allMilestones.push(...(mData.milestones ?? []));

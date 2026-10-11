@@ -8,9 +8,18 @@ import { getAuth } from '@/lib/auth/auth';
 import { db } from '@/server/db/client';
 import { subscriptions } from '@/server/db/schema';
 import { eq, and, or, isNull, gt } from 'drizzle-orm';
+import { getSecret } from '#airo/secrets';
 
 export default async function handler(req: Request, res: Response) {
   try {
+    // This release is intentionally free. Resolve access locally before auth
+    // or database work so historical subscription rows cannot reintroduce a
+    // paid-access state while payment collection is disabled.
+    if (getSecret('SODAFOM_PAYMENTS_ENABLED') !== 'true') {
+      res.json({ subscribed: false });
+      return;
+    }
+
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: req.headers as unknown as Headers });
 

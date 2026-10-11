@@ -6,6 +6,7 @@ import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSession } from '@/lib/auth/auth-client';
 import { ProtectedRoute } from '@/lib/auth/auth-client';
+import { normalizeChildrenResponse, type ChildApiRecord } from '@/lib/children-response';
 import { Lock, Unlock, Trophy, Sparkles, ChevronRight, Gift, Zap, Banknote, Copy, Check, Heart, Mail, CheckCircle } from 'lucide-react';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -24,13 +25,7 @@ interface Character {
   isActive: boolean;
 }
 
-interface Child {
-  id: number;
-  name: string;
-  ageGroup: string;
-  avatarEmoji: string;
-  totalStars: number;
-}
+type Child = ChildApiRecord;
 
 interface Milestone {
   milestone: number;
@@ -378,8 +373,8 @@ function RewardsContent() {
     if (!sessionData?.user) return;
     fetch(`${API_PREFIX}/children`)
       .then((r) => r.json())
-      .then((data: { children?: Child[] }) => {
-        const kids = data.children ?? [];
+      .then((data: unknown) => {
+        const kids = normalizeChildrenResponse(data);
         setChildren(kids);
         if (kids.length > 0) setSelectedChild(kids[0]);
       })

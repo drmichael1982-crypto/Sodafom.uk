@@ -63,6 +63,14 @@ describe('Archie Local Maths & Name Memory', () => {
       localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 1, name: 'Mia', ageGroup: '5-7' }));
       expect(getRememberedChildName()).toBe('Mimi');
     });
+
+    it('does not reuse a legacy guest nickname for an active child with a placeholder name', () => {
+      localStorage.setItem('sodafom_archie_design_v1', JSON.stringify({ settings: { childNickname: 'Mia' } }));
+      localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 2, name: 'Learner', ageGroup: '8-10' }));
+
+      expect(getRememberedChildName()).toBeNull();
+      expect(tryLocalChildName('What is my name?')?.text).toBe("I don't know your name yet. What is your name?");
+    });
   });
 
   describe('Local Maths Engine', () => {

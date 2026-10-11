@@ -4,6 +4,7 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult } from '@/components/games/GameShell';
 import LevelBadge from '@/components/games/LevelBadge';
 import { useGameLevel } from '@/hooks/useGameLevel';
+import { starsForPercentage } from '@/lib/game-scoring';
 
 const SLUG = 'coin-counter';
 
@@ -75,7 +76,7 @@ function CoinInner({ onComplete, level, onLevelChange, onQuestionChange }: {
       const nr = round + 1;
       if (nr >= TOTAL_ROUNDS) {
         const score = Math.round((nc / TOTAL_ROUNDS) * 100);
-        const stars = score >= 90 ? 3 : score >= 60 ? 2 : 1;
+        const stars = starsForPercentage(score);
         onLevelChange(stars);
         onComplete({ score, correct: nc, total: TOTAL_ROUNDS, stars });
       } else {

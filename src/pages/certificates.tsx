@@ -8,12 +8,13 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { ProtectedRoute, useSession } from '@/lib/auth/auth-client';
+import { normalizeChildrenResponse, type ChildApiRecord } from '@/lib/children-response';
 import {
   Printer, Trophy, ChevronRight,
   Calculator, BookOpen, Pencil, FlaskConical, Check,
 } from 'lucide-react';
 
-interface Child { id: number; name: string; age_group: string; total_stars: number; avatarEmoji?: string }
+type Child = ChildApiRecord;
 interface DashData {
   badgeCount: number;
   subjects: { subject: string; games_played: number; stars: number }[];
@@ -98,7 +99,7 @@ function AchievementCert({ child, badgeCount, date }: { child: Child; badgeCount
       </p>
       <div className="flex items-center gap-8 mb-2">
         <div className="text-center">
-          <div className="text-3xl font-black text-foreground">⭐ {child.total_stars}</div>
+          <div className="text-3xl font-black text-foreground">⭐ {child.totalStars}</div>
           <div className="text-xs text-muted-foreground font-bold mt-1">Stars earned</div>
         </div>
         <div className="w-px h-12 bg-border" />
@@ -107,16 +108,16 @@ function AchievementCert({ child, badgeCount, date }: { child: Child; badgeCount
           <div className="text-xs text-muted-foreground font-bold mt-1">Badges earned</div>
         </div>
       </div>
-      <CertFooter date={date} ageGroup={child.age_group} />
+      <CertFooter date={date} ageGroup={child.ageGroup} />
     </div>
   );
 }
 
 function StarCollectorCert({ child, date }: { child: Child; date: string }) {
   const milestoneLabel =
-    child.total_stars >= 500 ? 'Gold Star Collector' :
-    child.total_stars >= 200 ? 'Silver Star Collector' :
-    child.total_stars >= 50  ? 'Bronze Star Collector' : 'Rising Star';
+    child.totalStars >= 500 ? 'Gold Star Collector' :
+    child.totalStars >= 200 ? 'Silver Star Collector' :
+    child.totalStars >= 50  ? 'Bronze Star Collector' : 'Rising Star';
   return (
     <div className="relative rounded-2xl p-10 text-center overflow-hidden flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-violet-50 border-[6px] border-double border-purple-500" style={{ minHeight: '460px', fontFamily: 'var(--font-heading)' }}>
       <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-purple-600 via-yellow-400 to-purple-600 rounded-t-xl" />
@@ -129,13 +130,13 @@ function StarCollectorCert({ child, date }: { child: Child; date: string }) {
         {child.avatarEmoji && <span className="mr-2">{child.avatarEmoji}</span>}{child.name}
       </h2>
       <p className="text-sm text-foreground mb-4 max-w-md">
-        for collecting an incredible <strong className="text-purple-700 text-lg">{child.total_stars.toLocaleString()} stars</strong> through dedicated learning and gameplay
+        for collecting an incredible <strong className="text-purple-700 text-lg">{child.totalStars.toLocaleString()} stars</strong> through dedicated learning and gameplay
       </p>
       <div className="flex justify-center gap-1 flex-wrap max-w-xs mb-2">
-        {Array.from({ length: Math.min(child.total_stars, 15) }).map((_, i) => <span key={i} className="text-lg">⭐</span>)}
-        {child.total_stars > 15 && <span className="text-xs text-muted-foreground font-bold self-center ml-1">+{child.total_stars - 15} more</span>}
+        {Array.from({ length: Math.min(child.totalStars, 15) }).map((_, i) => <span key={i} className="text-lg">⭐</span>)}
+        {child.totalStars > 15 && <span className="text-xs text-muted-foreground font-bold self-center ml-1">+{child.totalStars - 15} more</span>}
       </div>
-      <CertFooter date={date} ageGroup={child.age_group} />
+      <CertFooter date={date} ageGroup={child.ageGroup} />
     </div>
   );
 }
@@ -159,7 +160,7 @@ function StreakChampionCert({ child, streak, date }: { child: Child; streak: num
         {Array.from({ length: Math.min(streak, 10) }).map((_, i) => <span key={i} className="text-xl">🔥</span>)}
         {streak > 10 && <span className="text-xs text-muted-foreground font-bold self-center ml-1">+{streak - 10} days</span>}
       </div>
-      <CertFooter date={date} ageGroup={child.age_group} />
+      <CertFooter date={date} ageGroup={child.ageGroup} />
     </div>
   );
 }
@@ -188,7 +189,7 @@ function SubjectMasterCert({ child, subject, subjectStars, date }: { child: Chil
         for outstanding achievement in <strong className={sc.title}>{cfg.label}</strong>, earning{' '}
         <strong className={`${sc.title} text-lg`}>{subjectStars} stars</strong> through dedicated practice
       </p>
-      <CertFooter date={date} ageGroup={child.age_group} />
+      <CertFooter date={date} ageGroup={child.ageGroup} />
     </div>
   );
 }
@@ -213,7 +214,7 @@ function CertificatesInner() {
     fetch(`${API_PREFIX}/children`, { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => {
-        const kids = (d as { children?: Child[] }).children ?? [];
+        const kids = normalizeChildrenResponse(d);
         setChildren(kids);
         if (kids.length) setSelected(kids[0]);
       })
@@ -387,7 +388,7 @@ function CertificatesInner() {
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-card rounded-xl p-3 text-center">
-                      <div className="text-xl font-black text-foreground">⭐ {selected.total_stars}</div>
+                      <div className="text-xl font-black text-foreground">⭐ {selected.totalStars}</div>
                       <div className="text-xs text-muted-foreground">Total stars</div>
                     </div>
                     <div className="bg-card rounded-xl p-3 text-center">
