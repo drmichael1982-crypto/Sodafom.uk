@@ -127,7 +127,7 @@ export function SpellingSnapPlay({ onComplete, onQuestionChange }: { onComplete:
           <p className="text-sm font-bold text-blue-900">Take a break and resume whenever you are ready.</p>
         </div>
       )}
-      <div className="grid grid-cols-2 gap-3 w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
         <button
           type="button"
           onClick={() => setShowHint(true)}

@@ -56,6 +56,7 @@ describe('Spelling Snap contextual questions', () => {
     render(<SpellingSnapPlay onComplete={vi.fn()} />);
 
     const hint = screen.getByRole('button', { name: 'Show meaning hint' });
+    expect(hint.parentElement).toHaveClass('grid-cols-1', 'sm:grid-cols-2');
     fireEvent.click(hint);
     expect(screen.getByText('Meaning hint')).toBeInTheDocument();
     expect(screen.getByText('“Their” shows belonging. “There” points to a place.')).toBeInTheDocument();
