@@ -31,16 +31,9 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
       const revealWithPager = async locator => {
         for (let attempt = 0; attempt < 30; attempt++) {
           const direction = await locator.evaluate(element => {
-            const viewportBox = element.closest('.app-screen-window')?.getBoundingClientRect();
-            const flow = element.closest('.app-screen-flow')?.getBoundingClientRect();
             const box = element.getBoundingClientRect();
-            if (!viewportBox || !flow) return 0;
-            if (box.left >= viewportBox.left - 1 && box.right <= viewportBox.right + 1) return 0;
-            const stride = viewportBox.width + 16;
-            const targetPage = Math.max(0, Math.round((box.left - flow.left) / stride));
-            const currentPage = Math.max(0, Math.round((viewportBox.left - flow.left) / stride));
-            if (targetPage === currentPage) return 0;
-            return targetPage < currentPage ? -1 : 1;
+            if (box.left >= -1 && box.right <= window.innerWidth + 1) return 0;
+            return box.right < 0 ? -1 : 1;
           });
           if (direction === 0) return;
           await button(direction < 0 ? '← Previous' : 'Next →').click();
