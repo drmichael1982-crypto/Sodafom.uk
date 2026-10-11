@@ -16,6 +16,7 @@ import HubStatsBar from '@/components/HubStatsBar';
 import { games as _games } from 'virtual:content';
 import { API_PREFIX } from '@/lib/config';
 import { readGameStarMap } from '@/lib/game-stars';
+import { normalizeChildrenResponse } from '@/lib/children-response';
 
 type WeeklyChallenge = { gameId: string; title: string; emoji: string; tagline: string; prize: string };
 const games = _games as typeof _games & { weeklyChallenge?: WeeklyChallenge };
@@ -216,7 +217,11 @@ interface Child {
   ageGroup: string;
   avatarEmoji: string;
   totalStars: number;
-  createdAt: string;
+  createdAt?: string;
+}
+
+export function normalizeHubChildren(value: unknown): Child[] {
+  return normalizeChildrenResponse(value);
 }
 
 // ── Config ───────────────────────────────────────────────────────────────────
@@ -551,7 +556,7 @@ function HubDashboard() {
       const response = await fetch(`${API_PREFIX}/children`, { credentials: 'include' });
       if (!response.ok) throw new Error(`Could not load learners (${response.status})`);
       const data = await response.json();
-      const list: Child[] = Array.isArray(data) ? data : [];
+      const list = normalizeHubChildren(data);
       setChildren(list);
       const stored = getActiveChild();
       const selected = list.find(child => child.id === stored?.id) ?? list[0] ?? null;

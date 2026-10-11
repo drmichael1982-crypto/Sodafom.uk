@@ -15,7 +15,25 @@ vi.mock('motion/react', async () => {
   return { motion, AnimatePresence: ({ children }: { children: React.ReactNode }) => children };
 });
 
-import { AddChildModal } from './index';
+import { AddChildModal, normalizeHubChildren } from './index';
+
+describe('Parent Hub learner response', () => {
+  it('keeps learners from the supported legacy response envelope', () => {
+    expect(normalizeHubChildren({ children: [{
+      id: 7,
+      name: 'Ava',
+      age_group: '8-10',
+      avatar_emoji: '🦊',
+      total_stars: 12,
+    }] })).toEqual([{
+      id: 7,
+      name: 'Ava',
+      ageGroup: '8-10',
+      avatarEmoji: '🦊',
+      totalStars: 12,
+    }]);
+  });
+});
 
 describe('Add learner dialog', () => {
   it('keeps all controls reachable on short phone and tablet viewports', () => {
