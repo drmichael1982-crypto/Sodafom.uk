@@ -153,6 +153,7 @@ export default function QuizEngine({
           <span>{idx + 1} / {pool.length}</span>
           <button
             type="button"
+            data-pager-first-screen
             aria-pressed={paused}
             disabled={feeding}
             onClick={togglePause}
