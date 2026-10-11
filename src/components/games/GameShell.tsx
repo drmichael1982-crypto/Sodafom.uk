@@ -256,7 +256,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
       <ActiveChildBanner />
 
       {/* Header bar */}
-      <div className={`${cfg.bg} ${cfg.text} px-2 sm:px-4 py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 shadow-md`}>
+      <div className={`game-title-bar ${cfg.bg} ${cfg.text} px-2 sm:px-4 py-3 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 shadow-md`}>
         <div className="flex items-center gap-1 sm:gap-2">
           <button aria-label="Back to games" onClick={() => navigate('/games')} className="min-h-11 min-w-11 flex items-center justify-center gap-2 rounded-xl font-bold text-sm opacity-80 hover:opacity-100 transition-opacity">
             <ArrowLeft size={18} />
@@ -319,7 +319,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
         </div>
       </div>
 
-      <div role="group" aria-label="Game help" className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100 bg-blue-50 px-3 sm:px-4 py-2">
+      <div role="group" aria-label="Game help" className="game-help-bar flex flex-wrap items-center justify-between gap-2 border-b border-blue-100 bg-blue-50 px-3 sm:px-4 py-2">
         <p className="text-sm font-bold text-blue-950">Need a hint?</p>
         <button type="button" onClick={() => openArchie()} className="min-h-11 flex items-center gap-2 rounded-xl border-2 border-blue-300 bg-white px-4 py-2 font-black text-blue-900 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700">
           <MessageCircle size={20} aria-hidden="true" /> Ask Archie

@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Request, Response } from 'express';
 
 const getSecret = vi.hoisted(() => vi.fn());
+const getAuth = vi.hoisted(() => vi.fn());
 vi.mock('#airo/secrets', () => ({ getSecret }));
+vi.mock('@/lib/auth/auth', () => ({ getAuth }));
 
 import createTrial from './subscription/create-trial/POST';
 import createCheckout from './stripe/create-checkout-session/POST';
@@ -11,6 +13,7 @@ import activateSubscription from './subscription/activate/POST';
 import activateSchool from './subscription/activate-school/POST';
 import getCheckoutSession from './stripe/session/[sessionId]/GET';
 import stripeWebhook from './webhook/stripe/POST';
+import getTrialStatus from './subscription/trial-status/GET';
 
 function response() {
   const res = { status: vi.fn(), json: vi.fn() } as unknown as Response;
@@ -38,6 +41,21 @@ describe('free-build payment boundary', () => {
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       error: 'Payments are disabled while Sodafom is free.',
     }));
+    expect(getSecret).not.toHaveBeenCalledWith('STRIPE_SECRET_KEY');
+  });
+
+  it('serves a payment-neutral trial status without consulting Stripe in the free release', async () => {
+    const res = response();
+    await getTrialStatus({ headers: {} } as Request, res);
+
+    expect(res.json).toHaveBeenCalledWith({
+      subscribed: false,
+      status: 'none',
+      trialEndsAt: null,
+      daysLeft: null,
+      plan: null,
+    });
+    expect(getAuth).not.toHaveBeenCalled();
     expect(getSecret).not.toHaveBeenCalledWith('STRIPE_SECRET_KEY');
   });
 });

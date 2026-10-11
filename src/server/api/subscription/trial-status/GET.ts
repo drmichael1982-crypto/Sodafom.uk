@@ -24,6 +24,22 @@ function getStripe(): Stripe {
 
 export default async function handler(req: Request, res: Response) {
   try {
+    // This deployment is intentionally free. Do not contact Better Auth, the
+    // database or Stripe just to determine access while payments are closed.
+    // Apart from avoiding an unnecessary cloud dependency, this prevents a
+    // stale historical Stripe subscription from being presented as the
+    // learner's current access mode in the free release.
+    if (getSecret('SODAFOM_PAYMENTS_ENABLED') !== 'true') {
+      res.json({
+        subscribed: false,
+        status: 'none',
+        trialEndsAt: null,
+        daysLeft: null,
+        plan: null,
+      });
+      return;
+    }
+
     const auth = getAuth();
     const session = await auth.api.getSession({ headers: req.headers as unknown as Headers });
     if (!session?.user?.id) {
