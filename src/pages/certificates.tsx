@@ -195,12 +195,15 @@ function SubjectMasterCert({ child, subject, subjectStars, date }: { child: Chil
 }
 
 // ── Main inner component ──────────────────────────────────────────────────────
-function CertificatesInner() {
+export function CertificatesInner() {
   useSession();
   const [children, setChildren] = useState<Child[]>([]);
   const [selected, setSelected] = useState<Child | null>(null);
   const [dashData, setDashData] = useState<DashData | null>(null);
   const [streakData, setStreakData] = useState<StreakData | null>(null);
+  const [loadedChildId, setLoadedChildId] = useState<number | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState(false);
   const [loading, setLoading] = useState(true);
   const [certType, setCertType] = useState<CertTypeId>('achievement');
   const [selectedSubject, setSelectedSubject] = useState<string>('maths');
@@ -224,12 +227,31 @@ function CertificatesInner() {
 
   React.useEffect(() => {
     if (!selected) return;
+    const childId = selected.id;
+    const controller = new AbortController();
+    setLoadedChildId(null);
+    setDashData(null);
+    setStreakData(null);
+    setSelectedSubject('maths');
+    setPrinted(false);
+    setDetailsLoading(true);
+    setDetailsError(false);
+
     Promise.all([
-      fetch(`${API_PREFIX}/parent/dashboard?childId=${selected.id}`, { credentials: 'include' }).then(r => r.json()),
-      fetch(`${API_PREFIX}/streak?childId=${selected.id}`, { credentials: 'include' }).then(r => r.json()).catch(() => null),
+      fetch(`${API_PREFIX}/parent/dashboard?childId=${childId}`, {
+        credentials: 'include', signal: controller.signal,
+      }).then((r) => {
+        if (!r.ok) throw new Error(`Dashboard request failed (${r.status})`);
+        return r.json();
+      }),
+      fetch(`${API_PREFIX}/streak?childId=${childId}`, {
+        credentials: 'include', signal: controller.signal,
+      }).then((r) => r.ok ? r.json() : null),
     ]).then(([dash, streak]) => {
+      if (controller.signal.aborted) return;
       setDashData(dash as DashData);
-      if (streak) setStreakData(streak as StreakData);
+      setStreakData(streak ? streak as StreakData : null);
+      setLoadedChildId(childId);
       const subs = (dash as DashData).subjects ?? [];
       if (subs.length > 0) {
         const best = subs.reduce((a: any, b: any) =>
@@ -237,11 +259,20 @@ function CertificatesInner() {
         );
         setSelectedSubject(best.subject);
       }
-    }).catch(console.error);
+    }).catch((error) => {
+      if (!controller.signal.aborted) {
+        console.error(error);
+        setDetailsError(true);
+      }
+    }).finally(() => {
+      if (!controller.signal.aborted) setDetailsLoading(false);
+    });
+
+    return () => controller.abort();
   }, [selected]);
 
   const handlePrint = () => {
-    if (!selected) return;
+    if (!selected || detailsLoading || loadedChildId !== selected.id) return;
     const el = document.getElementById('cert-preview');
     if (!el) return;
     printCertificate(el.innerHTML, `${certType} Certificate — ${selected.name}`);
@@ -249,8 +280,11 @@ function CertificatesInner() {
     setTimeout(() => setPrinted(false), 3000);
   };
 
-  const streak = streakData?.maxStreak ?? streakData?.currentStreak ?? 0;
-  const subjectStars = dashData?.subjects?.find(s => s.subject === selectedSubject)?.stars ?? 0;
+  const detailsReady = selected !== null && loadedChildId === selected.id && !detailsLoading;
+  const currentDashData = detailsReady ? dashData : null;
+  const currentStreakData = detailsReady ? streakData : null;
+  const streak = currentStreakData?.maxStreak ?? currentStreakData?.currentStreak ?? 0;
+  const subjectStars = currentDashData?.subjects?.find(s => s.subject === selectedSubject)?.stars ?? 0;
 
   return (
     <>
@@ -348,7 +382,7 @@ function CertificatesInner() {
 
               {/* Subject selector (only for subject-master) */}
               <AnimatePresence>
-                {certType === 'subject-master' && dashData && dashData.subjects.length > 0 && (
+                {certType === 'subject-master' && currentDashData && currentDashData.subjects.length > 0 && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
@@ -357,13 +391,13 @@ function CertificatesInner() {
                   >
                     <p className="text-xs font-black text-muted-foreground uppercase tracking-wide mb-3">Subject</p>
                     <div className="flex flex-col gap-2">
-                      {dashData.subjects.map((s) => {
+                      {currentDashData.subjects.map((s) => {
                         const cfg = SUBJECT_CONFIG[s.subject] ?? { label: s.subject, emoji: '📚', icon: BookOpen };
                         return (
                           <button
                             key={s.subject}
                             onClick={() => setSelectedSubject(s.subject)}
-                            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border-2 font-bold text-sm transition-all text-left ${
+                            className={`flex min-h-11 items-center gap-3 px-4 py-2.5 rounded-xl border-2 font-bold text-sm transition-all text-left ${
                               selectedSubject === s.subject
                                 ? 'border-primary bg-primary/5 text-primary'
                                 : 'border-border text-muted-foreground hover:border-primary/40'
@@ -392,7 +426,7 @@ function CertificatesInner() {
                       <div className="text-xs text-muted-foreground">Total stars</div>
                     </div>
                     <div className="bg-card rounded-xl p-3 text-center">
-                      <div className="text-xl font-black text-foreground">🏅 {dashData?.badgeCount ?? 0}</div>
+                      <div className="text-xl font-black text-foreground">🏅 {detailsReady ? currentDashData?.badgeCount ?? 0 : '—'}</div>
                       <div className="text-xs text-muted-foreground">Badges</div>
                     </div>
                     {streak > 0 && (
@@ -408,7 +442,30 @@ function CertificatesInner() {
 
             {/* ── Right panel: preview + print ── */}
             <div className="flex flex-col gap-4">
-              {selected && (
+              {selected && !detailsReady && !detailsError && (
+                <div
+                  className="min-h-[460px] rounded-3xl border-2 border-border bg-muted/40 flex flex-col items-center justify-center gap-4 p-8 text-center"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" aria-hidden="true" />
+                  <div>
+                    <p className="font-black text-foreground">Loading {selected.name}'s certificate</p>
+                    <p className="text-sm text-muted-foreground mt-1">Getting their latest badges, subjects, and streak.</p>
+                  </div>
+                </div>
+              )}
+              {selected && detailsError && (
+                <div
+                  className="min-h-[460px] rounded-3xl border-2 border-border bg-muted/40 flex flex-col items-center justify-center gap-2 p-8 text-center"
+                  role="alert"
+                >
+                  <Trophy size={44} className="text-muted-foreground" aria-hidden="true" />
+                  <p className="font-black text-foreground">Certificate details are unavailable</p>
+                  <p className="text-sm text-muted-foreground">Please reload the page and try again.</p>
+                </div>
+              )}
+              {selected && detailsReady && (
                 <>
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -420,7 +477,7 @@ function CertificatesInner() {
                       id="cert-preview"
                     >
                       {certType === 'achievement' && (
-                        <AchievementCert child={selected} badgeCount={dashData?.badgeCount ?? 0} date={today} />
+                        <AchievementCert child={selected} badgeCount={currentDashData?.badgeCount ?? 0} date={today} />
                       )}
                       {certType === 'star-collector' && (
                         <StarCollectorCert child={selected} date={today} />
@@ -467,7 +524,7 @@ function CertificatesInner() {
                       <button
                         key={ct.id}
                         onClick={() => setCertType(ct.id)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                        className={`flex min-h-11 items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
                           certType === ct.id
                             ? 'bg-primary text-primary-foreground border-primary'
                             : 'border-border text-muted-foreground hover:border-primary/40'
