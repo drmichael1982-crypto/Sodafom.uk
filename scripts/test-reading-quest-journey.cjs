@@ -62,7 +62,10 @@ const answers = {
             `${viewport.label}: reading play uses one contained vertical surface`);
         }
 
-        await page.getByRole('button', { name: answer, exact: true }).click();
+        const correctAnswer = page.getByLabel('Reading Quest answers').locator('button').filter({ hasText: answer });
+        assert.equal(await correctAnswer.count(), 1, `${viewport.label}: correct answer remains in the labelled answer group`);
+        assert.equal(await correctAnswer.isEnabled(), true, `${viewport.label}: correct answer remains enabled after recovery`);
+        await correctAnswer.click();
         await page.waitForTimeout(950);
       }
 
