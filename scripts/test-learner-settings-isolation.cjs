@@ -119,8 +119,8 @@ async function saveLearner(page, { nickname, age, year }) {
     await page.reload();
     await unlock(page);
     await page.getByRole('heading', { name: 'Practice settings for Leo', exact: true }).waitFor();
-    assert.equal(await page.locator('#learning-settings select').first().inputValue(), '4');
-    assert.equal(await page.locator('#learning-settings input[type="text"]').first().inputValue(), 'Older nickname');
+    assert.equal(await page.locator('#learning-settings select').first().inputValue(), '8');
+    assert.equal(await page.locator('#learning-settings input[type="text"]').first().inputValue(), 'Leo');
     assert.equal(await page.locator('#learning-settings input[type="number"]').first().inputValue(), '');
     assert.equal(await page.getByLabel('Read aloud and sound', { exact: true }).isChecked(), false);
     assert.equal(await page.getByLabel('Larger text on menus and books', { exact: true }).isChecked(), true);
@@ -166,14 +166,18 @@ async function saveLearner(page, { nickname, age, year }) {
     await page.getByRole('button', { name: 'Close Ask Archie', exact: true }).click();
     const stored = await page.evaluate(() => ({
       device: JSON.parse(localStorage.getItem('sodafom_archie_design_v1')),
-      mia: JSON.parse(localStorage.getItem('sodafom_archie_settings:profile:child:21')),
-      leo: JSON.parse(localStorage.getItem('sodafom_archie_settings:profile:child:22')),
+      mia: JSON.parse(localStorage.getItem('sodafom_archie_progress:21')),
+      leo: JSON.parse(localStorage.getItem('sodafom_archie_progress:22')),
+      earlierMiaSettings: localStorage.getItem('sodafom_archie_settings:profile:child:21'),
+      earlierLeoSettings: localStorage.getItem('sodafom_archie_settings:profile:child:22'),
       miaAge: localStorage.getItem('sodafom_learning_age:21'),
       leoAge: localStorage.getItem('sodafom_learning_age:22'),
       savedLearning: JSON.parse(localStorage.getItem('sodafom_archie_learning_v1')),
     }));
-    assert.deepEqual(stored.mia, { childNickname: 'Mia', year: 2 });
-    assert.deepEqual(stored.leo, { childNickname: 'Leo', year: 7 });
+    assert.deepEqual(stored.mia.settings, { childNickname: 'Mia', year: 2 });
+    assert.deepEqual(stored.leo.settings, { childNickname: 'Leo', year: 7 });
+    assert.equal(stored.earlierMiaSettings, null);
+    assert.equal(stored.earlierLeoSettings, null);
     assert.equal(stored.miaAge, '6'); assert.equal(stored.leoAge, '12');
     const savedProfiles = stored.savedLearning.map(turn => turn.profileId || 'device-default');
     assert.equal(savedProfiles.filter(profileId => profileId === '22').length, 0);
