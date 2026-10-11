@@ -56,6 +56,23 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
       await page.getByRole('heading', { name: 'Game paused', exact: true }).waitFor();
       assert.equal(await page.locator('.app-screen-window').evaluate(element => element.scrollLeft), 0,
         `${viewport.label}: pause returns to the first reflowed screen`);
+      await page.waitForFunction(() => {
+        const windowElement = document.querySelector('.app-screen-window');
+        const pausedPanel = [...document.querySelectorAll('.app-screen-flow section[role="status"]')]
+          .find(element => element.textContent?.includes('Game paused'));
+        if (!windowElement || !pausedPanel) return false;
+        const windowBox = windowElement.getBoundingClientRect();
+        const panelBox = pausedPanel.getBoundingClientRect();
+        return panelBox.left >= windowBox.left - 1 && panelBox.right <= windowBox.right + 1;
+      });
+      assert.equal(await page.locator('.app-screen-flow section[role="status"]')
+        .filter({ hasText: 'Game paused' })
+        .evaluate((panel, windowElement) => {
+          const panelBox = panel.getBoundingClientRect();
+          const windowBox = windowElement.getBoundingClientRect();
+          return panelBox.left >= windowBox.left - 1 && panelBox.right <= windowBox.right + 1;
+        }, await page.locator('.app-screen-window').elementHandle()), true,
+      `${viewport.label}: the settled pause card stays inside the visible app screen`);
       await page.screenshot({ path: `test-results/reading-speed/paused-${viewport.label}.png`, fullPage: true });
       await page.getByRole('button', { name: 'Resume game', exact: true }).first().press('Enter');
       assert.equal(await page.getByText(question, { exact: true }).count(), 1,
