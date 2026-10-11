@@ -60,20 +60,13 @@ function profile(name, ageGroup, schoolYear, topic, subject, status) {
   };
 }
 
-async function assertLauncherClearOfReport(page, viewportName) {
-  const launcher = page.getByRole('button', { name: 'Ask Archie' });
-  const heading = page.getByRole('heading', { name: /Child Tutor Progress Report/ }).first();
-  await launcher.waitFor();
-  await heading.waitFor();
-  const [launcherBox, headingBox] = await Promise.all([launcher.boundingBox(), heading.boundingBox()]);
-  assert.ok(launcherBox, `${viewportName}: Ask Archie launcher must have a visible box`);
-  assert.ok(headingBox, `${viewportName}: first tutor report heading must have a visible box`);
-  const overlaps = launcherBox.x < headingBox.x + headingBox.width
-    && launcherBox.x + launcherBox.width > headingBox.x
-    && launcherBox.y < headingBox.y + headingBox.height
-    && launcherBox.y + launcherBox.height > headingBox.y;
-  assert.equal(overlaps, false, `${viewportName}: Ask Archie launcher must not cover the tutor report heading`);
-  return launcherBox;
+async function assertAdultDashboardHasNoChildLauncher(page, viewportName) {
+  await page.getByRole('heading', { name: /Child Tutor Progress Report/ }).first().waitFor();
+  assert.equal(
+    await page.getByRole('button', { name: 'Ask Archie' }).count(),
+    0,
+    `${viewportName}: the child-facing Ask Archie launcher must not cover the grown-up dashboard`,
+  );
 }
 
 (async () => {
@@ -131,20 +124,15 @@ async function assertLauncherClearOfReport(page, viewportName) {
     assert.equal(await leo.getByText(/Addition - Great/).count(), 0, 'Leo must not receive Mia’s tutor topic');
     assert.equal(await page.getByText('COPPA Safe').count(), 0, 'The report must not make an unsupported compliance claim');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, 'Parent dashboard must fit the phone width');
-    const phoneLauncher = await assertLauncherClearOfReport(page, 'phone');
-    assert.ok(phoneLauncher.width >= 44 && phoneLauncher.height >= 44, 'phone: Ask Archie must retain a 44px minimum target');
-    assert.ok(phoneLauncher.width <= 60, 'phone: Ask Archie must use the compact launcher');
-    assert.equal(await page.locator('.archie-launcher-label').evaluate(element => getComputedStyle(element).display), 'none');
+    await assertAdultDashboardHasNoChildLauncher(page, 'phone');
     await page.screenshot({ path: path.join(captureDir, 'phone.png'), fullPage: true });
 
     await page.setViewportSize({ width: 820, height: 1180 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, 'Parent dashboard must fit the tablet width');
-    const tabletLauncher = await assertLauncherClearOfReport(page, 'tablet');
-    assert.ok(tabletLauncher.width > 60, 'tablet: Ask Archie must keep its visible text label');
-    assert.notEqual(await page.locator('.archie-launcher-label').evaluate(element => getComputedStyle(element).display), 'none');
+    await assertAdultDashboardHasNoChildLauncher(page, 'tablet');
     await page.screenshot({ path: path.join(captureDir, 'tablet.png'), fullPage: true });
     assert.deepEqual(errors, []);
-    console.log('PASS parent tutor reports stay isolated and the Archie launcher stays clear at phone/tablet widths');
+    console.log('PASS parent tutor reports stay isolated and the child-facing Archie launcher stays off the grown-up dashboard');
   } finally {
     await browser.close();
     await stopServer();

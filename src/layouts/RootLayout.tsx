@@ -28,6 +28,9 @@ export default function RootLayout({
   // Hide the top header on the homepage — it has its own full-screen nav experience
   const immersiveHome = isArchiePage(location.pathname) || location.pathname.startsWith('/games/') || location.pathname === '/cartoon-mode';
   const ownerPage = location.pathname === '/admin' || location.pathname === '/admin/payments';
+  const grownUpPage = location.pathname === '/parents'
+    || location.pathname === '/teacher'
+    || location.pathname === '/parent-dashboard';
   const hideHeader = immersiveHome || ownerPage;
   const isIndividualGame = location.pathname.startsWith('/games/');
   return (
@@ -49,7 +52,7 @@ export default function RootLayout({
                 {/* Floating UI — accessibility toolbar + unified Archie helper + mobile CTA */}
                 {/* Immersive home/cartoon mode already has its own Settings control. */}
                 {!immersiveHome && !ownerPage && <AccessibilityBar gameMode={isIndividualGame} />}
-                {!ownerPage && <ArchieHelper gameMode={isIndividualGame} hideLauncher={isArchiePage(location.pathname) || isIndividualGame} />}
+                {!ownerPage && <ArchieHelper gameMode={isIndividualGame} hideLauncher={isArchiePage(location.pathname) || isIndividualGame || grownUpPage} />}
                 {!immersiveHome && !ownerPage && <MobileTrialBar />}
               </Website>
             </CartProvider>
