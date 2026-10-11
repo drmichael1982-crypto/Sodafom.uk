@@ -27,6 +27,27 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
       });
       await page.goto(base + '/games/reading-fluency');
       await page.getByRole('heading', { name: 'Reading Fluency', exact: true }).waitFor();
+      const button = name => page.getByRole('button', { name, exact: true });
+      const revealWithPager = async locator => {
+        for (let attempt = 0; attempt < 30; attempt++) {
+          const direction = await locator.evaluate(element => {
+            const viewportBox = element.closest('.app-screen-window')?.getBoundingClientRect();
+            const flow = element.closest('.app-screen-flow')?.getBoundingClientRect();
+            const box = element.getBoundingClientRect();
+            if (!viewportBox || !flow) return 0;
+            if (box.left >= viewportBox.left - 1 && box.right <= viewportBox.right + 1) return 0;
+            const stride = viewportBox.width + 16;
+            const targetPage = Math.max(0, Math.round((box.left - flow.left) / stride));
+            const currentPage = Math.max(0, Math.round((viewportBox.left - flow.left) / stride));
+            if (targetPage === currentPage) return 0;
+            return targetPage < currentPage ? -1 : 1;
+          });
+          if (direction === 0) return;
+          await button(direction < 0 ? '← Previous' : 'Next →').click();
+          await page.waitForTimeout(180);
+        }
+        throw new Error(`${viewport.label}: pager did not reveal the requested Reading Fluency control`);
+      };
 
       const prompt = page.locator('p').filter({ hasText: /^Read: / }).first();
       await prompt.waitFor();
@@ -44,6 +65,7 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
       });
 
       const wrongAnswer = page.locator('.answer-snake-board button').nth(1);
+      await revealWithPager(wrongAnswer);
       await wrongAnswer.click();
       await page.getByRole('alert').waitFor();
       assert.match(await page.getByRole('alert').innerText(), /Good effort.+clue/is,
@@ -51,6 +73,7 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
       const savedPrompt = await prompt.innerText();
 
       const pauseButton = page.getByRole('button', { name: 'Pause game', exact: true });
+      await revealWithPager(pauseButton);
       await pauseButton.focus();
       await pauseButton.click();
       await page.getByRole('heading', { name: 'Game paused', exact: true }).waitFor();
@@ -64,19 +87,23 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
         fullPage: true,
       });
       await topResume.click();
-      await page.getByText(savedPrompt, { exact: true }).waitFor();
-      await page.getByRole('alert').waitFor();
-      await page.getByRole('button', { name: 'Try again', exact: true }).click();
+      assert.equal(await page.getByText(savedPrompt, { exact: true }).count(), 1,
+        `${viewport.label}: resume restores the exact question`);
+      const retryButton = page.getByRole('button', { name: 'Try again', exact: true });
+      await revealWithPager(retryButton);
+      await retryButton.click();
       assert.equal(await wrongAnswer.isDisabled(), true,
         `${viewport.label}: the tried answer remains unavailable after resume and retry`);
 
       // The fixed random source keeps authored answer order stable: the first
       // option is correct, while still exercising the real ten-question bank.
       for (let question = 1; question <= 10; question++) {
-        await page.locator('.answer-snake-board button').first().click();
+        const correctAnswer = page.locator('.answer-snake-board button').first();
+        await revealWithPager(correctAnswer);
+        await correctAnswer.click();
         await page.getByRole('status').filter({ hasText: 'Correct!' }).waitFor();
         if (question < 10) {
-          await page.getByText(`${question + 1} / 10`, { exact: true }).waitFor({ timeout: 5000 });
+          await page.waitForFunction(progress => document.body.textContent?.includes(progress), `${question + 1} / 10`);
         }
       }
       await page.getByRole('dialog').waitFor({ timeout: 7000 });
