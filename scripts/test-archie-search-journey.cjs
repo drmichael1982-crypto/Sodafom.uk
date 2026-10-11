@@ -71,10 +71,10 @@ const results = [];
       const goto = async route => { await page.goto(base + route); await page.getByRole('heading').first().waitFor(); };
       const chooseYear = year => page.getByRole('combobox', { name: 'My learning year', exact: true }).selectOption(String(year));
       const closeMovingReward = async screenshotPath => {
-        const dialog = page.getByRole('dialog').filter({ has: page.getByRole('button', { name: 'Back to puzzle', exact: true }) });
+        const dialog = page.getByRole('dialog').filter({ has: page.getByRole('button', { name: 'See my result', exact: true }) });
         await dialog.waitFor();
-        const close = dialog.getByRole('button', { name: 'Back to puzzle', exact: true });
-        assert.equal(await close.evaluate(element => element === document.activeElement), true, 'Moving reward puts focus on Back to puzzle');
+        const close = dialog.getByRole('button', { name: 'See my result', exact: true });
+        assert.equal(await close.evaluate(element => element === document.activeElement), true, 'Moving game reward puts focus on See my result');
         if (screenshotPath) await page.screenshot({ path: screenshotPath, fullPage: true });
         await close.click();
         await dialog.waitFor({ state: 'detached' });

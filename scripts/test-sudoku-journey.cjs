@@ -143,7 +143,7 @@ async function capture(page, viewport, state) {
       await page
         .getByRole("dialog", { name: /Your rocket is ready/i })
         .waitFor();
-      await page.getByRole("button", { name: "Back to puzzle" }).click();
+      await page.getByRole("button", { name: "See my result" }).click();
       await page.getByText("Final score: 95%").waitFor();
       await page.getByText("8 correct out of 8 questions").waitFor();
       await page.getByText("You earned 3 stars!").waitFor();
