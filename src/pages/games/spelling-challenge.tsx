@@ -4,6 +4,7 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import GameShell, { type GameResult } from '@/components/games/GameShell';
 import LevelBadge from '@/components/games/LevelBadge';
 import { useGameLevel } from '@/hooks/useGameLevel';
+import { starsForPercentage } from '@/lib/game-scoring';
 
 const SLUG = 'spelling-challenge';
 
@@ -84,7 +85,7 @@ function ChallengeInner({ onComplete, level, onLevelChange, onQuestionChange }: 
       const nr = idx + 1;
       if (nr >= pool.length) {
         const score = Math.round((nc / pool.length) * 100);
-        const stars = score >= 90 ? 3 : score >= 60 ? 2 : 1;
+        const stars = starsForPercentage(score);
         onLevelChange(stars);
         onComplete({ score, correct: nc, total: pool.length, stars });
       } else { setIdx(nr); setCorrect(nc); }

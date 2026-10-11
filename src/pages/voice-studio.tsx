@@ -11,15 +11,12 @@ import { ChevronRight, Play, Sparkles } from 'lucide-react';
 import { useSession } from '@/lib/auth/auth-client';
 import { ProtectedRoute } from '@/lib/auth/auth-client';
 import { useVoice } from '@/lib/voice-context';
+import { normalizeChildrenResponse, type ChildApiRecord } from '@/lib/children-response';
 import VoiceRecorder from '@/components/VoiceRecorder';
 import { VOICE_CLIPS } from '@/components/VoiceSetupWizard';
 import SpellingPracticeRecorder from '@/components/SpellingPracticeRecorder';
 
-interface Child {
-  id: number;
-  name: string;
-  avatarEmoji: string;
-}
+type Child = ChildApiRecord;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 16 },
@@ -38,8 +35,8 @@ function VoiceStudioContent() {
     if (!sessionData?.user) return;
     fetch(`${API_PREFIX}/children`)
       .then((r) => r.json())
-      .then((data: { children?: Child[] }) => {
-        const kids = data.children ?? [];
+      .then((data: unknown) => {
+        const kids = normalizeChildrenResponse(data);
         setChildren(kids);
         if (kids.length > 0) {
           setSelectedChild(kids[0]);

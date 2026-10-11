@@ -7,6 +7,7 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSession } from '@/lib/auth/auth-client';
+import { normalizeChildrenResponse, type ChildApiRecord } from '@/lib/children-response';
 import { Trophy, Star, RefreshCw, Shield, ChevronRight, Crown, Calculator, Pencil, BookOpen, FlaskConical, Sparkles } from 'lucide-react';
 
 interface Entry {
@@ -18,7 +19,7 @@ interface Entry {
   subject?: string;
 }
 
-interface Child { id: number; name: string; leaderboard_opt_in?: number }
+type Child = ChildApiRecord;
 
 const RANK_STYLES = [
   'bg-accent text-accent-foreground border-accent/40',
@@ -63,7 +64,7 @@ export default function LeaderboardPage() {
     if (isAuthenticated) {
       fetch(`${API_PREFIX}/children`, { credentials: 'include' })
         .then((r) => r.json())
-        .then((d) => setChildren((d as { children?: Child[] }).children ?? []))
+        .then((d) => setChildren(normalizeChildrenResponse(d)))
         .catch(console.error);
     }
   }, [isAuthenticated]);
@@ -78,7 +79,7 @@ export default function LeaderboardPage() {
         body: JSON.stringify({ childId, optIn: !current }),
       });
       setChildren((prev) =>
-        prev.map((c) => c.id === childId ? { ...c, leaderboard_opt_in: current ? 0 : 1 } : c)
+        prev.map((c) => c.id === childId ? { ...c, leaderboardOptIn: current ? 0 : 1 } : c)
       );
       loadLeaderboard();
     } catch (err) {
@@ -316,16 +317,16 @@ export default function LeaderboardPage() {
                 <div key={c.id} className="flex items-center justify-between bg-muted rounded-xl px-4 py-3">
                   <span className="font-bold text-foreground text-sm">{c.name}</span>
                   <button
-                    onClick={() => toggleOptIn(c.id, c.leaderboard_opt_in ?? 0)}
+                    onClick={() => toggleOptIn(c.id, c.leaderboardOptIn ?? 0)}
                     disabled={toggling === c.id}
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                      c.leaderboard_opt_in ? 'bg-primary' : 'bg-muted-foreground/30'
+                      c.leaderboardOptIn ? 'bg-primary' : 'bg-muted-foreground/30'
                     } disabled:opacity-60`}
                     aria-label={`Toggle leaderboard for ${c.name}`}
                   >
                     <span
                       className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                        c.leaderboard_opt_in ? 'translate-x-6' : 'translate-x-1'
+                        c.leaderboardOptIn ? 'translate-x-6' : 'translate-x-1'
                       }`}
                     />
                   </button>

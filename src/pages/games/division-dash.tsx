@@ -5,6 +5,7 @@ import GameShell, { type GameResult } from '@/components/games/GameShell';
 import LevelBadge from '@/components/games/LevelBadge';
 import { useGameLevel } from '@/hooks/useGameLevel';
 import ArchieGameHelper from '@/components/games/ArchieGameHelper';
+import { starsForPercentage } from '@/lib/game-scoring';
 
 const SLUG = 'division-dash';
 const TOTAL = 10;
@@ -63,7 +64,7 @@ function DivisionInner({ onComplete, level, onLevelChange, onQuestionChange }: {
       const nr = round + 1;
       if (nr >= TOTAL) {
         const score = Math.round((nc / TOTAL) * 100);
-        const stars = score >= 90 ? 3 : score >= 60 ? 2 : 1;
+        const stars = starsForPercentage(score);
         onLevelChange(stars);
         onComplete({ score, correct: nc, total: TOTAL, stars });
       } else {

@@ -8,6 +8,7 @@ import { motion } from 'motion/react';
 import { Star, Flame, Gamepad2, Trophy, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
+import { normalizeChildrenResponse } from '@/lib/children-response';
 
 interface StatsData {
   totalStars: number;
@@ -24,9 +25,10 @@ export default function HubStatsBar() {
     // Fetch children to sum up stars
     fetch(`${API_PREFIX}/children`, { credentials: 'include' })
       .then(r => r.json())
-      .then((children: { id: number; total_stars: number; name: string }[]) => {
+      .then((data: unknown) => {
+        const children = normalizeChildrenResponse(data);
         if (!Array.isArray(children) || children.length === 0) return;
-        const totalStars = children.reduce((sum, c) => sum + (c.total_stars ?? 0), 0);
+        const totalStars = children.reduce((sum, c) => sum + c.totalStars, 0);
 
         // Fetch streak from first child's progress
         fetch(`${API_PREFIX}/children/${children[0].id}/progress?summary=1`, { credentials: 'include' })

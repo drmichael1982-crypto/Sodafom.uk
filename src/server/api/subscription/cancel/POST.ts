@@ -21,6 +21,13 @@ interface SubRow {
 
 export default async function handler(req: Request, res: Response) {
   try {
+    // Cancellation is part of the payment surface. Keep it closed before any
+    // auth, database or Stripe work while this deployment is operating free.
+    if (getSecret('SODAFOM_PAYMENTS_ENABLED') !== 'true') {
+      res.status(403).json({ error: 'Payments are disabled while Sodafom is free.' });
+      return;
+    }
+
     const session = await getAuth().api.getSession({ headers: req.headers as Record<string, string> });
     if (!session?.user) return res.status(401).json({ error: 'Unauthorised' });
 

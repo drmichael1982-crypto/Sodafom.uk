@@ -6,6 +6,7 @@ import GameShell, { type GameResult } from '@/components/games/GameShell';
 import LevelBadge from '@/components/games/LevelBadge';
 import { useGameLevel } from '@/hooks/useGameLevel';
 import ArchieGameHelper from '@/components/games/ArchieGameHelper';
+import { starsForPercentage } from '@/lib/game-scoring';
 
 const SLUG = 'times-table-race';
 const TOTAL_ROUNDS = 10;
@@ -86,7 +87,7 @@ export function TimesTablePlay({ onComplete, level, onLevelChange, onQuestionCha
     setCarPos(Math.round((nc / TOTAL_ROUNDS) * 100));
     if (next >= TOTAL_ROUNDS) {
       const score = Math.round((nc / TOTAL_ROUNDS) * 100);
-      const stars = score >= 90 ? 3 : score >= 60 ? 2 : 1;
+      const stars = starsForPercentage(score);
       onLevelChange(stars);
       setTimeout(() => onComplete({ score, correct: nc, total: TOTAL_ROUNDS, stars }), 900);
     } else {

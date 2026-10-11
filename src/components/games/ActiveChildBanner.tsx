@@ -25,17 +25,18 @@ export default function ActiveChildBanner() {
   const tierLabel  = Object.hasOwn(TIER_LABELS, tier) ? TIER_LABELS[tier as keyof typeof TIER_LABELS] : '';
 
   return (
-    <div className={`flex items-center justify-between gap-3 px-4 py-2 text-xs font-bold border-b ${tierColour}`}>
-      <span className="flex items-center gap-2">
-        <span className="text-base">{child.avatarEmoji}</span>
-        Playing as <span className="font-black">{child.name}</span>
-        <span className="px-2 py-0.5 rounded-full bg-white/60 border border-current/20">
+    <div className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-2 text-xs font-bold border-b ${tierColour}`}>
+      <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+        <span className="shrink-0 text-base">{child.avatarEmoji}</span>
+        <span className="shrink-0">Playing as</span>
+        <span className="min-w-0 max-w-full break-words font-black">{child.name}</span>
+        <span className="shrink-0 px-2 py-0.5 rounded-full bg-white/60 border border-current/20">
           {tierLabel}
         </span>
       </span>
       <button
         onClick={() => setActiveChild(null)}
-        className="underline opacity-70 hover:opacity-100 transition-opacity"
+        className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-lg px-3 underline opacity-70 transition-opacity hover:bg-white/40 hover:opacity-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-current"
       >
         Change
       </button>

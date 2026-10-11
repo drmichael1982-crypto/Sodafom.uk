@@ -146,6 +146,26 @@ describe('Archie online-help privacy default',()=>{
     const body=JSON.parse(String(fetch.mock.calls[0][1]?.body));
     expect(JSON.stringify(body.messages)).not.toMatch(/Mia|8 plus 4/i);
   });
+  it('does not greet a selected learner with a legacy guest nickname',()=>{
+    localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:4,sound:false,childNickname:'Mia'},activities:[],stickers:[]}));
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:2,name:'Learner',ageGroup:'8-10'}));
+
+    render(<ArchieHelper/>);
+
+    expect(screen.getByRole('log')).toHaveTextContent('Hi! Ask me');
+    expect(screen.getByRole('log')).not.toHaveTextContent('Mia');
+  });
+  it('updates the empty greeting when the active child changes',()=>{
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:1,name:'Mia',ageGroup:'5-7'}));
+    render(<ArchieHelper/>);
+    expect(screen.getByRole('log')).toHaveTextContent('Hi, Mia!');
+
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:2,name:'Leo',ageGroup:'8-10'}));
+    fireEvent(window,new Event('sodafom:active-child-changed'));
+
+    expect(screen.getByRole('log')).toHaveTextContent('Hi, Leo!');
+    expect(screen.getByRole('log')).not.toHaveTextContent('Mia');
+  });
   it('falls back to the school year when a saved learning age is invalid',async()=>{
     localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:8,sound:false},activities:[],stickers:[]}));
     localStorage.setItem('sodafom_learning_age','99');

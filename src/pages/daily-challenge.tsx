@@ -7,6 +7,7 @@ import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useSession } from '@/lib/auth/auth-client';
+import { normalizeChildrenResponse, type ChildApiRecord } from '@/lib/children-response';
 import { Star, Flame, Clock, Trophy, ChevronRight, Zap, CalendarDays } from 'lucide-react';
 
 interface ChallengeData {
@@ -16,7 +17,7 @@ interface ChallengeData {
   date: string;
 }
 
-interface Child { id: number; name: string; total_stars: number }
+type Child = ChildApiRecord;
 
 interface ClaimHistory {
   date: string; // YYYY-MM-DD
@@ -136,7 +137,7 @@ export default function DailyChallengePage() {
       fetch(`${API_PREFIX}/children`, { credentials: 'include' })
         .then((r) => r.json())
         .then((d) => {
-          const kids = (d as { children?: Child[] }).children ?? [];
+          const kids = normalizeChildrenResponse(d);
           setChildren(kids);
           if (kids.length) {
             setSelectedChild(kids[0].id);
