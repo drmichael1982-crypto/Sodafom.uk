@@ -7,6 +7,7 @@ import { RouteObject } from "react-router";
 import { lazy } from 'react';
 const ArchieCourses = lazy(() => import('@/pages/archie/ArchieCourses'));
 import { Navigate } from 'react-router';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 const HomePage = lazy(() => import('./pages/index'));
 const SodafomAdventurePage = lazy(() => import('./pages/SodafomAdventurePage'));
 const CartoonTheatrePage = lazy(() => import('./pages/CartoonTheatrePage'));
@@ -290,7 +291,7 @@ export const routes: RouteObject[] = [
   element: <ArchieGames />,
 }, {
   path: '/demo',
-  element: <DemoPage />
+  element: OPEN_TESTING_MODE ? <Navigate to="/games" replace /> : <DemoPage />
 }, {
   path: '/subscribe',
   // Payments are deliberately closed while the public test is free. Keeping
@@ -713,7 +714,7 @@ export const routes: RouteObject[] = [
   element: <StoryWriterPage />,
 }, {
   path: '/pricing',
-  element: <PricingPage />
+  element: OPEN_TESTING_MODE ? <Navigate to="/games" replace /> : <PricingPage />
 }, {
   path: '/download',
   element: <AppDownloadPage />
@@ -752,7 +753,7 @@ export const routes: RouteObject[] = [
   element: <HubNotificationsPage />,
 }, {
   path: '/hub/subscription',
-  element: <HubSubscriptionPage />,
+  element: OPEN_TESTING_MODE ? <Navigate to="/hub/profile" replace /> : <HubSubscriptionPage />,
 }, {
   path: '/teacher-hub',
   element: <TeacherHubDashboard />,
@@ -773,7 +774,7 @@ export const routes: RouteObject[] = [
   element: <GameOfTheWeekPage />,
 }, {
   path: '/referral',
-  element: <ReferralPage />,
+  element: OPEN_TESTING_MODE ? <Navigate to="/games" replace /> : <ReferralPage />,
 }, {
   path: '/hub/progress',
   element: <HubProgressPage />,
@@ -785,7 +786,7 @@ export const routes: RouteObject[] = [
   element: <BadgesPage />,
 }, {
   path: '/cart',
-  element: <CartPage />
+  element: OPEN_TESTING_MODE ? <Navigate to="/games" replace /> : <CartPage />
 }, {
   path: '/leaderboard',
   element: <LeaderboardPage />,
@@ -836,10 +837,10 @@ export const routes: RouteObject[] = [
   element: <CertificatesPage />,
 }, {
   path: '/checkout/success',
-  element: <CheckoutSuccess />
+  element: OPEN_TESTING_MODE ? <Navigate to="/games" replace /> : <CheckoutSuccess />
 }, {
   path: '/checkout/cancel',
-  element: <CheckoutCancel />
+  element: OPEN_TESTING_MODE ? <Navigate to="/games" replace /> : <CheckoutCancel />
 }, {
   path: '/shop/back-to-school',
   element: <BackToSchoolShopPage />

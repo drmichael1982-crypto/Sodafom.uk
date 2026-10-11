@@ -6,9 +6,21 @@ import GameShell, { type GameResult } from '@/components/games/GameShell';
 import LevelBadge from '@/components/games/LevelBadge';
 import { useGameLevel } from '@/hooks/useGameLevel';
 import ArchieGameHelper from '@/components/games/ArchieGameHelper';
+import { starsForPercentage } from '@/lib/game-scoring';
 
 const SLUG = 'mental-maths-sprint';
 const TOTAL_ROUNDS = 12;
+
+export function buildMentalMathResult(correct: number): GameResult {
+  const safeCorrect = Math.max(0, Math.min(TOTAL_ROUNDS, correct));
+  const score = Math.round((safeCorrect / TOTAL_ROUNDS) * 100);
+  return {
+    correct: safeCorrect,
+    total: TOTAL_ROUNDS,
+    score,
+    stars: starsForPercentage(score),
+  };
+}
 
 type Q = { question: string; answer: number };
 
@@ -97,10 +109,9 @@ function MentalMathsGame({ onComplete, level, onLevelChange, onQuestionChange }:
     const newScore = wasCorrect ? currentScore + 1 : currentScore;
     const newRound = round + 1;
     if (newRound >= TOTAL_ROUNDS) {
-      const pct = Math.round((newScore / TOTAL_ROUNDS) * 100);
-      const stars = newScore >= 10 ? 3 : newScore >= 7 ? 2 : 1;
-      onLevelChange(stars);
-      setTimeout(() => onComplete({ correct: newScore, total: TOTAL_ROUNDS, score: pct, stars }), 700);
+      const result = buildMentalMathResult(newScore);
+      onLevelChange(result.stars);
+      setTimeout(() => onComplete(result), 700);
     } else {
       setScore(newScore);
       setRound(newRound);

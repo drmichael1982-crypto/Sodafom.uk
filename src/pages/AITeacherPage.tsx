@@ -4,6 +4,9 @@ import { ArrowLeft, BookOpen, Camera, PenLine, Send, Sparkles, Volume2 } from 'l
 import { useNavigate } from 'react-router';
 import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
+import { tryLocalArchieResponse } from '@/lib/archie-local';
+import { resolveLearningAge, saveLearningAge } from '@/lib/learning-age';
+import { useArchieData } from '@/lib/archie/storage';
 import { getActiveChild, setActiveChild, type AgeGroup } from '@/hooks/useChildAge';
 
 const CURRICULUM = [
@@ -20,6 +23,18 @@ const CURRICULUM = [
 
 const ageGroupFor = (age: number): AgeGroup => age <= 7 ? '5-7' : age <= 10 ? '8-10' : '11-13';
 
+function currentLearnerAge(): number {
+  const scopedAge = resolveLearningAge();
+  if (scopedAge !== null) return scopedAge;
+  // Preserve the old picker only for a profile-less learner. It must never
+  // override the active child's own saved age or age band.
+  if (!getActiveChild()) {
+    const legacyAge = Number(localStorage.getItem('sodafom_ai_teacher_age'));
+    if (Number.isInteger(legacyAge) && legacyAge >= 5 && legacyAge <= 13) return legacyAge;
+  }
+  return 9;
+}
+
 const SUBJECTS = [
   { name: 'Maths', emoji: '🔢', route: '/games/maths', prompt: 'Teach me maths one step at a time.' },
   { name: 'Reading', emoji: '📖', route: '/games/reading', prompt: 'Help me practise reading.' },
@@ -32,67 +47,114 @@ const SUBJECTS = [
 export default function AITeacherPage() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
+  const requestRef = useRef<AbortController | null>(null);
+  const fileReaderRef = useRef<FileReader | null>(null);
   const [question, setQuestion] = useState('');
+  const { settings } = useArchieData();
   const { setGameContext, clearGameContext } = useArchieContext();
   useEffect(() => { setGameContext('AI Teacher', 'Learning', question); return clearGameContext; }, [question, setGameContext, clearGameContext]);
   const [answer, setAnswer] = useState('');
   const [preview, setPreview] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [age, setAge] = useState(() => {
-    const stored = Number(localStorage.getItem('sodafom_ai_teacher_age'));
-    if (stored >= 5 && stored <= 13) return stored;
-    const group = getActiveChild()?.ageGroup;
-    return group === '5-7' ? 6 : group === '11-13' ? 12 : 9;
-  });
+  const [age, setAge] = useState(currentLearnerAge);
   const curriculum = useMemo(() => CURRICULUM.find(item => item.age === age) ?? CURRICULUM[4], [age]);
 
+  useEffect(() => {
+    const resetForLearner = () => {
+      requestRef.current?.abort();
+      requestRef.current = null;
+      try { fileReaderRef.current?.abort(); } catch { /* reader already finished */ }
+      fileReaderRef.current = null;
+      setBusy(false);
+      setQuestion('');
+      setAnswer('');
+      setPreview('');
+      setError('');
+      setAge(currentLearnerAge());
+    };
+    window.addEventListener('sodafom:active-child-changed', resetForLearner);
+    return () => {
+      window.removeEventListener('sodafom:active-child-changed', resetForLearner);
+      requestRef.current?.abort();
+      try { fileReaderRef.current?.abort(); } catch { /* reader already finished */ }
+    };
+  }, []);
+
   const selectAge = (nextAge: number) => {
+    if (!saveLearningAge(nextAge)) return;
     setAge(nextAge);
-    localStorage.setItem('sodafom_ai_teacher_age', String(nextAge));
     const current = getActiveChild();
-    setActiveChild({
-      id: current?.id ?? 1,
-      name: current?.name ?? 'Learner',
-      avatarEmoji: current?.avatarEmoji ?? '⭐',
-      ageGroup: ageGroupFor(nextAge),
-    });
+    if (current) setActiveChild({ ...current, ageGroup: ageGroupFor(nextAge) });
   };
 
   const askTeacher = async () => {
-    if (!question.trim() || busy) return;
+    const trimmedQuestion = question.trim();
+    if (!trimmedQuestion || busy) return;
+    const local = tryLocalArchieResponse(trimmedQuestion);
+    if (local) {
+      setError('');
+      setAnswer(local.text);
+      ttsSpeak(local.text);
+      return;
+    }
+    if (!settings.onlineHelp) {
+      const localOnly = 'Online learning help is off. Archie can still help on this device with maths, spelling, reading and learning games. Ask a grown-up before sending a wider question online.';
+      setAnswer(localOnly);
+      setError('Online learning help is off on this device.');
+      ttsSpeak(localOnly);
+      return;
+    }
     setBusy(true); setError('');
     const controller = new AbortController();
+    requestRef.current?.abort();
+    requestRef.current = controller;
     const timeoutId = setTimeout(() => controller.abort(), 15000);
     try {
       const response = await fetch(`${API_PREFIX}/chat`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({ messages: [{ role: 'user', content: question }], systemExtra: `Act as a patient teacher following the National Curriculum in England for a child aged ${age}, in ${curriculum.year} (${curriculum.stage}). Teach one clear step at a time, check understanding, use child-friendly language, and adapt examples to this level. Relevant learning includes ${curriculum.topics}.` }),
+        body: JSON.stringify({ messages: [{ role: 'user', content: trimmedQuestion }], learnerAge: age, systemExtra: `Act as a patient teacher following the National Curriculum in England for a child aged ${age}, in ${curriculum.year} (${curriculum.stage}). Teach one clear step at a time, check understanding, use child-friendly language, and adapt examples to this level. Relevant learning includes ${curriculum.topics}.` }),
       });
       clearTimeout(timeoutId);
       if (!response.ok) throw new Error('Online teacher is not connected yet.');
       const text = await response.text();
+      if (requestRef.current !== controller) return;
       setAnswer(text); ttsSpeak(text);
-    } catch (e) {
+    } catch {
       clearTimeout(timeoutId);
+      if (requestRef.current !== controller) return;
       const fallbackText = `I am helping offline! For a child in ${curriculum.year} learning ${curriculum.topics}, regarding "${question}": Let's break it down into simple steps. Take your time, try a small example, and you'll get it!`;
       setAnswer(fallbackText);
       ttsSpeak(fallbackText);
       setError('Online teacher is unavailable (offline mode active).');
     }
-    finally { setBusy(false); }
+    finally {
+      if (requestRef.current === controller) {
+        requestRef.current = null;
+        setBusy(false);
+      }
+    }
   };
 
   const readBookPage = async (file?: File) => {
     if (!file || busy) return;
+    if (!settings.onlineHelp) {
+      setError('Online page reading is off. Ask a grown-up to enable online learning help before sending a photograph.');
+      return;
+    }
     if (file.size > 6 * 1024 * 1024) { setError('Please choose a photograph smaller than 6 MB.'); return; }
     setBusy(true); setError(''); setAnswer('');
     const reader = new FileReader();
+    fileReaderRef.current = reader;
     reader.onload = async () => {
+      if (fileReaderRef.current !== reader) return;
+      fileReaderRef.current = null;
       const image = String(reader.result || '');
       setPreview(image);
       const controller = new AbortController();
+      requestRef.current?.abort();
+      requestRef.current = controller;
       const timeoutId = setTimeout(() => controller.abort(), 20000);
       try {
         const response = await fetch(`${API_PREFIX}/ai-teacher/read-page`, {
@@ -103,17 +165,29 @@ export default function AITeacherPage() {
         clearTimeout(timeoutId);
         if (!response.ok) throw new Error(await response.text() || 'The page could not be read.');
         const text = await response.text();
+        if (requestRef.current !== controller) return;
         setAnswer(text); ttsSpeak(text);
-      } catch (e) {
+      } catch {
         clearTimeout(timeoutId);
+        if (requestRef.current !== controller) return;
         const fallbackText = `I have looked at your book page photo! For year ${curriculum.year}, focus on reading each word clearly, sounding out tricky parts, and asking what happens next in the story.`;
         setAnswer(fallbackText);
         ttsSpeak(fallbackText);
         setError('Online OCR is unavailable (offline reading guidance active).');
       }
-      finally { setBusy(false); }
+      finally {
+        if (requestRef.current === controller) {
+          requestRef.current = null;
+          setBusy(false);
+        }
+      }
     };
-    reader.onerror = () => { setBusy(false); setError('The photograph could not be opened.'); };
+    reader.onerror = () => {
+      if (fileReaderRef.current !== reader) return;
+      fileReaderRef.current = null;
+      setBusy(false);
+      setError('The photograph could not be opened.');
+    };
     reader.readAsDataURL(file);
   };
 
@@ -143,14 +217,14 @@ export default function AITeacherPage() {
 
         <section className="mt-5 rounded-3xl bg-white p-5 shadow-xl">
           <h2 className="flex items-center gap-2 text-xl font-black text-sky-950"><Sparkles className="text-yellow-500"/> Ask your teacher</h2>
-          <div className="mt-3 flex gap-2"><input value={question} onChange={e => setQuestion(e.target.value)} placeholder="What would you like Archie to teach?" className="min-w-0 flex-1 rounded-2xl border-2 border-sky-200 px-4 py-3"/><button onClick={() => void askTeacher()} disabled={busy || !question.trim()} className="rounded-2xl bg-sky-600 px-4 text-white disabled:opacity-50"><Send/></button></div>
+          <div className="mt-3 flex gap-2"><input value={question} onChange={e => setQuestion(e.target.value)} placeholder="What would you like Archie to teach?" className="min-w-0 flex-1 rounded-2xl border-2 border-sky-200 px-4 py-3"/><button aria-label="Ask Archie" onClick={() => void askTeacher()} disabled={busy || !question.trim()} className="rounded-2xl bg-sky-600 px-4 text-white disabled:opacity-50"><Send/></button></div>
         </section>
 
         <section className="mt-5 rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-800 p-5 text-white shadow-xl">
           <h2 className="flex items-center gap-2 text-xl font-black"><BookOpen/> Read a Book With Archie</h2>
           <p className="mt-1 text-sm font-bold text-white/85">Photograph one page. Archie will read the visible text and explain difficult words.</p>
-          <input ref={inputRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={e => void readBookPage(e.target.files?.[0])}/>
-          <button onClick={() => inputRef.current?.click()} disabled={busy} className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-yellow-400 font-black text-indigo-950 disabled:opacity-60"><Camera/> {busy ? 'Reading the page…' : 'Photograph a Book Page'}</button>
+          <input ref={inputRef} aria-label="Choose a book page photograph" type="file" accept="image/*" capture="environment" className="hidden" onChange={e => void readBookPage(e.target.files?.[0])}/>
+          <button onClick={() => settings.onlineHelp ? inputRef.current?.click() : setError('Online page reading is off. Ask a grown-up to enable online learning help before sending a photograph.')} disabled={busy} className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-yellow-400 font-black text-indigo-950 disabled:opacity-60"><Camera/> {busy ? 'Reading the page…' : 'Photograph a Book Page'}</button>
           {preview && <img src={preview} alt="Photographed book page" className="mt-4 max-h-72 w-full rounded-2xl bg-white object-contain"/>}
         </section>
 

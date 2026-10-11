@@ -6,6 +6,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, X, ArrowRight } from 'lucide-react';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 
 // ── Search index ──────────────────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ function scoreItem(item: SearchItem, query: string): number {
 function runSearch(query: string): SearchItem[] {
   if (!query.trim()) return [];
   return SEARCH_INDEX
+    .filter(item => !OPEN_TESTING_MODE || item.id !== 'page-pricing')
     .map(item => ({ item, score: scoreItem(item, query) }))
     .filter(({ score }) => score > 0)
     .sort((a, b) => b.score - a.score)

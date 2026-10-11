@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router";
 import { Youtube, Lock, Instagram } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 
 // Hidden admin access logic (triggered by clicking the bottom copyright year)
 
@@ -144,6 +145,7 @@ function NewsletterForm() {
 
 export default function Footer() {
   const [researchMode, setResearchMode] = useState(() => {
+    if (OPEN_TESTING_MODE) return true;
     if (typeof window === 'undefined') return false;
     const isFreeAccess = localStorage.getItem('sodafom_free_access') === 'true';
     return isFreeAccess || localStorage.getItem('sodafom_research_mode') === 'true';
@@ -152,7 +154,7 @@ export default function Footer() {
   React.useEffect(() => {
     const handleResearchChange = () => {
       const isFreeAccess = localStorage.getItem('sodafom_free_access') === 'true';
-      setResearchMode(isFreeAccess || localStorage.getItem('sodafom_research_mode') === 'true');
+      setResearchMode(OPEN_TESTING_MODE || isFreeAccess || localStorage.getItem('sodafom_research_mode') === 'true');
     };
     window.addEventListener('sodafom_research_mode_change', handleResearchChange);
     return () => window.removeEventListener('sodafom_research_mode_change', handleResearchChange);
