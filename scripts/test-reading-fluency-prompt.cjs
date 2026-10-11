@@ -27,28 +27,11 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
       });
       await page.goto(base + '/games/reading-fluency');
       await page.getByRole('heading', { name: 'Reading Fluency', exact: true }).waitFor();
-      const button = name => page.getByRole('button', { name, exact: true });
-      const revealWithPager = async locator => {
-        for (let attempt = 0; attempt < 30; attempt++) {
-          const direction = await locator.evaluate(element => {
-            const viewport = element.closest('.app-screen-window')?.getBoundingClientRect();
-            if (!viewport) return 0;
-            const fragments = [...element.getClientRects()];
-            const visible = fragments.some(box => {
-              const centreX = box.left + box.width / 2;
-              const centreY = box.top + box.height / 2;
-              return centreX >= viewport.left - 1 && centreX <= viewport.right + 1
-                && centreY >= viewport.top - 1 && centreY <= viewport.bottom + 1;
-            });
-            if (visible) return 0;
-            const first = fragments[0] || element.getBoundingClientRect();
-            return first.right < viewport.left ? -1 : 1;
-          });
-          if (direction === 0) return;
-          await button(direction < 0 ? '← Previous' : 'Next →').click();
-          await page.waitForTimeout(180);
-        }
-        throw new Error(`${viewport.label}: pager did not reveal the requested Reading Fluency control`);
+      const activateWithPager = async locator => {
+        await locator.focus();
+        // AppScreenPager aligns an off-screen keyboard target over two frames.
+        await page.waitForTimeout(250);
+        await locator.press('Enter');
       };
 
       const prompt = page.locator('p').filter({ hasText: /^Read: / }).first();
@@ -67,17 +50,16 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
       });
 
       const wrongAnswer = page.locator('.answer-snake-board button').nth(1);
-      await revealWithPager(wrongAnswer);
-      await wrongAnswer.click();
+      await activateWithPager(wrongAnswer);
       await page.getByRole('alert').waitFor();
       assert.match(await page.getByRole('alert').innerText(), /Good effort.+clue/is,
         `${viewport.label}: a mistake gives supportive clue feedback`);
       const savedPrompt = await prompt.innerText();
 
       const pauseButton = page.getByRole('button', { name: 'Pause game', exact: true });
-      await revealWithPager(pauseButton);
       await pauseButton.focus();
-      await pauseButton.click();
+      await page.waitForTimeout(250);
+      await pauseButton.press('Enter');
       await page.getByRole('heading', { name: 'Game paused', exact: true }).waitFor();
       const topResume = page.getByRole('button', { name: 'Resume game', exact: true }).first();
       assert.equal(await topResume.evaluate(element => element === document.activeElement), true,
@@ -88,12 +70,11 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
         path: `test-results/reading-fluency/paused-${viewport.label}.png`,
         fullPage: true,
       });
-      await topResume.click();
+      await topResume.press('Enter');
       assert.equal(await page.getByText(savedPrompt, { exact: true }).count(), 1,
         `${viewport.label}: resume restores the exact question`);
       const retryButton = page.getByRole('button', { name: 'Try again', exact: true });
-      await revealWithPager(retryButton);
-      await retryButton.click();
+      await activateWithPager(retryButton);
       assert.equal(await wrongAnswer.isDisabled(), true,
         `${viewport.label}: the tried answer remains unavailable after resume and retry`);
 
@@ -101,8 +82,7 @@ if (process.env.ARCHIE_CHROMIUM_PATH) options.executablePath = process.env.ARCHI
       // option is correct, while still exercising the real ten-question bank.
       for (let question = 1; question <= 10; question++) {
         const correctAnswer = page.locator('.answer-snake-board button').first();
-        await revealWithPager(correctAnswer);
-        await correctAnswer.click();
+        await activateWithPager(correctAnswer);
         await page.getByRole('status').filter({ hasText: 'Correct!' }).waitFor();
         if (question < 10) {
           await page.waitForFunction(progress => document.body.textContent?.includes(progress), `${question + 1} / 10`);
