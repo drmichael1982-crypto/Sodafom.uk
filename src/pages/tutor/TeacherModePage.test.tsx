@@ -73,6 +73,13 @@ import TeacherModePage from "./TeacherModePage";
 
 const named = (name = "Sophie", ageGroup = "8-10") =>
   localStorage.setItem("sodafom_tutor_memory", JSON.stringify({ childName: name, ageGroup, topics: {} }));
+const selectChild = (id: number, name: string, ageGroup: "5-7" | "8-10") => {
+  localStorage.setItem("sodafom_active_child", JSON.stringify({ id, name, ageGroup }));
+  localStorage.setItem(
+    `sodafom_tutor_memory:${id}`,
+    JSON.stringify({ childName: name, ageGroup, profileSetupComplete: true, topics: {} }),
+  );
+};
 const show = () =>
   render(
     <MemoryRouter>
@@ -154,6 +161,54 @@ describe("Teacher Mode", () => {
     named("Kit", "5-7");
     show();
     expect(screen.getByRole("heading", { name: "Question Y1" })).toBeInTheDocument();
+  });
+
+  it("resets the lesson and retires old voice input when the active learner changes", async () => {
+    const instances: Array<{
+      start: ReturnType<typeof vi.fn>;
+      abort: ReturnType<typeof vi.fn>;
+      stop: ReturnType<typeof vi.fn>;
+      onresult?: (event: unknown) => void;
+    }> = [];
+    (window as any).SpeechRecognition = class {
+      start = vi.fn();
+      abort = vi.fn();
+      stop = vi.fn();
+      onresult?: (event: unknown) => void;
+      constructor() {
+        instances.push(this);
+      }
+    };
+
+    selectChild(1, "Mia", "5-7");
+    selectChild(2, "Leo", "8-10");
+    localStorage.setItem("sodafom_active_child", JSON.stringify({ id: 1, name: "Mia", ageGroup: "5-7" }));
+    show();
+
+    expect(screen.getByText("Learning with Mia")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Question Y1" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Voice/ }));
+    expect(instances[0].start).toHaveBeenCalled();
+
+    stopTts.mockClear();
+    localStorage.setItem("sodafom_active_child", JSON.stringify({ id: 2, name: "Leo", ageGroup: "8-10" }));
+    act(() => window.dispatchEvent(new Event("sodafom:active-child-changed")));
+
+    expect(await screen.findByText("Learning with Leo")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Question A1" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Question Y1" })).not.toBeInTheDocument();
+    expect(instances[0].abort).toHaveBeenCalled();
+    expect(stopTts).toHaveBeenCalled();
+
+    act(() => instances[0].onresult?.({ results: [[{ transcript: "right" }]] }));
+    fireEvent.click(screen.getByRole("button", { name: "right" }));
+
+    const mia = JSON.parse(localStorage.getItem("sodafom_tutor_memory:1")!);
+    const leo = JSON.parse(localStorage.getItem("sodafom_tutor_memory:2")!);
+    expect(mia.topics).toEqual({});
+    expect(leo.topics["maths:a"]).toMatchObject({ totalAttempted: 1, totalCorrect: 1 });
+    expect(leo.topics["maths:young"]).toBeUndefined();
+    expect(localStorage.getItem("sodafom_tutor_memory")).toBeNull();
   });
 
   it("shows an inline status instead of alert() when voice commands are unsupported", () => {

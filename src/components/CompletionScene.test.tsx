@@ -24,3 +24,13 @@ it('builds a word one letter at a time before changing the scene',()=>{
  fireEvent.click(screen.getByRole('button',{name:'Play with the scene again'}));
  expect(screen.getByRole('button',{name:'S'})).toBeInTheDocument();
 });
+it('keeps the puzzle return label by default and supports a result-specific label',()=>{
+ const close=vi.fn();
+ const view=render(<CompletionScene kind="words" onClose={close}/>);
+ fireEvent.click(screen.getByRole('button',{name:'Back to puzzle'}));
+ expect(close).toHaveBeenCalledOnce();
+ view.rerender(<CompletionScene kind="words" onClose={close} returnLabel="See my result"/>);
+ expect(screen.getByRole('button',{name:'See my result'})).toHaveFocus();
+ fireEvent.click(screen.getByRole('button',{name:'See my result'}));
+ expect(close).toHaveBeenCalledTimes(2);
+});

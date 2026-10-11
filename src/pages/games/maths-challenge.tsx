@@ -51,7 +51,7 @@ const L4: QuizQuestion[] = [
   { question: '√144 = ?', options: ['12','11','13','10'], answer: '12' },
   { question: '2³ × 3² = ?', options: ['72','54','64','81'], answer: '72' },
   { question: 'What is 7/8 of 96?', options: ['84','72','90','78'], answer: '84' },
-  { question: '0.4 × 0.6 = ?', options: ['0.24','0.24','0.12','0.36'], answer: '0.24' },
+  { question: '0.4 × 0.6 = ?', options: ['0.24','0.024','0.12','0.36'], answer: '0.24' },
   { question: 'What is 45% of 360?', options: ['162','144','180','126'], answer: '162' },
   { question: '√225 = ?', options: ['15','12','18','14'], answer: '15' },
   { question: '4³ = ?', options: ['64','48','32','128'], answer: '64' },

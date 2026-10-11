@@ -227,7 +227,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
 
   const gameContent = (
     <div style={puzzleThemeStyle(title, subject)} className="archie-game-shell soda-game-shell puzzle-themed min-h-screen bg-background flex flex-col">
-      {rewardOpen&&<CompletionScene kind={subject==='reading'||subject==='spelling'?'words':subject} onClose={closeReward}/>}
+      {rewardOpen&&<CompletionScene kind={subject==='reading'||subject==='spelling'?'words':subject} onClose={closeReward} returnLabel="See my result"/>}
       <Helmet>
         <title>{title} — Sodafom Games</title>
         <meta name="description" content={`Play ${title} on Sodafom — a fun educational game for children ages ${ageGroups.join(', ')}.`} />

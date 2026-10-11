@@ -37,7 +37,7 @@ const L3: QuizQuestion[] = [
   { question: 'Which word doubles the consonant before -ing?', options: ['swimming','swiming','swimminng','swimmming'], answer: 'swimming' },
   { question: 'Which word doubles the consonant before -ed?', options: ['planned','planed','plannedd','plannnned'], answer: 'planned' },
   { question: 'Which word doubles the consonant before -er?', options: ['thinner','thiner','thinnerr','thinnner'], answer: 'thinner' },
-  { question: 'Which word doubles the consonant before -est?', options: ['thinnest','thinest','thinnestt','thinnest'], answer: 'thinnest' },
+  { question: 'Which word doubles the consonant before -est?', options: ['thinnest','thinest','thinnestt','thinnnest'], answer: 'thinnest' },
   { question: 'Which word doubles the consonant before -ing?', options: ['sitting','siting','sittinng','sittting'], answer: 'sitting' },
   { question: 'Which word doubles the consonant before -ed?', options: ['dropped','droped','droppedd','droppped'], answer: 'dropped' },
   { question: 'Which word doubles the consonant before -er?', options: ['hotter','hoter','hotterr','hottter'], answer: 'hotter' },

@@ -83,6 +83,14 @@ const answers = {
         `${viewport.label}: result retains first-try accuracy`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true,
         `${viewport.label}: Reading Quest does not overflow horizontally`);
+      assert.equal(await page.getByRole('button', { name: 'Back to puzzle', exact: true }).count(), 0,
+        `${viewport.label}: game reward does not call its result a puzzle`);
+      const resultButton = page.getByRole('button', { name: 'See my result', exact: true });
+      await resultButton.waitFor();
+      await page.screenshot({ path: `test-results/reading-quest/complete-reward-${viewport.label}.png`, fullPage: true });
+      await resultButton.click();
+      await page.getByRole('heading', { name: /Good try/ }).waitFor();
+      await page.getByText('Final score: 67%', { exact: true }).waitFor();
       await page.screenshot({ path: `test-results/reading-quest/complete-${viewport.label}.png`, fullPage: true });
       await page.close();
       console.log(`PASS Reading Quest ${viewport.label} retry, break and completion`);

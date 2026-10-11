@@ -23,8 +23,8 @@ const L2: QuizQuestion[] = [
   { question: 'What compound word means "a light from the sun"?', options: ['sunlight','daylight','sunbeam','sunshine'], answer: 'sunlight' },
   { question: 'What compound word means "a storm with thunder"?', options: ['thunderstorm','rainstorm','lightstorm','cloudstorm'], answer: 'thunderstorm' },
   { question: 'What compound word means "a board for surfing"?', options: ['surfboard','waveboard','seaboard','rideboard'], answer: 'surfboard' },
-  { question: 'What compound word means "a fall of water"?', options: ['waterfall','waterfall','raindrop','streamfall'], answer: 'waterfall' },
-  { question: 'What compound word means "a bow made of fire"?', options: ['firebow','firework','flamebow','heatbow'], answer: 'firework' },
+  { question: 'What compound word means "a fall of water"?', options: ['waterfall','waterslide','raindrop','streamfall'], answer: 'waterfall' },
+  { question: 'What compound word means "an explosive display in the sky"?', options: ['firebow','firework','flamebow','heatbow'], answer: 'firework' },
   { question: 'What compound word means "a side of the road"?', options: ['roadside','roadedge','streetside','pathside'], answer: 'roadside' },
   { question: 'What compound word means "a bird that is black"?', options: ['blackbird','darkbird','nightbird','coalbird'], answer: 'blackbird' },
   { question: 'What compound word means "a house for a dog"?', options: ['doghouse','dogden','pethouse','houndhouse'], answer: 'doghouse' },
@@ -37,11 +37,11 @@ const L3: QuizQuestion[] = [
   { question: 'Which compound word means "a light that is a flash"?', options: ['flashlight','flashlamp','quicklight','speedlight'], answer: 'flashlight' },
   { question: 'Which compound word means "a stone that is precious"?', options: ['gemstone','preciousstone','valuestone','rarestone'], answer: 'gemstone' },
   { question: 'Which compound word means "a work done by hand"?', options: ['handwork','handcraft','manualwork','fingerwork'], answer: 'handwork' },
-  { question: 'Which compound word means "a book of notes"?', options: ['notebook','notebook','notesbook','writingbook'], answer: 'notebook' },
+  { question: 'Which compound word means "a book of notes"?', options: ['notebook','booknote','notesbook','writingbook'], answer: 'notebook' },
   { question: 'Which compound word means "a fall of snow"?', options: ['snowfall','snowdrop','icedrop','frostfall'], answer: 'snowfall' },
   { question: 'Which compound word means "a man made of straw"?', options: ['scarecrow','strawman','fieldman','cornman'], answer: 'scarecrow' },
-  { question: 'Which compound word means "a bow that is long"?', options: ['longbow','longbow','arrowbow','tallbow'], answer: 'longbow' },
-  { question: 'Which compound word means "a house for a fire"?', options: ['firehouse','firehouse','flamehouse','heathouse'], answer: 'firehouse' },
+  { question: 'Which compound word means "a bow that is long"?', options: ['longbow','crossbow','arrowbow','tallbow'], answer: 'longbow' },
+  { question: 'Which compound word means "a building used by firefighters"?', options: ['firehouse','fireplace','flamehouse','heathouse'], answer: 'firehouse' },
 ];
 const L4 = L3;
 const L5 = L3;

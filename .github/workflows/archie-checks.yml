@@ -30,6 +30,8 @@ jobs:
           test -f test-results/short-landscape-help/library-844x390.png
           test -f test-results/reading-quest/retry-break-phone.png
           test -f test-results/reading-quest/retry-break-tablet.png
+          test -f test-results/reading-quest/complete-reward-phone.png
+          test -f test-results/reading-quest/complete-reward-tablet.png
           test -f test-results/reading-quest/complete-phone.png
           test -f test-results/reading-quest/complete-tablet.png
       - name: Play simulated year-group games and spelling lessons

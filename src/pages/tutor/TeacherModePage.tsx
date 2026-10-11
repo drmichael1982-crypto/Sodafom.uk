@@ -36,6 +36,7 @@ export default function TeacherModePage() {
   const [wrongAttempts, setWrongAttempts] = useState<number>(0);
   const [completed, setCompleted] = useState<boolean>(false);
   const [status, setStatus] = useState<string>('');
+  const [profileRevision, setProfileRevision] = useState<number>(0);
   const recognitionRef = useRef<any>(null);
   const nextButtonRef = useRef<HTMLButtonElement>(null);
   const completeHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -86,7 +87,7 @@ export default function TeacherModePage() {
     const greeting = profile.childName ? `Hi ${profile.childName}! ` : '';
     const introText = `${greeting}Welcome to ${currentLesson.title}! ${currentLesson.explanation}`;
     speakText(introText);
-  }, [currentLessonIndex, showProfileSetup, completed]);
+  }, [currentLesson, showProfileSetup, completed, profile.childName, speakText]);
 
   useEffect(() => {
     if (answeredCorrectly) nextButtonRef.current?.focus();
@@ -167,12 +168,46 @@ export default function TeacherModePage() {
     }
   };
 
-  const stopListening = () => {
+  const stopListening = useCallback(() => {
     const active = recognitionRef.current;
     recognitionRef.current = null;
     if (active) { try { if (active.abort) active.abort(); else active.stop?.(); } catch { /* already ended */ } }
     setIsListening(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    const resetForActiveChild = (event?: Event) => {
+      if (event instanceof StorageEvent && event.key !== 'sodafom_active_child') return;
+
+      // Retire the recognizer before aborting it so a delayed callback from the
+      // previous learner cannot submit an answer into the new learner's memory.
+      stopListening();
+      stopTts();
+
+      const nextProfile = loadTutorMemory();
+      setProfile(nextProfile);
+      setProfileRevision((revision) => revision + 1);
+      setShowProfileSetup(!nextProfile.childName && !nextProfile.profileSetupComplete);
+      setCurrentLessonIndex(0);
+      setCurrentQuestionIndex(0);
+      setSelectedOption('');
+      setTypedInput('');
+      setIsSpeaking(false);
+      setShowHint(false);
+      setShowSimpler(false);
+      setFeedback(null);
+      setWrongAttempts(0);
+      setCompleted(false);
+      setStatus('');
+    };
+
+    window.addEventListener('sodafom:active-child-changed', resetForActiveChild);
+    window.addEventListener('storage', resetForActiveChild);
+    return () => {
+      window.removeEventListener('sodafom:active-child-changed', resetForActiveChild);
+      window.removeEventListener('storage', resetForActiveChild);
+    };
+  }, [stopListening]);
 
   const handleVoiceCommandToggle = () => {
     if (isListening) {
@@ -304,6 +339,7 @@ export default function TeacherModePage() {
         {status && <p role="status" className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 rounded-2xl p-3">{status}</p>}
         {showProfileSetup ? (
           <ChildProfileManager
+            key={profileRevision}
             onComplete={handleProfileComplete}
             onCancel={profile.childName || profile.profileSetupComplete ? () => setShowProfileSetup(false) : undefined}
             isEditing={!!(profile.childName || profile.profileSetupComplete)}
