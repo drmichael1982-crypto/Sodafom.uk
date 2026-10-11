@@ -3,7 +3,9 @@ import type { QuizQuestion } from '@/components/games/QuizEngine';
 /** Original short passages. Difficulty grows through meaning, never calculation or speed. */
 type PassageItem = [passage: string, question: string, answer: string, wrongA: string, wrongB: string, hint: string];
 const bank = (items: PassageItem[]): QuizQuestion[] => items.map(([passage, question, answer, wrongA, wrongB, hint]) => ({
-  question: `Read: “${passage}” ${question}`, options: [answer, wrongA, wrongB], answer, hint,
+  // Keep authored speech marks intact. Wrapping the whole passage in another
+  // pair produced confusing prompts such as `Read: ““I found it!” …”`.
+  question: `Read: ${passage} Question: ${question}`, options: [answer, wrongA, wrongB], answer, hint,
 }));
 
 export const READING_COMPREHENSION_BANKS: QuizQuestion[][] = [

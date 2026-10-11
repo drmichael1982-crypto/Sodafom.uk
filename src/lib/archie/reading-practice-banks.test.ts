@@ -15,7 +15,8 @@ describe('reading practice subject integrity', () => {
         expect(bank).toHaveLength(10);
         expect(new Set(bank.map(item => item.question)).size).toBe(10);
         for (const item of bank) {
-          expect(item.question).toMatch(/^Read: “.+” .+\?$/);
+          expect(item.question).toMatch(/^Read: .+ Question: .+\?$/);
+          expect(item.question).not.toContain('Read: ““');
           expect(item.options.filter(option => normalise(option) === normalise(item.answer))).toHaveLength(1);
           expect(new Set(item.options.map(normalise)).size).toBe(item.options.length);
           expect(item.options.length).toBeGreaterThanOrEqual(3);
@@ -47,6 +48,11 @@ describe('reading practice subject integrity', () => {
     expect(find(READING_FLUENCY_BANKS, '“Is that our train?”').answer).toBe('Its meaning and Mum’s uncertainty');
     expect(find(READING_FLUENCY_BANKS, '“I did not say it was your fault,”').answer).toBe('Keep “not” clear and use a gentle tone');
     for (const item of READING_FLUENCY_BANKS.flat()) expect(item.answer).not.toMatch(/as fast as possible|speed record|every question.*rising|guess.*first letter/i);
+  });
+  it('preserves authored speech marks without adding a second pair around the passage', () => {
+    const directSpeech = find(READING_FLUENCY_BANKS, '“I found it!” said Jo, grinning.');
+    expect(directSpeech.question).toBe('Read: “I found it!” said Jo, grinning. Question: Which feeling should guide the reading?');
+    expect(directSpeech.question.match(/[“”]/g)).toHaveLength(2);
   });
   it('uses actual supplied poetic images and distinguishes a fictional speaker from the poet', () => {
     expect(find(POETRY_DISCOVERY_BANKS, 'A puddle holds a patch of sky').answer).toBe('The sky reflected in the puddle');
