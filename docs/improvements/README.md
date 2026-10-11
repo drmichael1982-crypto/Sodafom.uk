@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Sibling learning-record reconciliation — 11 October 2026](2026-10-11-sibling-record-reconciliation.md): combines the current target's canonical learner/game records and repaired anagrams with non-destructive fallbacks for earlier candidate data, then repairs and verifies the resulting stale browser expectation across the full hosted matrix.
 1. [Spelling Snap supported retry and optional break — 11 October 2026](2026-10-11-spelling-snap-retry-break.md): keeps a mistaken contextual spelling sentence available for a meaning-guided correction, separates first-attempt accuracy from completion and adds a state-preserving optional break across Years 3–9 phone/tablet simulated journeys.
 1. [Game-route CI reconciliation — 11 October 2026](2026-10-11-game-route-ci-reconciliation.md): reconciles the latest deployed test target and restores the browser route check’s two-age school-year overlap calculation after a fresh target CI failure.
 1. [Current-target reconciliation and short-landscape access — 11 October 2026](2026-10-11-short-landscape-reconciliation.md): reconciles the current learner-isolation/parent-score target into PR #81 and keeps help, first activities and footer navigation reachable on 844×390 Games and Library routes with direct hosted captures.
@@ -47,6 +48,6 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 23. [Bingo feedback and breaks — 7 October 2026](2026-10-07-bingo-feedback.md): accurate first-try scoring, hints, pause/resume and prior-run evidence.
 24. [Game access — 7 October 2026](2026-10-07-game-access.md): preceding freeze/age-discovery repair and historical starting evidence.
 
-Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `bdaca0a5-e152-46b8-9d8d-102fe36401e1` at target `a3b1079d4bf0b8ecab3c56ddb39ee3f3e5789904`; candidate pushes do not imply deployment.
+Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. The latest observed test deployment is `4da475e4-98e9-4045-990f-bff83d1f1ed2` at target `1645a7d25957da01d2e1d70bf84be73cea7338e6`; candidate pushes do not imply deployment.
 
-Next bounded priority: recheck the target, PR and Leonard's separate queue, then choose the next currently observed reading, voice or lesson failure for a complete phone/tablet walkthrough. Do not duplicate the verified Spelling Snap retry work and do not merge/deploy.
+Next bounded priority: recheck the target, PR and Leonard's separate queue, then choose the next currently observed reading, voice or lesson failure for a complete phone/tablet wrong-answer, hint/retry, optional-break, completion and navigation walkthrough. Do not duplicate the verified storage or Spelling Snap work and do not merge/deploy.
