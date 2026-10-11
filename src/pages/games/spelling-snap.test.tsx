@@ -60,6 +60,7 @@ describe('Spelling Snap contextual questions', () => {
     expect(screen.getByText('Meaning hint')).toBeInTheDocument();
     expect(screen.getByText('“Their” shows belonging. “There” points to a place.')).toBeInTheDocument();
     expect(hint).toHaveAttribute('aria-pressed', 'true');
+    expect(hint).toBeEnabled();
     expect(screen.getByText('Question 1 of 10 · 0 first-try correct')).toBeInTheDocument();
   });
 

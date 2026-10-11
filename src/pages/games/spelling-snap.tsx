@@ -131,7 +131,7 @@ export function SpellingSnapPlay({ onComplete, onQuestionChange }: { onComplete:
         <button
           type="button"
           onClick={() => setShowHint(true)}
-          disabled={paused || feedback === 'correct' || showHint}
+          disabled={paused || feedback === 'correct'}
           aria-pressed={showHint}
           className="min-h-12 rounded-xl border-2 border-blue-300 bg-blue-50 px-3 py-2 font-black text-blue-950 disabled:opacity-60"
         >
