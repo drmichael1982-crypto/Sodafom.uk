@@ -2310,7 +2310,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
                           '4–6': 'Ages 4–6',
                           '5–7': 'Ages 5–7',
                           '8–10': 'Ages 8–10',
-                          '11–13': 'Ages 11–12',
+                          '11–13': 'Ages 11–13',
                         };
                         return <span key={ag} className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${ac?.badge ?? 'bg-muted text-muted-foreground'}`}>
                                 {ac?.icon} {friendlyLabel[ag] ?? `Ages ${ag}`}

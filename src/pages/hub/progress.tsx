@@ -5,6 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
+import { normalizeChildrenResponse } from '@/lib/children-response';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
 import { motion } from 'motion/react';
@@ -116,7 +117,7 @@ interface Child {
   ageGroup: string;
   avatarEmoji: string;
   totalStars: number;
-  createdAt: string;
+  createdAt?: string;
 }
 
 interface ActivityEntry {
@@ -132,6 +133,7 @@ interface ActivityEntry {
 interface ChildProgress {
   child: Child;
   activity: ActivityEntry[];
+  activityError?: boolean;
 }
 
 interface ProgressActivity {
@@ -271,7 +273,7 @@ function MasteryRings({ activity }: { activity: ActivityEntry[] }) {
 
 // ── Child progress card ───────────────────────────────────────────────────────
 function ChildProgressCard({ data }: { data: ChildProgress }) {
-  const { child, activity } = data;
+  const { child, activity, activityError } = data;
   const breakdown = subjectBreakdown(activity);
   const thisWeek = weeklyActivity(activity);
   const weekStars = thisWeek.reduce((s, a) => s + a.stars, 0);
@@ -349,7 +351,11 @@ function ChildProgressCard({ data }: { data: ChildProgress }) {
         )}
 
         {/* Recent activity */}
-        {recentGames.length > 0 ? (
+        {activityError ? (
+          <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900">
+            This learner’s latest progress could not be loaded. Refresh the page to try again.
+          </div>
+        ) : recentGames.length > 0 ? (
           <div>
             <h3 className="text-sm font-black text-foreground mb-2">Recent games</h3>
             <div className="space-y-1.5">
@@ -374,16 +380,16 @@ function ChildProgressCard({ data }: { data: ChildProgress }) {
         )}
 
         {/* CTA */}
-        <div className="flex gap-2 pt-1">
+        <div className="flex flex-col gap-2 pt-1 sm:flex-row">
           <Link
             to={`/games?age=${child.ageGroup}`}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity"
+            className="min-h-11 flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity"
           >
             🎮 Play games
           </Link>
           <Link
             to={`/hub/child/${child.id}`}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border text-foreground font-bold text-sm hover:border-primary hover:text-primary transition-colors"
+            className="min-h-11 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border-2 border-border text-foreground font-bold text-sm hover:border-primary hover:text-primary transition-colors"
           >
             <TrendingUp size={14} /> Full report
           </Link>
@@ -398,35 +404,50 @@ export function ProgressDashboard() {
   const { user } = useSession();
   const [progressData, setProgressData] = useState<ChildProgress[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const firstName = user?.name?.split(' ')[0] ?? 'there';
 
   useEffect(() => {
+    const controller = new AbortController();
     async function load() {
+      setLoading(true);
+      setLoadError(false);
       try {
-        const childRes = await fetch(`${API_PREFIX}/children`, { credentials: 'include' });
-        const children: Child[] = await childRes.json();
-        if (!Array.isArray(children)) { setLoading(false); return; }
+        const childRes = await fetch(`${API_PREFIX}/children`, {
+          credentials: 'include',
+          signal: controller.signal,
+        });
+        if (!childRes.ok) throw new Error(`Learners request failed (${childRes.status})`);
+        const children = normalizeChildrenResponse(await childRes.json());
 
         const all = await Promise.all(
           children.map(async (child) => {
             try {
-              const actRes = await fetch(`${API_PREFIX}/children/${child.id}/progress`, { credentials: 'include' });
-              if (!actRes.ok) return { child, activity: [] };
+              const actRes = await fetch(`${API_PREFIX}/children/${child.id}/progress`, {
+                credentials: 'include',
+                signal: controller.signal,
+              });
+              if (!actRes.ok) return { child, activity: [], activityError: true };
               const data = await actRes.json() as { recent?: ProgressActivity[] };
               return { child, activity: (data.recent ?? []).map(toActivityEntry) };
-            } catch {
-              return { child, activity: [] };
+            } catch (failure) {
+              if (failure instanceof Error && failure.name === 'AbortError') throw failure;
+              return { child, activity: [], activityError: true };
             }
           })
         );
-        setProgressData(all);
-      } catch {
-        // silently fail — show empty state
+        if (!controller.signal.aborted) setProgressData(all);
+      } catch (failure) {
+        if (!(failure instanceof Error && failure.name === 'AbortError')) {
+          setProgressData([]);
+          setLoadError(true);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
     void load();
+    return () => controller.abort();
   }, []);
 
   const totalStars = progressData.reduce((s, d) => s + d.child.totalStars, 0);
@@ -447,7 +468,7 @@ export function ProgressDashboard() {
         <header className="bg-primary text-primary-foreground">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <Link to="/hub" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-bold transition-colors">
+              <Link to="/hub" className="min-h-11 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-bold transition-colors">
                 <ArrowLeft size={14} /> Hub
               </Link>
               <div>
@@ -458,13 +479,13 @@ export function ProgressDashboard() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Link to="/referral" className="px-3 py-1.5 rounded-lg bg-accent/30 hover:bg-accent/50 text-sm font-bold transition-colors">
+              <Link to="/referral" className="min-h-11 flex items-center px-3 py-1.5 rounded-lg bg-accent/30 hover:bg-accent/50 text-sm font-bold transition-colors">
                 🎁 Refer a friend
               </Link>
-              <Link to="/certificates" className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-bold transition-colors">
+              <Link to="/certificates" className="min-h-11 flex items-center px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-bold transition-colors">
                 🏆 Certificates
               </Link>
-              <LogoutButton className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-bold transition-colors text-primary-foreground">
+              <LogoutButton className="min-h-11 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-sm font-bold transition-colors text-primary-foreground">
                 Sign out
               </LogoutButton>
             </div>
@@ -483,7 +504,7 @@ export function ProgressDashboard() {
                   Hi {firstName}! Here's how all your learners are doing this week.
                 </p>
               </div>
-              <div className="flex gap-3 text-center shrink-0">
+              <div className="grid w-full grid-cols-2 gap-2 text-center sm:w-auto sm:grid-cols-4 sm:gap-3">
                 {[
                   { value: progressData.length, label: 'Learners' },
                   { value: weekPlays, label: 'This week' },
@@ -507,8 +528,17 @@ export function ProgressDashboard() {
             </div>
           )}
 
+          {!loading && loadError && (
+            <div role="alert" className="text-center py-16 bg-card rounded-3xl border-2 border-amber-300 px-5">
+              <div className="text-5xl mb-4">📡</div>
+              <h2 className="text-xl font-black text-foreground mb-2">Could not load progress</h2>
+              <p className="text-muted-foreground mb-5">Check your connection, then refresh this page to try again.</p>
+              <Link to="/hub" className="min-h-11 inline-flex items-center justify-center px-5 rounded-xl bg-primary text-primary-foreground font-black">Back to Hub</Link>
+            </div>
+          )}
+
           {/* No children */}
-          {!loading && progressData.length === 0 && (
+          {!loading && !loadError && progressData.length === 0 && (
             <div className="text-center py-20">
               <div className="text-5xl mb-4">👶</div>
               <h2 className="text-xl font-black text-foreground mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
@@ -562,16 +592,16 @@ export function ProgressDashboard() {
                 ))}
               </div>
               <div className="mt-4 flex gap-3 flex-wrap">
-                <Link to="/certificates" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity">
+                <Link to="/certificates" className="min-h-11 flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity">
                   <Award size={14} /> Print a certificate
                 </Link>
-                <Link to="/badges" className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-border text-foreground font-bold text-sm hover:border-primary hover:text-primary transition-colors">
+                <Link to="/badges" className="min-h-11 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-border text-foreground font-bold text-sm hover:border-primary hover:text-primary transition-colors">
                   🏆 Achievement badges
                 </Link>
-                <Link to="/referral" className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-border text-foreground font-bold text-sm hover:border-primary hover:text-primary transition-colors">
+                <Link to="/referral" className="min-h-11 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-border text-foreground font-bold text-sm hover:border-primary hover:text-primary transition-colors">
                   🎁 Refer a friend — earn rewards
                 </Link>
-                <Link to="/blog" className="flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-border text-foreground font-bold text-sm hover:border-primary hover:text-primary transition-colors">
+                <Link to="/blog" className="min-h-11 flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-border text-foreground font-bold text-sm hover:border-primary hover:text-primary transition-colors">
                   <BookOpen size={14} /> Learning tips blog
                 </Link>
               </div>

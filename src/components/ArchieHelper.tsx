@@ -425,7 +425,7 @@ export default function ArchieHelper({ hideLauncher = false }: { hideLauncher?: 
     try { listener.start(); setListening(true); } catch { retireMicrophone(); setNotice('The microphone is busy. Type your question to Archie below.'); inputRef.current?.focus(); }
   }
   return <>
-    {!hideLauncher && !isOpen && <button className="archie-launcher" onClick={() => openArchie()} aria-label="Ask Archie"><MessageCircle size={23} aria-hidden="true"/> Ask Archie</button>}
+    {!hideLauncher && !isOpen && <button className="archie-launcher" onClick={() => openArchie()} aria-label="Ask Archie"><MessageCircle size={23} aria-hidden="true"/><span className="archie-launcher-label">Ask Archie</span></button>}
     <dialog ref={dialog} className="archie-dialog" onCancel={close} onClose={() => { if (openRef.current) close(); }} aria-labelledby="archie-title">
       <header><div><h2 id="archie-title">Ask Archie</h2><p>{gameTitle ? `Helping with ${gameTitle}${lesson?.phaseLabel ? ` · ${lesson.phaseLabel}` : ''}` : 'Your learning helper'}</p></div><button aria-label="Close Ask Archie" onClick={close}><X /></button></header>
       <div className="archie-chat-history" role="log" aria-live="polite">

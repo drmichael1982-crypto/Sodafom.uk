@@ -45,9 +45,45 @@ describe('parent progress dashboard', () => {
     render(<MemoryRouter><ProgressDashboard /></MemoryRouter>);
 
     expect(await screen.findByText('Reading Bingo')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Hub' })).toHaveClass('min-h-11');
     await waitFor(() => expect(fetch).toHaveBeenCalledTimes(2));
     const urls = vi.mocked(fetch).mock.calls.map(([url]) => String(url));
     expect(urls.some(url => url.endsWith('/children/7/progress'))).toBe(true);
     expect(urls.some(url => url.includes('/teacher/students/'))).toBe(false);
+  });
+
+  it('accepts the supported learner envelope and distinguishes unavailable activity from no play', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/children')) return new Response(JSON.stringify({ children: [{
+        id: 13,
+        name: 'Taylor',
+        ageGroup: '11-13',
+        avatarEmoji: '🏆',
+        totalStars: 14,
+      }] }));
+      if (url.endsWith('/children/13/progress')) {
+        return new Response(JSON.stringify({ error: 'Unavailable' }), { status: 503 });
+      }
+      return new Response(null, { status: 404 });
+    }));
+
+    render(<MemoryRouter><ProgressDashboard /></MemoryRouter>);
+
+    expect(await screen.findByRole('heading', { name: 'Taylor' })).toBeInTheDocument();
+    expect(screen.getByText('Ages 11–13')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('latest progress could not be loaded');
+    expect(screen.queryByText(/No games played yet/)).not.toBeInTheDocument();
+  });
+
+  it('shows a connection error instead of claiming the parent has no learners', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => (
+      new Response(JSON.stringify({ error: 'Unavailable' }), { status: 503 })
+    )));
+
+    render(<MemoryRouter><ProgressDashboard /></MemoryRouter>);
+
+    expect(await screen.findByRole('heading', { name: 'Could not load progress' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'No learners added yet' })).not.toBeInTheDocument();
   });
 });

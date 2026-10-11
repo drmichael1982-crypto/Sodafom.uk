@@ -27,6 +27,7 @@ describe('Add learner dialog', () => {
     expect(dialog).toHaveClass('max-h-[calc(100dvh-2rem)]', 'overflow-y-auto', 'overscroll-contain', 'p-5', 'sm:p-8');
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add learner' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Ages 11–13/ })).toHaveClass('min-h-11');
 
     const avatar = screen.getByRole('button', { name: 'Choose ⭐ avatar' });
     expect(avatar).toHaveClass('w-11', 'h-11');
