@@ -6,6 +6,7 @@
 - Dedicated candidate branch: `improve/archie-learning-20261007`; draft PR [#81](https://github.com/drmichael1982-crypto/Sodafom.uk/pull/81).
 - The candidate was reconciled with the new target before the Reading Quest files were changed. The target's parent-reward API and storage work did not overlap the game.
 - Railway deployment `789c5aed-507f-42a0-ad44-cac55fdeb057` succeeded on the exact target commit with no pending work. The separate Railway `sodafom797` service remained untouched.
+- During validation the target advanced once to `e0bc78c3b99ebc1e1cbcbe40e9ce394790170022` (`Remove duplicate answers from quiz banks`). That commit changes seven other game banks and adds a static integrity test; it does not touch Reading Quest. The final PR workflow tested the combined merge. The candidate branch remains one commit behind the target, and the Railway test deployment remains on `8b4c9218`; neither was silently rebased or deployed in this run.
 - The Stripe Directory instructions were checked before any provider lookup. No provider was selected, paid or provisioned; the directory CLI was unavailable in this runtime.
 
 On the current Railway test app, the rendered Year 4 Reading Quest was opened directly. Selecting the deliberately wrong answer `The garden` disabled every answer, revealed the correct answer, and moved from question 1 to question 2 after about one second. There was no clue, supported correction or break control. This is fresh browser evidence from 11 October 2026, not an inference from an older report.
@@ -22,6 +23,7 @@ Reading Quest now:
 - offers an optional pause/resume control that preserves the question and clue;
 - lets the learner re-read the passage and return to the same question without resetting the quiz;
 - reports first-attempt comprehension separately from eventual completion, while still rewarding a corrected finish;
+- uses the shared reward thresholds, so a corrected three-question round with 67% first-try accuracy earns one star consistently across the game and common results screen;
 - cancels delayed progression on unmount and submits completion only once;
 - uses 48-pixel-equivalent answer and support controls with clear status regions.
 
@@ -39,19 +41,30 @@ There is no single objectively best app. The relevant comparison here is narrow:
 ## Validation
 
 - `npm run type-check` — passed.
-- `npx vitest run src/pages/games/reading-quest.test.tsx --maxWorkers=1 --testTimeout=20000` — 1 file / 4 tests passed.
+- `npx vitest run src/pages/games/reading-quest.test.tsx src/components/games/GameShell.age.test.tsx --maxWorkers=1 --testTimeout=20000` — 2 files / 20 tests passed after the final scoring repair.
 - `npx vitest run --maxWorkers=2 --testTimeout=20000` — 161 files / 1,169 tests passed.
 - `npm run build` — passed (existing chunk-size and stale Browserslist-data warnings only).
-- Added a dedicated Chromium journey for 390×844 and 820×1180 that covers a deliberate wrong answer, evidence clue, pause/resume, corrected retry, all three questions, two-star/67% completion, navigation containment and screenshots.
+- Added a dedicated Chromium journey for 390×844 and 820×1180 that covers a deliberate wrong answer, evidence clue, pause/resume, corrected retry, all three questions, one-star/67% completion, navigation containment and screenshots.
 - Local execution of that browser journey was blocked because the shared Playwright Chromium binary disappeared from the runtime cache after build/test execution. The script is included in the hosted workflow so its result and captures can be checked from the exact pushed commit before this note is treated as final browser proof.
 - Hosted run #469 passed TypeScript, all 1,169 tests, the production build, all 15 established browser journeys, 130 game routes and the responsive layout sweep. The new journey then exposed an ambiguous test selector that read a different responsive `h2` instead of the visible game question. The app behavior had not failed; the selector is now bound to an explicit question marker and must pass a fresh hosted run before browser completion is claimed.
 - Hosted run #471 passed TypeScript, all 1,169 tests, the production build, all 15 established journeys, all 130 routes and the responsive sweep, then reproduced a genuine phone layout defect: the paged game wrapper treated Reading Quest's `w-full` play area as wider than one screen, clipping the retry/break card and leaving the corrected answer outside the active page. The play area is now explicitly one pager-screen wide with smaller phone padding, and the journey verifies the learner can use the visible Previous control after resuming before retrying.
 - Hosted run #474 showed that the one-screen width rule did not make the fragmented answer list reliably reachable: after returning from the retry/break fragment, the correct answer disappeared from the rendered accessibility tree. Reading Quest now opts into a labelled, vertically scrollable play region instead of column pagination. This keeps the passage/question sequence on one reading surface while retaining the fixed game header and large controls; the next hosted run must verify the complete phone/tablet journey and captures.
 - Hosted run #476 and its 390×844 capture confirmed that vertical scrolling removed the clipping: the question, all four native answer buttons, clue control and resume control rendered in one contained column. The journey then exposed a test-harness-only global role lookup failure after resume even though the correct native button remained visibly present. The final journey scopes the lookup to the labelled answer group and asserts that exactly one enabled native answer remains before clicking; a fresh hosted run is still required before completion is claimed.
 - Hosted run #478 proved that the scoped correct answer remained present but was checked while React was still completing the resume transition, so it was briefly disabled. The journey now waits for the visible control to change back to `Pause quest` before it requires the correct answer to be enabled; no fixed delay or forced click is used.
+- Hosted run #480 passed the established journeys/routes/layout sweep, then showed that the immediate enabled-state probe could still observe the React/motion hand-off. The journey now relies on Playwright's normal actionability wait, so the corrected answer must become visible, stable and enabled before a real click can succeed.
+- Hosted run #482 confirmed that corrected click and exposed the next fixed-delay assumption: the outgoing checked answer remained during its exit animation, so the loop could read the old question twice. The journey now waits for the rendered question to change, and waits for the result after the third answer.
+- Hosted run #484 completed all questions and exposed a real scoring mismatch: Reading Quest called 67% a two-star round while the shared result policy awards one star below 75%. Reading Quest now uses `starsForPercentage`, its unit expectation is one star, and the browser journey verifies the shared one-star result.
+- Hosted [run #486](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38135657105) passed on candidate `50ff9674803704f3ddcf51ce77ece1c9805adb68` merged with target `e0bc78c3b99ebc1e1cbcbe40e9ce394790170022`: TypeScript, 162 files / 1,170 tests, production build, 15 established browser journeys, 130 game routes, responsive layouts, the complete Reading Quest phone/tablet journey, and the simulated age/year game-and-spelling matrix.
+
+## Final rendered review
+
+- The 390×844 retry capture keeps the blue/gold game identity and readable full-width answer controls on a single vertical reading surface. The lower clue/break controls require normal contained scrolling; there is no horizontal clipping.
+- The 820×1180 retry capture shows the entire recovery state at once: the attempted answer is amber and marked `try again`, the correct option is not revealed, the clue cites passage evidence, and the saved pause message and resume control are clear.
+- The 390×844 and 820×1180 completion captures show the existing full-screen moving reward with the established blond, emerald-eyed Archie artwork and large, uncluttered controls. The automated journey separately verifies the underlying `Final score: 67%` and `You earned 1 star!` result before taking those captures.
+- These are exact-commit Chromium captures from simulated learner scenarios, not real-device or real-child evidence. They support layout and interaction claims only, not learning-outcome or enjoyment claims.
 
 ## Boundaries and next priority
 
 - No merge, deployment, production change, credential change, payment activation, paid service, 3D work or `sodafom797` edit was made.
 - Physical-device touch, microphone/audio, hardware screen-reader behavior, live accounts/payments and real-child outcomes remain unverified.
-- Next: inspect the exact candidate's hosted phone/tablet screenshots and full workflow, then continue with the next freshly reproduced lesson/reading defect rather than duplicating this recovery work.
+- Next: reconcile the dedicated branch with the current one-commit-newer target, then continue with the next freshly reproduced lesson/reading defect rather than duplicating this completed recovery work.
