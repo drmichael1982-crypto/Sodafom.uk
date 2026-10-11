@@ -59,7 +59,7 @@ function WeeklyReportButton() {
       onClick={handleSend}
       disabled={sending || sent}
       title={error || (sent ? 'Report sent!' : 'Email weekly report')}
-      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all ${
+      className={`flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all ${
         sent ? 'bg-green-100 text-green-700' : 'bg-primary/10 text-primary hover:bg-primary/20'
       } disabled:opacity-60`}
     >
@@ -73,7 +73,7 @@ function PrintReportButton() {
   return (
     <button
       onClick={() => window.print()}
-      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-muted hover:bg-muted/80 text-muted-foreground transition-all print:hidden"
+      className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-muted hover:bg-muted/80 text-muted-foreground transition-all print:hidden"
       title="Print this report"
     >
       <Printer size={14} />
@@ -273,6 +273,9 @@ function ChildCard({ childId }: { childId: number }) {
   if (!data) return null;
 
   const { child, totalGames, badgeCount, subjects, daily, recent } = data;
+  const tutorAgeGroup = child.age_group === '5-7' || child.age_group === '11-13'
+    ? child.age_group
+    : '8-10';
   const maxSubjectStars = Math.max(...subjects.map((s) => Number(s.stars)), 1);
 
   return (
@@ -309,7 +312,7 @@ function ChildCard({ childId }: { childId: number }) {
 
       <div className="p-6 flex flex-col gap-6">
         {/* 1-to-1 Child Tutor Report */}
-        <ParentTutorReport />
+        <ParentTutorReport childId={childId} childName={child.name} ageGroup={tutorAgeGroup} />
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
@@ -403,25 +406,25 @@ function ChildCard({ childId }: { childId: number }) {
         <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
           <Link
             to={`/hub/child/${childId}`}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors"
+            className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors"
           >
             <TrendingUp size={12} className="text-primary" /> Full progress
           </Link>
           <Link
             to="/certificates"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors"
+            className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors"
           >
             <Award size={12} className="text-primary" /> Certificate
           </Link>
           <Link
             to="/badges"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors"
+            className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors"
           >
             <Medal size={12} className="text-primary" /> Badges
           </Link>
           <Link
             to="/games"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+            className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
           >
             <ExternalLink size={12} /> Play games
           </Link>
@@ -498,7 +501,7 @@ export function ParentDashboardInner() {
           <div className="flex flex-wrap items-center gap-2">
             <Link
               to="/hub"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors"
+              className="flex min-h-11 items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold bg-muted hover:bg-muted/80 text-foreground transition-colors"
             >
               ← Hub
             </Link>
@@ -506,7 +509,7 @@ export function ParentDashboardInner() {
             <PrintReportButton />
             <Link
               to="/hub"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity"
+              className="flex min-h-11 items-center gap-2 px-4 py-2 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity"
             >
               <UserPlus size={14} /> Add child
             </Link>

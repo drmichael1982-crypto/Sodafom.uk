@@ -7,7 +7,9 @@ vi.mock('@/lib/auth/auth-client', () => ({
   useSession: () => ({ user: { name: 'Pat Parent' } }),
   ProtectedRoute: ({ children }: { children: React.ReactNode }) => children,
 }));
-vi.mock('@/components/ParentTutorReport', () => ({ ParentTutorReport: () => null }));
+vi.mock('@/components/ParentTutorReport', () => ({
+  ParentTutorReport: ({ childName }: { childName?: string }) => <div>Tutor report for {childName}</div>,
+}));
 vi.mock('@dr.pogodin/react-helmet', () => ({ Helmet: () => null }));
 
 import { ParentDashboardInner } from './parent-dashboard';
@@ -41,6 +43,7 @@ it('renders the signed-in parent\'s children from the API array and their camelC
   expect(await screen.findByText('Family overview')).toBeInTheDocument();
   expect(screen.queryByText('No children added yet')).not.toBeInTheDocument();
   expect(screen.getAllByText('Ava').length).toBeGreaterThan(0);
+  expect(await screen.findByText('Tutor report for Ava')).toBeInTheDocument();
   expect(screen.getByText('⭐12')).toBeInTheDocument();
   await waitFor(() => expect(fetch).toHaveBeenCalledWith('/parent/dashboard?childId=7', { credentials: 'include' }));
 });

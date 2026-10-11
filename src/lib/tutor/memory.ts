@@ -35,6 +35,12 @@ export interface ChildTutorProfile {
 
 const MEMORY_KEY = 'sodafom_tutor_memory';
 
+export interface TutorChildScope {
+  id: string | number;
+  name?: string;
+  ageGroup?: ChildTutorProfile['ageGroup'];
+}
+
 function activeChild(): { id: string; name?: string; ageGroup?: ChildTutorProfile['ageGroup'] } | null {
   try {
     const parsed = JSON.parse(localStorage.getItem('sodafom_active_child') || 'null') as Record<string, unknown> | null;
@@ -86,12 +92,11 @@ function loadTopics(value: unknown): Record<string, TopicProgress> {
   return topics;
 }
 
-export function loadTutorMemory(): ChildTutorProfile {
+function loadTutorMemoryForScope(child: ReturnType<typeof activeChild>): ChildTutorProfile {
   if (typeof window === 'undefined') {
     return { topics: {} };
   }
   try {
-    const child = activeChild();
     const raw = localStorage.getItem(memoryKey(child));
     if (raw) {
       const parsed = JSON.parse(raw);
@@ -117,7 +122,6 @@ export function loadTutorMemory(): ChildTutorProfile {
     }
   } catch { /* ignore */ }
 
-  const child = activeChild();
   const storedName = localStorage.getItem(childNameKey(child));
   return {
     childName: storedName || child?.name || undefined,
@@ -127,6 +131,21 @@ export function loadTutorMemory(): ChildTutorProfile {
     readAloudPreference: true,
     topics: {}
   };
+}
+
+export function loadTutorMemory(): ChildTutorProfile {
+  return loadTutorMemoryForScope(activeChild());
+}
+
+/** Read one learner's device-local tutor memory without changing the active learner. */
+export function loadTutorMemoryForChild(scope: TutorChildScope): ChildTutorProfile {
+  const id = String(scope.id).trim();
+  if (!id) return { topics: {} };
+  return loadTutorMemoryForScope({
+    id,
+    name: scope.name?.trim() || undefined,
+    ageGroup: scope.ageGroup,
+  });
 }
 
 export function saveTutorMemory(profile: ChildTutorProfile): void {
@@ -211,8 +230,7 @@ export function getRecentLessonSummary(): string | null {
   return `Recently${name}, you were practising ${profile.recentTopic} in ${profile.recentSubject}. Shall we continue?`;
 }
 
-export function getWeakAndStrongTopics(): { weak: string[]; strong: string[] } {
-  const profile = loadTutorMemory();
+export function getWeakAndStrongTopics(profile = loadTutorMemory()): { weak: string[]; strong: string[] } {
   const weak: string[] = [];
   const strong: string[] = [];
 
