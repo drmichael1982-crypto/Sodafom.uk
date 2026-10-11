@@ -1,6 +1,6 @@
 import { renderHook, act, cleanup } from '@testing-library/react';
 import { afterEach, expect, it } from 'vitest';
-import { claimScopedSticker, currentProgressProfile, scopedLearnerSettingsKey, useArchieData } from './storage';
+import { claimScopedSticker, currentProgressProfile, useArchieData } from './storage';
 afterEach(()=>{cleanup();localStorage.clear();});
 it('keeps a multi-year course record beyond 500 lessons and never awards a repeat twice',()=>{
   localStorage.setItem('sodafom_active_child',JSON.stringify({id:12,name:'Synthetic learner'}));
@@ -16,7 +16,7 @@ it('keeps a multi-year course record beyond 500 lessons and never awards a repea
   expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).activities[0].id).toBe('course-0');
 });
 it('does not attribute older shared activities or another child\'s records to the selected learner',()=>{
-  localStorage.setItem('sodafom_active_child',JSON.stringify({id:21,name:'Mia'}));
+  localStorage.setItem('sodafom_active_child',JSON.stringify({id:21,name:'Mia',ageGroup:'8-10'}));
   localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:4,sound:true},activities:[
     {id:'legacy-book',kind:'book',title:'Older shared book',stars:1,date:'2026-10-01T10:00:00Z'},
     {id:'mia-lesson',kind:'lesson',title:'Mia lesson',stars:2,date:'2026-10-02T10:00:00Z',profileId:'child:21'},
@@ -53,20 +53,20 @@ it('keeps practice year and nickname with each learner while device access setti
   localStorage.setItem('sodafom_active_child',JSON.stringify({id:21,name:'Mia'}));
   const {result}=renderHook(()=>useArchieData());
   expect(result.current.hasLearnerSettings).toBe(false);
-  expect(result.current.settings.year).toBe(4);
+  expect(result.current.settings.year).toBe(5);
   act(()=>result.current.setSettings({childNickname:'Older nickname',year:4}));
   expect(result.current.hasLearnerSettings).toBe(true);
   act(()=>result.current.setSettings({childNickname:'Mia',year:2,sound:false,largeText:true}));
   expect(result.current.hasLearnerSettings).toBe(true);
-  expect(JSON.parse(localStorage.getItem(scopedLearnerSettingsKey())!)).toEqual({childNickname:'Mia',year:2});
+  expect(JSON.parse(localStorage.getItem('sodafom_archie_progress:21')!).settings).toEqual({childNickname:'Mia',year:2});
   expect(JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings).toEqual({childNickname:'Older nickname',year:4,sound:false,largeText:true,onlineHelp:true});
 
   act(()=>{
-    localStorage.setItem('sodafom_active_child',JSON.stringify({id:22,name:'Leo'}));
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:22,name:'Leo',ageGroup:'11-13'}));
     window.dispatchEvent(new Event('sodafom:active-child-changed'));
   });
   expect(result.current.hasLearnerSettings).toBe(false);
-  expect(result.current.settings).toEqual({childNickname:'Older nickname',year:4,sound:false,largeText:true,onlineHelp:true});
+  expect(result.current.settings).toEqual({childNickname:'Leo',year:8,sound:false,largeText:true,onlineHelp:true});
   act(()=>result.current.setSettings({childNickname:'Leo',year:7}));
   expect(result.current.settings.year).toBe(7);
 

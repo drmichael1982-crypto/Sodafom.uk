@@ -18,13 +18,14 @@ export { useChildAge } from '@/hooks/useChildAge';
 export type { AgeGroup } from '@/hooks/useChildAge';
 import { getActiveChild } from '@/hooks/useChildAge';
 import { API_PREFIX, ARCHIE_PREVIEW } from '@/lib/config';
-import { isSoundEnabled, recordScopedGameStars, useArchieData } from '@/lib/archie/storage';
+import { isSoundEnabled, useArchieData } from '@/lib/archie/storage';
 import { isGameForYear } from '@/lib/archie/game-age';
 import { games as gamesContent } from 'virtual:content';
 import SceneArtwork, { sceneForSubject } from '@/components/SceneArtwork';
 import '@/pages/archie/sodafom-polish.css';
 import { puzzleThemeStyle } from '@/lib/archie/puzzle-theme';
 import { starsForPercentage } from '@/lib/game-scoring';
+import { saveBestGameStars } from '@/lib/game-stars';
 
 export interface GameResult {
   score: number; // 0–100
@@ -162,7 +163,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
     recordGameCompletion(subject, slug);
     if(r.total>0)setRewardOpen(true);
 
-    recordScopedGameStars(`game-${gameSlug}`, stars);
+    saveBestGameStars(`game-${gameSlug}`, stars);
 
     const activeChild = getActiveChild();
     if (!ARCHIE_PREVIEW && activeChild?.id) {

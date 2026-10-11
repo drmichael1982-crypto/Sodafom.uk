@@ -10,7 +10,7 @@ vi.mock('@/pages/CartoonTheatrePage',()=>({EPISODES:[]}));
 vi.mock('@/components/SceneArtwork',()=>({default:()=>null,sceneForSubject:()=> 'maths',sceneArtworkPath:()=> '/assets/scenes/archie-jigsaw-maths-v2.webp'}));
 vi.mock('@/components/OrbitHome',()=>({default:()=>null}));
 import { ArchieGames } from './ArchiePages';
-import { scopedLearnerSettingsKey, updateSavedData } from '@/lib/archie/storage';
+import { updateSavedData } from '@/lib/archie/storage';
 import catalog from '@/lib/archie/game-catalog.json';
 import { isGameForYear } from '@/lib/archie/game-age';
 import { useChildAge } from '@/hooks/useChildAge';
@@ -21,7 +21,7 @@ function DifficultyProbe(){
 }
 const staleProfile={id:31,ageGroup:'11-13'};
 const saveYear=(year:number)=>updateSavedData(data=>({...data,settings:{...data.settings,year}}));
-const savedYear=()=>{const scoped=localStorage.getItem(scopedLearnerSettingsKey());return scoped?JSON.parse(scoped).year:JSON.parse(localStorage.getItem('sodafom_archie_design_v1')!).settings.year;};
+const savedYear=()=>JSON.parse(localStorage.getItem('sodafom_archie_progress:31')!).settings.year;
 const show=(path='/games')=>render(<MemoryRouter initialEntries={[path]}><ArchieGames/><DifficultyProbe/></MemoryRouter>);
 const gameRoutes=(container:HTMLElement)=>Array.from(container.querySelectorAll<HTMLAnchorElement>('[data-game-link]')).map(link=>link.getAttribute('href'));
 const eligibleRoutes=(year:number)=>catalog.filter(game=>isGameForYear(year,game.ageGroups)).map(game=>game.route);

@@ -18,7 +18,7 @@ interface StatsData {
   topSubject: string | null;
 }
 
-export default function HubStatsBar() {
+export default function HubStatsBar({ activeChildId = null }: { activeChildId?: number | null }) {
   const [stats, setStats] = useState<StatsData | null>(null);
 
   useEffect(() => {
@@ -30,8 +30,8 @@ export default function HubStatsBar() {
         if (!Array.isArray(children) || children.length === 0) return;
         const totalStars = children.reduce((sum, c) => sum + c.totalStars, 0);
 
-        // Fetch streak from first child's progress
-        fetch(`${API_PREFIX}/children/${children[0].id}/progress?summary=1`, { credentials: 'include' })
+        const selectedChild = children.find(child => child.id === activeChildId) ?? children[0];
+        fetch(`${API_PREFIX}/children/${selectedChild.id}/progress?summary=1`, { credentials: 'include' })
           .then(r => r.ok ? r.json() : null)
           .then((prog: { streakDays?: number; gamesThisWeek?: number; badgeCount?: number; topSubject?: string } | null) => {
             setStats({
@@ -47,7 +47,7 @@ export default function HubStatsBar() {
           });
       })
       .catch(() => {/* silently ignore */});
-  }, []);
+  }, [activeChildId]);
 
   if (!stats) return null;
 

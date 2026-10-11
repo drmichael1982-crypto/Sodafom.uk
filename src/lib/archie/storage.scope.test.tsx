@@ -40,7 +40,7 @@ describe('child-scoped Archie activity and sticker storage', () => {
 
     expect(result.current.activities).toEqual([]);
     expect(result.current.stickers).toEqual([]);
-    expect(result.current.settings.year).toBe(4);
+    expect(result.current.settings.year).toBe(5);
 
     act(() => {
       result.current.complete({ id: 'quest-maths-1', kind: 'lesson', title: 'Mia maths quest', stars: 1 });
@@ -52,7 +52,7 @@ describe('child-scoped Archie activity and sticker storage', () => {
     act(() => selectChild(2, 'Leo'));
     expect(result.current.activities).toEqual([]);
     expect(result.current.stickers).toEqual([]);
-    expect(result.current.settings.year).toBe(4);
+    expect(result.current.settings.year).toBe(5);
 
     act(() => {
       result.current.setSettings({ year: 7 });
@@ -62,7 +62,7 @@ describe('child-scoped Archie activity and sticker storage', () => {
     expect(result.current.activities.map(item => item.id)).toEqual(['course-science-2']);
 
     act(() => selectChild(1, 'Mia'));
-    expect(result.current.settings.year).toBe(4);
+    expect(result.current.settings.year).toBe(5);
     expect(result.current.activities.map(item => item.id)).toEqual(['quest-maths-1']);
     expect(result.current.stickers).toEqual(['gold-key']);
 
