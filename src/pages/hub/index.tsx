@@ -232,7 +232,7 @@ const AGE_GROUPS = [{
   color: 'bg-blue-100 border-blue-300 text-blue-800'
 }, {
   value: '11-13',
-  label: 'Ages 11–12',
+  label: 'Ages 11–13',
   icon: '🏆',
   color: 'bg-purple-100 border-purple-300 text-purple-800'
 }];
