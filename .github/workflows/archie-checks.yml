@@ -41,10 +41,13 @@ jobs:
         run: |
           node scripts/test-archie-search-journey.cjs
           node scripts/test-learner-settings-isolation.cjs
+          node scripts/test-parent-tutor-isolation.cjs
           test -f test-results/learner-settings-isolation/mia-phone.png
           test -f test-results/learner-settings-isolation/mia-tablet.png
           test -f test-results/learner-settings-isolation/ask-archie-memory-phone.png
           test -f test-results/learner-settings-isolation/ask-archie-memory-tablet.png
+          test -f test-results/parent-tutor-isolation/phone.png
+          test -f test-results/parent-tutor-isolation/tablet.png
       - uses: actions/upload-artifact@v4
         if: always()
         with:
