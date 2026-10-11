@@ -14,6 +14,7 @@ import {
   UserPlus, Flame, Award, ExternalLink,
 } from 'lucide-react';
 import { ParentTutorReport } from '@/components/ParentTutorReport';
+import { normalizeChildrenResponse } from '@/lib/children-response';
 
 const SUBJECT_META: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   maths:    { label: 'Maths',    color: 'bg-blue-100 text-blue-700 border-blue-200',    icon: Calculator },
@@ -449,7 +450,10 @@ export function ParentDashboardInner() {
       })
       .then((d) => {
         console.log('ParentDashboard: Data loaded', d);
-        setChildren(Array.isArray(d) ? d as ChildSummary[] : []);
+        // Accept the current array response and the legacy envelope so a
+        // cached frontend cannot briefly clear a family's learner list while
+        // Railway revisions are rolling over.
+        setChildren(normalizeChildrenResponse(d));
       })
       .catch(err => {
         console.error('ParentDashboard: Load failed', err);

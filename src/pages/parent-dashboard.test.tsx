@@ -48,6 +48,37 @@ it('renders the signed-in parent\'s children from the API array and their camelC
   await waitFor(() => expect(fetch).toHaveBeenCalledWith('/parent/dashboard?childId=7', { credentials: 'include' }));
 });
 
+it('keeps learners visible when a cached backend returns the supported children envelope', async () => {
+  vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url === '/children') return { ok: true, json: async () => ({ children: [{
+      id: 9,
+      name: 'Milo',
+      age_group: '5-7',
+      total_stars: 6,
+      avatar_emoji: '🐯',
+    }] }) };
+    if (url === '/parent/dashboard?childId=9') return { ok: true, json: async () => ({
+      child: { id: 9, name: 'Milo', age_group: '5-7', total_stars: 6 },
+      totalGames: 2,
+      badgeCount: 0,
+      subjects: [],
+      daily: [],
+      recent: [],
+    }) };
+    if (url === '/streak?childId=9') return { ok: true, json: async () => ({ currentStreak: 0, maxStreak: 0, starBalance: 6 }) };
+    throw new Error(`Unexpected fetch: ${url}`);
+  }));
+
+  render(<MemoryRouter><ParentDashboardInner /></MemoryRouter>);
+
+  expect(await screen.findByText('Family overview')).toBeInTheDocument();
+  expect(screen.queryByText('No children added yet')).not.toBeInTheDocument();
+  expect(screen.getAllByText('Milo').length).toBeGreaterThan(0);
+  expect(await screen.findByText('Tutor report for Milo')).toBeInTheDocument();
+  expect(screen.getByText('⭐6')).toBeInTheDocument();
+});
+
 it('shows a safe error card when one child progress request fails', async () => {
   vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
     const url = String(input);
