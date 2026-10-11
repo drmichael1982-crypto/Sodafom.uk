@@ -170,7 +170,7 @@ export default function QuizEngine({
         />
       </div>
 
-      <div className="quiz-picture-jigsaw" aria-label={`${fitted} picture pieces earned`}>{pool.map((_,i)=><span key={i} className={i<fitted?'quiz-picture-fit':'quiz-picture-gap'} style={{backgroundSize:`${pool.length*100}% 100%`,backgroundPosition:`${pool.length===1?0:i/(pool.length-1)*100}% center`}}/>)}</div>
+      {!paused && <div className="quiz-picture-jigsaw" aria-label={`${fitted} picture pieces earned`}>{pool.map((_,i)=><span key={i} className={i<fitted?'quiz-picture-fit':'quiz-picture-gap'} style={{backgroundSize:`${pool.length*100}% 100%`,backgroundPosition:`${pool.length===1?0:i/(pool.length-1)*100}% center`}}/>)}</div>}
       {paused ? (
         <section role="status" className="rounded-2xl border-2 border-blue-200 bg-white p-6 text-center text-blue-950 shadow-sm">
           <h2 className="text-xl font-black">Game paused</h2>
