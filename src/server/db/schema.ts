@@ -90,6 +90,7 @@ export const children = mysqlTable('children', {
   ageGroup: varchar('age_group', { length: 16 }).notNull(), // '5-7' | '8-10' | '11-13'
   avatarEmoji: varchar('avatar_emoji', { length: 8 }).default('⭐'),
   totalStars: int('total_stars').default(0).notNull(),
+  rewardEmail: varchar('reward_email', { length: 255 }),
   activeCharacterId: int('active_character_id'), // FK set after rewardCharacters is defined
   createdAt: timestamp('created_at').defaultNow(),
 });

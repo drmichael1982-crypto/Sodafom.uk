@@ -25,7 +25,6 @@ interface StreakRow {
 
 interface ChildRow {
   id: number;
-  total_stars: number | string;
 }
 
 export default async function handler(req: Request, res: Response) {
@@ -45,7 +44,7 @@ export default async function handler(req: Request, res: Response) {
 
     // Verify child belongs to this parent before reading any learning records.
     const childRows = await db.execute(sql`
-      SELECT id, total_stars
+      SELECT id
       FROM children
       WHERE id = ${childId} AND parent_id = ${session.user.id}
       LIMIT 1
@@ -77,7 +76,7 @@ export default async function handler(req: Request, res: Response) {
     // Build stats
     const stats: BadgeStats = {
       gamesPlayed: progressRows.length,
-      totalStars: Number(ownedChildren[0]?.total_stars ?? 0),
+      totalStars: progressRows.reduce((sum, row) => sum + Number(row.stars ?? 0), 0),
       currentStreak: Number(streak.current_streak),
       maxStreak: Number(streak.max_streak),
       mathsGames: progressRows.filter(r => r.subject?.toLowerCase() === 'maths').length,

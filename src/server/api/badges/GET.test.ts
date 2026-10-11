@@ -25,10 +25,12 @@ describe('parent badge progress', () => {
 
   it('derives badges from current activity sessions for the owned child', async () => {
     mocks.execute
-      .mockResolvedValueOnce([[{ id: 7, total_stars: '12' }]])
+      .mockResolvedValueOnce([[{ id: 7 }]])
       .mockResolvedValueOnce([[
         { subject: 'maths', stars: '3', completed_at: '2026-10-11T09:00:00Z' },
-        { subject: 'reading', stars: 2, completed_at: '2026-10-11T10:00:00Z' },
+        { subject: 'reading', stars: 3, completed_at: '2026-10-11T10:00:00Z' },
+        { subject: 'spelling', stars: 2, completed_at: '2026-10-11T11:00:00Z' },
+        { subject: 'science', stars: 2, completed_at: '2026-10-11T12:00:00Z' },
       ]])
       .mockResolvedValueOnce([[{ current_streak: '2', max_streak: '4' }]])
       .mockResolvedValueOnce([[{ cnt: '1' }]]);
@@ -39,15 +41,15 @@ describe('parent badge progress', () => {
     expect(res.status).not.toHaveBeenCalled();
     const payload = (res.json as ReturnType<typeof vi.fn>).mock.calls[0][0];
     expect(payload.stats).toEqual({
-      gamesPlayed: 2,
-      totalStars: 12,
+      gamesPlayed: 4,
+      totalStars: 10,
       currentStreak: 2,
       maxStreak: 4,
       mathsGames: 1,
       readingGames: 1,
-      spellingGames: 0,
-      scienceGames: 0,
-      perfectGames: 1,
+      spellingGames: 1,
+      scienceGames: 1,
+      perfectGames: 2,
       referrals: 1,
     });
     expect(payload.badges.find((badge: { id: string }) => badge.id === 'first_game').earned).toBe(true);
