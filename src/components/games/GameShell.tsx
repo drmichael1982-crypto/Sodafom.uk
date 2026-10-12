@@ -180,16 +180,18 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
           maxScore: r.maxScore,
           durationSeconds,
         }),
-      }).catch(() => { /* silent — progress save is non-critical */ });
-
-      // ── Check for newly earned badges and trigger reward email ────────────
-      fetch(`${API_PREFIX}/rewards/check-badges`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ childId: activeChild.id }),
       })
-        .then(res => res.ok ? res.json() : null)
+        // Badge checks depend on the completed game being stored first.
+        // Do not race the two requests or award against stale progress.
+        .then(progressResponse => progressResponse.ok
+          ? fetch(`${API_PREFIX}/rewards/check-badges`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ childId: activeChild.id }),
+            })
+          : null)
+        .then(res => res?.ok ? res.json() : null)
         .then(data => {
           if (data?.newBadges?.length) {
             setNewBadges(data.newBadges);
@@ -271,15 +273,16 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
             <div className="flex items-center gap-1.5">
               <Link
                 to="/hub"
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-xs font-black"
+                className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-xs font-black"
                 title="My Hub"
               >
                 <User size={14} />
                 <span className="hidden sm:inline">My Hub</span>
               </Link>
               <button
+                type="button"
                 onClick={() => signOut().then(() => navigate('/hub/login'))}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-xs font-black"
+                className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-xs font-black"
                 title="Log out"
               >
                 <LogOut size={14} />
@@ -289,7 +292,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
           ) : (
             <Link
               to="/hub/login"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-xs font-black"
+              className="flex min-h-11 min-w-11 items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 transition-colors text-xs font-black"
               title="Log in"
             >
               <LogIn size={14} />
@@ -344,8 +347,9 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
               </div>
               <p className="text-muted-foreground text-xs mb-3">A reward email is on its way! 🎉</p>
               <button
+                type="button"
                 onClick={() => setNewBadges([])}
-                className="px-5 py-2 rounded-full bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity"
+                className="min-h-11 px-5 py-2 rounded-full bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity"
               >
                 Awesome!
               </button>
@@ -616,8 +620,9 @@ export function ResultScreen({
                   <p className="text-xs text-muted-foreground">Claim your 5 bonus stars</p>
                 </div>
                 <button
+                  type="button"
                   onClick={() => navigate('/daily-challenge')}
-                  className="px-3 py-2 rounded-lg bg-primary text-primary-foreground font-black text-xs hover:opacity-90 transition-opacity shrink-0"
+                  className="min-h-11 px-3 py-2 rounded-lg bg-primary text-primary-foreground font-black text-xs hover:opacity-90 transition-opacity shrink-0"
                 >
                   Claim ⭐×5
                 </button>
@@ -637,13 +642,14 @@ export function ResultScreen({
             {/* Get Started CTA — shown to logged-out users */}
             {!isLoggedIn && !ARCHIE_PREVIEW && (
               <motion.button
+                type="button"
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.6 }}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => navigate('/hub/signup')}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-black text-white mb-3 shadow-lg"
+                className="w-full min-h-11 flex items-center justify-center gap-2 py-3 rounded-xl font-black text-white mb-3 shadow-lg"
                 style={{ background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))' }}
               >
                 <Zap size={16} className="fill-white" />
@@ -664,7 +670,7 @@ export function ResultScreen({
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => navigate('/certificates')}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-black text-sm bg-yellow-50 border-2 border-yellow-300 text-yellow-800 hover:bg-yellow-100 transition-colors"
+                  className="flex-1 min-h-11 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-black text-sm bg-yellow-50 border-2 border-yellow-300 text-yellow-800 hover:bg-yellow-100 transition-colors"
                 >
                   <Award size={15} />
                   My Certificates
@@ -674,7 +680,7 @@ export function ResultScreen({
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => navigate('/star-bank')}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-black text-sm bg-primary/10 border-2 border-primary/30 text-primary hover:bg-primary/20 transition-colors"
+                  className="flex-1 min-h-11 flex items-center justify-center gap-1.5 py-2.5 rounded-xl font-black text-sm bg-primary/10 border-2 border-primary/30 text-primary hover:bg-primary/20 transition-colors"
                 >
                   <Gift size={15} />
                   My Rewards
