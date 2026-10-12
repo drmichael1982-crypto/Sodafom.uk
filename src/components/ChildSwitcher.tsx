@@ -52,10 +52,13 @@ export default function ChildSwitcher({ children, activeChildId, onAddChild, onS
   return (
     <div ref={ref} className="relative">
       <button
+        type="button"
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all"
+        className="flex min-h-11 items-center gap-2 px-3 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-all"
         aria-expanded={open}
         aria-haspopup="listbox"
+        aria-controls="child-switcher-listbox"
+        aria-label={`Switch learner, currently ${active?.name ?? 'none selected'}`}
       >
         <span className="text-xl">{active?.avatarEmoji ?? '⭐'}</span>
         <span className="font-black text-foreground text-sm max-w-[80px] truncate">
@@ -77,31 +80,33 @@ export default function ChildSwitcher({ children, activeChildId, onAddChild, onS
             className="absolute top-full mt-2 left-0 z-50 min-w-[200px] bg-card border border-border rounded-2xl shadow-xl overflow-hidden"
             role="listbox"
             aria-label="Switch child"
+            id="child-switcher-listbox"
           >
             <div className="p-2 space-y-1">
               {children.map(child => (
                 <button
                   key={child.id}
+                  type="button"
                   role="option"
-                  aria-selected={child.id === activeChildId}
+                  aria-selected={child.id === active?.id}
                   onClick={() => switchTo(child)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
-                    child.id === activeChildId
+                  className={`w-full min-h-11 flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                    child.id === active?.id
                       ? 'bg-primary text-primary-foreground'
                       : 'hover:bg-muted'
                   }`}
                 >
                   <span className="text-2xl">{child.avatarEmoji}</span>
                   <div className="flex-1 min-w-0">
-                    <div className={`font-black text-sm truncate ${child.id === activeChildId ? 'text-primary-foreground' : 'text-foreground'}`}>
+                    <div className={`font-black text-sm truncate ${child.id === active?.id ? 'text-primary-foreground' : 'text-foreground'}`}>
                       {child.name}
                     </div>
-                    <div className={`flex items-center gap-1 text-xs ${child.id === activeChildId ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                    <div className={`flex items-center gap-1 text-xs ${child.id === active?.id ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
                       <Star size={10} className="fill-current" />
                       {child.totalStars} stars
                     </div>
                   </div>
-                  {child.id === activeChildId && (
+                  {child.id === active?.id && (
                     <div className="w-2 h-2 rounded-full bg-accent shrink-0" />
                   )}
                 </button>
@@ -109,8 +114,9 @@ export default function ChildSwitcher({ children, activeChildId, onAddChild, onS
             </div>
             <div className="border-t border-border p-2">
               <button
+                type="button"
                 onClick={() => { setOpen(false); onAddChild(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-primary font-bold text-sm hover:bg-primary/10 transition-colors"
+                className="w-full min-h-11 flex items-center gap-2 px-3 py-2 rounded-xl text-primary font-bold text-sm hover:bg-primary/10 transition-colors"
               >
                 <Plus size={16} />
                 Add another child
