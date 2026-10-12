@@ -15,7 +15,7 @@ vi.mock('motion/react', async () => {
   return { motion, AnimatePresence: ({ children }: { children: React.ReactNode }) => children };
 });
 
-import { AddChildModal, HubLearnerLoadError, normalizeHubChildren } from './index';
+import { AddChildModal, deleteHubChild, HubLearnerLoadError, nextActiveChildAfterRemoval, normalizeHubChildren } from './index';
 
 describe('Parent Hub learner response', () => {
   it('keeps learners from the supported legacy response envelope', () => {
@@ -44,6 +44,27 @@ describe('Parent Hub learner response', () => {
     expect(retry).toHaveClass('min-h-11');
     fireEvent.click(retry);
     expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it('moves the active learner after their profile is removed', () => {
+    const learners = normalizeHubChildren({ children: [
+      { id: 7, name: 'Ava', age_group: '8-10', avatar_emoji: '🦊', total_stars: 12 },
+      { id: 8, name: 'Leo', age_group: '5-7', avatar_emoji: '🐯', total_stars: 4 },
+    ] });
+
+    expect(nextActiveChildAfterRemoval(learners, 7, 7)?.id).toBe(8);
+    expect(nextActiveChildAfterRemoval(learners, 8, 7)?.id).toBe(7);
+    expect(nextActiveChildAfterRemoval([learners[0]], 7, 7)).toBeNull();
+  });
+
+  it('does not treat a rejected delete request as a removed learner', async () => {
+    const request = vi.fn().mockResolvedValue({ ok: false, status: 503 });
+
+    await expect(deleteHubChild(7, request as unknown as typeof fetch)).rejects.toThrow('Could not remove learner (503)');
+    expect(request).toHaveBeenCalledWith('/api/children/7', {
+      method: 'DELETE',
+      credentials: 'include',
+    });
   });
 });
 

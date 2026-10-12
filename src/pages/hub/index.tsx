@@ -245,6 +245,19 @@ export function HubLearnerLoadError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
+export function nextActiveChildAfterRemoval(children: Child[], removedId: number, activeId: number | null): Child | null {
+  if (activeId !== removedId) return children.find(child => child.id === activeId) ?? children[0] ?? null;
+  return children.find(child => child.id !== removedId) ?? null;
+}
+
+export async function deleteHubChild(id: number, fetcher: typeof fetch = fetch): Promise<void> {
+  const response = await fetcher(`${API_PREFIX}/children/${id}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  if (!response.ok) throw new Error(`Could not remove learner (${response.status})`);
+}
+
 // ── Config ───────────────────────────────────────────────────────────────────
 const AGE_GROUPS = [{
   value: '5-7',
@@ -406,10 +419,12 @@ export function AddChildModal({
 // ── Child Card ────────────────────────────────────────────────────────────────
 function ChildCard({
   child,
-  onDelete
+  onDelete,
+  deleting,
 }: {
   child: Child;
   onDelete: (id: number) => void;
+  deleting: boolean;
 }) {
   const ag = AGE_GROUPS.find(a => a.value === child.ageGroup) ?? AGE_GROUPS[0];
   return <motion.div variants={fadeUp} whileHover={{
@@ -431,7 +446,14 @@ function ChildCard({
             {ag.icon} {ag.label}
           </span>
         </div>
-        <button onClick={() => onDelete(child.id)} className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 flex items-center justify-center text-primary-foreground/70 hover:text-primary-foreground transition-colors" title="Remove learner">
+        <button
+          type="button"
+          onClick={() => onDelete(child.id)}
+          disabled={deleting}
+          className="flex min-h-11 min-w-11 items-center justify-center rounded-full bg-white/10 text-primary-foreground/70 transition-colors hover:bg-white/25 hover:text-primary-foreground disabled:cursor-wait disabled:opacity-60"
+          title="Remove learner"
+          aria-label={`Remove ${child.name}`}
+        >
           <Trash2 size={14} />
         </button>
       </div>
@@ -554,6 +576,8 @@ function HubDashboard() {
   const [children, setChildren] = useState<Child[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [learnerActionError, setLearnerActionError] = useState<string | null>(null);
+  const [deletingChildId, setDeletingChildId] = useState<number | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [activeChildId, setActiveChildIdState] = useState<number | null>(() => {
     try { const s = localStorage.getItem('sodafom_active_child'); return s ? JSON.parse(s).id : null; } catch { return null; }
@@ -603,11 +627,28 @@ function HubDashboard() {
   }, [loadChildren]);
   const handleDelete = async (id: number) => {
     if (!confirm('Remove this learner?')) return;
-    await fetch(`${API_PREFIX}/children/${id}`, {
-      method: 'DELETE',
-      credentials: 'include'
-    });
-    setChildren(prev => prev.filter(c => c.id !== id));
+    setLearnerActionError(null);
+    setDeletingChildId(id);
+    try {
+      await deleteHubChild(id);
+
+      const remaining = children.filter(child => child.id !== id);
+      setChildren(remaining);
+      if (activeChildId === id) {
+        const next = nextActiveChildAfterRemoval(children, id, activeChildId);
+        setActiveChild(next ? {
+          id: next.id,
+          name: next.name,
+          ageGroup: next.ageGroup as AgeGroup,
+          avatarEmoji: next.avatarEmoji,
+        } : null);
+        setActiveChildIdState(next?.id ?? null);
+      }
+    } catch {
+      setLearnerActionError('Could not remove that learner. Check your connection and try again.');
+    } finally {
+      setDeletingChildId(null);
+    }
   };
   const handleAdded = (child: Child) => {
     // Show the returned learner immediately, then reload the authoritative
@@ -945,6 +986,7 @@ function HubDashboard() {
           </div>
 
           {!loading && loadError && <HubLearnerLoadError onRetry={() => void loadChildren()} />}
+          {learnerActionError && <p role="alert" className="mb-5 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm font-bold text-destructive">{learnerActionError}</p>}
 
           {loading ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {[1, 2, 3].map(i => <div key={i} className="bg-card rounded-2xl border border-border h-52 animate-pulse" />)}
@@ -962,7 +1004,7 @@ function HubDashboard() {
                 <Plus size={16} /> Add your first learner
               </button>
             </motion.div> : <motion.div variants={stagger} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {children.map(child => <ChildCard key={child.id} child={child} onDelete={handleDelete} />)}
+              {children.map(child => <ChildCard key={child.id} child={child} onDelete={handleDelete} deleting={deletingChildId === child.id} />)}
               {/* Add more card */}
               <motion.button variants={fadeUp} whileHover={{
             scale: 1.02
