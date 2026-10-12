@@ -3,7 +3,7 @@
  * Shows sign-in details, subscription status, children + their stars,
  * rewards summary, and 1000-star milestone promo code auto-link.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
@@ -58,7 +58,7 @@ const AVATAR_EMOJIS = [
   '🌟','⭐','🚀','🎮','🎨','🎵','🏆','💎','🌈','🔥',
 ];
 
-function ChildCard({
+export function ProfileChildCard({
   child,
   onEmojiChange,
 }: {
@@ -67,20 +67,26 @@ function ChildCard({
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
 
   async function pickEmoji(emoji: string) {
     setSaving(true);
+    setAvatarError(null);
     try {
-      await fetch(`${API_PREFIX}/children/${child.id}`, {
+      const response = await fetch(`${API_PREFIX}/children/${child.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ avatarEmoji: emoji }),
       });
+      if (!response.ok) throw new Error(`Could not update avatar (${response.status})`);
       onEmojiChange(child.id, emoji);
-    } catch { /* silent */ }
-    setSaving(false);
-    setPickerOpen(false);
+      setPickerOpen(false);
+    } catch {
+      setAvatarError('Could not save that avatar. Check your connection and try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -122,7 +128,7 @@ function ChildCard({
                   key={emoji}
                   onClick={() => pickEmoji(emoji)}
                   disabled={saving}
-                  className={`text-2xl w-10 h-10 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${
+                  className={`text-2xl w-11 h-11 rounded-xl flex items-center justify-center transition-all hover:scale-110 ${
                     child.avatarEmoji === emoji
                       ? 'bg-primary/20 ring-2 ring-primary'
                       : 'bg-muted hover:bg-primary/10'
@@ -133,6 +139,7 @@ function ChildCard({
                 </button>
               ))}
             </div>
+            {avatarError && <p role="alert" className="mt-3 text-sm font-bold text-destructive">{avatarError}</p>}
           </motion.div>
         )}
       </AnimatePresence>
@@ -207,6 +214,7 @@ function ProfileInner() {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [subData, setSubData] = useState<SubData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [childrenLoadError, setChildrenLoadError] = useState(false);
 
   // Edit name state
   const [editingName, setEditingName] = useState(false);
@@ -230,35 +238,42 @@ function ProfileInner() {
     if (user?.name) setNameInput(user.name);
   }, [user?.name]);
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const [childRes, subRes] = await Promise.all([
-          fetch(`${API_PREFIX}/children`),
-          OPEN_TESTING_MODE ? Promise.resolve(null) : fetch(`${API_PREFIX}/subscription`),
-        ]);
-        const childData = normalizeChildrenResponse(await childRes.json());
-        setChildren(childData);
+  const loadProfile = useCallback(async () => {
+    setLoading(true);
+    setChildrenLoadError(false);
+    try {
+      const [childRes, subRes] = await Promise.all([
+        fetch(`${API_PREFIX}/children`),
+        OPEN_TESTING_MODE ? Promise.resolve(null) : fetch(`${API_PREFIX}/subscription`),
+      ]);
+      if (!childRes.ok) throw new Error(`Could not load learners (${childRes.status})`);
+      const childData = normalizeChildrenResponse(await childRes.json());
+      setChildren(childData);
 
-        if (subRes) {
-          const sd = await subRes.json() as SubData;
-          setSubData(sd);
-        }
+      if (subRes?.ok) {
+        const sd = await subRes.json() as SubData;
+        setSubData(sd);
+      }
 
-        // Load milestones for each child
-        const allMilestones: Milestone[] = [];
-        for (const child of childData) {
-          const mRes = await fetch(`${API_PREFIX}/rewards/milestones?childId=${child.id}`);
-          const mData = await mRes.json() as { milestones?: Milestone[] };
-          allMilestones.push(...(mData.milestones ?? []));
-        }
-        setMilestones(allMilestones);
-      } catch { /* silent */ }
-      finally { setLoading(false); }
+      // Load milestones for each child. A reward failure must not hide learners.
+      const allMilestones: Milestone[] = [];
+      for (const child of childData) {
+        const mRes = await fetch(`${API_PREFIX}/rewards/milestones?childId=${child.id}`);
+        if (!mRes.ok) continue;
+        const mData = await mRes.json() as { milestones?: Milestone[] };
+        allMilestones.push(...(mData.milestones ?? []));
+      }
+      setMilestones(allMilestones);
+    } catch {
+      setChildrenLoadError(true);
+    } finally {
+      setLoading(false);
     }
-    load();
   }, []);
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
 
   const totalStars = children.reduce((sum, c) => sum + c.totalStars, 0);
   const promoMilestones = milestones.filter((m) => m.promoCode);
@@ -632,6 +647,21 @@ function ProfileInner() {
         </motion.section>
 
         {/* ── Children & stars ────────────────────────────────────────────── */}
+        {loading && (
+          <div className="rounded-2xl border border-border bg-card p-5 text-sm font-bold text-muted-foreground">Loading learners…</div>
+        )}
+        {!loading && childrenLoadError && (
+          <div role="alert" className="rounded-2xl border border-destructive/30 bg-destructive/5 p-5">
+            <p className="font-black text-foreground">Could not load learners</p>
+            <p className="mt-1 text-sm text-muted-foreground">Check your connection, then try again. Saved learner profiles have not been removed.</p>
+            <button type="button" onClick={() => void loadProfile()} className="mt-4 min-h-11 w-full rounded-xl bg-primary px-5 py-2.5 text-sm font-black text-primary-foreground sm:w-auto">Try again</button>
+          </div>
+        )}
+        {!loading && !childrenLoadError && children.length === 0 && (
+          <div className="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
+            No learners have been added yet. <Link to="/hub" className="font-black text-primary hover:underline">Add a learner in the Hub</Link>.
+          </div>
+        )}
         {!loading && children.length > 0 && (
           <motion.section initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
             <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
@@ -639,7 +669,7 @@ function ProfileInner() {
             </h2>
             <div className="flex flex-col gap-3">
               {children.map((child) => (
-                <ChildCard
+                <ProfileChildCard
                   key={child.id}
                   child={child}
                   onEmojiChange={(id, emoji) =>
