@@ -565,7 +565,7 @@ export function ParentDashboardInner() {
                         <button
                           type="button"
                           aria-pressed={selected}
-                          aria-controls={`progress-child-${child.id}`}
+                          aria-controls="selected-learner-progress"
                           onClick={() => setSelectedChildId(child.id)}
                           className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 ${
                             selected
@@ -580,7 +580,7 @@ export function ParentDashboardInner() {
                               <span className="block text-xs text-muted-foreground">Age group {child.ageGroup}</span>
                             </span>
                           </span>
-                          <span className="shrink-0 text-xs font-black text-accent">⭐{child.totalStars}</span>
+                          <span className="shrink-0 text-xs font-black text-foreground">⭐{child.totalStars}</span>
                         </button>
                       </li>
                     );
@@ -592,7 +592,10 @@ export function ParentDashboardInner() {
               </nav>
             )}
             {selectedChildId !== null && (
-              <section id={`progress-child-${selectedChildId}`} aria-live="polite">
+              <section
+                id="selected-learner-progress"
+                aria-label={`Progress for ${children.find((child) => child.id === selectedChildId)?.name ?? 'selected learner'}`}
+              >
                 <ChildCard key={selectedChildId} childId={selectedChildId} />
               </section>
             )}
@@ -610,3 +613,4 @@ export default function ParentDashboardPage() {
     </ProtectedRoute>
   );
 }
+fc19558e4125936d7ee27a506f568dad9838d20d

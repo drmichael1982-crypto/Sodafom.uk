@@ -1,1 +1,0 @@
-Approved first-test Sodafom artwork previews for Railway layout testing. These are compressed preview assets; replace with high-resolution approved originals after the layout and navigation are verified.
