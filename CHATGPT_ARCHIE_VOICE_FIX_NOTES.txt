@@ -1,0 +1,45 @@
+SODAFOM — ASK ARCHIE VOICE / FLICKER FIX
+31 August 2026
+
+Changes made:
+1. Ask Archie now has one-tap Conversation Mode.
+   - Tap the microphone once to enter conversation mode.
+   - Speech recognition automatically restarts after Archie finishes speaking.
+   - Speech recognition pauses while Archie is speaking so Archie cannot hear himself.
+   - Say "stop listening", "stop talking", "stop", or "goodbye Archie" to end the conversation locally.
+   - Listening is stopped when the Ask Archie page is left/unmounted.
+
+2. Screen flicker reduction.
+   - Removed the forced text-input focus after voice responses (this was making the Android keyboard jump/open again).
+   - Removed smooth auto-scroll during message updates.
+   - Streaming AI output is buffered and rendered once instead of repainting the chat for every small stream chunk.
+
+3. Spoken-text cleanup.
+   - Removes markdown/display symbols before TTS (***, ###, underscores, code markers, URLs, repeated XXX tokens, decorative emoji).
+   - Converts common maths symbols into natural spoken wording (times, divided by, plus, equals, percent).
+   - Display text is left intact; only the spoken version is cleaned.
+
+4. Android native Text-to-Speech fallback.
+   - Added ArchieSpeechPlugin.java using Android TextToSpeech.
+   - MainActivity registers the native plugin.
+   - The web layer uses native Android TTS first inside Capacitor and falls back to browser speechSynthesis on desktop/web.
+   - Added ARCHIE_TTS_* diagnostic logging.
+
+Files changed:
+- src/pages/chatbot/ChatbotPage.tsx
+- src/lib/voice-context.tsx
+- android/app/src/main/java/uk/sodafom/app/MainActivity.java
+- android/app/src/main/java/uk/sodafom/app/ArchieSpeechPlugin.java (new)
+
+Testing note:
+The source changes were syntax-checked as far as possible in the sandbox, but a full Vite/Android build could not be completed here because the project's npm dependency installation timed out in this environment. Build and install the ZIP in Android Studio/Gemini, then test audible speech on the physical phone.
+
+Suggested physical-phone test:
+- Open Ask Archie.
+- Tap mic once.
+- Ask "What is ten times ten?"
+- Confirm Archie speaks the answer.
+- Do not tap mic again; after speech finishes, ask "What is five plus five?"
+- Confirm it listens automatically.
+- Ask a response that contains formatted text and confirm Archie does not say "asterisk", "hash", or "X X X".
+- Say "stop listening" and confirm the mic stops.

@@ -1,0 +1,455 @@
+import { isSoundEnabled } from '@/lib/archie/storage';
+import { getArchieVoice } from '@/lib/archie/age-style';
+/**
+ * VoiceContext — manages the child's recorded voice clips.
+ *
+ * Each clip is stored as a base64 data-URL in localStorage keyed by:
+ *   sodafom-voice-{childId}-{clipKey}
+ *
+ * clipKey examples:
+ *   "welcome"        — played when the child opens the app
+ *   "game-intro"     — generic game intro
+ *   "well-done"      — praise after a correct answer
+ *   "try-again"      — encouragement after a wrong answer
+ *   "read:{text}"    — arbitrary text read-aloud (falls back to TTS)
+ *
+ * When no recording exists for a key, the system falls back to the
+ * Web Speech API with a child-friendly voice (UK English, high pitch,
+ * slow rate).
+ */
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  type ReactNode,
+} from 'react';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+
+interface ArchieSpeechPluginApi {
+  speak(options: { text: string }): Promise<{ status?: string }>;
+  stop(): Promise<void>;
+  isAvailable(): Promise<{ available: boolean }>;
+}
+
+// Capacitor 8 no longer reliably exposes custom plugins through
+// window.Capacitor.Plugins. Register the native bridge explicitly so Android
+// read-aloud does not silently fall back to the WebView speech API.
+const ArchieSpeech = registerPlugin<ArchieSpeechPluginApi>('ArchieSpeech');
+
+// ── Types ────────────────────────────────────────────────────────────────────
+export type ClipKey =
+  | 'welcome'
+  | 'game-intro'
+  | 'well-done'
+  | 'try-again'
+  | 'instructions'
+  | string; // arbitrary read:{text} keys
+
+export interface VoiceClip {
+  key: ClipKey;
+  label: string;       // human-readable label shown in the recorder UI
+  prompt: string;      // what the child should say when recording
+  dataUrl: string;     // base64 audio/webm or audio/ogg
+  recordedAt: number;  // timestamp
+}
+
+interface VoiceContextValue {
+  /** childId currently active (set by hub/profile) */
+  childId: string | null;
+  setChildId: (id: string | null) => void;
+
+  /** All clips for the active child */
+  clips: Record<ClipKey, VoiceClip>;
+
+  /** Save a recorded clip */
+  saveClip: (key: ClipKey, label: string, prompt: string, dataUrl: string) => void;
+
+  /** Delete a clip (falls back to TTS) */
+  deleteClip: (key: ClipKey) => void;
+
+  /** Play a clip by key — uses recording if available, else TTS */
+  speak: (key: ClipKey, fallbackText?: string) => void;
+
+  /** Stop any currently playing audio */
+  stop: () => void;
+
+  /** Whether audio is currently playing */
+  playing: boolean;
+
+  /** Child-friendly recovery message when read-aloud cannot start or finishes with an error */
+  voiceNotice: string | null;
+
+  /** Dismiss the current read-aloud recovery message */
+  dismissVoiceNotice: () => void;
+}
+
+type SpeechFailureReason = 'unavailable' | 'failed';
+
+const SPEECH_FAILURE_MESSAGE: Record<SpeechFailureReason, string> = {
+  unavailable: 'Read aloud is not available on this device. Keep reading on the screen, or ask a grown-up to check the sound settings.',
+  failed: 'Archie could not read that aloud. Try the Read aloud button again, or keep reading on the screen.',
+};
+
+// ── Child-friendly TTS voice ─────────────────────────────────────────────────
+function pickChildVoice(): SpeechSynthesisVoice | null {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return null;
+  const voices = window.speechSynthesis.getVoices();
+  // Prefer a youthful UK male voice when the browser exposes one.
+  // Voice names differ by device, so this remains best-effort.
+  const preferred = [
+    (v: SpeechSynthesisVoice) => v.lang === 'en-GB' && /(boy|young|male|child)/i.test(v.name),
+    (v: SpeechSynthesisVoice) => v.lang === 'en-GB',
+    (v: SpeechSynthesisVoice) => v.lang.startsWith('en') && /(boy|young|male|child)/i.test(v.name),
+    (v: SpeechSynthesisVoice) => v.lang.startsWith('en'),
+  ];
+  for (const test of preferred) {
+    const match = voices.find(test);
+    if (match) return match;
+  }
+  return voices[0] ?? null;
+}
+
+function cleanSpeakableText(text: string): string {
+  return text
+    // Game launch markers are visual controls, not spoken content.
+    .replace(/\[PLAY:[^\]]+\]/g, ' ')
+    // Preserve the label from Markdown links but never read the URL aloud.
+    .replace(/\[([^\]]+)\]\((?:https?:\/\/|www\.)[^)]+\)/gi, '$1')
+    .replace(/https?:\/\/\S+|www\.\S+/gi, ' ')
+    // Convert maths symbols before removing display-only Markdown characters.
+    .replace(/(\d)\s*[×*xX]\s*(\d)/g, '$1 times $2')
+    .replace(/(\d)\s*÷\s*(\d)/g, '$1 divided by $2')
+    .replace(/(\d)\s*\+\s*(\d)/g, '$1 plus $2')
+    .replace(/(\d)\s*=\s*(\d)/g, '$1 equals $2')
+    .replace(/(\d)\s*%/g, '$1 percent')
+    // Strip Markdown / formatting noise that Android TTS otherwise announces.
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/^\s{0,3}#{1,6}\s*/gm, '')
+    .replace(/\*\*|__|~~/g, '')
+    .replace(/[>*_]/g, ' ')
+    // Remove placeholder/noise tokens such as XXX, but keep a single x in words.
+    .replace(/\b[xX]{2,}\b/g, ' ')
+    // Drop common emoji/decorative pictographs from the spoken version.
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, ' ')
+    .replace(/\s+([,.!?;:])/g, '$1')
+    .replace(/([!?.,])\1{1,}/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
+function getNativeArchieSpeech(): any | null {
+  if (typeof window === 'undefined') return null;
+  const plugin = Capacitor.isNativePlatform() ? ArchieSpeech : null;
+  console.log('ArchieSpeech Plugin check:', {
+    hasCapacitor: true,
+    isNativePlatform: Capacitor.isNativePlatform(),
+    hasArchieSpeech: !!plugin,
+  });
+  return plugin ?? null;
+}
+
+/**
+ * Speak dynamic Archie text. On Android/Capacitor we prefer the native
+ * TextToSpeech engine because speechSynthesis in WebView has been unreliable.
+ * Falls back to the browser Web Speech API on desktop/web.
+ */
+let speechGeneration = 0;
+let cancelVoiceWait: (() => void) | null = null;
+
+function ttsSpeak(text: string, onEnd?: () => void, onFailure?: (reason: SpeechFailureReason) => void) {
+  const generation = ++speechGeneration;
+  cancelVoiceWait?.(); cancelVoiceWait = null;
+  const ended = () => { if (generation === speechGeneration) onEnd?.(); };
+  if (!isSoundEnabled()) { onEnd?.(); return; }
+  if (typeof window === 'undefined') {
+    onEnd?.();
+    return;
+  }
+
+  const speakable = cleanSpeakableText(text);
+  console.log('ttsSpeak starting:', { characters: speakable.length });
+  if (!speakable) {
+    console.warn('ttsSpeak: Nothing speakable');
+    onEnd?.();
+    return;
+  }
+
+  const native = getNativeArchieSpeech();
+  if (native?.speak) {
+    console.info('ARCHIE_TTS_START', { engine: 'android-native' });
+    try {
+    Promise.resolve(native.speak({ text: speakable }))
+      .then((res: any) => {
+        console.info('ARCHIE_TTS_SUCCESS', { engine: 'android-native', response: res });
+        ended();
+      })
+      .catch((err: unknown) => {
+        console.error('ARCHIE_TTS_ERROR', err);
+        // If native speech fails, make one browser fallback attempt.
+        if (generation === speechGeneration) browserTtsSpeak(speakable, ended, generation, onFailure);
+      });
+    } catch {
+      if (generation === speechGeneration) browserTtsSpeak(speakable, ended, generation, onFailure);
+    }
+    return;
+  }
+
+  console.log('ttsSpeak: Falling back to browser TTS');
+  browserTtsSpeak(speakable, ended, generation, onFailure);
+}
+
+function browserTtsSpeak(text: string, onEnd: (() => void) | undefined, generation: number, onFailure?: (reason: SpeechFailureReason) => void) {
+  if (generation !== speechGeneration) return;
+  if (!window.speechSynthesis) {
+    console.warn('ARCHIE_TTS_UNAVAILABLE');
+    onFailure?.('unavailable');
+    onEnd?.();
+    return;
+  }
+
+  if (typeof SpeechSynthesisUtterance !== 'function') {
+    console.warn('ARCHIE_TTS_UNAVAILABLE');
+    onFailure?.('unavailable');
+    onEnd?.();
+    return;
+  }
+
+  let utt: SpeechSynthesisUtterance;
+  try {
+    window.speechSynthesis.cancel();
+    utt = new SpeechSynthesisUtterance(text);
+  } catch {
+    onFailure?.('failed');
+    onEnd?.();
+    return;
+  }
+  utt.lang = 'en-GB';
+  // A natural, gentle pace. Avoid artificially extreme pitch, which can sound robotic.
+  let year=4;
+  try {year=JSON.parse(localStorage.getItem('sodafom_archie_design_v1')||'{}').settings?.year||4;} catch { /* default gentle pace */ }
+  const voiceStyle=getArchieVoice(year);
+  utt.rate = voiceStyle.rate;
+  utt.pitch = voiceStyle.pitch;
+  utt.volume = 1;
+
+  const speakNow = () => {
+    if (generation !== speechGeneration) return;
+    if (!isSoundEnabled()) { onEnd?.(); return; }
+    const voice = pickChildVoice();
+    if (voice) utt.voice = voice;
+    utt.onend = () => {
+      console.info('ARCHIE_TTS_SUCCESS', { engine: 'browser' });
+      onEnd?.();
+    };
+    utt.onerror = (err) => {
+      if (generation !== speechGeneration) return;
+      console.error('ARCHIE_TTS_ERROR', err);
+      onFailure?.('failed');
+      onEnd?.();
+    };
+    console.info('ARCHIE_TTS_START', { engine: 'browser', voice: voice?.name ?? 'default' });
+    try { window.speechSynthesis.speak(utt); }
+    catch {
+      onFailure?.('failed');
+      onEnd?.();
+    }
+  };
+
+  if (window.speechSynthesis.getVoices().length === 0) {
+    let fired = false;
+    const cleanup = () => {
+      fired = true;
+      window.clearTimeout(fallbackTimer);
+      if (window.speechSynthesis.onvoiceschanged === voicesReady)
+        window.speechSynthesis.onvoiceschanged = null;
+      if (cancelVoiceWait === cleanup) cancelVoiceWait = null;
+    };
+    const fallbackTimer = window.setTimeout(() => {
+      if (fired) return;
+      cleanup();
+      speakNow();
+    }, 700);
+    const voicesReady = () => {
+      if (fired) return;
+      cleanup();
+      speakNow();
+    };
+    cancelVoiceWait = cleanup;
+    window.speechSynthesis.onvoiceschanged = voicesReady;
+  } else {
+    speakNow();
+  }
+}
+
+function stopTts() {
+  speechGeneration++;
+  cancelVoiceWait?.(); cancelVoiceWait = null;
+  if (typeof window === 'undefined') return;
+  const native = getNativeArchieSpeech();
+  if (native?.stop) {
+    native.stop().catch((err: unknown) => console.warn('ARCHIE_TTS_STOP native error', err));
+  }
+  window.speechSynthesis?.cancel();
+  console.info('ARCHIE_TTS_STOP');
+}
+
+// ── Storage helpers ──────────────────────────────────────────────────────────
+function storageKey(childId: string, clipKey: ClipKey) {
+  return `sodafom-voice-${childId}-${clipKey}`;
+}
+
+function loadClips(childId: string): Record<ClipKey, VoiceClip> {
+  const result: Record<ClipKey, VoiceClip> = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(`sodafom-voice-${childId}-`)) {
+        const clipKey = k.replace(`sodafom-voice-${childId}-`, '');
+        const raw = localStorage.getItem(k);
+      if (raw) Object.assign(result, { [clipKey]: JSON.parse(raw) as VoiceClip });
+      }
+    }
+  } catch {}
+  return result;
+}
+
+// ── Context ──────────────────────────────────────────────────────────────────
+const VoiceContext = createContext<VoiceContextValue>({
+  childId: null,
+  setChildId: () => {},
+  clips: {},
+  saveClip: () => {},
+  deleteClip: () => {},
+  speak: () => {},
+  stop: () => {},
+  playing: false,
+  voiceNotice: null,
+  dismissVoiceNotice: () => {},
+});
+
+export function VoiceProvider({ children }: { children: ReactNode }) {
+  const [childId, setChildIdState] = useState<string | null>(null);
+  const [clips, setClips] = useState<Record<ClipKey, VoiceClip>>({});
+  const [playing, setPlaying] = useState(false);
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playbackGeneration = useRef(0);
+
+  const setChildId = useCallback((id: string | null) => {
+    setChildIdState(id);
+    setClips(id ? loadClips(id) : {});
+  }, []);
+
+  const saveClip = useCallback(
+    (key: ClipKey, label: string, prompt: string, dataUrl: string) => {
+      if (!childId) return;
+      const clip: VoiceClip = { key, label, prompt, dataUrl, recordedAt: Date.now() };
+      try {
+        localStorage.setItem(storageKey(childId, key), JSON.stringify(clip));
+      } catch {}
+      setClips((prev) => ({ ...prev, [key]: clip }));
+    },
+    [childId]
+  );
+
+  const deleteClip = useCallback(
+    (key: ClipKey) => {
+      if (!childId) return;
+      try {
+        localStorage.removeItem(storageKey(childId, key));
+      } catch {}
+      setClips((prev) => {
+        const next = { ...prev };
+        Reflect.deleteProperty(next, key);
+        return next;
+      });
+    },
+    [childId]
+  );
+
+  const stop = useCallback(() => {
+    playbackGeneration.current++;
+    if (audioRef.current) {
+      audioRef.current.onended = null;
+      audioRef.current.onerror = null;
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    stopTts();
+    setPlaying(false);
+  }, []);
+  useEffect(() => () => stop(), [stop]);
+
+  const speak = useCallback(
+    (key: ClipKey, fallbackText?: string) => {
+      stop();
+      setVoiceNotice(null);
+      const playback = playbackGeneration.current;
+      const current = () => playback === playbackGeneration.current;
+      const ended = () => { if (current()) setPlaying(false); };
+      const failed = (reason: SpeechFailureReason) => {
+        if (!current()) return;
+        setPlaying(false);
+        setVoiceNotice(SPEECH_FAILURE_MESSAGE[reason]);
+      };
+      if (!isSoundEnabled()) return;
+      const clip = Object.hasOwn(clips, key) ? clips[key as keyof typeof clips] : undefined;
+      if (clip?.dataUrl) {
+        // Play recorded audio
+        const audio = new Audio(clip.dataUrl);
+        audioRef.current = audio;
+        setPlaying(true);
+        audio.onended = ended;
+        let fallbackStarted = false;
+        const fallback = () => {
+          if (!current() || fallbackStarted) return;
+          fallbackStarted = true;
+          // Fallback to TTS if audio fails
+          setPlaying(true);
+          ttsSpeak(fallbackText ?? key, ended, failed);
+        };
+        audio.onerror = fallback;
+        audio.play().catch(fallback);
+      } else {
+        // No recording — use TTS
+        const text = fallbackText ?? key;
+        setPlaying(true);
+        ttsSpeak(text, ended, failed);
+      }
+    },
+    [clips, stop]
+  );
+
+  const dismissVoiceNotice = useCallback(() => setVoiceNotice(null), []);
+
+  return (
+    <VoiceContext.Provider
+      value={{ childId, setChildId, clips, saveClip, deleteClip, speak, stop, playing, voiceNotice, dismissVoiceNotice }}
+    >
+      {children}
+      {voiceNotice && (
+        <aside className="voice-recovery" role="status" aria-live="assertive" aria-atomic="true">
+          <span aria-hidden="true">🔊</span>
+          <p>{voiceNotice}</p>
+          <button type="button" onClick={dismissVoiceNotice}>Got it</button>
+        </aside>
+      )}
+    </VoiceContext.Provider>
+  );
+}
+
+export function useVoice() {
+  return useContext(VoiceContext);
+}
+
+/** Convenience: speak arbitrary text (uses TTS always — for dynamic content) */
+export function speakText(text: string) {
+  ttsSpeak(text);
+}
+
+/** Export ttsSpeak for use outside React */
+export { ttsSpeak, stopTts, cleanSpeakableText };

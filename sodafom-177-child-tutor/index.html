@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sodafom 177 Child Tutor</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Sodafom 177</p>
+          <h1>Ask Archie</h1>
+          <p class="lede">A friendly two-way tutor for lessons, reading, spelling, maths, history, science and quick games.</p>
+          <div class="hero-actions">
+            <button id="startLesson" class="primary">Start Lesson</button>
+            <button id="talkButton" class="secondary">Talk</button>
+          </div>
+        </div>
+        <div class="teacher-card" aria-label="Ask Archie teacher">
+          <div class="teacher-art">Ask Archie</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="lesson-controls">
+          <label>Age
+            <select id="ageSelect">
+              <option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8" selected>8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option>
+            </select>
+          </label>
+          <label>Subject
+            <select id="subjectSelect">
+              <option>Reading</option><option>Maths</option><option>Spelling</option><option>Science</option><option>History</option><option>Geography</option><option>Knowledge Quiz</option>
+            </select>
+          </label>
+          <label>Lesson length
+            <select id="lengthSelect">
+              <option value="10">10 questions</option><option value="15">15 minutes</option><option value="20">20 minutes</option><option value="30">30 minutes</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="subjects" aria-label="Learning apps">
+          <button data-subject="Reading">Reading</button>
+          <button data-subject="Maths">Maths</button>
+          <button data-subject="Spelling">Spelling</button>
+          <button data-subject="Science">Science</button>
+          <button data-subject="History">History</button>
+          <button data-subject="Knowledge Quiz">Games</button>
+        </div>
+
+        <div class="lesson-box">
+          <div id="lessonOutput" class="lesson-output" aria-live="polite"></div>
+          <form id="askForm" class="ask-form">
+            <input id="childInput" type="text" autocomplete="off" placeholder="Ask Archie or answer the question">
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

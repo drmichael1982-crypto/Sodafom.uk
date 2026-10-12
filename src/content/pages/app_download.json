@@ -1,0 +1,74 @@
+{
+  "SCREENSHOTS": [
+    {
+      "emoji": "🏠",
+      "label": "Home screen",
+      "color": "bg-green-100 border-green-300",
+      "id": "PFo_q_igycZBuhllWxc0i"
+    },
+    {
+      "emoji": "🔢",
+      "label": "Maths games",
+      "color": "bg-blue-100 border-blue-300",
+      "id": "5ytILIk0ewRDt9SHSIArw"
+    },
+    {
+      "emoji": "📖",
+      "label": "Reading zone",
+      "color": "bg-yellow-100 border-yellow-300",
+      "id": "4QdOAhvjLlat_6QKSv9mr"
+    },
+    {
+      "emoji": "🏆",
+      "label": "Progress hub",
+      "color": "bg-purple-100 border-purple-300",
+      "id": "OU0jAgyFX-ngR8o4wynoD"
+    }
+  ],
+  "REVIEWS": [
+    {
+      "name": "Sarah M.",
+      "stars": 5,
+      "text": "My daughter asks to use Sodafom every evening. The games are brilliant and she's come on leaps and bounds in maths!",
+      "id": "ax_NVz82nezO3x6jmbXXR"
+    },
+    {
+      "name": "James T.",
+      "stars": 5,
+      "text": "As a primary school teacher I recommend this to all my parents. The curriculum alignment is spot on.",
+      "id": "3RlXRIoEPU_zfHZrGy3au"
+    },
+    {
+      "name": "Priya K.",
+      "stars": 5,
+      "text": "Three kids, one subscription. The offline mode is a lifesaver on long car journeys!",
+      "id": "BuSoknbVneQzxpIQOAdz2"
+    }
+  ],
+  "STEPS": [
+    {
+      "num": "1",
+      "title": "Download the app",
+      "desc": "Free to download on iOS and Android.",
+      "id": "UY_ahxvSNb5R9E5U4zcJp"
+    },
+    {
+      "num": "2",
+      "title": "Create your account",
+      "desc": "Sign up in seconds — no credit card needed to explore.",
+      "id": "0Fb3eEJQERQla0Ex3OesU"
+    },
+    {
+      "num": "3",
+      "title": "Add your children",
+      "desc": "Set up a profile for each child with their age group.",
+      "id": "6NOjFlk-rH00BO0JYZd-1"
+    },
+    {
+      "num": "4",
+      "title": "Start learning!",
+      "desc": "Dive straight into games, lessons, and activities.",
+      "id": "9-2F-p73g2IBPWwN0cuVO"
+    }
+  ]
+}

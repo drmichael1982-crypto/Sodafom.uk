@@ -1,0 +1,125 @@
+{
+  "VALUES": [
+    {
+      "colour": "bg-red-100 text-red-600",
+      "title": "Learning through joy",
+      "desc": "We believe children learn best when they're having fun. Every game is designed to spark curiosity, not anxiety.",
+      "id": "XyzlYwwNrEoV2QK_GpRuu"
+    },
+    {
+      "colour": "bg-green-100 text-green-700",
+      "title": "Safe by design",
+      "desc": "No adverts, no in-app purchases, no social features. Just a clean, safe space for children to grow.",
+      "id": "XLpOjCz5ySZWgpiD0XJhh"
+    },
+    {
+      "colour": "bg-blue-100 text-blue-700",
+      "title": "Curriculum-aligned",
+      "desc": "Every activity maps to the UK National Curriculum for Key Stages 1 and 2, so parents and teachers can trust what children are learning.",
+      "id": "ftis_jHeJuAVYmbxPew2G"
+    },
+    {
+      "colour": "bg-purple-100 text-purple-700",
+      "title": "Built for families",
+      "desc": "From the Parent Hub to the Teacher Dashboard, Sodafom keeps the whole support network informed and involved.",
+      "id": "XY6Cp_ppYibsfGOE2vcnt"
+    },
+    {
+      "colour": "bg-yellow-100 text-yellow-700",
+      "title": "Adaptive difficulty",
+      "desc": "Games automatically adjust to each child's age and ability, keeping the challenge just right — never too easy, never overwhelming.",
+      "id": "TCf7tDpyzifLMu3QzJLnu"
+    },
+    {
+      "colour": "bg-teal-100 text-teal-700",
+      "title": "Accessible to all",
+      "desc": "Dyslexia-friendly fonts, high-contrast mode, large text, and read-aloud support mean every child can participate.",
+      "id": "5UeI5GlWF3_Jwru76VAV0"
+    }
+  ],
+  "MILESTONES": [
+    {
+      "year": "2022",
+      "label": "The idea is born",
+      "desc": "A parent frustrated by boring revision apps decides to build something better — a platform where learning feels like play.",
+      "id": "0p6i7gu_9_yip_ii_SOCW"
+    },
+    {
+      "year": "2023",
+      "label": "First 50 games launched",
+      "desc": "Sodafom goes live with 50 curriculum-aligned games across Maths, Spelling, and Reading. Early families love it.",
+      "id": "s-djBsxt4rty4YqQhAPdl"
+    },
+    {
+      "year": "2024",
+      "label": "100+ games & Teacher Hub",
+      "desc": "The platform grows to over 100 games. The Teacher Hub launches, bringing Sodafom into classrooms across the UK.",
+      "id": "_gLQhy20sQF6tX8Bm_7Vi"
+    },
+    {
+      "year": "2025",
+      "label": "10,000 learners milestone",
+      "desc": "Sodafom reaches 10,000 active learners. The star reward system, badges, and parent progress dashboard go live.",
+      "id": "1mMKenpZJbKk_tHBjujQl"
+    }
+  ],
+  "TEAM": [
+    {
+      "emoji": "👨‍💻",
+      "name": "Dr Michael",
+      "role": "Founder & Lead Developer",
+      "bio": "A parent of two who built Sodafom after struggling to find engaging, safe, curriculum-aligned learning tools. Combines a background in education technology with a passion for making learning genuinely fun.",
+      "id": "IctsnR-aGjFLYoL4_2hPF"
+    },
+    {
+      "emoji": "👩‍🏫",
+      "name": "The Community",
+      "role": "Parents & Teachers",
+      "bio": "Sodafom is shaped by the hundreds of parents and teachers who share feedback, suggest new games, and help us stay true to what children actually need. Every update is informed by real classroom experience.",
+      "id": "sBq38lbZnF7U5Whllc49Q"
+    }
+  ],
+  "STATS": [
+    {
+      "value": "118",
+      "label": "Learning games",
+      "emoji": "🎮",
+      "id": "XBZ7TxkbAWGx7QFClK4kN"
+    },
+    {
+      "value": "10k+",
+      "label": "Active learners",
+      "emoji": "👧",
+      "id": "HmhDxhbHnReBV0hY5YLX3"
+    },
+    {
+      "value": "4",
+      "label": "Subjects covered",
+      "emoji": "📚",
+      "id": "lrQO7KTbK_TkoHFB6OeIq"
+    },
+    {
+      "value": "5★",
+      "label": "Parent rating",
+      "emoji": "⭐",
+      "id": "cF42tbmYa-_ac1EON1wHU"
+    }
+  ],
+  "PRESS": [
+    {
+      "quote": "A genuinely brilliant resource for primary-age children. The games are engaging, the progress tracking is superb, and there's not an advert in sight.",
+      "source": "Primary School Parent, Bristol",
+      "id": "1UXQVB_ictiUApmG1NNLn"
+    },
+    {
+      "quote": "My Year 4 class uses Sodafom every Friday. The children ask for it — that's the highest praise I can give any EdTech tool.",
+      "source": "Primary School Teacher, Manchester",
+      "id": "GhV-mVkqTZG44AN-c6QLw"
+    },
+    {
+      "quote": "Finally an app I'm happy to let my kids use unsupervised. Safe, educational, and they actually enjoy it.",
+      "source": "Home Educator, Edinburgh",
+      "id": "ntBuMRVWfN6DXTjg_B0bC"
+    }
+  ]
+}

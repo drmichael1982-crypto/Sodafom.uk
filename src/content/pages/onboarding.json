@@ -1,0 +1,62 @@
+{
+  "AGE_GROUPS": [
+    {
+      "id": "age-5-7",
+      "label": "5–7 years",
+      "emoji": "🌱",
+      "description": "Early learner — phonics, counting, simple words"
+    },
+    {
+      "id": "age-8-10",
+      "label": "8–10 years",
+      "emoji": "🌟",
+      "description": "Growing learner — times tables, reading, spelling"
+    },
+    {
+      "id": "age-11-13",
+      "label": "11–13 years",
+      "emoji": "🚀",
+      "description": "Advanced learner — algebra, comprehension, science"
+    }
+  ],
+  "SUBJECTS": [
+    {
+      "id": "maths",
+      "label": "Maths",
+      "emoji": "🔢",
+      "color": "border-amber-300 bg-amber-50"
+    },
+    {
+      "id": "spelling",
+      "label": "Spelling",
+      "emoji": "✏️",
+      "color": "border-red-300 bg-red-50"
+    },
+    {
+      "id": "reading",
+      "label": "Reading",
+      "emoji": "📖",
+      "color": "border-green-300 bg-green-50"
+    },
+    {
+      "id": "science",
+      "label": "Science",
+      "emoji": "🔬",
+      "color": "border-blue-300 bg-blue-50"
+    }
+  ],
+  "AVATAR_EMOJIS": [
+    "🦁",
+    "🐯",
+    "🦊",
+    "🐼",
+    "🦄",
+    "🐸",
+    "🐧",
+    "🦋",
+    "🐬",
+    "🦅",
+    "🐙",
+    "🦖"
+  ]
+}

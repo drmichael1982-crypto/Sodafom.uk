@@ -1,0 +1,22 @@
+import {act,cleanup,render,screen} from '@testing-library/react';
+import {afterEach,expect,it,vi} from 'vitest';
+import type {ReactNode} from 'react';
+import {PicturePauseContext} from '@/lib/archie/picture-pause';
+const fixture=vi.hoisted(()=>({finish:vi.fn(),record:vi.fn(async()=>1)}));
+vi.mock('@/components/games/GameShell',()=>({default:({children}:{children:(done:()=>void)=>ReactNode})=>children(fixture.finish)}));
+vi.mock('@/hooks/useGameLevel',()=>({useGameLevel:()=>({level:1,loading:false,recordResult:fixture.record})}));
+vi.mock('@/components/games/LevelBadge',()=>({default:()=>null}));
+vi.mock('@dr.pogodin/react-helmet',()=>({Helmet:()=>null}));
+import SpeedTables from './speed-tables';
+afterEach(()=>{cleanup();vi.useRealTimers();vi.restoreAllMocks();});
+it('includes the answer to the actual first question and holds the countdown during a picture break',()=>{
+ vi.useFakeTimers();vi.spyOn(Math,'random').mockReturnValueOnce(.1).mockReturnValueOnce(.2);
+ const view=render(<PicturePauseContext.Provider value={false}><SpeedTables/></PicturePauseContext.Provider>);
+ const question=document.querySelector('.text-5xl')!.textContent!;const numbers=question.match(/\d+/g)!.map(Number);
+ expect(screen.getByRole('button',{name:String(numbers[0]*numbers[1])})).toBeInTheDocument();
+ act(()=>vi.advanceTimersByTime(1000));expect(screen.getByText('⏱ 59s')).toBeInTheDocument();
+ view.rerender(<PicturePauseContext.Provider value={true}><SpeedTables/></PicturePauseContext.Provider>);
+ act(()=>vi.advanceTimersByTime(5000));expect(screen.getByText('⏱ 59s')).toBeInTheDocument();expect(fixture.finish).not.toHaveBeenCalled();
+ view.rerender(<PicturePauseContext.Provider value={false}><SpeedTables/></PicturePauseContext.Provider>);
+ act(()=>vi.advanceTimersByTime(1000));expect(screen.getByText('⏱ 58s')).toBeInTheDocument();
+});

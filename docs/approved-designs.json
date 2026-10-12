@@ -1,0 +1,14 @@
+{
+  "approved_on": "2026-10-02",
+  "style": "Static illustration with a 3D look; no character animation",
+  "artwork": [
+    {
+      "path": "public/assets/archie-approved/home.png",
+      "sha256": "2a2307566871cea4938639c4b8e598393525209ede07608f91c57cee29bd0f28"
+    },
+    {
+      "path": "public/assets/archie-approved/lesson.png",
+      "sha256": "78e1e8f79e22fcf2c088cc69478d05fd71065395421a696421178f55d5a5d2fe"
+    }
+  ]
+}

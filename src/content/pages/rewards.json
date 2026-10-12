@@ -1,0 +1,32 @@
+{
+  "seo": {
+    "title": "Rewards & Star Bank — Sodafom",
+    "description": "Track your stars, unlock characters, and earn free months of Sodafom by reaching 1,000 stars!"
+  },
+  "heading": "Rewards & Star Bank",
+  "subheading": "Earn stars · Unlock characters · Get free months",
+  "starBank": {
+    "title": "Star Bank",
+    "balanceLabel": "Balance",
+    "starsUnit": "stars",
+    "howToTitle": "⭐ How to fill your Star Bank",
+    "milestoneReachedMsg": "🎉 Milestone reached! Check your free code below.",
+    "playGamesLabel": "Play games to earn stars",
+    "thanksTitle": "Thank You — Your Free Month Codes",
+    "thanksBody": "earned enough stars to unlock free access. Use the code below on the subscribe page — it gives 1 full month free.",
+    "codeFootnote": "Each code gives 1 month free access · Single use · Valid for 6 months",
+    "teaserTitle": "Reach 1,000 stars for 1 month free!",
+    "teaserBody": "A unique access code will appear here automatically once your child hits the milestone."
+  },
+  "milestones": {
+    "title": "Star Milestones"
+  },
+  "shop": {
+    "title": "Character Shop"
+  },
+  "noChildren": {
+    "heading": "No children added yet",
+    "body": "Add a child profile to start earning stars and unlocking characters.",
+    "cta": "Go to Dashboard"
+  }
+}

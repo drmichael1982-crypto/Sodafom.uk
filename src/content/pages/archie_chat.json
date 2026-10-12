@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "title": "Ask Archie!",
+    "subtitle": "Hi, I'm Archie! 👋",
+    "description": "I'm your friendly learning buddy! Ask me anything about maths, spelling, science, or how Sodafom works. I'm here to help! 🌟",
+    "tagline": "Your learning buddy",
+    "disclaimer": "Archie is an AI — always check answers with a grown-up 😊",
+    "inputPlaceholder": "Ask Archie anything... 🌟",
+    "newChatLabel": "New chat"
+  },
+  "suggestions": [
+    {
+      "id": "s1",
+      "text": "What is 7 × 8?"
+    },
+    {
+      "id": "s2",
+      "text": "How do I spell 'beautiful'?"
+    },
+    {
+      "id": "s3",
+      "text": "Tell me a fun science fact!"
+    },
+    {
+      "id": "s4",
+      "text": "What is a fraction?"
+    },
+    {
+      "id": "s5",
+      "text": "Help me with my homework"
+    },
+    {
+      "id": "s6",
+      "text": "What games can I play?"
+    }
+  ],
+  "seo": {
+    "title": "Ask Archie — Your Learning Buddy | Sodafom",
+    "description": "Chat with Archie, Sodafom's friendly AI learning buddy! Get help with maths, spelling, science and more."
+  }
+}

@@ -1,0 +1,1190 @@
+[
+  {
+    "id": "maths-1",
+    "subject": "maths",
+    "year": 1,
+    "title": "Numbers and shapes",
+    "objective": "Number bonds within 20 and common shapes",
+    "stage": "KS1",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Archie has 6 keys and finds 3 more. How many keys?",
+        "options": [
+          "8",
+          "9",
+          "10"
+        ],
+        "answer": 1,
+        "hint": "Count on three steps from six.",
+        "explanation": "6 + 3 = 9. Counting on joins two groups."
+      },
+      {
+        "prompt": "A triangle has how many sides?",
+        "options": [
+          "3",
+          "4",
+          "5"
+        ],
+        "answer": 0,
+        "hint": "Trace each straight edge.",
+        "explanation": "A triangle has three straight sides."
+      },
+      {
+        "prompt": "There are 10 apples. Rabbit eats 2. How many remain?",
+        "options": [
+          "12",
+          "7",
+          "8"
+        ],
+        "answer": 2,
+        "hint": "Take two away from ten.",
+        "explanation": "10 − 2 = 8."
+      }
+    ]
+  },
+  {
+    "id": "maths-2",
+    "subject": "maths",
+    "year": 2,
+    "title": "Treasure tens",
+    "objective": "Two-digit place value, halves and multiplication",
+    "stage": "KS1",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "What is the value of the 4 in 47?",
+        "options": [
+          "4",
+          "40",
+          "400"
+        ],
+        "answer": 1,
+        "hint": "The first digit tells us the tens.",
+        "explanation": "47 has four tens, worth 40, and seven ones."
+      },
+      {
+        "prompt": "Share 12 gems equally between 2 bags. How many in each?",
+        "options": [
+          "6",
+          "4",
+          "8"
+        ],
+        "answer": 0,
+        "hint": "Split them into two equal groups.",
+        "explanation": "Half of 12 is 6: 6 + 6 = 12."
+      },
+      {
+        "prompt": "Three boats carry 5 parcels each. How many parcels?",
+        "options": [
+          "8",
+          "10",
+          "15"
+        ],
+        "answer": 2,
+        "hint": "Count in fives three times.",
+        "explanation": "5 + 5 + 5 = 15."
+      }
+    ]
+  },
+  {
+    "id": "maths-3",
+    "subject": "maths",
+    "year": 3,
+    "title": "Bridge builder",
+    "objective": "Multiplication facts, unit fractions and perimeter",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Four dragons each need 3 berries. How many berries?",
+        "options": [
+          "7",
+          "12",
+          "9"
+        ],
+        "answer": 1,
+        "hint": "Count four groups of three.",
+        "explanation": "4 × 3 = 12."
+      },
+      {
+        "prompt": "What is one third of 18?",
+        "options": [
+          "6",
+          "9",
+          "3"
+        ],
+        "answer": 0,
+        "hint": "Share 18 into three equal groups.",
+        "explanation": "18 ÷ 3 = 6."
+      },
+      {
+        "prompt": "A square garden has sides of 4 metres. What is its perimeter?",
+        "options": [
+          "8 metres",
+          "16 metres",
+          "12 metres"
+        ],
+        "answer": 1,
+        "hint": "Add all four sides.",
+        "explanation": "4 + 4 + 4 + 4 = 16 metres."
+      }
+    ]
+  },
+  {
+    "id": "maths-4",
+    "subject": "maths",
+    "year": 4,
+    "title": "Decimal detectives",
+    "objective": "Tenths, times tables and angle comparison",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Which number equals 7 tenths?",
+        "options": [
+          "0.07",
+          "7.0",
+          "0.7"
+        ],
+        "answer": 2,
+        "hint": "Tenths are the first place after the decimal point.",
+        "explanation": "7/10 = 0.7."
+      },
+      {
+        "prompt": "Six rows have 8 lanterns each. How many lanterns?",
+        "options": [
+          "48",
+          "42",
+          "56"
+        ],
+        "answer": 0,
+        "hint": "Use the eight times table.",
+        "explanation": "6 × 8 = 48."
+      },
+      {
+        "prompt": "Which angle is smaller than a right angle?",
+        "options": [
+          "Obtuse",
+          "Acute",
+          "Straight"
+        ],
+        "answer": 1,
+        "hint": "A right angle is 90 degrees.",
+        "explanation": "An acute angle is less than 90 degrees."
+      }
+    ]
+  },
+  {
+    "id": "maths-5",
+    "subject": "maths",
+    "year": 5,
+    "title": "Potion proportions",
+    "objective": "Fraction sums, percentages and volume",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "What is 2/5 + 1/5?",
+        "options": [
+          "3/10",
+          "3/5",
+          "2/5"
+        ],
+        "answer": 1,
+        "hint": "The parts are all fifths.",
+        "explanation": "Two fifths plus one fifth makes three fifths."
+      },
+      {
+        "prompt": "What is 25% of 20 gems?",
+        "options": [
+          "5",
+          "10",
+          "4"
+        ],
+        "answer": 0,
+        "hint": "25% is one quarter.",
+        "explanation": "20 ÷ 4 = 5."
+      },
+      {
+        "prompt": "A cuboid is 2 cm by 3 cm by 4 cm. What is its volume?",
+        "options": [
+          "9 cm³",
+          "24 cm³",
+          "12 cm³"
+        ],
+        "answer": 1,
+        "hint": "Multiply length, width and height.",
+        "explanation": "2 × 3 × 4 = 24 cubic centimetres."
+      }
+    ]
+  },
+  {
+    "id": "maths-6",
+    "subject": "maths",
+    "year": 6,
+    "title": "Castle code",
+    "objective": "Negative numbers, ratio and simple algebra",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "The temperature rises from −3°C to 2°C. How much does it rise?",
+        "options": [
+          "1°C",
+          "5°C",
+          "6°C"
+        ],
+        "answer": 1,
+        "hint": "Count from −3 to zero, then to 2.",
+        "explanation": "It rises 3 degrees to zero and 2 more: 5°C."
+      },
+      {
+        "prompt": "Red and blue flags are in the ratio 2:3. There are 10 red flags. How many blue?",
+        "options": [
+          "15",
+          "6",
+          "12"
+        ],
+        "answer": 0,
+        "hint": "Scale both parts by the same factor.",
+        "explanation": "2 becomes 10 by multiplying by 5; 3 × 5 = 15."
+      },
+      {
+        "prompt": "If x + 7 = 19, what is x?",
+        "options": [
+          "26",
+          "11",
+          "12"
+        ],
+        "answer": 2,
+        "hint": "Undo adding seven.",
+        "explanation": "19 − 7 = 12."
+      }
+    ]
+  },
+  {
+    "id": "maths-7",
+    "subject": "maths",
+    "year": 7,
+    "title": "Explorer equations",
+    "objective": "Key Stage 3: integers, expressions and averages",
+    "stage": "KS3",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "What is −4 + 9?",
+        "options": [
+          "−13",
+          "5",
+          "13"
+        ],
+        "answer": 1,
+        "hint": "Move nine steps right from −4.",
+        "explanation": "−4 + 9 = 5."
+      },
+      {
+        "prompt": "Simplify 3a + 2a.",
+        "options": [
+          "5a",
+          "6a",
+          "5a²"
+        ],
+        "answer": 0,
+        "hint": "They are like terms.",
+        "explanation": "Three lots of a plus two lots of a equals 5a."
+      },
+      {
+        "prompt": "Find the mean of 4, 6 and 8.",
+        "options": [
+          "8",
+          "6",
+          "18"
+        ],
+        "answer": 1,
+        "hint": "Add the values, then divide by three.",
+        "explanation": "(4 + 6 + 8) ÷ 3 = 6."
+      }
+    ]
+  },
+  {
+    "id": "maths-8",
+    "subject": "maths",
+    "year": 8,
+    "title": "Map makers",
+    "objective": "Key Stage 3: equations, area and probability",
+    "stage": "KS3",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Solve 3x + 2 = 17.",
+        "options": [
+          "5",
+          "6",
+          "7"
+        ],
+        "answer": 0,
+        "hint": "Subtract two, then divide by three.",
+        "explanation": "3x = 15, so x = 5."
+      },
+      {
+        "prompt": "A triangle has base 8 cm and perpendicular height 5 cm. What is its area?",
+        "options": [
+          "40 cm²",
+          "13 cm²",
+          "20 cm²"
+        ],
+        "answer": 2,
+        "hint": "A triangle is half a matching rectangle.",
+        "explanation": "½ × 8 × 5 = 20 cm²."
+      },
+      {
+        "prompt": "A bag has 3 red and 2 blue tokens. What is the chance of a blue token?",
+        "options": [
+          "2/3",
+          "2/5",
+          "3/5"
+        ],
+        "answer": 1,
+        "hint": "Count blue tokens out of all tokens.",
+        "explanation": "Two of the five equally likely tokens are blue."
+      }
+    ]
+  },
+  {
+    "id": "maths-9",
+    "subject": "maths",
+    "year": 9,
+    "title": "Sky engineers",
+    "objective": "Key Stage 3: right triangles, standard form and equations",
+    "stage": "KS3",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "A right triangle has shorter sides of 3 cm and 4 cm. How long is the hypotenuse?",
+        "options": [
+          "7 cm",
+          "5 cm",
+          "6 cm"
+        ],
+        "answer": 1,
+        "hint": "Square both shorter lengths and add them.",
+        "explanation": "3² + 4² = 25, so the hypotenuse is √25 = 5 cm."
+      },
+      {
+        "prompt": "Write 4500 in standard form.",
+        "options": [
+          "45 × 10²",
+          "4.5 × 10³",
+          "0.45 × 10⁴"
+        ],
+        "answer": 1,
+        "hint": "The first number must be at least 1 and less than 10.",
+        "explanation": "4.5 × 1000 = 4500."
+      },
+      {
+        "prompt": "x + y = 9 and x − y = 3. What is x?",
+        "options": [
+          "3",
+          "9",
+          "6"
+        ],
+        "answer": 2,
+        "hint": "Add the two equations so y cancels.",
+        "explanation": "2x = 12, so x = 6."
+      }
+    ]
+  },
+  {
+    "id": "english-1",
+    "subject": "english",
+    "year": 1,
+    "title": "Word garden",
+    "objective": "Sounds, familiar words and sentence boundaries",
+    "stage": "KS1",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Which word rhymes with cat?",
+        "options": [
+          "Hat",
+          "Cup",
+          "Dog"
+        ],
+        "answer": 0,
+        "hint": "Listen to the ending sound.",
+        "explanation": "Cat and hat share the same ending sound."
+      },
+      {
+        "prompt": "Which letters make the first sound in ship?",
+        "options": [
+          "ch",
+          "sh",
+          "th"
+        ],
+        "answer": 1,
+        "hint": "Say ship slowly.",
+        "explanation": "The letters sh represent the first sound in ship."
+      },
+      {
+        "prompt": "Which sentence ends correctly?",
+        "options": [
+          "The sun is warm.",
+          "the sun is warm",
+          "The sun is warm,"
+        ],
+        "answer": 0,
+        "hint": "A statement usually ends with a full stop.",
+        "explanation": "A capital letter begins the statement and a full stop ends it."
+      }
+    ]
+  },
+  {
+    "id": "english-2",
+    "subject": "english",
+    "year": 2,
+    "title": "Story trail",
+    "objective": "Suffixes, questions and reading comprehension",
+    "stage": "KS1",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Add the suffix -ful to help.",
+        "options": [
+          "Helped",
+          "Helper",
+          "Helpful"
+        ],
+        "answer": 2,
+        "hint": "A suffix goes at the end.",
+        "explanation": "Helpful means giving help."
+      },
+      {
+        "prompt": "Which punctuation ends a question?",
+        "options": [
+          "Full stop",
+          "Question mark",
+          "Comma"
+        ],
+        "answer": 1,
+        "hint": "Think about asking something.",
+        "explanation": "A question mark shows that a sentence asks a question."
+      },
+      {
+        "prompt": "Mia put on her coat because it was cold. Why did she put it on?",
+        "options": [
+          "She was cold",
+          "It was sunny",
+          "She wanted to swim"
+        ],
+        "answer": 0,
+        "hint": "Look for the reason after because.",
+        "explanation": "The sentence tells us that it was cold."
+      }
+    ]
+  },
+  {
+    "id": "english-3",
+    "subject": "english",
+    "year": 3,
+    "title": "Forest storyteller",
+    "objective": "Prefixes, adverbs and evidence for inference",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "What does the prefix un- do in unhappy?",
+        "options": [
+          "Means again",
+          "Means not",
+          "Means before"
+        ],
+        "answer": 1,
+        "hint": "Compare happy and unhappy.",
+        "explanation": "Unhappy means not happy."
+      },
+      {
+        "prompt": "In 'The rabbit moved quietly', which word says how it moved?",
+        "options": [
+          "Rabbit",
+          "Moved",
+          "Quietly"
+        ],
+        "answer": 2,
+        "hint": "Look for the word describing the action.",
+        "explanation": "Quietly is an adverb describing how the rabbit moved."
+      },
+      {
+        "prompt": "Asha smiled as she opened her gift. How is she likely feeling?",
+        "options": [
+          "Pleased",
+          "Angry",
+          "Afraid"
+        ],
+        "answer": 0,
+        "hint": "Use her smile as evidence.",
+        "explanation": "Her smile suggests she is pleased; an inference uses clues."
+      }
+    ]
+  },
+  {
+    "id": "english-4",
+    "subject": "english",
+    "year": 4,
+    "title": "Grammar guardians",
+    "objective": "Possession, pronouns and fronted adverbials",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Which phrase shows one girl's bag?",
+        "options": [
+          "The girls bag",
+          "The girl's bag",
+          "The girls' bag"
+        ],
+        "answer": 1,
+        "hint": "One owner needs an apostrophe before s.",
+        "explanation": "Girl's shows that the bag belongs to one girl."
+      },
+      {
+        "prompt": "Replace 'Tom' in 'Tom found a key' with a pronoun.",
+        "options": [
+          "He",
+          "They key",
+          "Found"
+        ],
+        "answer": 0,
+        "hint": "Use a word that stands for Tom.",
+        "explanation": "He found a key uses a pronoun instead of repeating Tom."
+      },
+      {
+        "prompt": "Which sentence correctly uses a fronted adverbial?",
+        "options": [
+          "After lunch Archie read.",
+          "After lunch, Archie read.",
+          "After, lunch Archie read."
+        ],
+        "answer": 1,
+        "hint": "Pause after the opening time phrase.",
+        "explanation": "After lunch is the opening adverbial and is followed by a comma."
+      }
+    ]
+  },
+  {
+    "id": "english-5",
+    "subject": "english",
+    "year": 5,
+    "title": "Secret chapters",
+    "objective": "Relative clauses, cohesion and inferred feelings",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Which words form the relative clause in 'The fox, which had red fur, ran'?",
+        "options": [
+          "The fox",
+          "Ran",
+          "Which had red fur"
+        ],
+        "answer": 2,
+        "hint": "Find the extra detail introduced by which.",
+        "explanation": "The relative clause gives more information about the fox."
+      },
+      {
+        "prompt": "Which word links these ideas: 'It rained. ___, we played indoors'?",
+        "options": [
+          "Therefore",
+          "Yesterday",
+          "Although"
+        ],
+        "answer": 0,
+        "hint": "The second event happens because of the first.",
+        "explanation": "Therefore connects a cause with its result."
+      },
+      {
+        "prompt": "Leo's hands trembled before his speech. What does this suggest?",
+        "options": [
+          "He is bored",
+          "He is nervous",
+          "He is asleep"
+        ],
+        "answer": 1,
+        "hint": "Use the trembling hands as a clue.",
+        "explanation": "Trembling can suggest nervousness; the context supports that inference."
+      }
+    ]
+  },
+  {
+    "id": "english-6",
+    "subject": "english",
+    "year": 6,
+    "title": "Author's workshop",
+    "objective": "Passive voice, formal language and vocabulary",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Which sentence uses the passive voice?",
+        "options": [
+          "The dragon opened the gate.",
+          "The gate was opened by the dragon.",
+          "The dragon is opening the gate."
+        ],
+        "answer": 1,
+        "hint": "The thing receiving the action becomes the subject.",
+        "explanation": "The gate is the subject receiving the action."
+      },
+      {
+        "prompt": "Which is a formal subjunctive expression?",
+        "options": [
+          "If I were captain",
+          "If I am captain yesterday",
+          "If I was be captain"
+        ],
+        "answer": 0,
+        "hint": "Imagine a situation that is not currently true.",
+        "explanation": "If I were captain uses the subjunctive for an imagined situation."
+      },
+      {
+        "prompt": "Which is closest in meaning to cautious?",
+        "options": [
+          "Careless",
+          "Rapid",
+          "Careful"
+        ],
+        "answer": 2,
+        "hint": "A cautious explorer avoids unnecessary risks.",
+        "explanation": "Cautious and careful are similar in meaning."
+      }
+    ]
+  },
+  {
+    "id": "english-7",
+    "subject": "english",
+    "year": 7,
+    "title": "Poetry explorers",
+    "objective": "Key Stage 3: figurative language and textual evidence",
+    "stage": "KS3",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "'The moon was a silver coin.' What technique is this?",
+        "options": [
+          "Metaphor",
+          "Alliteration",
+          "Fact"
+        ],
+        "answer": 0,
+        "hint": "One thing is described as another.",
+        "explanation": "The moon is compared directly to a coin: a metaphor."
+      },
+      {
+        "prompt": "Which phrase uses alliteration?",
+        "options": [
+          "The tall tree",
+          "Silver stars shimmer",
+          "The moon is bright"
+        ],
+        "answer": 1,
+        "hint": "Listen for repeated first consonant sounds.",
+        "explanation": "Silver, stars and shimmer begin with an s sound."
+      },
+      {
+        "prompt": "'Nora hid the letter when footsteps approached.' Which inference has support?",
+        "options": [
+          "She is writing a recipe",
+          "She has forgotten her name",
+          "She wants to keep the letter secret"
+        ],
+        "answer": 2,
+        "hint": "Consider hiding it as someone comes near.",
+        "explanation": "Hiding the letter suggests secrecy, though more context could change our reading."
+      }
+    ]
+  },
+  {
+    "id": "english-8",
+    "subject": "english",
+    "year": 8,
+    "title": "Persuasion detectives",
+    "objective": "Key Stage 3: rhetoric, reliability and evidence",
+    "stage": "KS3",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "'Who would not want a cleaner park?' is mainly what?",
+        "options": [
+          "A rhetorical question",
+          "A timetable",
+          "A scientific measurement"
+        ],
+        "answer": 0,
+        "hint": "The writer is making a point rather than asking for a reply.",
+        "explanation": "A rhetorical question encourages agreement."
+      },
+      {
+        "prompt": "A narrator says 'I never make mistakes', then describes three mistakes. What might we question?",
+        "options": [
+          "The font",
+          "The narrator's reliability",
+          "The chapter number"
+        ],
+        "answer": 1,
+        "hint": "Compare the claim with the events.",
+        "explanation": "The contradiction makes the narrator's account less reliable."
+      },
+      {
+        "prompt": "Which supports the claim 'The character feels isolated'?",
+        "options": [
+          "The title is short",
+          "The book has 20 pages",
+          "'No one came to sit beside her'"
+        ],
+        "answer": 2,
+        "hint": "Choose evidence about the character's situation.",
+        "explanation": "The quotation supports isolation because she is left alone."
+      }
+    ]
+  },
+  {
+    "id": "english-9",
+    "subject": "english",
+    "year": 9,
+    "title": "Critical readers",
+    "objective": "Key Stage 3: tone, counterargument and evaluation",
+    "stage": "KS3",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-english-programmes-of-study/national-curriculum-in-england-english-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "'Oh wonderful, another three-hour queue.' Which tone is likely?",
+        "options": [
+          "Sarcastic",
+          "Neutral",
+          "Celebratory"
+        ],
+        "answer": 0,
+        "hint": "Compare wonderful with the frustrating situation.",
+        "explanation": "The praise is probably ironic: the speaker is frustrated."
+      },
+      {
+        "prompt": "What is a counterargument?",
+        "options": [
+          "Repeating a claim",
+          "An opposing reason or viewpoint",
+          "A story's setting"
+        ],
+        "answer": 1,
+        "hint": "Consider another side of an argument.",
+        "explanation": "A counterargument challenges the main claim with another viewpoint."
+      },
+      {
+        "prompt": "Which makes a literary interpretation stronger?",
+        "options": [
+          "Saying it loudly",
+          "Counting the pages",
+          "Explaining relevant quotations"
+        ],
+        "answer": 2,
+        "hint": "Link a claim to details in the text.",
+        "explanation": "An interpretation is stronger when its reasoning is supported by relevant evidence."
+      }
+    ]
+  },
+  {
+    "id": "science-1",
+    "subject": "science",
+    "year": 1,
+    "title": "Garden explorers",
+    "objective": "Plants, senses and everyday materials",
+    "stage": "KS1",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-science-programmes-of-study/national-curriculum-in-england-science-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Which plant part usually takes in water from soil?",
+        "options": [
+          "Petals",
+          "Roots",
+          "Leaves"
+        ],
+        "answer": 1,
+        "hint": "Think about what grows underground.",
+        "explanation": "Roots absorb water from the soil."
+      },
+      {
+        "prompt": "Which sense helps you hear a bell?",
+        "options": [
+          "Hearing",
+          "Taste",
+          "Smell"
+        ],
+        "answer": 0,
+        "hint": "Think about your ears.",
+        "explanation": "Your ears help you hear sounds."
+      },
+      {
+        "prompt": "Which material is transparent?",
+        "options": [
+          "Cardboard",
+          "Wood",
+          "Clear glass"
+        ],
+        "answer": 2,
+        "hint": "Transparent materials let you see through.",
+        "explanation": "Clear glass lets light pass through so we can see through it."
+      }
+    ]
+  },
+  {
+    "id": "science-2",
+    "subject": "science",
+    "year": 2,
+    "title": "Habitat heroes",
+    "objective": "Living things, habitats and basic needs",
+    "stage": "KS1",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-science-programmes-of-study/national-curriculum-in-england-science-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Which was once living?",
+        "options": [
+          "A pebble",
+          "A wooden spoon",
+          "A plastic toy"
+        ],
+        "answer": 1,
+        "hint": "Wood comes from a tree.",
+        "explanation": "The spoon's wood came from a living tree."
+      },
+      {
+        "prompt": "What do animals need to survive?",
+        "options": [
+          "Water, food and air",
+          "Only toys",
+          "Only sunlight"
+        ],
+        "answer": 0,
+        "hint": "Think about the needs of a pet.",
+        "explanation": "Animals need water, food and air."
+      },
+      {
+        "prompt": "Why is a pond a suitable habitat for a frog?",
+        "options": [
+          "It is always dry",
+          "There is no food",
+          "It has water and food"
+        ],
+        "answer": 2,
+        "hint": "A habitat must meet an animal's needs.",
+        "explanation": "A pond provides water and a place to find food."
+      }
+    ]
+  },
+  {
+    "id": "science-3",
+    "subject": "science",
+    "year": 3,
+    "title": "Nature investigators",
+    "objective": "Plant functions, rocks and magnetic forces",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-science-programmes-of-study/national-curriculum-in-england-science-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "What carries water from a plant's roots towards its leaves?",
+        "options": [
+          "Petals",
+          "The stem",
+          "Seeds"
+        ],
+        "answer": 1,
+        "hint": "Follow the plant upwards.",
+        "explanation": "Water travels through the stem towards the leaves."
+      },
+      {
+        "prompt": "Which is usually attracted to a magnet?",
+        "options": [
+          "An iron nail",
+          "A wooden block",
+          "A rubber band"
+        ],
+        "answer": 0,
+        "hint": "Magnetic materials include iron.",
+        "explanation": "Iron is magnetic; wood and rubber are not."
+      },
+      {
+        "prompt": "What is a fossil?",
+        "options": [
+          "A new plastic toy",
+          "A cloud",
+          "Preserved evidence of ancient life"
+        ],
+        "answer": 2,
+        "hint": "Think about remains or traces in rock.",
+        "explanation": "Fossils preserve evidence of organisms that lived long ago."
+      }
+    ]
+  },
+  {
+    "id": "science-4",
+    "subject": "science",
+    "year": 4,
+    "title": "Sound and circuit lab",
+    "objective": "States of matter, vibration and simple circuits",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-science-programmes-of-study/national-curriculum-in-england-science-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "When ice melts, what change happens?",
+        "options": [
+          "Gas to solid",
+          "Solid to liquid",
+          "Liquid to gas"
+        ],
+        "answer": 1,
+        "hint": "Think about ice becoming water.",
+        "explanation": "Melting changes solid ice into liquid water."
+      },
+      {
+        "prompt": "How does a plucked string make sound?",
+        "options": [
+          "It vibrates",
+          "It stops moving",
+          "It absorbs all air"
+        ],
+        "answer": 0,
+        "hint": "Watch the string move back and forth.",
+        "explanation": "Vibrations from the string produce sound."
+      },
+      {
+        "prompt": "When can a bulb light in a simple circuit?",
+        "options": [
+          "When a wire is missing",
+          "With no source of electricity",
+          "When the circuit is complete and powered"
+        ],
+        "answer": 2,
+        "hint": "Electricity needs a complete conducting path.",
+        "explanation": "A working bulb, power source and complete circuit allow current to flow."
+      }
+    ]
+  },
+  {
+    "id": "science-5",
+    "subject": "science",
+    "year": 5,
+    "title": "Space and changes",
+    "objective": "Earth's rotation, gravity and irreversible changes",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-science-programmes-of-study/national-curriculum-in-england-science-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "What causes day and night on Earth?",
+        "options": [
+          "The Sun switches off",
+          "Earth rotates",
+          "The Moon makes daylight"
+        ],
+        "answer": 1,
+        "hint": "Earth turns while the Sun lights one side.",
+        "explanation": "Earth's rotation turns places towards and away from the Sun."
+      },
+      {
+        "prompt": "What force pulls an unsupported object towards Earth?",
+        "options": [
+          "Gravity",
+          "Sound",
+          "Magnetism in every material"
+        ],
+        "answer": 0,
+        "hint": "It acts on objects with mass.",
+        "explanation": "Gravity pulls objects towards Earth."
+      },
+      {
+        "prompt": "Which change is difficult to reverse?",
+        "options": [
+          "Melting ice",
+          "Dissolving sugar in water",
+          "Cooking an egg"
+        ],
+        "answer": 2,
+        "hint": "Can you turn the cooked egg back into a raw egg?",
+        "explanation": "Cooking produces changes that cannot easily be reversed."
+      }
+    ]
+  },
+  {
+    "id": "science-6",
+    "subject": "science",
+    "year": 6,
+    "title": "Light and life",
+    "objective": "Light paths, electrical components and adaptation",
+    "stage": "KS2",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-science-programmes-of-study/national-curriculum-in-england-science-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "How does light travel in a uniform material?",
+        "options": [
+          "In random loops",
+          "In straight lines",
+          "Only downwards"
+        ],
+        "answer": 1,
+        "hint": "Think about the path of a narrow torch beam.",
+        "explanation": "Light travels in straight lines in a uniform material."
+      },
+      {
+        "prompt": "What happens when a switch opens a simple circuit?",
+        "options": [
+          "The bulb goes out",
+          "The bulb gets brighter",
+          "Nothing can change"
+        ],
+        "answer": 0,
+        "hint": "The conducting path is broken.",
+        "explanation": "Opening the switch stops current through the bulb."
+      },
+      {
+        "prompt": "How can thick fur help an animal in a cold habitat?",
+        "options": [
+          "It makes food",
+          "It stops the need for water",
+          "It reduces heat loss"
+        ],
+        "answer": 2,
+        "hint": "Think about insulation.",
+        "explanation": "Thick fur can help reduce heat loss in cold conditions."
+      }
+    ]
+  },
+  {
+    "id": "science-7",
+    "subject": "science",
+    "year": 7,
+    "title": "Micro-world missions",
+    "objective": "Key Stage 3: cells, particles and fair tests",
+    "stage": "KS3",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-science-programmes-of-study/national-curriculum-in-england-science-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "Which cell structure contains genetic material in a typical animal cell?",
+        "options": [
+          "Cell wall",
+          "Nucleus",
+          "Chloroplast"
+        ],
+        "answer": 1,
+        "hint": "Think about the cell's control centre.",
+        "explanation": "The nucleus contains most of the genetic material."
+      },
+      {
+        "prompt": "How are particles arranged in a solid?",
+        "options": [
+          "Close together, vibrating in place",
+          "Very far apart and motionless",
+          "Only around the surface"
+        ],
+        "answer": 0,
+        "hint": "A solid keeps its shape.",
+        "explanation": "Solid particles are close together and vibrate around fixed positions."
+      },
+      {
+        "prompt": "In a fair test of light and plant growth, what should be kept the same?",
+        "options": [
+          "The amount of light being tested",
+          "Every result",
+          "Other conditions, such as water and plant type"
+        ],
+        "answer": 2,
+        "hint": "Change one factor and control other relevant factors.",
+        "explanation": "Controlling other conditions helps isolate the effect of light."
+      }
+    ]
+  },
+  {
+    "id": "science-8",
+    "subject": "science",
+    "year": 8,
+    "title": "Energy detectives",
+    "objective": "Key Stage 3: respiration, balanced forces and heat transfer",
+    "stage": "KS3",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-science-programmes-of-study/national-curriculum-in-england-science-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "What is the main purpose of cellular respiration?",
+        "options": [
+          "Making chlorophyll",
+          "Releasing energy from food",
+          "Producing soil"
+        ],
+        "answer": 1,
+        "hint": "Cells need energy for their activities.",
+        "explanation": "Respiration releases energy through chemical reactions involving food."
+      },
+      {
+        "prompt": "Equal opposite forces act on a stationary box. What is the resultant force?",
+        "options": [
+          "Zero",
+          "Twice either force",
+          "Always upwards"
+        ],
+        "answer": 0,
+        "hint": "Opposite equal forces balance.",
+        "explanation": "The forces cancel, giving a resultant of zero."
+      },
+      {
+        "prompt": "A metal spoon warms in hot soup mainly through what process along the spoon?",
+        "options": [
+          "Evaporation",
+          "Condensation",
+          "Conduction"
+        ],
+        "answer": 2,
+        "hint": "Energy passes through the material.",
+        "explanation": "Conduction transfers thermal energy along the spoon."
+      }
+    ]
+  },
+  {
+    "id": "science-9",
+    "subject": "science",
+    "year": 9,
+    "title": "Big science questions",
+    "objective": "Key Stage 3: chemical reactions, waves and inheritance",
+    "stage": "KS3",
+    "source": "https://www.gov.uk/government/publications/national-curriculum-in-england-science-programmes-of-study/national-curriculum-in-england-science-programmes-of-study",
+    "questions": [
+      {
+        "prompt": "In a reaction inside a sealed container, what happens to the total mass?",
+        "options": [
+          "It always doubles",
+          "It is conserved",
+          "It always disappears"
+        ],
+        "answer": 1,
+        "hint": "Atoms are rearranged rather than created or destroyed.",
+        "explanation": "Total mass stays the same when nothing enters or leaves."
+      },
+      {
+        "prompt": "What generally happens to pitch as sound frequency increases?",
+        "options": [
+          "Pitch becomes higher",
+          "Pitch becomes lower",
+          "Sound must become silent"
+        ],
+        "answer": 0,
+        "hint": "Faster vibrations mean a higher frequency.",
+        "explanation": "A higher frequency corresponds to a higher pitch."
+      },
+      {
+        "prompt": "What can be passed from parents to offspring through genes?",
+        "options": [
+          "Every learned skill",
+          "Every memory",
+          "Inherited characteristics"
+        ],
+        "answer": 2,
+        "hint": "Distinguish inherited information from experiences.",
+        "explanation": "Genes carry information that influences inherited characteristics."
+      }
+    ]
+  }
+]

@@ -1,0 +1,21 @@
+Sodafom Android white-screen fix candidate
+Created from the uploaded review ZIP.
+
+Changes made:
+1) capacitor.config.ts: packaged WebView hostname changed from sodafom.uk to localhost so local Capacitor assets do not share the real API hostname.
+2) src/App.tsx: Capacitor uses createHashRouter; the normal website still uses createBrowserRouter.
+3) export-plugins/AiroErrorBoundary.tsx: replaced the passthrough with a real React error boundary so render crashes show an error instead of a blank white screen.
+4) index.html: added a very early startup error surface for pre-React JavaScript/unhandled promise failures.
+5) android/app/src/main/assets/capacitor.config.json: kept aligned with localhost for immediate Android testing; npx cap sync will regenerate it from capacitor.config.ts.
+
+IMPORTANT:
+This copy has been source-reviewed and patched, but it has NOT been verified on Michael's physical Android phone from this environment.
+Build/test sequence in Android Studio/Gemini:
+- npm/pnpm build
+- npx cap sync android
+- build debug APK
+- uninstall old debug app if needed
+- install fresh APK
+- launch and inspect screen/logcat
+
+If an error screen appears instead of the home page, copy the exact error text; that will identify the remaining startup fault.

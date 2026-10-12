@@ -1,0 +1,74 @@
+SODAFOM — GEMINI FIX COMMAND
+Date: 9 September 2026
+
+PROJECT
+GitHub repo: drmichael1982-crypto/Sodafom.uk
+Railway service: Sodafom.uk
+
+SOURCE OF TRUTH
+Use the exact nine approved screenshots supplied in the latest Sodafom handoff ZIP:
+1. Home
+2. Archie’s Stories
+3. Archie’s Lessons
+4. Ask Archie
+5. Sodafom Game Islands
+6. Homework Helper
+7. Archie Theatre
+8. Parents’ Evening
+9. Teacher Classroom
+
+GOAL
+Make the live app visually match those approved screenshots. Do not leave the current generic/wireframe cards, orange placeholder doors, chair emojis, or the temporary approved-artwork preview block.
+
+MUST FIX
+- Remove the temporary “Approved design preview — live test controls are directly below” injection.
+- Replace temporary/generic visual shells with the approved designs.
+- Keep existing navigation/business logic underneath.
+- Make visible buttons/doors/islands/books clickable and route to their existing pages.
+- Fix broken approved image paths so assets return correctly in Railway production.
+- Fix startup crash: Cannot read properties of null (reading 'totalSignups'). Guard null/undefined stats data and default numeric values to 0 instead of crashing the app.
+- Keep mobile layout usable at roughly 360–430px width with no horizontal overflow.
+- Do not remove AI, lesson, game, parent, teacher, payment or admin logic.
+
+ORDER
+1. Home page first: match the approved screenshot closely and wire its menu items.
+2. Stories.
+3. Lessons.
+4. Ask Archie.
+5. Game Islands.
+6. Homework Helper.
+7. Archie Theatre.
+8. Parents’ Evening.
+9. Teacher Classroom.
+10. Fix totalSignups null crash and run full route regression.
+
+ASSET RULE
+Put supplied approved images in a stable public asset directory, e.g. public/assets/approved-v2/. Do not reference local machine paths. Verify production asset URLs load.
+
+HOME MENU ROUTES TO PRESERVE
+Archie’s Stories
+Archie’s Lessons
+Ask Archie
+Game Islands
+Homework Helper
+Archie Theatre
+Parents’ Evening
+Teacher Classroom
+Sodafom Shop
+Archie’s Sticker Book
+Settings
+My Progress
+Rewards
+Friends
+
+TEST BEFORE COMMIT
+- Home visually matches approved design.
+- No broken image boxes.
+- No duplicate old controls underneath.
+- All nine main routes open.
+- totalSignups null/undefined cannot crash startup.
+- Mobile layout works.
+- Production build passes.
+
+Suggested commit message:
+Replace temporary Sodafom wireframes with approved visuals and fix startup null crash

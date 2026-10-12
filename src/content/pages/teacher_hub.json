@@ -1,0 +1,127 @@
+{
+  "hero": {
+    "eyebrow": "For teachers & tutors",
+    "headline": "Bring Sodafom into your classroom",
+    "subtext": "Curriculum-aligned games, class progress tracking, and up to 30 pupil profiles — everything you need to make learning irresistible.",
+    "cta": "Request a free demo",
+    "ctaHref": "/contact"
+  },
+  "stats": [
+    {
+      "id": "ts-1",
+      "value": "118",
+      "label": "curriculum-aligned games"
+    },
+    {
+      "id": "ts-2",
+      "value": "4",
+      "label": "core subjects covered"
+    },
+    {
+      "id": "ts-3",
+      "value": "30",
+      "label": "pupil profiles per class"
+    },
+    {
+      "id": "ts-4",
+      "value": "5–13",
+      "label": "age range supported"
+    }
+  ],
+  "features": [
+    {
+      "id": "tf-1",
+      "emoji": "📊",
+      "title": "Class progress dashboard",
+      "description": "See every pupil's stars, games played, and subject strengths at a glance. Spot who needs extra support instantly."
+    },
+    {
+      "id": "tf-2",
+      "emoji": "📚",
+      "title": "Curriculum alignment",
+      "description": "Every game is mapped to the UK National Curriculum. Filter by year group, subject, and topic to assign targeted practice."
+    },
+    {
+      "id": "tf-3",
+      "emoji": "🏆",
+      "title": "Class leaderboard",
+      "description": "Motivate pupils with a private class leaderboard — first names only, fully opt-in, and always kind."
+    },
+    {
+      "id": "tf-4",
+      "emoji": "📋",
+      "title": "Weekly reports",
+      "description": "Automated weekly summaries emailed to you every Monday — no manual data entry required."
+    },
+    {
+      "id": "tf-5",
+      "emoji": "🎯",
+      "title": "Assign daily challenges",
+      "description": "Set a specific game as the class daily challenge and track how many pupils complete it."
+    },
+    {
+      "id": "tf-6",
+      "emoji": "🖨️",
+      "title": "Printable certificates",
+      "description": "Generate and print personalised achievement certificates for every pupil — great for parents' evening."
+    }
+  ],
+  "subjects": [
+    {
+      "id": "tsub-1",
+      "name": "Maths",
+      "emoji": "🔢",
+      "games": 37,
+      "topics": "Times tables, fractions, geometry, algebra, mental arithmetic"
+    },
+    {
+      "id": "tsub-2",
+      "name": "Spelling",
+      "emoji": "✏️",
+      "games": 27,
+      "topics": "Phonics, word families, homophones, prefixes, suffixes"
+    },
+    {
+      "id": "tsub-3",
+      "name": "Reading",
+      "emoji": "📖",
+      "games": 25,
+      "topics": "Comprehension, inference, vocabulary, fluency, phonics"
+    },
+    {
+      "id": "tsub-4",
+      "name": "Science",
+      "emoji": "🔬",
+      "games": 22,
+      "topics": "Animals, plants, forces, materials, space, human body"
+    }
+  ],
+  "testimonials": [
+    {
+      "id": "tt-1",
+      "quote": "My Year 3 class absolutely love the daily challenge. Engagement in literacy has gone through the roof.",
+      "name": "Miss Patel",
+      "role": "Year 3 Teacher, London"
+    },
+    {
+      "id": "tt-2",
+      "quote": "The progress dashboard saves me hours every week. I can see exactly who needs extra maths support.",
+      "name": "Mr Davies",
+      "role": "Primary School Teacher, Cardiff"
+    },
+    {
+      "id": "tt-3",
+      "quote": "I use it with my tutoring students aged 7–11. The curriculum alignment is spot on for the UK.",
+      "name": "Sarah K.",
+      "role": "Private Tutor, Manchester"
+    }
+  ],
+  "cta": {
+    "headline": "Ready to transform your classroom?",
+    "subtext": "Get a free 30-day trial for your whole class — no credit card required.",
+    "primaryCta": "Request a free demo",
+    "primaryHref": "/contact",
+    "secondaryCta": "See pricing",
+    "secondaryHref": "/pricing"
+  }
+}
