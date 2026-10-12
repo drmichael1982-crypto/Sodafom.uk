@@ -180,4 +180,26 @@ describe('preview legacy-account request isolation',()=>{
     expect(mocks.recordGameCompletion).toHaveBeenCalledExactlyOnceWith('maths','starter');
     expect(readScopedGameStars()).toEqual({'game-starter':3});
   });
+  it('waits for the completed game to save before checking newly earned badges',async()=>{
+    mocks.preview=false;
+    localStorage.setItem('sodafom_active_child',JSON.stringify(staleChild));
+    let resolveProgress!:(response:{ok:boolean})=>void;
+    const progressResponse=new Promise<{ok:boolean}>(resolve=>{resolveProgress=resolve;});
+    vi.mocked(fetch).mockImplementation((input)=>{
+      const url=String(input);
+      if(url==='/daily-challenge')return Promise.resolve({ok:true,json:async()=>({})} as Response);
+      if(url==='/children/42/progress')return progressResponse as Promise<Response>;
+      if(url==='/rewards/check-badges')return Promise.resolve({ok:true,json:async()=>({newBadges:[]})} as Response);
+      return Promise.reject(new Error(`Unexpected request: ${url}`));
+    });
+    show(<GameShell title="Starter" emoji="1" subject="maths" ageGroups={['11–13']}>
+      {finish=> <button onClick={()=>finish(result)}>Finish ordered round</button>}
+    </GameShell>);
+    fireEvent.click(screen.getByRole('button',{name:'Finish ordered round'}));
+    expect(vi.mocked(fetch).mock.calls.some(([url])=>url==='/children/42/progress')).toBe(true);
+    expect(vi.mocked(fetch).mock.calls.some(([url])=>url==='/rewards/check-badges')).toBe(false);
+
+    await act(async()=>{resolveProgress({ok:true});await progressResponse;});
+    expect(vi.mocked(fetch).mock.calls.some(([url])=>url==='/rewards/check-badges')).toBe(true);
+  });
 });

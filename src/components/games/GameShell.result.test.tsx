@@ -61,3 +61,9 @@ it('leaves focus alone while a native dialog is open',()=>{
   expect(document.body).toHaveFocus();
 });
 
+it('keeps signed-in reward and daily-challenge actions large enough for phones',()=>{
+  render(<MemoryRouter><ResultScreen result={{score:80,correct:8,total:10,stars:2}} onReplay={vi.fn()} onHome={vi.fn()} gameTitle="Number Pop" subject="maths" nextGame={null} isLoggedIn isDailyChallenge navigate={vi.fn()}/></MemoryRouter>);
+  expect(screen.getByRole('button',{name:'Claim ⭐×5'})).toHaveClass('min-h-11');
+  expect(screen.getByRole('button',{name:'My Certificates'})).toHaveClass('min-h-11');
+  expect(screen.getByRole('button',{name:'My Rewards'})).toHaveClass('min-h-11');
+});
