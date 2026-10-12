@@ -114,14 +114,22 @@ async function assertAdultDashboardHasNoChildLauncher(page, viewportName) {
 
     await page.goto(`${base}/parent-dashboard`);
     await page.getByRole('heading', { name: 'Progress Dashboard' }).waitFor();
+    const miaButton = page.getByRole('button', { name: /Mia/ });
+    const leoButton = page.getByRole('button', { name: /Leo/ });
+    await miaButton.waitFor();
+    assert.equal(await miaButton.getAttribute('aria-pressed'), 'true', 'The first learner should be selected initially');
+    assert.equal(await leoButton.getAttribute('aria-pressed'), 'false', 'Other learners should stay available without duplicating long reports');
     const mia = page.locator('[data-tutor-report-child-id="101"]');
-    const leo = page.locator('[data-tutor-report-child-id="202"]');
     await mia.getByText('Report for Mia • Year 2 • ages 5–7').waitFor();
-    await leo.getByText('Report for Leo • Year 7 • ages 11–13').waitFor();
     await mia.getByText(/Addition - Great accuracy and confidence!/).waitFor();
-    await leo.getByText(/Forces - Scheduled for simpler examples/).waitFor();
     assert.equal(await mia.getByText(/Forces - Scheduled/).count(), 0, 'Mia must not receive Leo’s tutor topic');
+    assert.equal(await page.locator('[data-tutor-report-child-id="202"]').count(), 0, 'Only the selected learner report should render');
+    await leoButton.click();
+    const leo = page.locator('[data-tutor-report-child-id="202"]');
+    await leo.getByText('Report for Leo • Year 7 • ages 11–13').waitFor();
+    await leo.getByText(/Forces - Scheduled for simpler examples/).waitFor();
     assert.equal(await leo.getByText(/Addition - Great/).count(), 0, 'Leo must not receive Mia’s tutor topic');
+    assert.equal(await page.locator('[data-tutor-report-child-id="101"]').count(), 0, 'Switching learner should replace the previous detailed report');
     assert.equal(await page.getByText('COPPA Safe').count(), 0, 'The report must not make an unsupported compliance claim');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, 'Parent dashboard must fit the phone width');
     await assertAdultDashboardHasNoChildLauncher(page, 'phone');

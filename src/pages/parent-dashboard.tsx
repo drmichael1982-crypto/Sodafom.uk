@@ -442,6 +442,7 @@ function ChildCard({ childId }: { childId: number }) {
 export function ParentDashboardInner() {
   const { user } = useSession();
   const [children, setChildren] = useState<ChildSummary[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -457,7 +458,13 @@ export function ParentDashboardInner() {
         // Accept the current array response and the legacy envelope so a
         // cached frontend cannot briefly clear a family's learner list while
         // Railway revisions are rolling over.
-        setChildren(normalizeChildrenResponse(d));
+        const normalizedChildren = normalizeChildrenResponse(d);
+        setChildren(normalizedChildren);
+        setSelectedChildId((currentId) => (
+          currentId !== null && normalizedChildren.some((child) => child.id === currentId)
+            ? currentId
+            : normalizedChildren[0]?.id ?? null
+        ));
       })
       .catch(err => {
         console.error('ParentDashboard: Load failed', err);
@@ -547,11 +554,48 @@ export function ParentDashboardInner() {
         {!loading && children.length > 0 && (
           <>
             <FamilySummaryCard children={children} />
-            <div className="flex flex-col gap-8">
-              {children.map((c) => (
-                <ChildCard key={c.id} childId={c.id} />
-              ))}
-            </div>
+            {children.length > 1 && (
+              <nav aria-label="Choose a learner" className="mb-6 rounded-3xl border-2 border-border bg-card p-4 sm:p-5">
+                <h2 className="mb-3 text-sm font-black text-foreground">Choose a learner</h2>
+                <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {children.map((child) => {
+                    const selected = child.id === selectedChildId;
+                    return (
+                      <li key={child.id}>
+                        <button
+                          type="button"
+                          aria-pressed={selected}
+                          aria-controls={`progress-child-${child.id}`}
+                          onClick={() => setSelectedChildId(child.id)}
+                          className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 ${
+                            selected
+                              ? 'border-primary bg-primary/10 text-foreground'
+                              : 'border-border bg-muted/40 text-foreground hover:border-primary/40 hover:bg-primary/5'
+                          }`}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="text-xl" aria-hidden="true">{child.avatarEmoji ?? '🦁'}</span>
+                            <span className="min-w-0">
+                              <span className="block truncate font-black">{child.name}</span>
+                              <span className="block text-xs text-muted-foreground">Age group {child.ageGroup}</span>
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-xs font-black text-accent">⭐{child.totalStars}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Showing one detailed report at a time keeps this page easier to scan on smaller screens.
+                </p>
+              </nav>
+            )}
+            {selectedChildId !== null && (
+              <section id={`progress-child-${selectedChildId}`} aria-live="polite">
+                <ChildCard key={selectedChildId} childId={selectedChildId} />
+              </section>
+            )}
           </>
         )}
       </main>
