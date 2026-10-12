@@ -23,6 +23,7 @@ jobs:
           npm start > /tmp/archie-server.log 2>&1 &
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/api/health && break; sleep 1; done
           node scripts/test-archie-ui.cjs
+          node scripts/test-game-card-artwork.cjs
           node scripts/test-reading-quest-journey.cjs
           node scripts/test-reading-fluency-prompt.cjs
           node scripts/test-reading-speed-journey.cjs
@@ -30,6 +31,8 @@ jobs:
           node scripts/test-short-landscape-help.cjs
           test -f test-results/short-landscape-help/games-844x390.png
           test -f test-results/short-landscape-help/library-844x390.png
+          test -f test-results/game-card-artwork/games-phone.png
+          test -f test-results/game-card-artwork/games-tablet.png
           test -f test-results/reading-quest/retry-break-phone.png
           test -f test-results/reading-quest/retry-break-tablet.png
           test -f test-results/reading-quest/complete-reward-phone.png

@@ -15,7 +15,7 @@ import { getChildInterests, getInterestTheme, isSchoolFriendlyInterest, removeCh
 import GrownUpGate from '@/components/GrownUpGate';
 import ArchieAvatar from '@/components/ArchieAvatar';
 import { getArchieStage } from '@/lib/archie/age-style';
-import SceneArtwork, { sceneForSubject, type LearningScene } from '@/components/SceneArtwork';
+import SceneArtwork, { gameArtworkCue, sceneForSubject, type LearningScene } from '@/components/SceneArtwork';
 import PagePictureJigsaw from '@/components/PagePictureJigsaw';
 import OrbitHome from '@/components/OrbitHome';
 import PlanetGlobe from '@/components/PlanetGlobe';
@@ -248,7 +248,7 @@ export function ArchieGames() {
     </div><div className="a-tabs" aria-label="Game subjects">{['all','maths','spelling','reading','science'].map(s=><button key={s} className="a-button" aria-pressed={subject===s} onClick={()=>setParams(s==='all'?{}:{subject:s})}>{s==='all'?'All games':s[0].toUpperCase()+s.slice(1)}</button>)}</div>
     <p role="status">{filtered.length} games for Year {activeYear}</p></div>;
   return <Page title="Choose a game" intro="Pick a picture and let's play." toolbar={toolbar}>
-    <div className="a-grid">{filtered.map((g,i)=><Link key={g.id} to={g.route} className={`a-card colour-${i%4}`} data-game-link><SceneArtwork scene={sceneForSubject(g.subject,g.title)} title={g.title} compact/><h2>{g.title}</h2><p>{g.description}</p><small>Ages {g.ageGroups.join(', ')}</small><span className="a-play">Play game →</span></Link>)}</div>
+    <div className="a-grid">{filtered.map((g,i)=><Link key={g.id} to={g.route} className={`a-card colour-${i%4}`} data-game-link><SceneArtwork scene={sceneForSubject(g.subject,g.title)} title={g.title} compact cue={gameArtworkCue(g.title,g.subject)}/><h2>{g.title}</h2><p>{g.description}</p><small>Ages {g.ageGroups.join(', ')}</small><span className="a-play">Play game →</span></Link>)}</div>
     {!filtered.length && <section className="a-panel" aria-labelledby="game-search-help"><h2 id="game-search-help">Let's find another game</h2><p>No games match those filters for Year {activeYear}. Try a shorter search or choose another subject.</p><button className="a-button" onClick={()=>{setQuery('');setParams({});searchInput.current?.focus();}}>Show Year {activeYear} games</button></section>}
   </Page>;
 }
