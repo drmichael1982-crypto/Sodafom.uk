@@ -38,8 +38,10 @@ This is an adult information-density and navigation proposal, not a statutory cu
 | Hosted interest-theme check | PASS — application commit run #127 |
 | Hosted Archie test build | PASS — [run #588](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38192373160), application commit `a498f7d` |
 | Browser artifact | PASS — ID `11722536378`, SHA-256 `9ae740647be52b07253c27f2c288f4b010433da2826ace17d4f40b3dc0880c26`, 228 files |
+| Exact reconciled hosted checks | PASS — interest themes #129 and [Archie test build #593](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38194517544) on `95bc05c` |
+| Exact reconciled browser artifact | PASS — ID `11723576072`, SHA-256 `fa5ab372109915e0a0e9826093cffb95f084ff84cb11c60e357d65fbfa478769` |
 
-Fresh workflows #591/#128 on the first reconciliation publication failed at TypeScript before tests because that publication had accidentally appended a blob-SHA token after `parent-dashboard.tsx`. The complete GitHub tree and the exact failing line were inspected; the clean locally tested source is published in the following repair commit. Older green evidence is not being used to hide that current failure.
+Fresh workflows #591/#128 on the first reconciliation publication failed at TypeScript before tests because that publication had accidentally appended a blob-SHA token after `parent-dashboard.tsx`. The complete GitHub tree and exact failing line were inspected. Repair commit `95bc05c266eede28ed7737460bda99ed68e82e7f` removed that token and restored the complete 955-file tree. Its replacement workflows #593/#129 passed: TypeScript, all 1,203 tests, production build, Chromium installation, route/button checks, complete Reading Speed journey, full simulated Years 1–9 phone/tablet game/lesson matrix, learner settings/parent tutor isolation and artifact upload.
 
 The new unit scenario verifies the default learner, switching, `aria-pressed`, the 44 px class, removal of the prior report from the DOM and the selected learner’s API request. The browser isolation journey now chooses Mia, checks only Mia’s topic, switches to Leo, checks only Leo’s topic, verifies both reports are never rendered together, checks phone/tablet width fit and captures the rendered result.
 
