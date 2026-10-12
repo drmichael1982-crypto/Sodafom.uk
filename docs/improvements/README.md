@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Parent Hub learner-removal reconciliation — 12 October 2026](2026-10-12-learner-removal-reconciliation.md): combines the latest active-learner deletion context with the existing Reading Speed candidate, restores a mergeable draft PR and records the current deployment, simulated tests and adult-account visual boundary.
 1. [Reading Speed learner-controlled evidence clues — 12 October 2026](2026-10-12-reading-speed-evidence-clues.md): keeps evidence help optional on the first attempt, persists it for a supported retry and adds a complete phone/tablet instructions-to-result browser journey after reconciling the latest Parent Hub target.
 1. [Teacher summary pager reflow — 11 October 2026](2026-10-11-teacher-summary-pager-reflow.md): reproduces the current live post-gate clipping, constrains the learner puzzle summary to one app-screen, reconciles the latest parent API target and verifies the exact candidate across the full hosted matrix.
 1. [Grown-up dashboard launcher clearance — 11 October 2026](2026-10-11-phone-archie-launcher.md): records the failed 56 px overlap attempt, keeps the child-facing launcher off grown-up pages, preserves its branded compact state elsewhere and renders parent reports immediately when reduced motion is requested.
@@ -53,6 +54,6 @@ Read the latest note first and recheck GitHub/CI/deployment before work.
 23. [Bingo feedback and breaks — 7 October 2026](2026-10-07-bingo-feedback.md): accurate first-try scoring, hints, pause/resume and prior-run evidence.
 24. [Game access — 7 October 2026](2026-10-07-game-access.md): preceding freeze/age-discovery repair and historical starting evidence.
 
-Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. Current target `e03f6875c65c8189d595b4da2e6c859a757e2fa6` is reconciled into exact tested application head `57371e3b9cbe156cd6efe0a80ea5299c7f809501`; the candidate is not deployed.
+Continue `improve/archie-learning-20261007`, draft PR #81, targeting `test/archie-2026-10-02`. Current target `48aadea151dd841b59dbaddfc39d9d159e01c2b3` is reconciled into application head `fdae14dc4663e768c2168f553fb25ebc57c8e040`; the candidate is not deployed.
 
-Next bounded priority: review Reading Speed's hosted phone/tablet artifact, then repair one reproducible adult-page visual failure (parent input affordance or teacher preview clipping) with settled geometry/contrast coverage. Do not duplicate completed Reading Speed, storage, Reading Fluency, Spelling Snap or Reading Quest work and do not merge/deploy.
+Next bounded priority: review the very long signed-in phone parent dashboard for a bounded information-density/navigation improvement, with settled geometry and learner-isolation coverage. Do not duplicate the already-fitted teacher pager, Reading Speed, storage, Reading Fluency, Spelling Snap or Reading Quest work and do not merge/deploy.
