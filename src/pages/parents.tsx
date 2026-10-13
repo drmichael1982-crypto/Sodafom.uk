@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { CheckCircle2, ChevronRight, ShieldCheck, Star } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { ArchieCharacter } from '../components/ArchieCharacter';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 import { parents } from 'virtual:content';
 const siteUrl = 'https://sodafom.uk';
 const ogImage = `${siteUrl}/og-image.png`;
@@ -46,10 +47,31 @@ const cardIn = {
   }
 } as const;
 export default function ParentsPage() {
+  const parentFaq = OPEN_TESTING_MODE
+    ? parents.faq.map(item => {
+        if (item.id === 'f2') {
+          return {
+            ...item,
+            answer: 'Sodafom is free to explore in this release. Payment collection is off, so no card or subscription is required.',
+          };
+        }
+        if (item.id === 'f3') {
+          return {
+            ...item,
+            question: 'Do I need a trial or payment card?',
+            answer: 'No. Open the games catalogue and start learning for free. There is no checkout or trial countdown in this release.',
+          };
+        }
+        return item;
+      })
+    : parents.faq;
+
   return <>
       <Helmet>
         <title>For Parents — Sodafom | Safe, Fun Learning for Ages 5–13</title>
-        <meta name="description" content="Everything parents need to know about Sodafom — safe, UK curriculum-aligned, game-based learning for children aged 5–13. Track progress, no ads, cancel anytime." />
+        <meta name="description" content={OPEN_TESTING_MODE
+          ? 'Everything parents need to know about Sodafom — safe, free, UK curriculum-aligned learning for children aged 5–13.'
+          : 'Everything parents need to know about Sodafom — safe, UK curriculum-aligned, game-based learning for children aged 5–13. Track progress, no ads, cancel anytime.'} />
         <link rel="canonical" href={`${siteUrl}/parents`} />
         <meta property="og:title" content="For Parents — Sodafom" />
         <meta property="og:description" content="Safe, fun, curriculum-aligned learning for children aged 5–13. Track your child's progress from the Parent Hub." />
@@ -154,8 +176,8 @@ export default function ParentsPage() {
                 Go to Parent Hub
                 <ChevronRight size={18} />
               </Link>
-              <Link to="/pricing" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full font-bold text-base bg-white/15 text-primary-foreground border border-white/30 hover:bg-white/25 transition-all">
-                View pricing
+              <Link to={OPEN_TESTING_MODE ? '/games' : '/pricing'} className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full font-bold text-base bg-white/15 text-primary-foreground border border-white/30 hover:bg-white/25 transition-all">
+                {OPEN_TESTING_MODE ? 'Browse free games' : 'View pricing'}
               </Link>
             </motion.div>
           </div>
@@ -191,7 +213,9 @@ export default function ParentsPage() {
                 { value: '25+', label: 'Playable games', emoji: '🎮' },
                 { value: '3',   label: 'Core subjects',  emoji: '📚' },
                 { value: '5–13', label: 'Ages covered',  emoji: '🎓' },
-                { value: '£1',  label: 'From per month', emoji: '💷' },
+                OPEN_TESTING_MODE
+                  ? { value: 'Free', label: 'Current access', emoji: '💚' }
+                  : { value: '£1', label: 'From per month', emoji: '💷' },
               ].map(s => (
                 <motion.div key={s.label} variants={cardIn} className="flex flex-col items-center gap-1">
                   <span className="text-3xl">{s.emoji}</span>
@@ -217,10 +241,10 @@ export default function ParentsPage() {
               {[
                 { name: 'Sarah M.', role: 'Parent of two, Manchester', stars: 5, quote: 'My daughter went from dreading maths to asking to play Sodafom every evening. The difference in her confidence is incredible.' },
                 { name: 'James T.', role: 'Primary school teacher, London', stars: 5, quote: 'I use Sodafom with my Year 3 class. The Teacher Hub makes it so easy to see who needs extra support. Brilliant tool.' },
-                { name: 'Priya K.', role: 'Parent, Birmingham', stars: 5, quote: 'Finally an app with no ads and no in-app purchases. My son can just focus on learning. Worth every penny.' },
+                { name: 'Priya K.', role: 'Parent, Birmingham', stars: 5, quote: 'Finally an app with no ads and no in-app purchases. My son can just focus on learning.' },
                 { name: 'David L.', role: 'Parent of three, Leeds', stars: 5, quote: 'All three of my children use it — ages 6, 9, and 12. The age-appropriate difficulty means it works for all of them.' },
                 { name: 'Emma R.', role: 'Home educator, Bristol', stars: 5, quote: 'The curriculum alignment is spot on. I use it to supplement our home education and the progress tracking is really useful.' },
-                { name: 'Aisha B.', role: 'Parent, Nottingham', stars: 5, quote: 'My son earned 1000 stars and got a free month — he was so proud! The rewards system keeps him motivated every day.' },
+                { name: 'Aisha B.', role: 'Parent, Nottingham', stars: 5, quote: 'My son earned 1000 stars and was so proud! The rewards system keeps him motivated every day.' },
               ].map(t => (
                 <motion.div key={t.name} variants={cardIn} className="bg-card rounded-2xl p-6 border border-border shadow-sm flex flex-col gap-4">
                   <div className="flex gap-0.5">
@@ -332,7 +356,9 @@ export default function ParentsPage() {
                 { emoji: '⏱️', title: '10 minutes a day', body: 'Short, focused sessions fit into any routine — before school, after dinner, or at weekends.' },
                 { emoji: '📊', title: 'See progress instantly', body: 'The Parent Hub shows exactly which topics your child has practised and where they need more support.' },
                 { emoji: '🏆', title: 'Built-in motivation', body: 'Stars, badges, streaks, and certificates keep children coming back without any nagging from you.' },
-                { emoji: '🔒', title: 'No surprises', body: 'One flat subscription. No ads, no in-app purchases, no hidden extras. Ever.' },
+                { emoji: '🔒', title: 'No surprises', body: OPEN_TESTING_MODE
+                  ? 'Free access, no ads, no in-app purchases, and no checkout in this release.'
+                  : 'One flat subscription. No ads, no in-app purchases, no hidden extras. Ever.' },
                 { emoji: '🎓', title: 'Curriculum-aligned', body: 'Every game maps to the UK National Curriculum — so what they play actually helps at school.' },
                 { emoji: '📱', title: 'Any device', body: 'Works on phones, tablets, and computers. No app to download — just open the browser and play.' },
               ].map(w => (
@@ -577,7 +603,7 @@ export default function ParentsPage() {
             once: true
           }}>
               <Accordion type="single" collapsible className="flex flex-col gap-3">
-                {parents.faq.map((item, idx) => <AccordionItem key={item.id} value={`faq-${idx}`} className="bg-card rounded-2xl border border-border px-6 shadow-sm">
+                {parentFaq.map((item, idx) => <AccordionItem key={item.id} value={`faq-${idx}`} className="bg-card rounded-2xl border border-border px-6 shadow-sm">
                     <AccordionTrigger className="font-bold text-foreground text-left py-5 hover:no-underline">
                       <span>{item.question}</span>
                     </AccordionTrigger>
@@ -627,14 +653,16 @@ export default function ParentsPage() {
               </h2>
               <p className="text-primary-foreground/70 text-lg mb-10">{parents.cta.subtext}</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
-                <Link to="/subscribe" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full font-black text-base bg-accent text-accent-foreground hover:scale-105 active:scale-95 transition-transform shadow-lg">
-                  🎉 Start 7-day free trial
+                <Link to={OPEN_TESTING_MODE ? '/games' : '/subscribe'} className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full font-black text-base bg-accent text-accent-foreground hover:scale-105 active:scale-95 transition-transform shadow-lg">
+                  {OPEN_TESTING_MODE ? '🎉 Start learning free' : '🎉 Start 7-day free trial'}
                 </Link>
                 <Link to="/games" className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full font-bold text-base bg-white/15 text-primary-foreground border border-white/30 hover:bg-white/25 transition-all">
                   Browse games first
                 </Link>
               </div>
-              <p className="text-primary-foreground/50 text-xs mb-8">No card required for trial · Cancel anytime · From £1/month after</p>
+              <p className="text-primary-foreground/50 text-xs mb-8">{OPEN_TESTING_MODE
+                ? 'No card required · payment collection is off'
+                : 'No card required for trial · Cancel anytime · From £1/month after'}</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link to="/games?age=5-7" className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full font-black text-base bg-primary-foreground/10 text-primary-foreground border border-primary-foreground/20 hover:bg-primary-foreground/20 transition-all">
                   🌟 Ages 5–7
