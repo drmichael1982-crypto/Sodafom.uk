@@ -92,6 +92,7 @@ const results = [];
         assert.equal(await page.getByRole('combobox', { name: 'My learning year', exact: true }).inputValue(), String(year));
         assert.equal(await page.getByLabel('Search games', { exact: true }).inputValue(), '');
         assert.equal(await page.getByLabel('Search games', { exact: true }).evaluate(input => input === document.activeElement), true);
+        await page.locator('button[aria-pressed="true"]').filter({ hasText: /^All games$/ }).waitFor();
         assert.equal(await button('All games').getAttribute('aria-pressed'), 'true');
         assert.deepEqual(await page.locator('[data-game-link]').evaluateAll(links => links.map(link => link.getAttribute('href'))), catalog.filter(game => eligible(game, year)).map(game => game.route));
         results.push(`Year ${year}, ${viewport.width}px: empty filters recover to eligible games with keyboard focus`);
