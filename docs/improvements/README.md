@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Settled Number Pop result evidence — 13 October 2026](2026-10-13-settled-number-pop-result-evidence.md): prevents the simulated browser capture from mistaking the result entrance animation for the settled phone/tablet layout, without changing gameplay or rewards.
 1. [Learner catalogue and free-access reconciliation — 13 October 2026](2026-10-13-catalogue-age-free-access-reconciliation.md): carries the active learner’s exact age into the classic catalogue, preserves learner-scoped stars and removes stale trial/subscription claims while payment collection is off.
 1. [Current-target reconciliation — 13 October 2026](2026-10-13-current-target-reconciliation.md): reconciles the latest learner switcher and reward-ordering target into the cumulative 2D candidate while retaining the distinct game-card cues and previous teacher-layout repair.
 1. [Game-card visual cues — 12 October 2026](2026-10-12-game-card-visual-cues.md): differentiates repeated game-card scenes with stable high-contrast activity cues while preserving accessible names, reduced-motion behavior, routes and the original branded artwork.
