@@ -29,7 +29,8 @@ The separate 3D and `sodafom797` work was not touched. Leonard’s private queue
 | Exact isolated rerun of those failures | PASS — 3 files / 18 tests with one worker |
 | Current target GitHub Actions | No PR-triggered run was exposed for `6b4ac34`; no conclusion is inferred |
 | Current target Railway status | SUCCESS before reconciliation |
-| Candidate hosted workflow | Pending after `ca19ce5` |
+| Candidate hosted workflow | PASS — [Archie test build #612](https://github.com/drmichael1982-crypto/Sodafom.uk/actions/runs/38362646189) on exact application commit `ca19ce5`: type-check, full unit suite, production build, button/game-route crawl, and simulated age/year phone/tablet matrix |
+| Exact responsive artifact | `archie-test-results` artifact `11796465117`; downloaded ZIP SHA-256 `40922cbb0a8e40e4a4b23dd93cfd20eace3a9728114d71a347d3fa2cd5b2bbbc` |
 
 All learner scenarios are simulated. They are not real-child testing and do not demonstrate learning outcomes or enjoyment.
 
@@ -38,7 +39,9 @@ All learner scenarios are simulated. They are not real-child testing and do not 
 - The current deployed main home remains visually coherent at the available 1,363×936 browser viewport: blue/gold branding, pale illustrated background, large controls and blond, emerald-eyed Archie are preserved.
 - The deployed game catalogue remains readable and unclipped at that viewport, with the saved Year 4 learner selection visible, a clear subject row and written game labels.
 - The deployed `/classic-home` page was inspected before and after scrolling. It visibly shows `Free — Current access`, `Four subjects, one free app`, `Browse free games` and `No card required · payment collection is off`; the stale trial/subscription action is absent.
-- The exact pre-reconciliation candidate’s phone and tablet game/teacher captures were already hash-verified in the preceding run. A new exact `ca19ce5` responsive artifact is still required before claiming this reconciliation’s phone/tablet rendering; the fresh runtime has no local Playwright Chromium executable.
+- Exact `ca19ce5` captures were visually inspected at 390×844 and 820×1180 for home, catalogue, a completed Number Pop game, spelling lesson, unlocked parent area and unlocked teacher preview. Branding, blond/emerald-eyed Archie, illustrated picture-world treatment and blue/gold controls remain coherent; labels and primary controls are readable, with no visible horizontal clipping.
+- The catalogue correctly renders the learner-year control, subject filters and written game labels at both sizes. The spelling lesson keeps the word, instruction, audio, typing, spoken-lesson, pause and next controls legible. Parent and teacher screens retain explicit adult/data-boundary copy.
+- The completed Number Pop result is functional and unclipped, but its 390×844 card leaves substantial empty vertical space and pushes some secondary actions below the initial viewport. This is a concrete presentation issue for the next bounded run, not evidence of a broken completion route.
 
 ## Sources and boundaries
 
@@ -48,4 +51,4 @@ Physical-device touch/layout, hardware screen readers, real-device microphone/au
 
 ## Next priority
 
-Confirm the hosted workflow and inspect its exact phone/tablet artifact. If green, continue from the next current browser failure rather than duplicating the catalogue-age, free-access, Word Scramble readiness or teacher-layout work.
+Tighten the Number Pop completion card at 390×844 so the result, replay/home choice and next activity are grouped more efficiently without adding pressure. Preserve the now-green routes, catalogue-age, free-access, Word Scramble readiness and teacher-layout work.
