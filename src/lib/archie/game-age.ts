@@ -17,6 +17,13 @@ export function isGameForAgeBand(ageBand: string, ageGroups: readonly string[]):
   });
 }
 
+/** Catalogue band centred on a learner's saved age, capped to the app's 5–13 range. */
+export function catalogueAgeBandForLearningAge(age: number | null): string | null {
+  if (age === null || !Number.isInteger(age) || age < 5 || age > 13) return null;
+  const start = age === 13 ? 12 : age;
+  return `${start}–${start + 1}`;
+}
+
 /** Ages represented by an England school year within Sodafom's 5–13 range. */
 export function schoolYearAgeRange(year: number): [number, number] | null {
   if (!Number.isInteger(year) || year < 1 || year > 9) return null;

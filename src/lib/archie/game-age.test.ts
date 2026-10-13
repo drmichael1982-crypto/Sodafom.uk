@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isGameForAgeBand, isGameForYear, schoolYearAgeLabel, schoolYearAgeRange } from './game-age';
+import { catalogueAgeBandForLearningAge, isGameForAgeBand, isGameForYear, schoolYearAgeLabel, schoolYearAgeRange } from './game-age';
 
 describe('game age matching', () => {
   it('matches exact and overlapping displayed age bands', () => {
@@ -12,6 +12,14 @@ describe('game age matching', () => {
     expect(isGameForAgeBand('all', ['5–7'])).toBe(false);
     expect(isGameForAgeBand('9–7', ['5–7'])).toBe(false);
     expect(isGameForAgeBand('5–7', ['older children'])).toBe(false);
+  });
+
+  it('selects a catalogue band from the active learner age', () => {
+    expect(catalogueAgeBandForLearningAge(5)).toBe('5–6');
+    expect(catalogueAgeBandForLearningAge(9)).toBe('9–10');
+    expect(catalogueAgeBandForLearningAge(13)).toBe('12–13');
+    expect(catalogueAgeBandForLearningAge(null)).toBeNull();
+    expect(catalogueAgeBandForLearningAge(14)).toBeNull();
   });
 
   it('matches both possible ages in a school year without exceeding age 13', () => {
