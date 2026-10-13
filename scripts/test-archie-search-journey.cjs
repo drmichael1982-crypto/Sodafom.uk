@@ -79,6 +79,21 @@ const results = [];
         await close.click();
         await dialog.waitFor({ state: 'detached' });
       };
+      const assertCoreResultActionsVisible = async label => {
+        const actions = [
+          button('Play another round'),
+          button('Home'),
+          page.getByRole('button', { name: /^(Play Next:|Choose Next Game$)/ }),
+        ];
+        for (const action of actions) {
+          const bounds = await action.evaluate(element => {
+            const box = element.getBoundingClientRect();
+            return { top: box.top, bottom: box.bottom, viewportHeight: window.innerHeight };
+          });
+          assert.ok(bounds.top >= 0 && bounds.bottom <= bounds.viewportHeight,
+            `${label}: ${await action.innerText()} must be fully visible before scrolling (${JSON.stringify(bounds)})`);
+        }
+      };
       await goto('/games'); await chooseYear(4);
       await page.getByLabel('Search games', { exact: true }).fill('Phonics Parrot');
       await page.getByText('0 games for Year 4', { exact: true }).waitFor();
@@ -135,6 +150,7 @@ const results = [];
           .some(element => element.textContent?.trim() === '90%'));
         await page.getByText('Your practice earned three stars!', { exact: true }).waitFor();
         await page.waitForTimeout(450);
+        await assertCoreResultActionsVisible(`Year ${year}, ${viewport.width}px Number Pop result`);
         await page.screenshot({ path: `${output}/complete-year-${year}-${viewport.width}.png`, fullPage: true });
         await button('Back to games').click(); await page.waitForURL(base + '/games');
         results.push(`Year ${year}, ${viewport.width}px: eligible menu → wrong answer/hint → pause/resume → ten answers → completion → menu`);
@@ -242,6 +258,7 @@ const results = [];
           await page.getByText(retried ? 'You earned 2 stars!' : '⭐ Three stars earned! ⭐', { exact: true }).waitFor();
           await page.waitForTimeout(1700);
           await page.getByText(`${score}%`, { exact: true }).waitFor();
+          await assertCoreResultActionsVisible(`Year ${year}, ${viewport.width}px Number Planets result`);
           await page.screenshot({ path: `${output}/number-planets-complete-year-${year}-${viewport.width}.png`, fullPage: true });
           await button('Back to games').click(); await page.waitForURL(base + '/games');
           const tierLabel = year <= 3 ? 'addition' : year <= 6 ? 'multiplication' : 'multiplication and division';

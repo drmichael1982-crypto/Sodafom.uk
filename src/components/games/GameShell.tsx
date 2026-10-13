@@ -487,7 +487,7 @@ export function ResultScreen({
         initial={{ opacity: 0, scale: 0.88, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-        className="flex-1 flex items-center justify-center px-4 pt-4 pb-44 sm:p-6 sm:pb-36 focus-within:!opacity-100 [&_*:focus-within]:!opacity-100"
+        className="flex-1 flex items-center justify-center px-2 pt-2 pb-44 sm:p-6 sm:pb-36 focus-within:!opacity-100 [&_*:focus-within]:!opacity-100"
       >
         <div className="max-w-md w-full">
 
@@ -511,7 +511,7 @@ export function ResultScreen({
           </AnimatePresence>
 
           {/* Main card */}
-          <div className="bg-card rounded-3xl shadow-2xl border-2 border-border p-6 sm:p-8 text-center relative overflow-hidden">
+          <div className="bg-card rounded-3xl shadow-2xl border-2 border-border p-4 sm:p-8 text-center relative overflow-hidden">
 
             {/* Subtle shimmer for 3 stars */}
             {result.stars === 3 && (
@@ -531,14 +531,14 @@ export function ResultScreen({
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="text-2xl sm:text-3xl font-black text-foreground mb-4 rounded-lg focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-blue-700"
+              className="text-2xl sm:text-3xl font-black text-foreground mb-2 sm:mb-4 rounded-lg focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-blue-700"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               {headline}
             </motion.h2>
 
             {/* Stars */}
-            <div className="flex justify-center gap-2 sm:gap-3 my-5">
+            <div className="flex justify-center gap-2 sm:gap-3 my-3 sm:my-5">
               {[1, 2, 3].map(s => (
                 <motion.div
                   key={s}
@@ -549,7 +549,7 @@ export function ResultScreen({
                   transition={{ type: 'spring', stiffness: 400, damping: 18 }}
                 >
                   <Star
-                    size={52}
+                    size={48}
                     className={s <= result.stars ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}
                   />
                 </motion.div>
@@ -561,9 +561,9 @@ export function ResultScreen({
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-              className="bg-muted rounded-2xl p-4 mb-5"
+              className="bg-muted rounded-2xl p-3 sm:p-4 mb-3 sm:mb-5"
             >
-              <div aria-hidden="true" className="text-5xl font-black text-primary mb-1 tabular-nums">
+              <div aria-hidden="true" className="text-4xl sm:text-5xl font-black text-primary mb-1 tabular-nums">
                 {animatedScore}%
               </div>
               <span className="sr-only">Final score: {result.score}%</span>
@@ -578,7 +578,7 @@ export function ResultScreen({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.1 }}
-                className="flex items-center justify-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4 text-sm font-bold text-yellow-800"
+                className="flex items-center justify-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl p-2.5 sm:p-3 mb-3 sm:mb-4 text-sm font-bold text-yellow-800"
               >
                 <Trophy size={16} />
                 You earned {result.stars} star{result.stars !== 1 ? 's' : ''}!
@@ -608,7 +608,7 @@ export function ResultScreen({
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setShowCert(true)}
-                className="relative z-20 w-full flex min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl font-black mb-4 shadow-md hover:shadow-lg transition-shadow"
+                className="relative z-20 w-full flex min-h-11 sm:min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-black mb-3 sm:mb-4 shadow-md hover:shadow-lg transition-shadow"
                 style={bannerStyle}
               >
                 🏆 View Certificate
@@ -698,7 +698,7 @@ export function ResultScreen({
             )}
 
             {/* Action buttons */}
-            <div className="mb-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-3 text-sky-900">
+            <div className="mb-2 sm:mb-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-2.5 sm:p-3 text-sky-900">
               <p className="font-black">Level {level}</p>
               <p className="text-xs font-bold">
                 {gamesRemainingForNextLevel === 10
@@ -706,13 +706,13 @@ export function ResultScreen({
                   : `${gamesRemainingForNextLevel} game${gamesRemainingForNextLevel === 1 ? '' : 's'} until Level ${level + 1}`}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={onReplay}
-                className="relative z-20 flex-1 min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl font-bold bg-primary text-primary-foreground shadow-sm"
+                className="relative z-20 flex-1 min-h-11 sm:min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-bold bg-primary text-primary-foreground shadow-sm"
               >
                 <RotateCcw size={16} /> Play another round
               </motion.button>
@@ -721,7 +721,7 @@ export function ResultScreen({
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={onHome}
-                className="relative z-20 flex-1 min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl font-bold bg-muted text-foreground border border-border"
+                className="relative z-20 flex-1 min-h-11 sm:min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-bold bg-muted text-foreground border border-border"
               >
                 <Home size={16} /> Home
               </motion.button>
@@ -739,13 +739,13 @@ export function ResultScreen({
                   navigate(`/games?cat=${encodeURIComponent(subject)}`);
                 }
               }}
-              className="relative z-20 mt-3 w-full flex min-h-14 touch-manipulation cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground font-black shadow-md"
+              className="relative z-20 mt-2 sm:mt-3 w-full flex min-h-12 sm:min-h-14 touch-manipulation cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground font-black shadow-md"
             >
               {nextGame ? `Play Next: ${nextGame.title}` : 'Choose Next Game'} <ArrowRight size={18} />
             </motion.button>
 
             {/* Share nudge */}
-            <div className="mt-5 pt-5 border-t border-border">
+            <div className="mt-4 pt-4 sm:mt-5 sm:pt-5 border-t border-border">
               <ShareBar
                 url="https://sodafom.uk"
                 text="My child just played a learning game on Sodafom — fun maths, spelling & reading for kids! 🎮"
