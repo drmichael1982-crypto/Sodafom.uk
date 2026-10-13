@@ -109,6 +109,38 @@ describe('child progress ownership boundary', () => {
     expect(res.status).toHaveBeenCalledWith(404);
     expect(mocks.execute).not.toHaveBeenCalled();
   });
+
+  it('returns a complete 30-day window and a separate all-time play count', async () => {
+    const recent = [{ id: 20, activityTitle: 'Latest game' }];
+    const activity30 = [
+      { id: 20, activityTitle: 'Latest game' },
+      { id: 19, activityTitle: 'Earlier game' },
+    ];
+    const summaries = [{ id: 3, subject: 'maths' }];
+
+    mocks.select
+      .mockReturnValueOnce({ from: () => ({ where: () => ({ limit: () => Promise.resolve([{ totalStars: 77 }]) }) }) })
+      .mockReturnValueOnce({ from: () => ({ where: () => ({ orderBy: () => ({ limit: () => Promise.resolve(recent) }) }) }) })
+      .mockReturnValueOnce({ from: () => ({ where: () => ({ orderBy: () => Promise.resolve(activity30) }) }) })
+      .mockReturnValueOnce({ from: () => ({ where: () => ({ orderBy: () => ({ limit: () => Promise.resolve(summaries) }) }) }) })
+      .mockReturnValueOnce({ from: () => ({ where: () => Promise.resolve([{ totalPlays: '142' }]) }) });
+
+    const res = response();
+    await getProgress({
+      headers: {},
+      params: { childId: '7' },
+      query: {},
+    } as any, res);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({
+      recent,
+      activity30,
+      summaries,
+      totalStars: 77,
+      totalPlays: 142,
+    });
+  });
 });
 
 describe('parent progress score normalisation', () => {

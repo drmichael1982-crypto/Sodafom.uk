@@ -1,28 +1,8 @@
-import { Link, useNavigate } from "react-router";
-import { Youtube, Lock, Instagram } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Link } from "react-router";
+import { Youtube, Instagram } from 'lucide-react';
+import React, { useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
-
-// Hidden admin access logic (triggered by clicking the bottom copyright year)
-
-function AdminUnlock() {
-  const navigate = useNavigate();
-
-  return (
-    <>
-      {/* Tiny lock icon — barely visible, only for the owner */}
-      <button
-        onClick={() => navigate('/admin')}
-        aria-label="Admin access"
-        className="text-primary-foreground/20 hover:text-primary-foreground/50 transition-colors focus:outline-none"
-      >
-        <Lock size={12} />
-      </button>
-    </>
-  );
-}
-
 
 function TikTokIcon({ size = 16 }: { size?: number }) {
   return (
@@ -171,11 +151,11 @@ export default function Footer() {
       <div className="bg-primary/90 border-b border-primary-foreground/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           <div className="flex flex-wrap items-center justify-center gap-6 text-primary-foreground/80 text-sm font-bold">
-            <span className="flex items-center gap-1.5"><span className="text-accent">🎮</span> 118 learning games</span>
+            <span className="flex items-center gap-1.5"><span className="text-accent">🎮</span> Interactive learning games</span>
             <span className="hidden sm:block w-px h-4 bg-primary-foreground/20" />
             <span className="flex items-center gap-1.5"><span className="text-accent">👧</span> Ages 5–13</span>
             <span className="hidden sm:block w-px h-4 bg-primary-foreground/20" />
-            <span className="flex items-center gap-1.5"><span className="text-accent">⭐</span> Millions of stars earned</span>
+            <span className="flex items-center gap-1.5"><span className="text-accent">⭐</span> Progress saved for each learner</span>
             <span className="hidden sm:block w-px h-4 bg-primary-foreground/20" />
             <span className="flex items-center gap-1.5"><span className="text-accent">🇬🇧</span> UK curriculum aligned</span>
           </div>
@@ -191,7 +171,7 @@ export default function Footer() {
                 🔔 Stay in the loop
               </p>
               <p className="text-primary-foreground/70 text-sm mt-1">
-                New games, tips for parents, and special offers — straight to your inbox.
+                New games, tips for parents, and learning updates — straight to your inbox.
               </p>
             </div>
             <div className="w-full sm:w-80 shrink-0">
@@ -255,12 +235,9 @@ export default function Footer() {
           <p className="text-primary-foreground/50 text-xs">
             © {new Date().getFullYear()} Sodafom. All rights reserved.
           </p>
-          <div className="flex items-center gap-3">
-            <p className="text-primary-foreground/50 text-xs">
-              Learn The Key To Success 🔑
-            </p>
-            <AdminUnlock />
-          </div>
+          <p className="text-primary-foreground/50 text-xs">
+            Learn The Key To Success 🔑
+          </p>
         </div>
       </div>
     </footer>

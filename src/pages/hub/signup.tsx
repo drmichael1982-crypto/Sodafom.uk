@@ -1,9 +1,9 @@
 /**
- * /signup — Create account + choose a plan
+ * /signup — Create a parent account
  *
  * Step 1: Full details form (name, email, phone, password)
- * Step 2: Payment plan selection (Monthly / Annual / School / Free trial)
- * After account creation the user picks a plan and goes straight to Stripe checkout.
+ * Step 2: Payment plan selection when paid mode is enabled.
+ * Open testing mode keeps signup free and sends parents straight to their hub.
  * Promo codes bypass payment entirely.
  */
 import { useState } from 'react';
@@ -12,6 +12,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { signUp } from '@/lib/auth/auth-client.tsx';
 import { API_PREFIX } from '@/lib/config';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 import {
   Eye, EyeOff, KeyRound, CheckCircle, ArrowRight,
   CreditCard, Calendar, School, Sparkles, Shield, Lock,
@@ -185,14 +186,17 @@ export default function SignupPage() {
 
       // Redirect path — e.g. came from /subscribe button while not logged in
       if (redirectTo) {
-        navigate(redirectTo, { replace: true });
+        const destination = OPEN_TESTING_MODE && redirectTo === '/subscribe' ? '/hub' : redirectTo;
+        navigate(destination, { replace: true });
         return;
       }
 
-      // FOR TESTING: Bypass plan selection and go straight to the hub
-      navigate('/hub', { replace: true });
-      // Move to plan selection (DISABLED FOR TESTING)
-      // setStep(2);
+      if (OPEN_TESTING_MODE) {
+        navigate('/hub', { replace: true });
+        return;
+      }
+
+      setStep(2);
     } catch (err) {
       setError(String(err));
     } finally {
@@ -233,7 +237,12 @@ export default function SignupPage() {
     <>
       <Helmet>
         <title>Create Account — Sodafom</title>
-        <meta name="description" content="Create your Sodafom account and choose a learning plan for your child." />
+        <meta
+          name="description"
+          content={OPEN_TESTING_MODE
+            ? 'Create your free Sodafom parent account and start learning.'
+            : 'Create your Sodafom account and choose a learning plan for your child.'}
+        />
         <link rel="canonical" href={`${siteUrl}/signup`} />
         <meta name="robots" content="noindex" />
       </Helmet>
@@ -257,7 +266,7 @@ export default function SignupPage() {
             </Link>
           </div>
 
-          <StepDots step={step} />
+          {!OPEN_TESTING_MODE && <StepDots step={step} />}
 
           <AnimatePresence mode="wait">
 
@@ -269,7 +278,7 @@ export default function SignupPage() {
                     Create your account
                   </h1>
                   <p className="text-muted-foreground text-sm mt-1">
-                    Step 1 of 2 — your details
+                    {OPEN_TESTING_MODE ? 'Your details — learning is free during testing' : 'Step 1 of 2 — your details'}
                   </p>
                 </div>
 
@@ -285,7 +294,9 @@ export default function SignupPage() {
                         Almost there — create your account first
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Once your account is set up you'll choose your plan and start your 7-day free trial.
+                        {OPEN_TESTING_MODE
+                          ? 'Create your free account to continue. No plan or payment is needed.'
+                          : "Once your account is set up you'll choose your plan and start your 7-day free trial."}
                       </p>
                     </div>
                   </motion.div>
@@ -314,10 +325,11 @@ export default function SignupPage() {
 
                     {/* Name */}
                     <div>
-                      <label className="block text-sm font-bold text-foreground mb-1.5 flex items-center gap-1.5">
+                      <label htmlFor="signup-name" className="block text-sm font-bold text-foreground mb-1.5 flex items-center gap-1.5">
                         <User size={14} className="text-muted-foreground" /> Full name
                       </label>
                       <input
+                        id="signup-name"
                         type="text"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -329,10 +341,11 @@ export default function SignupPage() {
 
                     {/* Email */}
                     <div>
-                      <label className="block text-sm font-bold text-foreground mb-1.5 flex items-center gap-1.5">
+                      <label htmlFor="signup-email" className="block text-sm font-bold text-foreground mb-1.5 flex items-center gap-1.5">
                         <Mail size={14} className="text-muted-foreground" /> Email address
                       </label>
                       <input
+                        id="signup-email"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -344,11 +357,12 @@ export default function SignupPage() {
 
                     {/* Phone (optional) */}
                     <div>
-                      <label className="block text-sm font-bold text-foreground mb-1.5 flex items-center gap-1.5">
+                      <label htmlFor="signup-phone" className="block text-sm font-bold text-foreground mb-1.5 flex items-center gap-1.5">
                         <Phone size={14} className="text-muted-foreground" /> Phone number
                         <span className="text-muted-foreground font-normal text-xs">(optional)</span>
                       </label>
                       <input
+                        id="signup-phone"
                         type="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
@@ -359,23 +373,24 @@ export default function SignupPage() {
 
                     {/* Password */}
                     <div>
-                      <label className="block text-sm font-bold text-foreground mb-1.5 flex items-center gap-1.5">
+                      <label htmlFor="signup-password" className="block text-sm font-bold text-foreground mb-1.5 flex items-center gap-1.5">
                         <Lock size={14} className="text-muted-foreground" /> Password
                       </label>
                       <div className="relative">
                         <input
+                          id="signup-password"
                           type={showPw ? 'text' : 'password'}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required
                           minLength={8}
                           placeholder="At least 8 characters"
-                          className="w-full px-4 py-3 pr-11 rounded-xl border-2 border-border bg-background text-foreground focus:outline-none focus:border-primary font-bold text-sm transition-colors"
+                          className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-border bg-background text-foreground focus:outline-none focus:border-primary font-bold text-sm transition-colors"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPw((v) => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          className="absolute right-0 top-1/2 -translate-y-1/2 min-h-11 min-w-11 flex items-center justify-center text-muted-foreground hover:text-foreground"
                           aria-label={showPw ? 'Hide password' : 'Show password'}
                         >
                           {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -401,7 +416,7 @@ export default function SignupPage() {
                       className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-black text-sm hover:opacity-90 transition-opacity disabled:opacity-60 flex items-center justify-center gap-2 mt-1"
                     >
                     {loading ? 'Creating account…' : (
-                        <><span>{promoFromUrl ? 'Create account & unlock access' : redirectTo ? 'Create account & choose a plan' : 'Continue to choose a plan'}</span> <ArrowRight size={16} /></>
+                        <><span>{OPEN_TESTING_MODE ? 'Create free account' : promoFromUrl ? 'Create account & unlock access' : redirectTo ? 'Create account & choose a plan' : 'Continue to choose a plan'}</span> <ArrowRight size={16} /></>
                       )}
                     </button>
                   </form>
@@ -421,13 +436,13 @@ export default function SignupPage() {
                 <div className="flex flex-wrap justify-center gap-4 mt-5 text-xs text-muted-foreground">
                   <span className="flex items-center gap-1"><Shield size={12} /> Secure & private</span>
                   <span className="flex items-center gap-1"><Lock size={12} /> No spam, ever</span>
-                  <span className="flex items-center gap-1"><CheckCircle size={12} /> Cancel anytime</span>
+                  <span className="flex items-center gap-1"><CheckCircle size={12} /> {OPEN_TESTING_MODE ? 'Free during testing' : 'Cancel anytime'}</span>
                 </div>
               </motion.div>
             )}
 
             {/* ── STEP 2: Choose a plan ── */}
-            {step === 2 && (
+            {!OPEN_TESTING_MODE && step === 2 && (
               <motion.div key="step2" variants={slideIn} initial="hidden" animate="visible" exit="exit">
                 <div className="text-center mb-6">
                   <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">

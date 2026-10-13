@@ -19,9 +19,9 @@ function StarBarChart({ activity }: { activity: ActivityEntry[] }) {
   for (let i = 13; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
+    const key = localDayKey(d);
     const dayStars = activity
-      .filter(a => a.playedAt.slice(0, 10) === key)
+      .filter(a => localDayKey(a.playedAt) === key)
       .reduce((s, a) => s + a.stars, 0);
     days.push({
       key,
@@ -69,8 +69,8 @@ function ActivityHeatmap({ activity }: { activity: ActivityEntry[] }) {
   for (let i = 29; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    const count = activity.filter(a => a.playedAt.slice(0, 10) === key).length;
+    const key = localDayKey(d);
+    const count = activity.filter(a => localDayKey(a.playedAt) === key).length;
     cells.push({ key, count, label: d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) });
   }
   const maxCount = Math.max(...cells.map(c => c.count), 1);
@@ -133,6 +133,7 @@ interface ActivityEntry {
 interface ChildProgress {
   child: Child;
   activity: ActivityEntry[];
+  totalPlays: number;
   activityError?: boolean;
 }
 
@@ -198,6 +199,15 @@ function weeklyActivity(activity: ActivityEntry[]) {
   return activity.filter(a => now - new Date(a.playedAt).getTime() < weekMs);
 }
 
+function localDayKey(value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // ── Subject mastery donut rings ───────────────────────────────────────────────
 function DonutRing({
   pct, strokeColor, emoji, label, plays,
@@ -254,7 +264,7 @@ function MasteryRings({ activity }: { activity: ActivityEntry[] }) {
 
   return (
     <div>
-      <h3 className="text-sm font-black text-foreground mb-3">Subject mastery</h3>
+      <h3 className="text-sm font-black text-foreground mb-3">Subject mastery (last 30 days)</h3>
       <div className="flex justify-around flex-wrap gap-4">
         {rings.map(r => (
           <DonutRing
@@ -273,12 +283,11 @@ function MasteryRings({ activity }: { activity: ActivityEntry[] }) {
 
 // ── Child progress card ───────────────────────────────────────────────────────
 function ChildProgressCard({ data }: { data: ChildProgress }) {
-  const { child, activity, activityError } = data;
+  const { child, activity, totalPlays, activityError } = data;
   const breakdown = subjectBreakdown(activity);
   const thisWeek = weeklyActivity(activity);
   const weekStars = thisWeek.reduce((s, a) => s + a.stars, 0);
   const recentGames = [...activity].sort((a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()).slice(0, 5);
-  const totalPlays = activity.length;
 
   return (
     <motion.div
@@ -331,7 +340,7 @@ function ChildProgressCard({ data }: { data: ChildProgress }) {
         {/* Subject breakdown */}
         {Object.keys(breakdown).length > 0 && (
           <div>
-            <h3 className="text-sm font-black text-foreground mb-2">Subject breakdown</h3>
+            <h3 className="text-sm font-black text-foreground mb-2">Subject breakdown (last 30 days)</h3>
             <div className="space-y-2">
               {Object.entries(breakdown).map(([subj, stats]) => {
                 const meta = SUBJECT_META[subj] ?? SUBJECT_META.reading;
@@ -427,12 +436,20 @@ export function ProgressDashboard() {
                 credentials: 'include',
                 signal: controller.signal,
               });
-              if (!actRes.ok) return { child, activity: [], activityError: true };
-              const data = await actRes.json() as { recent?: ProgressActivity[] };
-              return { child, activity: (data.recent ?? []).map(toActivityEntry) };
+              if (!actRes.ok) return { child, activity: [], totalPlays: 0, activityError: true };
+              const data = await actRes.json() as {
+                recent?: ProgressActivity[];
+                activity30?: ProgressActivity[];
+                totalPlays?: number;
+              };
+              const activity = (data.activity30 ?? data.recent ?? []).map(toActivityEntry);
+              const totalPlays = Number.isFinite(Number(data.totalPlays))
+                ? Math.max(0, Number(data.totalPlays))
+                : activity.length;
+              return { child, activity, totalPlays };
             } catch (failure) {
               if (failure instanceof Error && failure.name === 'AbortError') throw failure;
-              return { child, activity: [], activityError: true };
+              return { child, activity: [], totalPlays: 0, activityError: true };
             }
           })
         );
@@ -451,7 +468,7 @@ export function ProgressDashboard() {
   }, []);
 
   const totalStars = progressData.reduce((s, d) => s + d.child.totalStars, 0);
-  const totalPlays = progressData.reduce((s, d) => s + d.activity.length, 0);
+  const totalPlays = progressData.reduce((s, d) => s + d.totalPlays, 0);
   const weekPlays  = progressData.reduce((s, d) => s + weeklyActivity(d.activity).length, 0);
 
   return (

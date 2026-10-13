@@ -52,6 +52,59 @@ describe('parent progress dashboard', () => {
     expect(urls.some(url => url.includes('/teacher/students/'))).toBe(false);
   });
 
+  it('uses the complete 30-day window for charts and the all-time count for totals', async () => {
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.endsWith('/children')) return new Response(JSON.stringify([{
+        id: 7,
+        name: 'Sam',
+        ageGroup: '8-10',
+        avatarEmoji: '🦊',
+        totalStars: 90,
+      }]));
+      if (url.endsWith('/children/7/progress')) return new Response(JSON.stringify({
+        recent: [{
+          id: 1,
+          activityId: 'number-bonds',
+          activityTitle: 'Number Bonds',
+          subject: 'maths',
+          score: 10,
+          maxScore: 10,
+          starsEarned: 3,
+          completedAt: new Date().toISOString(),
+        }],
+        activity30: [{
+          id: 2,
+          activityId: 'reading-bingo',
+          activityTitle: 'Reading Bingo',
+          subject: 'reading',
+          score: 8,
+          maxScore: 10,
+          starsEarned: 2,
+          completedAt: new Date().toISOString(),
+        }, {
+          id: 1,
+          activityId: 'number-bonds',
+          activityTitle: 'Number Bonds',
+          subject: 'maths',
+          score: 10,
+          maxScore: 10,
+          starsEarned: 3,
+          completedAt: new Date().toISOString(),
+        }],
+        totalPlays: 42,
+      }));
+      return new Response(null, { status: 404 });
+    }));
+
+    render(<MemoryRouter><ProgressDashboard /></MemoryRouter>);
+
+    expect(await screen.findByText('Reading Bingo')).toBeInTheDocument();
+    expect(screen.getAllByText('42')).not.toHaveLength(0);
+    expect(screen.getByText('Subject mastery (last 30 days)')).toBeInTheDocument();
+    expect(screen.getByText('Subject breakdown (last 30 days)')).toBeInTheDocument();
+  });
+
   it('accepts the supported learner envelope and distinguishes unavailable activity from no play', async () => {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const url = String(input);
