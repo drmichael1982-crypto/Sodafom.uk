@@ -463,6 +463,7 @@ const results=[];
             await unlockGrownUpArea();
             const unlocked=await page.evaluate(()=>({viewport:window.innerWidth,document:document.documentElement.scrollWidth}));
             assert.ok(unlocked.document<=unlocked.viewport+1,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' unlocked overflows: '+JSON.stringify(unlocked));
+            assert.equal(await page.locator('.app-screen-window').evaluate(element=>element.scrollLeft),0,viewport.label+' '+viewport.width+'x'+viewport.height+' '+route+' unlocked with a hidden native horizontal scroll');
             if(route==='/teacher'){
               assert.equal(await page.getByRole('heading',{name:'A grown-up needs to help here',exact:true}).count(),0,'The teacher gate must leave layout flow after unlock');
               assert.equal(await page.locator('.grown-up-unlocked').count(),0,'The retired gate wrapper must not combine teacher panels into one pager screen');

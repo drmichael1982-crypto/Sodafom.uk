@@ -13,7 +13,7 @@ export default function GrownUpGate({ children, purpose = 'Open the grown-up are
   const [error,setError]=useState('');
   const input=useRef<HTMLInputElement>(null);
   const content=useRef<HTMLSpanElement>(null);
-  useEffect(()=>{if(unlocked)content.current?.focus();},[unlocked]);
+  useEffect(()=>{if(unlocked)content.current?.focus({preventScroll:true});},[unlocked]);
   function submit(event:FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if(answer.trim().toLowerCase().replace(/\s+/g,' ')==='privacy choose'){
