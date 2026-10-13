@@ -467,6 +467,9 @@ const results=[];
             if(route==='/teacher'){
               assert.equal(await page.getByRole('heading',{name:'A grown-up needs to help here',exact:true}).count(),0,'The teacher gate must leave layout flow after unlock');
               assert.equal(await page.locator('.grown-up-unlocked').count(),0,'The retired gate wrapper must not combine teacher panels into one pager screen');
+              if((viewport.width===390&&viewport.height===844)||(viewport.width===820&&viewport.height===1180)||(viewport.width===1440&&viewport.height===900)){
+                await page.screenshot({path:`test-results/teacher-unlocked-first-${viewport.width}.png`,fullPage:true});
+              }
               const learning=page.getByRole('heading',{name:'Recent puzzle learning for this learner',exact:true});
               await learning.waitFor();
               await learning.dispatchEvent('click');
