@@ -15,7 +15,7 @@ import { blockedLearningText, FRIENDLY_REDIRECT, safeLearningReply } from '@/lib
 import { normaliseVoiceAnswer, submitGameVoiceAnswer } from '@/lib/archie/game-voice';
 import { coachLessonReply, guardPracticeReply, lessonContextForService, subjectMethod } from '@/lib/archie/lesson-coach';
 import { loadTutorMemory } from '@/lib/tutor/memory';
-import { resolveLearningAge } from '@/lib/learning-age';
+import { getActiveLearningProfile, resolveLearningAge } from '@/lib/learning-age';
 import { clearActivePendingQuestion } from '@/lib/tutor/engine';
 
 import type { CourseLesson, CourseSubject } from '@/lib/archie/course-types';
@@ -55,6 +55,21 @@ export function getLearnerAge() {
   if (typeof window === 'undefined') return 9;
   const learningAge = resolveLearningAge();
   if (learningAge !== null) return learningAge;
+  const activeProfile = getActiveLearningProfile();
+  // Legacy learner records can have an ID but no age band. Keep their local
+  // teaching age inside that learner's scoped progress instead of falling
+  // through to a guest/global school year left by somebody else.
+  if (activeProfile) {
+    try {
+      const scoped = JSON.parse(localStorage.getItem(`sodafom_archie_progress:${encodeURIComponent(activeProfile.id)}`) || '{}');
+      const year = Number(scoped.settings?.year);
+      if (Number.isInteger(year) && year >= 1 && year <= 9) return year + 4;
+    } catch { /* use this learner's scoped tutor fallback */ }
+    const ageGroup = loadTutorMemory().ageGroup;
+    if (ageGroup === '5-7') return 6;
+    if (ageGroup === '11-13') return 12;
+    return 9;
+  }
   try {
     const app = JSON.parse(localStorage.getItem('sodafom_archie_design_v1') || '{}');
     const year = Number(app.settings?.year);
