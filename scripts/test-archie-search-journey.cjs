@@ -259,7 +259,12 @@ const results = [];
           }
         };
         for (let round = 0; round < 10; round++) {
-          const available = await page.locator('button[aria-label^="Letter "]').evaluateAll(tiles => tiles.map(tile => tile.getAttribute('aria-label').slice(7)));
+          const availableTiles = page.locator('button[aria-label^="Letter "]');
+          // The progress label renders as soon as qIdx changes, before the effect
+          // has installed the next word's tiles. Wait for that effect instead of
+          // sampling the brief empty transition between rounds.
+          await availableTiles.first().waitFor({ state: 'visible' });
+          const available = await availableTiles.evaluateAll(tiles => tiles.map(tile => tile.getAttribute('aria-label').slice(7)));
           const signature = [...available].sort().join('');
           const answer = wordScrambleAnswers.find(word => [...word].sort().join('') === signature);
           assert.ok(answer, `Word Scramble round ${round + 1} has a known answer for ${signature}`);
