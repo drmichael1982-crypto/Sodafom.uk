@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { answerFromDevice, answerLessonReply, clearSavedLearning, loadSavedLearning, saveLearningTurn } from './device-learning';
+import { answerFromDevice, answerLessonReply, clearSavedLearning, clearSavedLearningForActiveProfile, loadSavedLearning, loadSavedLearningForActiveProfile, saveLearningTurn } from './device-learning';
 
 describe('Archie offline learning memory', () => {
   beforeEach(() => localStorage.clear());
@@ -32,6 +32,23 @@ describe('Archie offline learning memory', () => {
     expect(answerFromDevice('What is a habitat?', 8)).toBeNull();
     saveLearningTurn('What is a habitat?', 'A home for living things.', 8);
     expect(answerFromDevice('What is a habitat?', 8)).toBe('A home for living things.');
+  });
+
+  it('counts and clears only the active learner memory', () => {
+    localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 'child-a' }));
+    saveLearningTurn('What is a habitat?', 'A place where an organism lives.', 8);
+    localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 'child-b' }));
+    saveLearningTurn('What is a force?', 'A push or a pull.', 8);
+    saveLearningTurn('What is gravity?', 'A force that attracts masses.', 8);
+
+    expect(loadSavedLearningForActiveProfile()).toHaveLength(2);
+    clearSavedLearningForActiveProfile();
+    expect(loadSavedLearningForActiveProfile()).toEqual([]);
+    expect(loadSavedLearning()).toEqual([expect.objectContaining({ profileId: 'child-a', question: 'What is a habitat?' })]);
+
+    localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 'child-a' }));
+    expect(loadSavedLearningForActiveProfile()).toHaveLength(1);
+    expect(answerFromDevice('What is a habitat?', 8)).toBe('A place where an organism lives.');
   });
 
   it('clears local learning turns when requested', () => {

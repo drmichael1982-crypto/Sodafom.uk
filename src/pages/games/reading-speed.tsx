@@ -27,6 +27,8 @@ export default function ReadingSpeedGame() {
             emoji="⚡"
             questionsByLevel={READING_COMPREHENSION_BANKS}
             accentClass="bg-accent"
+            deferHint
+            hintButtonLabel="Show evidence clue"
             onComplete={oc}
           /></div>
         )}

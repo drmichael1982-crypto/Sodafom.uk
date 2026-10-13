@@ -8,7 +8,7 @@ const base = process.env.ARCHIE_TEST_URL || 'http://127.0.0.1:4173';
   page.on('pageerror', error => errors.push(String(error)));
   try {
     await page.goto(base);
-    for (const [name, route] of [['Explore my world', '/world'], ['Games', '/games'], ['Lessons', '/lesson'], ['Parents', '/parents'], ['Rewards', '/rewards'], ['Sticker book', '/stickers'], ['Cartoons', '/cartoons'], ['Progress', '/progress'], ['Settings', '/settings']]) {
+    for (const [name, route] of [['My world', '/world'], ['Games', '/games'], ['Lessons', '/courses'], ['Whiteboard', '/lesson'], ['Parents', '/parents'], ['Rewards', '/rewards'], ['Stickers', '/stickers'], ['Cartoons', '/cartoons'], ['Progress', '/progress'], ['Settings', '/settings']]) {
       await page.goto(base); await page.getByRole('link', { name, exact: true }).click(); await page.waitForURL(base + route);
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
     }

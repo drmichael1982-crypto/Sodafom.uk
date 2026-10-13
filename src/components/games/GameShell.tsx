@@ -51,6 +51,8 @@ interface GameShellProps {
   children: (onComplete: (result: GameResult) => void, controls: GameShellControls) => React.ReactNode;
   currentQuestion?: string;
   currentOptions?: string[];
+  /** Use contained vertical scrolling for reading-heavy games instead of paged columns. */
+  screenMode?: 'pager' | 'scroll';
 }
 
 const subjectColors: Record<string, { bg: string; text: string; light: string }> = {
@@ -68,7 +70,7 @@ const ageConfig: Record<string, { badge: string; icon: string }> = {
   '11–13':{ badge: 'bg-purple-600 text-white',        icon: '🏆' },
 };
 
-export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, subject, ageGroups, children, currentQuestion, currentOptions }: GameShellProps) {
+export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, subject, ageGroups, children, currentQuestion, currentOptions, screenMode = 'pager' }: GameShellProps) {
   // Preserve existing saved game IDs; the new title has a typographic apostrophe.
   const gameSlug = canonicalGameSlug ?? (title === 'Archie’s Adventure Trail' ? 'archie-adventure-trail' : title.toLowerCase().replace(/\s+/g, '-'));
   const navigate = useNavigate();
@@ -227,7 +229,7 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
 
   const gameContent = (
     <div style={puzzleThemeStyle(title, subject)} className="archie-game-shell soda-game-shell puzzle-themed min-h-screen bg-background flex flex-col">
-      {rewardOpen&&<CompletionScene kind={subject==='reading'||subject==='spelling'?'words':subject} onClose={closeReward}/>}
+      {rewardOpen&&<CompletionScene kind={subject==='reading'||subject==='spelling'?'words':subject} onClose={closeReward} returnLabel="See my result"/>}
       <Helmet>
         <title>{title} — Sodafom Games</title>
         <meta name="description" content={`Play ${title} on Sodafom — a fun educational game for children ages ${ageGroups.join(', ')}.`} />
@@ -317,7 +319,11 @@ export default function GameShell({ title, gameSlug: canonicalGameSlug, emoji, s
           {result
             ? <ResultScreen key="result" result={result} focusOrigin={resultFocusOriginRef.current} onReplay={handleReplay} onHome={() => navigate('/')} gameTitle={title} subject={subject} nextGame={nextGame ? { title: nextGame.title, route: `/games/${nextGame.slug}` } : null} isDailyChallenge={isDailyChallenge} dailyClaimed={dailyClaimed} isLoggedIn={isLoggedIn} navigate={navigate} />
             : <motion.div ref={handleGamePanelMount} key={`game-${key}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col">
-                <AppScreenPager>{children(handleComplete, { recordCompletion })}</AppScreenPager>
+                {screenMode === 'scroll'
+                  ? <div role="region" aria-label={`${title} play area`} className="game-scroll-window flex-1 min-h-0 min-w-0 overflow-y-auto overflow-x-hidden overscroll-contain">
+                      {children(handleComplete, { recordCompletion })}
+                    </div>
+                  : <AppScreenPager>{children(handleComplete, { recordCompletion })}</AppScreenPager>}
               </motion.div>
           }
         </AnimatePresence>
@@ -461,11 +467,12 @@ export function ResultScreen({
   };
   const headline = headlineMap[result.stars] ?? headlineMap[0];
 
-  // Subject-keyed gradient using semantic CSS vars via inline style
+  // High-contrast subject banners. The maths gold keeps the established
+  // palette but uses navy text; the darker literacy gradients use white.
   const gradientStyle: Record<string, React.CSSProperties> = {
-    maths:    { background: 'linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent) / 0.7))' },
-    spelling: { background: 'linear-gradient(135deg, hsl(var(--secondary)), hsl(var(--secondary) / 0.7))' },
-    reading:  { background: 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7))' },
+    maths:    { background: 'linear-gradient(135deg, #facc15, #fde68a)', color: '#172554' },
+    spelling: { background: 'linear-gradient(135deg, #be123c, #881337)', color: '#ffffff' },
+    reading:  { background: 'linear-gradient(135deg, #166534, #14532d)', color: '#ffffff' },
   };
   const bannerStyle = gradientStyle[subject] ?? gradientStyle['reading'];
 
@@ -476,10 +483,11 @@ export function ResultScreen({
       <CertificateModal open={showCert} onClose={() => setShowCert(false)} gameTitle={gameTitle} subject={subject} stars={result.stars} />
 
       <motion.div
+        data-result-screen
         initial={{ opacity: 0, scale: 0.88, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-        className="flex-1 flex items-center justify-center px-4 pt-4 pb-44 sm:p-6 sm:pb-36 focus-within:!opacity-100 [&_*:focus-within]:!opacity-100"
+        className="flex-1 flex items-center justify-center px-2 pt-2 pb-44 sm:p-6 sm:pb-36 focus-within:!opacity-100 [&_*:focus-within]:!opacity-100"
       >
         <div className="max-w-md w-full">
 
@@ -491,19 +499,19 @@ export function ResultScreen({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -16 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                className="mb-4 rounded-2xl text-white text-center py-3 px-5 shadow-lg"
+                className="mb-4 rounded-2xl text-center py-3 px-5 shadow-lg"
                 style={bannerStyle}
               >
                 <p className="font-black text-lg tracking-wide" style={{ fontFamily: 'var(--font-heading)' }}>
                   ⭐ Three stars earned! ⭐
                 </p>
-                <p className="text-sm opacity-90 font-bold">{result.correct===result.total?'You got every question right!':'Your practice earned three stars!'}</p>
+                <p className="text-sm opacity-90 font-bold">{result.score===100?'You got every question right!':'Your practice earned three stars!'}</p>
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* Main card */}
-          <div className="bg-card rounded-3xl shadow-2xl border-2 border-border p-6 sm:p-8 text-center relative overflow-hidden">
+          <div className="bg-card rounded-3xl shadow-2xl border-2 border-border p-3 sm:p-8 text-center relative overflow-hidden">
 
             {/* Subtle shimmer for 3 stars */}
             {result.stars === 3 && (
@@ -523,14 +531,14 @@ export function ResultScreen({
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="text-2xl sm:text-3xl font-black text-foreground mb-4 rounded-lg focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-blue-700"
+              className="text-2xl sm:text-3xl font-black text-foreground mb-1 sm:mb-4 rounded-lg focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-blue-700"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               {headline}
             </motion.h2>
 
             {/* Stars */}
-            <div className="flex justify-center gap-2 sm:gap-3 my-5">
+            <div className="flex justify-center gap-2 sm:gap-3 my-2 sm:my-5">
               {[1, 2, 3].map(s => (
                 <motion.div
                   key={s}
@@ -541,7 +549,7 @@ export function ResultScreen({
                   transition={{ type: 'spring', stiffness: 400, damping: 18 }}
                 >
                   <Star
-                    size={52}
+                    size={48}
                     className={s <= result.stars ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200 fill-gray-200'}
                   />
                 </motion.div>
@@ -553,11 +561,12 @@ export function ResultScreen({
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-              className="bg-muted rounded-2xl p-4 mb-5"
+              className="bg-muted rounded-2xl p-2 sm:p-4 mb-2 sm:mb-5"
             >
-              <div className="text-5xl font-black text-primary mb-1 tabular-nums">
+              <div aria-hidden="true" className="text-4xl sm:text-5xl font-black text-primary mb-1 tabular-nums">
                 {animatedScore}%
               </div>
+              <span className="sr-only">Final score: {result.score}%</span>
               <div className="text-muted-foreground text-sm font-bold">
                 {result.correct} correct out of {result.total} questions
               </div>
@@ -569,11 +578,11 @@ export function ResultScreen({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.1 }}
-                className="flex items-center justify-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-4 text-sm font-bold text-yellow-800"
+                className="flex items-center justify-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl p-2 sm:p-3 mb-2 sm:mb-4 text-sm font-bold text-yellow-800"
               >
                 <Trophy size={16} />
                 You earned {result.stars} star{result.stars !== 1 ? 's' : ''}!
-                {result.score === 100 && <span className="ml-1 text-yellow-600">🏆 All correct!</span>}
+                {result.score === 100 && <span className="ml-1 text-yellow-900">🏆 All correct!</span>}
               </motion.div>
             )}
 
@@ -583,7 +592,7 @@ export function ResultScreen({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.3 }}
-                className="flex items-center justify-center gap-2 bg-primary/5 border border-primary/20 rounded-xl p-2.5 mb-4 text-xs font-bold text-primary"
+                className="flex items-center justify-center gap-2 bg-blue-50 border border-blue-200 rounded-xl p-2.5 mb-4 text-xs font-bold text-blue-950"
               >
                 <Zap size={13} /> Well done for practising. Come back whenever you are ready.
               </motion.div>
@@ -599,7 +608,7 @@ export function ResultScreen({
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setShowCert(true)}
-                className="relative z-20 w-full flex min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl text-white font-black mb-4 shadow-md hover:shadow-lg transition-shadow"
+                className="relative z-20 w-full flex min-h-11 sm:min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-2 sm:py-3 rounded-xl font-black mb-2 sm:mb-4 shadow-md hover:shadow-lg transition-shadow"
                 style={bannerStyle}
               >
                 🏆 View Certificate
@@ -689,7 +698,7 @@ export function ResultScreen({
             )}
 
             {/* Action buttons */}
-            <div className="mb-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-3 text-sky-900">
+            <div className="mb-2 sm:mb-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-2 sm:p-3 text-sky-900">
               <p className="font-black">Level {level}</p>
               <p className="text-xs font-bold">
                 {gamesRemainingForNextLevel === 10
@@ -697,13 +706,13 @@ export function ResultScreen({
                   : `${gamesRemainingForNextLevel} game${gamesRemainingForNextLevel === 1 ? '' : 's'} until Level ${level + 1}`}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <motion.button
                 type="button"
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={onReplay}
-                className="relative z-20 flex-1 min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl font-bold bg-primary text-primary-foreground shadow-sm"
+                className="relative z-20 flex-1 min-h-11 sm:min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-bold bg-primary text-primary-foreground shadow-sm"
               >
                 <RotateCcw size={16} /> Play another round
               </motion.button>
@@ -712,7 +721,7 @@ export function ResultScreen({
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={onHome}
-                className="relative z-20 flex-1 min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-3 rounded-xl font-bold bg-muted text-foreground border border-border"
+                className="relative z-20 flex-1 min-h-11 sm:min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-bold bg-muted text-foreground border border-border"
               >
                 <Home size={16} /> Home
               </motion.button>
@@ -730,13 +739,13 @@ export function ResultScreen({
                   navigate(`/games?cat=${encodeURIComponent(subject)}`);
                 }
               }}
-              className="relative z-20 mt-3 w-full flex min-h-14 touch-manipulation cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground font-black shadow-md"
+              className="relative z-20 mt-2 sm:mt-3 w-full flex min-h-12 sm:min-h-14 touch-manipulation cursor-pointer items-center justify-center gap-2 rounded-xl bg-accent text-accent-foreground font-black shadow-md"
             >
               {nextGame ? `Play Next: ${nextGame.title}` : 'Choose Next Game'} <ArrowRight size={18} />
             </motion.button>
 
             {/* Share nudge */}
-            <div className="mt-5 pt-5 border-t border-border">
+            <div className="mt-4 pt-4 sm:mt-5 sm:pt-5 border-t border-border">
               <ShareBar
                 url="https://sodafom.uk"
                 text="My child just played a learning game on Sodafom — fun maths, spelling & reading for kids! 🎮"
@@ -749,3 +758,4 @@ export function ResultScreen({
     </>
   );
 }
+

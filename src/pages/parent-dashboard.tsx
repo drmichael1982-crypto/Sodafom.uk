@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { API_PREFIX } from '@/lib/config';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { Link } from 'react-router';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { ProtectedRoute, useSession } from '@/lib/auth/auth-client';
 import {
   Star, BookOpen, FlaskConical, Calculator, Pencil, Trophy,
@@ -232,6 +232,7 @@ function FamilySummaryCard({ children }: { children: ChildSummary[] }) {
 
 
 function ChildCard({ childId }: { childId: number }) {
+  const reduceMotion = useReducedMotion();
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -274,16 +275,13 @@ function ChildCard({ childId }: { childId: number }) {
   if (!data) return null;
 
   const { child, totalGames, badgeCount, subjects, daily, recent } = data;
-  const tutorAgeGroup = child.age_group === '5-7' || child.age_group === '11-13'
-    ? child.age_group
-    : '8-10';
   const maxSubjectStars = Math.max(...subjects.map((s) => Number(s.stars)), 1);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: reduceMotion ? 0 : 0.4 }}
       className="bg-card rounded-3xl border-2 border-border overflow-hidden shadow-sm"
     >
       {/* Header */}
@@ -313,7 +311,13 @@ function ChildCard({ childId }: { childId: number }) {
 
       <div className="p-6 flex flex-col gap-6">
         {/* 1-to-1 Child Tutor Report */}
-        <ParentTutorReport childId={childId} childName={child.name} ageGroup={tutorAgeGroup} />
+        <ParentTutorReport child={{
+          id: child.id,
+          name: child.name,
+          ageGroup: child.age_group === '5-7' || child.age_group === '8-10' || child.age_group === '11-13'
+            ? child.age_group
+            : undefined,
+        }} />
 
         {/* Stats row */}
         <div className="grid grid-cols-3 gap-3">
@@ -438,6 +442,7 @@ function ChildCard({ childId }: { childId: number }) {
 export function ParentDashboardInner() {
   const { user } = useSession();
   const [children, setChildren] = useState<ChildSummary[]>([]);
+  const [selectedChildId, setSelectedChildId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -453,7 +458,13 @@ export function ParentDashboardInner() {
         // Accept the current array response and the legacy envelope so a
         // cached frontend cannot briefly clear a family's learner list while
         // Railway revisions are rolling over.
-        setChildren(normalizeChildrenResponse(d));
+        const normalizedChildren = normalizeChildrenResponse(d);
+        setChildren(normalizedChildren);
+        setSelectedChildId((currentId) => (
+          currentId !== null && normalizedChildren.some((child) => child.id === currentId)
+            ? currentId
+            : normalizedChildren[0]?.id ?? null
+        ));
       })
       .catch(err => {
         console.error('ParentDashboard: Load failed', err);
@@ -543,11 +554,51 @@ export function ParentDashboardInner() {
         {!loading && children.length > 0 && (
           <>
             <FamilySummaryCard children={children} />
-            <div className="flex flex-col gap-8">
-              {children.map((c) => (
-                <ChildCard key={c.id} childId={c.id} />
-              ))}
-            </div>
+            {children.length > 1 && (
+              <nav aria-label="Choose a learner" className="mb-6 rounded-3xl border-2 border-border bg-card p-4 sm:p-5">
+                <h2 className="mb-3 text-sm font-black text-foreground">Choose a learner</h2>
+                <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {children.map((child) => {
+                    const selected = child.id === selectedChildId;
+                    return (
+                      <li key={child.id}>
+                        <button
+                          type="button"
+                          aria-pressed={selected}
+                          aria-controls="selected-learner-progress"
+                          onClick={() => setSelectedChildId(child.id)}
+                          className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/30 ${
+                            selected
+                              ? 'border-primary bg-primary/10 text-foreground'
+                              : 'border-border bg-muted/40 text-foreground hover:border-primary/40 hover:bg-primary/5'
+                          }`}
+                        >
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span className="text-xl" aria-hidden="true">{child.avatarEmoji ?? '🦁'}</span>
+                            <span className="min-w-0">
+                              <span className="block truncate font-black">{child.name}</span>
+                              <span className="block text-xs text-muted-foreground">Age group {child.ageGroup}</span>
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-xs font-black text-foreground">⭐{child.totalStars}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Showing one detailed report at a time keeps this page easier to scan on smaller screens.
+                </p>
+              </nav>
+            )}
+            {selectedChildId !== null && (
+              <section
+                id="selected-learner-progress"
+                aria-label={`Progress for ${children.find((child) => child.id === selectedChildId)?.name ?? 'selected learner'}`}
+              >
+                <ChildCard key={selectedChildId} childId={selectedChildId} />
+              </section>
+            )}
           </>
         )}
       </main>

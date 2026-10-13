@@ -37,4 +37,19 @@ describe('child-scoped game stars', () => {
     expect(gameStarsStorageKey()).toBe('sodafom_game_stars:child:child%2Fone');
     expect(readGameStarMap()).toEqual({ 'game-valid': 3 });
   });
+
+  it('reads the previous profile key until the next score is saved canonically', () => {
+    selectChild(7);
+    localStorage.setItem('sodafom_game_stars:profile:child:7', JSON.stringify({ 'game-reading': 2 }));
+
+    expect(readGameStarMap()).toEqual({ 'game-reading': 2 });
+    expect(localStorage.getItem('sodafom_game_stars:child:7')).toBeNull();
+
+    saveBestGameStars('game-spelling', 3);
+    expect(JSON.parse(localStorage.getItem('sodafom_game_stars:child:7')!)).toEqual({
+      'game-reading': 2,
+      'game-spelling': 3,
+    });
+    expect(localStorage.getItem('sodafom_game_stars:profile:child:7')).not.toBeNull();
+  });
 });

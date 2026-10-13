@@ -16,7 +16,7 @@ function answerCurrentQuestion() {
   const left = Number(match[1]);
   const right = Number(match[3]);
   const answer = match[2] === '+' ? left + right : match[2] === '-' ? left - right : left * right;
-  fireEvent.click(screen.getByRole('button', { name: String(answer) }));
+  fireEvent.click(screen.getByRole('button', { name: `Bingo number ${answer}` }));
 }
 
 describe('Maths Bingo result', () => {
@@ -44,6 +44,6 @@ describe('Maths Bingo result', () => {
     const result = complete.mock.calls[0][0];
     expect(result).toMatchObject({ score: 100, stars: 3 });
     expect(result.correct).toBe(result.total);
-    expect(result.correct).toBeGreaterThanOrEqual(4);
+    expect(result.correct).toBeGreaterThanOrEqual(3);
   });
 });

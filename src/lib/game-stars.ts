@@ -1,6 +1,7 @@
 export type GameStarMap = Record<string, number>;
 
 const GAME_STARS_KEY = 'sodafom_game_stars';
+const PREVIOUS_PROFILE_PREFIX = `${GAME_STARS_KEY}:profile:`;
 
 function activeChildId(): string | null {
   try {
@@ -13,16 +14,46 @@ function activeChildId(): string | null {
 }
 
 export function gameStarsStorageKey(childId = activeChildId()): string {
-  return childId ? `${GAME_STARS_KEY}:child:${encodeURIComponent(childId)}` : GAME_STARS_KEY;
+  if (childId) return `${GAME_STARS_KEY}:child:${encodeURIComponent(childId)}`;
+  try {
+    const localProfile = localStorage.getItem('sodafom_archie_local_profile_v1')?.trim();
+    return localProfile ? `${GAME_STARS_KEY}:local:${encodeURIComponent(localProfile.slice(0, 80))}` : GAME_STARS_KEY;
+  } catch {
+    return GAME_STARS_KEY;
+  }
 }
 
-export function readGameStarMap(): GameStarMap {
+function previousProfileStorageKey(childId = activeChildId()): string | null {
+  if (childId) return `${PREVIOUS_PROFILE_PREFIX}child:${encodeURIComponent(childId)}`;
   try {
-    const parsed: unknown = JSON.parse(localStorage.getItem(gameStarsStorageKey()) || '{}');
+    const localProfile = localStorage.getItem('sodafom_archie_local_profile_v1')?.trim();
+    return localProfile ? `${PREVIOUS_PROFILE_PREFIX}local:${encodeURIComponent(localProfile.slice(0, 80))}` : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseGameStarMap(raw: string | null): GameStarMap {
+  try {
+    const parsed: unknown = JSON.parse(raw || '{}');
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
     return Object.fromEntries(Object.entries(parsed).filter(([, stars]) =>
       typeof stars === 'number' && Number.isInteger(stars) && stars >= 0 && stars <= 3
     ));
+  } catch {
+    return {};
+  }
+}
+
+export function readGameStarMap(): GameStarMap {
+  try {
+    const canonical = localStorage.getItem(gameStarsStorageKey());
+    if (canonical !== null) return parseGameStarMap(canonical);
+
+    // Read the earlier improvement-branch key until the learner next earns a
+    // better score. Merely opening the app never copies or deletes a record.
+    const previousKey = previousProfileStorageKey();
+    return previousKey ? parseGameStarMap(localStorage.getItem(previousKey)) : {};
   } catch {
     return {};
   }

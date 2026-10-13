@@ -27,6 +27,9 @@ interface QuizEngineProps {
   onQuestionChange?: (question: string, options?: string[]) => void; // reports current question text upward
   sessionKey?: string;
   answerReward?: 'snake' | 'word-monster' | 'robot';
+  /** Keep authored clues behind an optional learner action until they are needed. */
+  deferHint?: boolean;
+  hintButtonLabel?: string;
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -42,6 +45,8 @@ export default function QuizEngine({
   onQuestionChange,
   sessionKey = title,
   answerReward = 'snake',
+  deferHint = false,
+  hintButtonLabel = 'Show hint',
 }: QuizEngineProps) {
   const [pool] = useState(() => {
     const unique = [...new Map(questions.map(q => [`${q.question}|${q.answer}`, q])).values()];
@@ -63,10 +68,12 @@ export default function QuizEngine({
   const [correct, setCorrect] = useState(0);
   const [fitted, setFitted] = useState(0);
   const [tried, setTried] = useState<string[]>([]);
+  const [paused, setPaused] = useState(false);
+  const [hintVisible, setHintVisible] = useState(false);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => () => { if(advanceTimer.current)clearTimeout(advanceTimer.current); }, []);
   const [done, setDone] = useState(false);
-  const { speak } = useVoice();
+  const { speak, stop } = useVoice();
 
   const reducedMotion = useReducedMotion();
   const feeding = selected !== null && selected === pool[idx]?.answer;
@@ -78,21 +85,24 @@ export default function QuizEngine({
   }, [idx, done, current, onQuestionChange]);
 
   useEffect(() => {
-    if (done || !current) return;
+    if (done || paused || !current) return;
     const timer = window.setTimeout(() => {
       speak(`archie-question:${sessionKey}:${idx}`, `${current.question}. ${current.options.join('. ')}`);
     }, 350);
     return () => window.clearTimeout(timer);
-  }, [current, done, idx, sessionKey, speak]);
+  }, [current, done, idx, paused, sessionKey, speak]);
 
   const pick = useCallback((opt: string) => {
-    if (selected !== null) return;
+    if (paused || selected !== null) return;
     setSelected(opt);
     const isCorrect = opt === current.answer;
     if (isCorrect) {
       if(tried.length===0)setCorrect(c => c + 1);
       setFitted(value=>value+1);
-    } else setTried(values=>[...values,opt]);
+    } else {
+      setTried(values=>[...values,opt]);
+      setHintVisible(true);
+    }
 
     const feedback = isCorrect
       ? `You chose ${opt}. That's correct! Well done.`
@@ -106,9 +116,15 @@ export default function QuizEngine({
         setIdx(i => i + 1);
         setSelected(null);
         setTried([]);
+        setHintVisible(false);
       }
     }, isCorrect && !reducedMotion ? 1900 : 900);
-  }, [selected, current, idx, pool.length, speak, reducedMotion, tried]);
+  }, [paused, selected, current, idx, pool.length, speak, reducedMotion, tried]);
+
+  const togglePause = () => {
+    stop?.();
+    setPaused(value => !value);
+  };
 
   useEffect(() => {
     if (done) {
@@ -141,9 +157,21 @@ export default function QuizEngine({
   return (
     <div className="flex flex-col gap-5 max-w-lg mx-auto w-full px-2">
       {/* Progress */}
-      <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 text-xs font-bold text-muted-foreground">
         <span>{title} {emoji}</span>
-        <span>{idx + 1} / {pool.length}</span>
+        <div className="flex items-center gap-3">
+          <span>{idx + 1} / {pool.length}</span>
+          <button
+            type="button"
+            data-pager-first-screen
+            aria-pressed={paused}
+            disabled={feeding}
+            onClick={togglePause}
+            className="min-h-11 rounded-xl border-2 border-blue-300 bg-white px-4 py-2 font-black text-blue-950 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+          >
+            {paused ? 'Resume game' : 'Pause game'}
+          </button>
+        </div>
       </div>
       <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
         <motion.div
@@ -153,7 +181,20 @@ export default function QuizEngine({
         />
       </div>
 
-      <div className="quiz-picture-jigsaw" aria-label={`${fitted} picture pieces earned`}>{pool.map((_,i)=><span key={i} className={i<fitted?'quiz-picture-fit':'quiz-picture-gap'} style={{backgroundSize:`${pool.length*100}% 100%`,backgroundPosition:`${pool.length===1?0:i/(pool.length-1)*100}% center`}}/>)}</div>
+      {!paused && <div className="quiz-picture-jigsaw" aria-label={`${fitted} picture pieces earned`}>{pool.map((_,i)=><span key={i} className={i<fitted?'quiz-picture-fit':'quiz-picture-gap'} style={{backgroundSize:`${pool.length*100}% 100%`,backgroundPosition:`${pool.length===1?0:i/(pool.length-1)*100}% center`}}/>)}</div>}
+      {paused ? (
+        <section role="status" className="rounded-2xl border-2 border-blue-200 bg-white p-6 text-center text-blue-950 shadow-sm">
+          <h2 className="text-xl font-black">Game paused</h2>
+          <p className="mt-2">Take a stretch, rest your eyes or get a drink. Your question and tries are saved.</p>
+          <button
+            type="button"
+            onClick={togglePause}
+            className="mt-4 min-h-12 rounded-xl bg-blue-700 px-6 py-3 font-black text-white focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+          >
+            Resume game
+          </button>
+        </section>
+      ) : <>
       {/* Question */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -169,7 +210,7 @@ export default function QuizEngine({
               <p className="font-black text-foreground text-lg leading-snug text-center">
                 {current.question}
               </p>
-              {current.hint && (
+              {current.hint && (!deferHint || hintVisible) && selected === null && (
                 <p className="text-muted-foreground text-xs text-center mt-1">{current.hint}</p>
               )}
             </div>
@@ -178,6 +219,17 @@ export default function QuizEngine({
           </div>
         </motion.div>
       </AnimatePresence>
+
+      {deferHint && current.hint && selected === null && (
+        <button
+          type="button"
+          aria-pressed={hintVisible}
+          onClick={() => setHintVisible(value => !value)}
+          className="mx-auto min-h-11 rounded-xl border-2 border-blue-300 bg-blue-50 px-5 py-2 font-black text-blue-950 focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-2 focus-visible:outline-blue-700"
+        >
+          {hintVisible ? `Hide ${hintButtonLabel.replace(/^Show\s+/i, '').toLowerCase()}` : hintButtonLabel}
+        </button>
+      )}
 
       {/* Options */}
       <div key={`answers-${idx}`} className={`answer-snake-board grid grid-cols-1 sm:grid-cols-2 gap-3 ${feeding ? 'is-feeding' : ''} answer-reward-${answerReward}`}>
@@ -210,6 +262,7 @@ export default function QuizEngine({
       </div>
       {selected !== null && !feeding && <div role="alert" className="rounded-2xl border-2 border-amber-300 bg-amber-50 p-4 text-amber-950"><p className="font-bold">Good effort. Let’s try a clue!</p><p>{current.hint || "Read the question again and try a different answer. Ask Archie if you need help."}</p><button type="button" className="mt-3 min-h-11 rounded-xl bg-blue-700 px-5 py-2 font-bold text-white" onClick={()=>setSelected(null)}>Try again</button></div>}
       {feeding && <p role="status" className="answer-snake-notice">{answerReward==='word-monster'?'Correct! The word monster is gobbling up the wrong words.':answerReward==='robot'?'Correct! Your discovery robot is collecting the wrong answers.':'Correct! The snake is gobbling up the wrong answers.'}</p>}
+      </>}
     </div>
   );
 }

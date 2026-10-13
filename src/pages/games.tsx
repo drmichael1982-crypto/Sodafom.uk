@@ -10,7 +10,7 @@ import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 import { catalogueAgeBandForLearningAge, isGameForAgeBand } from '@/lib/archie/game-age';
-import { readGameStarMap } from '@/lib/game-stars';
+import { readScopedGameStars } from '@/lib/archie/storage';
 import { resolveLearningAge } from '@/lib/learning-age';
 
 type WeeklyChallenge = { gameId: string; title: string; emoji: string; tagline: string; prize: string };
@@ -889,18 +889,21 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
   // ── Recently played (from localStorage) ────────────────────────────────────
   const [recentlyPlayed, setRecentlyPlayed] = useState<{ id: string; title: string; emoji: string; slug: string; subject: string }[]>([]);
   React.useEffect(() => {
-    const load = () => {
-      const map = readGameStarMap();
-      // Map played game IDs back to game data
-      const playedSlugs = Object.keys(map).map(k => k.replace('game-', ''));
-      const matched = (games.games as { id: string; title: string; emoji: string; slug: string; subject: string }[])
-        .filter(g => playedSlugs.includes(g.slug))
-        .slice(0, 6);
-      setRecentlyPlayed(matched);
+    const refresh = () => {
+      try {
+        const map = readScopedGameStars();
+        // Map played game IDs back to game data
+        const playedSlugs = Object.keys(map).map(k => k.replace('game-', ''));
+        const matched = (games.games as { id: string; title: string; emoji: string; slug: string; subject: string }[])
+          .filter(g => playedSlugs.includes(g.slug))
+          .slice(0, 6);
+        setRecentlyPlayed(matched);
+      } catch { setRecentlyPlayed([]); }
     };
-    load();
-    window.addEventListener('sodafom:active-child-changed', load);
-    return () => window.removeEventListener('sodafom:active-child-changed', load);
+    refresh();
+    window.addEventListener('storage', refresh);
+    window.addEventListener('sodafom:active-child-changed', refresh);
+    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('sodafom:active-child-changed', refresh); };
   }, []);
 
   // ── Archie tip cycling ──────────────────────────────────────────────────────
@@ -983,10 +986,11 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
   // Read earned stars from localStorage
   const [earnedStars, setEarnedStars] = useState<Record<string, number>>({});
   React.useEffect(() => {
-    const load = () => setEarnedStars(readGameStarMap());
-    load();
-    window.addEventListener('sodafom:active-child-changed', load);
-    return () => window.removeEventListener('sodafom:active-child-changed', load);
+    const refresh = () => setEarnedStars(readScopedGameStars());
+    refresh();
+    window.addEventListener('storage', refresh);
+    window.addEventListener('sodafom:active-child-changed', refresh);
+    return () => { window.removeEventListener('storage', refresh); window.removeEventListener('sodafom:active-child-changed', refresh); };
   }, []);
 
   // Keep URL in sync when filters change
@@ -994,9 +998,7 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
     setSelectedAge(age);
     const params = new URLSearchParams(searchParams);
     if (age === AGE_ALL) {
-      // Missing age means “follow the active learner”; preserve an explicit
-      // All ages choice instead of immediately restoring the learner default.
-      params.set('age', 'all');
+      params.delete('age');
     } else {
       params.set('age', age.replace('–', '-'));
     }

@@ -1,35 +1,28 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it } from 'vitest';
 import { ParentTutorReport } from './ParentTutorReport';
 
-describe('ParentTutorReport learner scoping', () => {
-  beforeEach(() => localStorage.clear());
-  afterEach(() => {
-    cleanup();
-    localStorage.clear();
-  });
+beforeEach(() => localStorage.clear());
+afterEach(cleanup);
 
-  it('shows the requested learner memory instead of the active sibling memory', () => {
-    localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 1, name: 'Alice', ageGroup: '5-7' }));
-    localStorage.setItem('sodafom_tutor_memory:1', JSON.stringify({
-      childName: 'Alice', ageGroup: '5-7', topics: {
-        'maths:addition': { topic: 'addition', subject: 'maths', status: 'GREEN' },
-      },
-    }));
-    localStorage.setItem('sodafom_tutor_memory:2', JSON.stringify({
-      childName: 'Bob', ageGroup: '11-13', topics: {
-        'science:forces': { topic: 'forces', subject: 'science', status: 'RED' },
-      },
-    }));
+it('renders the explicit child card memory instead of the globally active learner', () => {
+  localStorage.setItem('sodafom_active_child', JSON.stringify({ id: 2, name: 'Leo', ageGroup: '11-13' }));
+  localStorage.setItem('sodafom_tutor_memory:1', JSON.stringify({
+    childName: 'Mia', ageGroup: '5-7', schoolYear: 'Year 2', topics: {
+      'maths:addition': { topic: 'Addition', subject: 'Maths', status: 'GREEN', difficultyLevel: 2, consecutiveCorrect: 2, consecutiveIncorrect: 0, totalAttempted: 2, totalCorrect: 2, lastPractisedAt: '2026-10-10T12:00:00.000Z' },
+    },
+  }));
+  localStorage.setItem('sodafom_tutor_memory:2', JSON.stringify({
+    childName: 'Leo', ageGroup: '11-13', schoolYear: 'Year 7', topics: {
+      'science:forces': { topic: 'Forces', subject: 'Science', status: 'RED', difficultyLevel: 1, consecutiveCorrect: 0, consecutiveIncorrect: 2, totalAttempted: 2, totalCorrect: 0, lastPractisedAt: '2026-10-10T12:00:00.000Z' },
+    },
+  }));
 
-    const { container } = render(
-      <ParentTutorReport childId={2} childName="Bob" ageGroup="11-13" />,
-    );
-
-    expect(screen.getByText(/Report for Bob/)).toBeInTheDocument();
-    expect(screen.queryByText(/Report for Alice/)).not.toBeInTheDocument();
-    expect(screen.getByText(/Forces - Scheduled for simpler examples/)).toBeInTheDocument();
-    const report = within(container);
-    expect(report.getByText('1')).toBeInTheDocument();
-  });
+  const { container } = render(<ParentTutorReport child={{ id: 1, name: 'Mia', ageGroup: '5-7' }} />);
+  const report = container.querySelector('[data-tutor-report-child-id="1"]');
+  expect(report).not.toBeNull();
+  expect(within(report as HTMLElement).getByText('Report for Mia • Year 2 • ages 5–7')).toBeInTheDocument();
+  expect(within(report as HTMLElement).getByText(/Addition - Great accuracy and confidence!/)).toBeInTheDocument();
+  expect(screen.queryByText(/Forces - Scheduled/)).not.toBeInTheDocument();
+  expect(screen.getByText('Device-only local tutor memory')).toBeInTheDocument();
 });

@@ -347,3 +347,41 @@ html {
   60% { transform: translateX(-4px); }
   80% { transform: translateX(4px); }
 }
+
+/* Read-aloud recovery stays visible and usable without covering the full lesson. */
+.voice-recovery {
+  position: fixed;
+  z-index: 10000;
+  left: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(680px, calc(100vw - 24px));
+  padding: 13px 14px;
+  border: 3px solid #ffd85b;
+  border-radius: 18px;
+  background: #fffdf2;
+  color: #173560;
+  box-shadow: 0 8px 28px #17356038;
+}
+.voice-recovery > span { flex: 0 0 auto; font-size: 1.6rem; }
+.voice-recovery p { flex: 1; margin: 0; font-size: 1rem; line-height: 1.45; font-weight: 800; }
+.voice-recovery button {
+  flex: 0 0 auto;
+  min-width: 64px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 2px solid #0a5fc9;
+  border-radius: 12px;
+  background: #0a67d8;
+  color: white;
+  font-weight: 900;
+}
+.voice-recovery button:focus-visible { outline: 4px solid #ffcc00; outline-offset: 3px; }
+@media (max-width: 520px) {
+  .voice-recovery { align-items: flex-start; flex-wrap: wrap; gap: 8px 10px; }
+  .voice-recovery p { flex-basis: calc(100% - 48px); font-size: .95rem; }
+  .voice-recovery button { margin-left: 42px; }
+}

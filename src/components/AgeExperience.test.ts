@@ -15,6 +15,7 @@ describe('age-tailored home presentation', () => {
     expect(readLearningAge()).toBe(13);
     expect(saveLearningAge(14)).toBe(false);
     expect(saveLearningAge(5.5)).toBe(false);
+    saveLearningAge(null);
     localStorage.setItem('sodafom_learning_age','4');
     expect(readLearningAge()).toBeNull();
     saveLearningAge(7);

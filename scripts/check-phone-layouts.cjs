@@ -10,10 +10,11 @@ const core=['/','/world','/games','/lesson','/library','/reader/lost-key','/home
  const jobs=sizes.flatMap(([width,height])=>core.map(route=>({width,height,route}))).concat([320,390,430].flatMap(width=>catalog.map(g=>({width,height:width===320?568:844,route:g.route}))));
  await Promise.all(Array.from({length:6},async()=>{
   const page=await browser.newPage({ignoreHTTPSErrors:true,reducedMotion:'reduce'});page.on('pageerror',e=>errors.push({url:page.url(),error:String(e)}));
-  while(index<jobs.length){const job=jobs[index++];await page.setViewportSize({width:job.width,height:job.height});await page.goto(base+job.route);await page.locator('.art-hit,.a-page,.archie-launcher,.compact-home,.compact-lesson').first().waitFor();await page.waitForTimeout(80);
+  while(index<jobs.length){const job=jobs[index++];await page.setViewportSize({width:job.width,height:job.height});await page.goto(base+job.route);try{await page.locator('#app > *').first().waitFor();}catch(error){throw new Error(`Rendered shell missing for ${job.route} at ${job.width}×${job.height}: ${error.message}`)}await page.waitForTimeout(80);
    const metrics=await page.evaluate(()=>{
     const vw=innerWidth,vh=innerHeight;
-    const visible=e=>{const r=e.getBoundingClientRect();const s=getComputedStyle(e);return r.width>1&&r.height>1&&s.visibility!=='hidden'&&s.display!=='none'&&!e.closest('.sr-only')};
+    const visible=e=>{const r=e.getBoundingClientRect();const s=getComputedStyle(e);if(r.width<=1||r.height<=1||s.visibility==='hidden'||s.display==='none'||e.closest('.sr-only')||e.closest('.app-screen-window'))return false;
+      for(let parent=e.parentElement;parent;parent=parent.parentElement){const ps=getComputedStyle(parent);if(!/(hidden|clip|auto|scroll)/.test(ps.overflowX))continue;const pr=parent.getBoundingClientRect();if(r.right<=pr.left||r.left>=pr.right)return false;}return true;};
     const bad=[...document.querySelectorAll('button,a,input,select,textarea,canvas,svg,table')].filter(visible).map(e=>{const r=e.getBoundingClientRect();return {name:(e.getAttribute('aria-label')||e.textContent||e.tagName).trim().slice(0,70),left:r.left,right:r.right,bottom:r.bottom,width:r.width,height:r.height}}).filter(r=>r.left< -1||r.right>vw+1);
     const art=[...document.querySelectorAll('.art-hit')].map(e=>({name:e.getAttribute('aria-label'),bottom:e.getBoundingClientRect().bottom})).filter(r=>r.bottom>vh+1);
     return {horizontal:document.documentElement.scrollWidth>vw+1,scrollHeight:document.documentElement.scrollHeight,overflow:bad,artBelow:art};

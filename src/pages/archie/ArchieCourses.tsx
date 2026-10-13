@@ -41,13 +41,13 @@ import {
   normaliseVoiceAnswer,
 } from "@/lib/archie/game-voice";
 import { nextLessonInPath } from "@/lib/archie/course-sequence";
+import LearningYearOptions, { LEARNING_YEAR_SCOPE_NOTE } from "@/components/LearningYearOptions";
 import {
   revealsAnswer,
   subjectMethod,
   type LessonCoachContext,
   type LessonPhase,
 } from "@/lib/archie/lesson-coach";
-import { schoolYearAgeLabel } from "@/lib/archie/game-age";
 
 export const COURSE_LESSONS = [
   ...MATHS_LESSONS,
@@ -128,13 +128,10 @@ function CourseLibrary() {
             value={year}
             onChange={(event) => setChoice(Number(event.target.value), subject)}
           >
-            {Array.from({ length: 9 }, (_, i) => (
-              <option key={i + 1} value={i + 1}>
-                Year {i + 1} · {schoolYearAgeLabel(i + 1)}
-              </option>
-            ))}
+            <LearningYearOptions />
           </select>
         </label>
+        <p className="a-note">{LEARNING_YEAR_SCOPE_NOTE}</p>
         <div className="a-tabs" aria-label="Learning subjects">
           {(["maths", "history", "english", "science"] as const).map((item) => (
             <button

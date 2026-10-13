@@ -78,7 +78,20 @@ interface VoiceContextValue {
 
   /** Whether audio is currently playing */
   playing: boolean;
+
+  /** Child-friendly recovery message when read-aloud cannot start or finishes with an error */
+  voiceNotice: string | null;
+
+  /** Dismiss the current read-aloud recovery message */
+  dismissVoiceNotice: () => void;
 }
+
+type SpeechFailureReason = 'unavailable' | 'failed';
+
+const SPEECH_FAILURE_MESSAGE: Record<SpeechFailureReason, string> = {
+  unavailable: 'Read aloud is not available on this device. Keep reading on the screen, or ask a grown-up to check the sound settings.',
+  failed: 'Archie could not read that aloud. Try the Read aloud button again, or keep reading on the screen.',
+};
 
 // ── Child-friendly TTS voice ─────────────────────────────────────────────────
 function pickChildVoice(): SpeechSynthesisVoice | null {
@@ -147,7 +160,7 @@ function getNativeArchieSpeech(): any | null {
 let speechGeneration = 0;
 let cancelVoiceWait: (() => void) | null = null;
 
-function ttsSpeak(text: string, onEnd?: () => void) {
+function ttsSpeak(text: string, onEnd?: () => void, onFailure?: (reason: SpeechFailureReason) => void) {
   const generation = ++speechGeneration;
   cancelVoiceWait?.(); cancelVoiceWait = null;
   const ended = () => { if (generation === speechGeneration) onEnd?.(); };
@@ -177,22 +190,30 @@ function ttsSpeak(text: string, onEnd?: () => void) {
       .catch((err: unknown) => {
         console.error('ARCHIE_TTS_ERROR', err);
         // If native speech fails, make one browser fallback attempt.
-        if (generation === speechGeneration) browserTtsSpeak(speakable, ended, generation);
+        if (generation === speechGeneration) browserTtsSpeak(speakable, ended, generation, onFailure);
       });
     } catch {
-      if (generation === speechGeneration) browserTtsSpeak(speakable, ended, generation);
+      if (generation === speechGeneration) browserTtsSpeak(speakable, ended, generation, onFailure);
     }
     return;
   }
 
   console.log('ttsSpeak: Falling back to browser TTS');
-  browserTtsSpeak(speakable, ended, generation);
+  browserTtsSpeak(speakable, ended, generation, onFailure);
 }
 
-function browserTtsSpeak(text: string, onEnd: (() => void) | undefined, generation: number) {
+function browserTtsSpeak(text: string, onEnd: (() => void) | undefined, generation: number, onFailure?: (reason: SpeechFailureReason) => void) {
   if (generation !== speechGeneration) return;
   if (!window.speechSynthesis) {
     console.warn('ARCHIE_TTS_UNAVAILABLE');
+    onFailure?.('unavailable');
+    onEnd?.();
+    return;
+  }
+
+  if (typeof SpeechSynthesisUtterance !== 'function') {
+    console.warn('ARCHIE_TTS_UNAVAILABLE');
+    onFailure?.('unavailable');
     onEnd?.();
     return;
   }
@@ -201,7 +222,11 @@ function browserTtsSpeak(text: string, onEnd: (() => void) | undefined, generati
   try {
     window.speechSynthesis.cancel();
     utt = new SpeechSynthesisUtterance(text);
-  } catch { onEnd?.(); return; }
+  } catch {
+    onFailure?.('failed');
+    onEnd?.();
+    return;
+  }
   utt.lang = 'en-GB';
   // A natural, gentle pace. Avoid artificially extreme pitch, which can sound robotic.
   let year=4;
@@ -221,12 +246,17 @@ function browserTtsSpeak(text: string, onEnd: (() => void) | undefined, generati
       onEnd?.();
     };
     utt.onerror = (err) => {
+      if (generation !== speechGeneration) return;
       console.error('ARCHIE_TTS_ERROR', err);
+      onFailure?.('failed');
       onEnd?.();
     };
     console.info('ARCHIE_TTS_START', { engine: 'browser', voice: voice?.name ?? 'default' });
     try { window.speechSynthesis.speak(utt); }
-    catch { onEnd?.(); }
+    catch {
+      onFailure?.('failed');
+      onEnd?.();
+    }
   };
 
   if (window.speechSynthesis.getVoices().length === 0) {
@@ -297,12 +327,15 @@ const VoiceContext = createContext<VoiceContextValue>({
   speak: () => {},
   stop: () => {},
   playing: false,
+  voiceNotice: null,
+  dismissVoiceNotice: () => {},
 });
 
 export function VoiceProvider({ children }: { children: ReactNode }) {
   const [childId, setChildIdState] = useState<string | null>(null);
   const [clips, setClips] = useState<Record<ClipKey, VoiceClip>>({});
   const [playing, setPlaying] = useState(false);
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playbackGeneration = useRef(0);
 
@@ -331,7 +364,6 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
       } catch {}
       setClips((prev) => {
         const next = { ...prev };
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         Reflect.deleteProperty(next, key);
         return next;
       });
@@ -355,9 +387,15 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
   const speak = useCallback(
     (key: ClipKey, fallbackText?: string) => {
       stop();
+      setVoiceNotice(null);
       const playback = playbackGeneration.current;
       const current = () => playback === playbackGeneration.current;
       const ended = () => { if (current()) setPlaying(false); };
+      const failed = (reason: SpeechFailureReason) => {
+        if (!current()) return;
+        setPlaying(false);
+        setVoiceNotice(SPEECH_FAILURE_MESSAGE[reason]);
+      };
       if (!isSoundEnabled()) return;
       const clip = Object.hasOwn(clips, key) ? clips[key as keyof typeof clips] : undefined;
       if (clip?.dataUrl) {
@@ -372,7 +410,7 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
           fallbackStarted = true;
           // Fallback to TTS if audio fails
           setPlaying(true);
-          ttsSpeak(fallbackText ?? key, ended);
+          ttsSpeak(fallbackText ?? key, ended, failed);
         };
         audio.onerror = fallback;
         audio.play().catch(fallback);
@@ -380,17 +418,26 @@ export function VoiceProvider({ children }: { children: ReactNode }) {
         // No recording — use TTS
         const text = fallbackText ?? key;
         setPlaying(true);
-        ttsSpeak(text, ended);
+        ttsSpeak(text, ended, failed);
       }
     },
     [clips, stop]
   );
 
+  const dismissVoiceNotice = useCallback(() => setVoiceNotice(null), []);
+
   return (
     <VoiceContext.Provider
-      value={{ childId, setChildId, clips, saveClip, deleteClip, speak, stop, playing }}
+      value={{ childId, setChildId, clips, saveClip, deleteClip, speak, stop, playing, voiceNotice, dismissVoiceNotice }}
     >
       {children}
+      {voiceNotice && (
+        <aside className="voice-recovery" role="status" aria-live="assertive" aria-atomic="true">
+          <span aria-hidden="true">🔊</span>
+          <p>{voiceNotice}</p>
+          <button type="button" onClick={dismissVoiceNotice}>Got it</button>
+        </aside>
+      )}
     </VoiceContext.Provider>
   );
 }

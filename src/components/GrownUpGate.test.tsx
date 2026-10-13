@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import GrownUpGate from './GrownUpGate';
 afterEach(cleanup);
 describe('grown-up instruction gate',()=>{
@@ -16,12 +16,14 @@ describe('grown-up instruction gate',()=>{
   });
   it('supports keyboard-only completion of the native form',async()=>{
     const user=userEvent.setup();
+    const focus=vi.spyOn(HTMLElement.prototype,'focus');
     render(<GrownUpGate><button>Enable online help</button></GrownUpGate>);
     await user.tab(); expect(screen.getByRole('textbox')).toHaveFocus();
     await user.keyboard('Privacy  Choose{Enter}');
     expect(screen.getByRole('button',{name:'Enable online help'})).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Grown-up area')).toHaveFocus();
+    expect(screen.getByLabelText('Grown-up area opened')).toHaveFocus();
+    expect(focus).toHaveBeenCalledWith({preventScroll:true});
     await user.tab();expect(screen.getByRole('button',{name:'Enable online help'})).toHaveFocus();
   });
   it('locks again on remount without retaining an answer or unlock in storage',async()=>{

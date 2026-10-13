@@ -33,22 +33,26 @@ export interface ChildTutorProfile {
   profileSetupComplete?: boolean;
 }
 
-const MEMORY_KEY = 'sodafom_tutor_memory';
-
-export interface TutorChildScope {
+export type TutorMemoryChild = {
   id: string | number;
   name?: string;
   ageGroup?: ChildTutorProfile['ageGroup'];
+};
+
+const MEMORY_KEY = 'sodafom_tutor_memory';
+
+function normaliseChild(value: TutorMemoryChild | null): { id: string; name?: string; ageGroup?: ChildTutorProfile['ageGroup'] } | null {
+  const id = typeof value?.id === 'number' || typeof value?.id === 'string' ? String(value.id).trim() : '';
+  if (!id) return null;
+  const ageGroup = value?.ageGroup === '5-7' || value?.ageGroup === '8-10' || value?.ageGroup === '11-13'
+    ? value.ageGroup : undefined;
+  return { id, name: typeof value?.name === 'string' ? value.name.trim() : undefined, ageGroup };
 }
 
-function activeChild(): { id: string; name?: string; ageGroup?: ChildTutorProfile['ageGroup'] } | null {
+function activeChild(): ReturnType<typeof normaliseChild> {
   try {
     const parsed = JSON.parse(localStorage.getItem('sodafom_active_child') || 'null') as Record<string, unknown> | null;
-    const id = typeof parsed?.id === 'number' || typeof parsed?.id === 'string' ? String(parsed.id).trim() : '';
-    if (!id) return null;
-    const ageGroup = parsed?.ageGroup === '5-7' || parsed?.ageGroup === '8-10' || parsed?.ageGroup === '11-13'
-      ? parsed.ageGroup : undefined;
-    return { id, name: typeof parsed?.name === 'string' ? parsed.name.trim() : undefined, ageGroup };
+    return normaliseChild(parsed as TutorMemoryChild | null);
   } catch { return null; }
 }
 
@@ -102,7 +106,7 @@ function loadTopics(value: unknown): Record<string, TopicProgress> {
   return topics;
 }
 
-function loadTutorMemoryForScope(child: ReturnType<typeof activeChild>): ChildTutorProfile {
+function loadTutorMemoryFor(child: ReturnType<typeof normaliseChild>): ChildTutorProfile {
   if (typeof window === 'undefined') {
     return { topics: {} };
   }
@@ -114,12 +118,11 @@ function loadTutorMemoryForScope(child: ReturnType<typeof activeChild>): ChildTu
       const setupComplete = parsed.profileSetupComplete === true;
       const storedName = typeof parsed.childName === 'string' && parsed.childName.trim() ? parsed.childName : undefined;
       const legacyName = localStorage.getItem(childNameKey(child)) ?? undefined;
-      // Older local tutor profiles did not save an age group. In that case the
-      // active parent profile is the authoritative fallback, rather than
-      // silently routing every learner to ages 8-10.
+      // Older local tutor profiles did not save an age group. The selected
+      // learner is the authoritative fallback instead of a generic middle band.
       const ageGroup = validAgeGroup(parsed.ageGroup) ?? child?.ageGroup ?? '8-10';
       return {
-        childName: storedName || (setupComplete ? undefined : legacyName),
+        childName: storedName || (setupComplete ? undefined : legacyName || child?.name),
         ageGroup,
         schoolYear: typeof parsed.schoolYear === 'string' && parsed.schoolYear.trim()
           ? parsed.schoolYear
@@ -151,18 +154,12 @@ function loadTutorMemoryForScope(child: ReturnType<typeof activeChild>): ChildTu
 }
 
 export function loadTutorMemory(): ChildTutorProfile {
-  return loadTutorMemoryForScope(activeChild());
+  return loadTutorMemoryFor(activeChild());
 }
 
-/** Read one learner's device-local tutor memory without changing the active learner. */
-export function loadTutorMemoryForChild(scope: TutorChildScope): ChildTutorProfile {
-  const id = String(scope.id).trim();
-  if (!id) return { topics: {} };
-  return loadTutorMemoryForScope({
-    id,
-    name: scope.name?.trim() || undefined,
-    ageGroup: scope.ageGroup,
-  });
+/** Read one learner's local tutor record without changing the globally active child. */
+export function loadTutorMemoryForChild(child: TutorMemoryChild): ChildTutorProfile {
+  return loadTutorMemoryFor(normaliseChild(child));
 }
 
 export function saveTutorMemory(profile: ChildTutorProfile): void {
