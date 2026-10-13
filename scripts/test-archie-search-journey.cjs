@@ -127,6 +127,13 @@ const results = [];
         await closeMovingReward(year === 1 ? `${output}/moving-reward-number-pop-year-${year}-${viewport.width}.png` : null);
         await page.getByText('9 correct out of 10 questions', { exact: true }).waitFor();
         await page.getByRole('heading', { name: '🎉 Amazing exploring!', exact: true }).waitFor();
+        // The accessible final value is available before the large score counter and
+        // delayed reward details finish animating. Capture the settled child-facing
+        // result rather than an empty intermediate frame.
+        await page.waitForFunction(() => Array.from(document.querySelectorAll('[aria-hidden="true"].tabular-nums'))
+          .some(element => element.textContent?.trim() === '90%'));
+        await page.getByText('Your practice earned three stars!', { exact: true }).waitFor();
+        await page.waitForTimeout(450);
         await page.screenshot({ path: `${output}/complete-year-${year}-${viewport.width}.png`, fullPage: true });
         await button('Back to games').click(); await page.waitForURL(base + '/games');
         results.push(`Year ${year}, ${viewport.width}px: eligible menu → wrong answer/hint → pause/resume → ten answers → completion → menu`);
