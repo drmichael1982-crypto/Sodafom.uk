@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Grown-up unlock pager alignment — 13 October 2026](2026-10-13-grown-up-unlock-pager-alignment.md): prevents the focused unlock announcement from partially panning the hidden shared pager, while retaining keyboard focus and adding explicit zero-scroll plus settled phone/tablet/desktop evidence.
 1. [Settled Number Pop result evidence — 13 October 2026](2026-10-13-settled-number-pop-result-evidence.md): prevents the simulated browser capture from mistaking the result entrance animation for the settled phone/tablet layout, without changing gameplay or rewards.
 1. [Learner catalogue and free-access reconciliation — 13 October 2026](2026-10-13-catalogue-age-free-access-reconciliation.md): carries the active learner’s exact age into the classic catalogue, preserves learner-scoped stars and removes stale trial/subscription claims while payment collection is off.
 1. [Current-target reconciliation — 13 October 2026](2026-10-13-current-target-reconciliation.md): reconciles the latest learner switcher and reward-ordering target into the cumulative 2D candidate while retaining the distinct game-card cues and previous teacher-layout repair.
