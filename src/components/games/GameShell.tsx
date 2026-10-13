@@ -511,7 +511,7 @@ export function ResultScreen({
           </AnimatePresence>
 
           {/* Main card */}
-          <div className="bg-card rounded-3xl shadow-2xl border-2 border-border p-4 sm:p-8 text-center relative overflow-hidden">
+          <div className="bg-card rounded-3xl shadow-2xl border-2 border-border p-3 sm:p-8 text-center relative overflow-hidden">
 
             {/* Subtle shimmer for 3 stars */}
             {result.stars === 3 && (
@@ -531,14 +531,14 @@ export function ResultScreen({
               initial={{ opacity: 0, y: -12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="text-2xl sm:text-3xl font-black text-foreground mb-2 sm:mb-4 rounded-lg focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-blue-700"
+              className="text-2xl sm:text-3xl font-black text-foreground mb-1 sm:mb-4 rounded-lg focus-visible:outline focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-blue-700"
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               {headline}
             </motion.h2>
 
             {/* Stars */}
-            <div className="flex justify-center gap-2 sm:gap-3 my-3 sm:my-5">
+            <div className="flex justify-center gap-2 sm:gap-3 my-2 sm:my-5">
               {[1, 2, 3].map(s => (
                 <motion.div
                   key={s}
@@ -561,7 +561,7 @@ export function ResultScreen({
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
-              className="bg-muted rounded-2xl p-3 sm:p-4 mb-3 sm:mb-5"
+              className="bg-muted rounded-2xl p-2 sm:p-4 mb-2 sm:mb-5"
             >
               <div aria-hidden="true" className="text-4xl sm:text-5xl font-black text-primary mb-1 tabular-nums">
                 {animatedScore}%
@@ -578,7 +578,7 @@ export function ResultScreen({
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 1.1 }}
-                className="flex items-center justify-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl p-2.5 sm:p-3 mb-3 sm:mb-4 text-sm font-bold text-yellow-800"
+                className="flex items-center justify-center gap-2 bg-yellow-50 border border-yellow-200 rounded-xl p-2 sm:p-3 mb-2 sm:mb-4 text-sm font-bold text-yellow-800"
               >
                 <Trophy size={16} />
                 You earned {result.stars} star{result.stars !== 1 ? 's' : ''}!
@@ -608,7 +608,7 @@ export function ResultScreen({
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setShowCert(true)}
-                className="relative z-20 w-full flex min-h-11 sm:min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-2.5 sm:py-3 rounded-xl font-black mb-3 sm:mb-4 shadow-md hover:shadow-lg transition-shadow"
+                className="relative z-20 w-full flex min-h-11 sm:min-h-12 touch-manipulation cursor-pointer items-center justify-center gap-2 py-2 sm:py-3 rounded-xl font-black mb-2 sm:mb-4 shadow-md hover:shadow-lg transition-shadow"
                 style={bannerStyle}
               >
                 🏆 View Certificate
@@ -698,7 +698,7 @@ export function ResultScreen({
             )}
 
             {/* Action buttons */}
-            <div className="mb-2 sm:mb-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-2.5 sm:p-3 text-sky-900">
+            <div className="mb-2 sm:mb-3 rounded-2xl border-2 border-sky-200 bg-sky-50 p-2 sm:p-3 text-sky-900">
               <p className="font-black">Level {level}</p>
               <p className="text-xs font-bold">
                 {gamesRemainingForNextLevel === 10
