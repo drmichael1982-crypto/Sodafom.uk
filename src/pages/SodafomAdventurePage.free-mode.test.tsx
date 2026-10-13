@@ -32,6 +32,7 @@ it('opens the free account profile without subscription wording', () => {
   fireEvent.click(screen.getByRole('button', { name: /Settings$/i }));
   expect(screen.getByText(/Learning is free.*no payment is required/i)).toBeInTheDocument();
   expect(screen.queryByText(/Subscription management and cancellation/i)).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /Admin Access/i })).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: /Account$/i }));
   expect(screen.getByTestId('location')).toHaveTextContent('/hub/profile');
 });
