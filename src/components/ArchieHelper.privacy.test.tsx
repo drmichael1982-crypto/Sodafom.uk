@@ -44,6 +44,13 @@ describe('Archie online-help privacy default',()=>{
     localStorage.removeItem('sodafom_active_child');
     expect(getLearnerAge()).toBe(6);
   });
+  it('uses a legacy learner’s scoped progress year instead of the guest year when their age band is missing',()=>{
+    localStorage.setItem('sodafom_archie_design_v1',JSON.stringify({settings:{year:2,sound:false},activities:[],stickers:[]}));
+    localStorage.setItem('sodafom_active_child',JSON.stringify({id:'legacy-learner',name:'Leo'}));
+    localStorage.setItem('sodafom_archie_progress:legacy-learner',JSON.stringify({settings:{year:8,childNickname:'Leo'},activities:[],stickers:[]}));
+
+    expect(getLearnerAge()).toBe(12);
+  });
   it('does not transmit a wider question from a new device',async()=>{
     const fetch=vi.fn();vi.stubGlobal('fetch',fetch);
     await ask('Explain the history of the telescope');
