@@ -1,0 +1,36 @@
+name: Walkable Island Prototype Validation
+on:
+  push:
+    branches:
+      - feature/walkable-island-prototype-20261013
+  pull_request:
+    paths:
+      - public/walkable-island-prototype.html
+      - .github/workflows/walkable-island-validation.yml
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check embedded 3D JavaScript syntax
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const html = fs.readFileSync('public/walkable-island-prototype.html', 'utf8');
+          const match = html.match(/<script type="module">([\s\S]*?)<\/script>/);
+          if (!match) throw new Error('3D module script not found');
+          fs.writeFileSync('/tmp/sodafom-island.mjs', match[1]);
+          NODE
+          node --check /tmp/sodafom-island.mjs
+      - name: Confirm mobile interaction hooks
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const html=fs.readFileSync('public/walkable-island-prototype.html','utf8');
+          for(const required of ['id="stick"','id="jump"','pointermove','function enter(name)','function showBook()','function clockLesson()','function numberGame()']){
+            if(!html.includes(required))throw new Error('Missing required feature: '+required);
+          }
+          NODE
