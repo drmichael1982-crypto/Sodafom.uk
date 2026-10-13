@@ -1,7 +1,7 @@
 import { app_download } from 'virtual:content';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion } from 'motion/react';
-import { Star, Smartphone, Wifi, BookOpen, Gamepad2, BarChart3, Bell, Shield, Zap } from 'lucide-react';
+import { Star, Smartphone, BookOpen, Gamepad2, BarChart3, Bell, Shield, Zap } from 'lucide-react';
 import GamesSection from '@/components/GamesSection';
 import { ArchieCharacter } from '../components/ArchieCharacter';
 
@@ -18,24 +18,22 @@ const APP_FEATURES = [
   { icon: <Gamepad2 size={22} />, title: 'Fun learning games', desc: 'Hundreds of interactive games that make learning feel like play.' },
   { icon: <BarChart3 size={22} />, title: 'Progress tracking', desc: 'Parents can monitor every child\'s growth from the Hub dashboard.' },
   { icon: <Bell size={22} />, title: 'Daily reminders', desc: 'Gentle nudges keep children in their learning routine.' },
-  { icon: <Wifi size={22} />, title: 'Works offline', desc: 'Downloaded lessons play without an internet connection.' },
+  { icon: <Smartphone size={22} />, title: 'Phone and tablet ready', desc: 'Open the mobile web app in a modern browser — no store download is needed.' },
   { icon: <Shield size={22} />, title: 'Safe & ad-free', desc: 'No adverts, no in-app purchases — just pure learning.' },
 ];
 
-// ── Store badge components ────────────────────────────────────────────────────
+// ── Mobile web actions ────────────────────────────────────────────────────────
 function AppStoreBadge() {
   return (
     <a
-      href="#coming-soon"
-      aria-label="Download on the App Store"
+      href="/"
+      aria-label="Open the Sodafom web app"
       className="inline-flex items-center gap-3 bg-foreground text-background px-5 py-3 rounded-2xl hover:opacity-90 transition-opacity active:scale-95 select-none"
     >
-      <svg viewBox="0 0 24 24" className="w-7 h-7 shrink-0" fill="currentColor" aria-hidden="true">
-        <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
-      </svg>
+      <Smartphone className="w-7 h-7 shrink-0" aria-hidden="true" />
       <div className="text-left leading-tight">
-        <div className="text-xs font-bold opacity-75">Download on the</div>
-        <div className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)' }}>App Store</div>
+        <div className="text-xs font-bold opacity-75">Open the</div>
+        <div className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)' }}>Sodafom web app</div>
       </div>
     </a>
   );
@@ -44,29 +42,16 @@ function AppStoreBadge() {
 function GooglePlayBadge() {
   return (
     <a
-      href="#coming-soon"
-      aria-label="Get it on Google Play"
+      href="/games"
+      aria-label="Browse free learning games"
       className="inline-flex items-center gap-3 bg-foreground text-background px-5 py-3 rounded-2xl hover:opacity-90 transition-opacity active:scale-95 select-none"
     >
-      <svg viewBox="0 0 24 24" className="w-7 h-7 shrink-0" fill="currentColor" aria-hidden="true">
-        <path d="M3.18 23.76c.3.17.64.24.99.2l12.6-7.27-2.72-2.72-10.87 9.79zm-1.5-20.5C1.25 3.6 1 4.04 1 4.56v14.88c0 .52.25.96.68 1.3l.1.07 8.34-8.34v-.2L1.68 3.19l-.01.07zm18.12 8.97l-2.38-1.37-2.98 2.98 2.98 2.98 2.4-1.38c.68-.4.68-1.04 0-1.44l-.02.23zm-16.62 9.5l10.87-9.79-2.72-2.72-8.15 11.51z"/>
-      </svg>
+      <Gamepad2 className="w-7 h-7 shrink-0" aria-hidden="true" />
       <div className="text-left leading-tight">
-        <div className="text-xs font-bold opacity-75">Get it on</div>
-        <div className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)' }}>Google Play</div>
+        <div className="text-xs font-bold opacity-75">Play now</div>
+        <div className="text-lg font-black" style={{ fontFamily: 'var(--font-heading)' }}>Free learning games</div>
       </div>
     </a>
-  );
-}
-
-// ── Star rating ───────────────────────────────────────────────────────────────
-function Stars({ count }: { count: number }) {
-  return (
-    <div className="flex gap-0.5" aria-label={`${count} out of 5 stars`}>
-      {Array.from({ length: count }).map((_, i) => (
-        <Star key={i} size={14} className="fill-accent text-accent" />
-      ))}
-    </div>
   );
 }
 
@@ -79,25 +64,25 @@ export default function AppDownloadPage() {
   return (
     <>
       <Helmet>
-        <title>Download the App — Sodafom</title>
-        <meta name="description" content="Download the Sodafom app on iOS and Android. Fun, curriculum-aligned Maths, Spelling and Reading games for children aged 5–13. Free to download." />
+        <title>Sodafom on Phones and Tablets</title>
+        <meta name="description" content="Open Sodafom's free mobile web app for curriculum-aligned Maths, Spelling and Reading games for children aged 5–13." />
         <link rel="canonical" href={url} />
-        <meta property="og:title" content="Download the Sodafom App" />
-        <meta property="og:description" content="Fun educational games for children aged 5–13. Available on iOS and Android." />
+        <meta property="og:title" content="Sodafom on Phones and Tablets" />
+        <meta property="og:description" content="Free mobile web learning games for children aged 5–13." />
         <meta property="og:url" content={url} />
         <meta property="og:type" content="website" />
         <meta property="og:image" content={ogImage} />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Download the Sodafom App" />
-        <meta name="twitter:description" content="Fun educational games for children aged 5–13. Available on iOS and Android." />
+        <meta name="twitter:title" content="Sodafom on Phones and Tablets" />
+        <meta name="twitter:description" content="Free mobile web learning games for children aged 5–13." />
         <meta name="twitter:image" content={ogImage} />
         <script type="application/ld+json">{JSON.stringify({
           '@context': 'https://schema.org',
           '@type': 'WebPage',
           '@id': `${url}#webpage`,
-          name: 'Download the Sodafom App',
+          name: 'Sodafom on Phones and Tablets',
           url,
-          description: 'Download the Sodafom app on iOS and Android. Fun, curriculum-aligned Maths, Spelling and Reading games for children aged 5–13.',
+          description: 'Open the free Sodafom mobile web app for curriculum-aligned learning games for children aged 5–13.',
           isPartOf: { '@id': `${site}/#website` },
           about: { '@id': `${site}/#organization` },
         })}</script>
@@ -113,7 +98,7 @@ export default function AppDownloadPage() {
               <motion.div variants={stagger} initial="hidden" animate="visible">
                 <motion.div variants={fadeUp} className="inline-flex items-center gap-2 bg-accent/20 text-accent-foreground text-xs font-bold px-3 py-1.5 rounded-full mb-5 border border-accent/30">
                   <Smartphone size={14} />
-                  <span>Available on iOS &amp; Android</span>
+                  <span>Mobile web preview for phones &amp; tablets</span>
                 </motion.div>
 
                 <motion.h1
@@ -121,17 +106,16 @@ export default function AppDownloadPage() {
                   className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight mb-5"
                   style={{ fontFamily: 'var(--font-heading)' }}
                 >
-                  Learning in the palm of their hand 🌟
+                  Learning on phones and tablets 🌟
                 </motion.h1>
 
                 <motion.p variants={fadeUp} className="text-primary-foreground/80 text-lg leading-relaxed mb-8 max-w-lg">
-                  Take Sodafom anywhere. Curriculum-aligned Maths, Spelling, and Reading games for children aged 5–13 — now on mobile.
+                  Open Sodafom in a modern phone or tablet browser. Curriculum-aligned Maths, Spelling and Reading games are free in this testing release.
                 </motion.p>
 
-                {/* App store rating */}
                 <motion.div variants={fadeUp} className="flex items-center gap-3 mb-8">
-                  <Stars count={5} />
-                  <span className="text-primary-foreground/70 text-sm font-bold">4.9 · Loved by 10,000+ families</span>
+                  <Shield size={16} aria-hidden="true" />
+                  <span className="text-primary-foreground/70 text-sm font-bold">Open testing release · designed for ages 5–13</span>
                 </motion.div>
 
                 {/* Download badges */}
@@ -141,7 +125,7 @@ export default function AppDownloadPage() {
                 </motion.div>
 
                 <motion.p variants={fadeUp} className="mt-4 text-primary-foreground/50 text-xs">
-                  Free to download · Subscription required for full access
+                  Free web access · no subscription or app-store download required
                 </motion.p>
               </motion.div>
 
@@ -167,8 +151,8 @@ export default function AppDownloadPage() {
                   >
                     <span className="text-2xl">🏆</span>
                     <div>
-                      <p className="text-xs font-black text-foreground" style={{ fontFamily: 'var(--font-heading)' }}>Top Rated</p>
-                      <p className="text-xs text-muted-foreground">Education App 2025</p>
+                      <p className="text-xs font-black text-foreground" style={{ fontFamily: 'var(--font-heading)' }}>Open testing</p>
+                      <p className="text-xs text-muted-foreground">Mobile web preview</p>
                     </div>
                   </motion.div>
                   <motion.div
@@ -178,7 +162,7 @@ export default function AppDownloadPage() {
                     className="absolute -top-4 -right-4 bg-accent rounded-2xl shadow-xl px-4 py-3 flex items-center gap-2"
                   >
                     <Zap size={16} className="text-accent-foreground shrink-0" />
-                    <p className="text-xs font-black text-accent-foreground" style={{ fontFamily: 'var(--font-heading)' }}>Free to try!</p>
+                    <p className="text-xs font-black text-accent-foreground" style={{ fontFamily: 'var(--font-heading)' }}>Free to use</p>
                   </motion.div>
                 </div>
               </motion.div>
@@ -197,7 +181,7 @@ export default function AppDownloadPage() {
             >
               Everything your child needs, beautifully designed
             </motion.h2>
-            <p className="text-center text-muted-foreground text-sm mb-10">Swipe through games, track progress, and earn rewards — all in one app.</p>
+            <p className="text-center text-muted-foreground text-sm mb-10">Swipe through games, track progress, and earn rewards — all in one mobile web app.</p>
 
             {/* Phone mockup frames */}
             <motion.div
@@ -268,7 +252,7 @@ export default function AppDownloadPage() {
                 Why families love the app
               </h2>
               <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-                Built for children, trusted by parents and teachers.
+                Built for children, with clear learning and parent controls.
               </p>
             </motion.div>
 
@@ -366,10 +350,10 @@ export default function AppDownloadPage() {
           >
             <div className="text-6xl mb-5">📱</div>
             <h2 className="text-3xl sm:text-4xl font-black text-foreground mb-3" style={{ fontFamily: 'var(--font-heading)' }}>
-              Ready to download?
+              Ready to learn?
             </h2>
             <p className="text-muted-foreground text-lg mb-8">
-              Join thousands of children already learning with Sodafom. Free to download on iOS and Android.
+              Open the free testing release in your phone or tablet browser. No store listing or subscription is required.
             </p>
             <div className="flex flex-wrap gap-3 justify-center mb-6">
               <AppStoreBadge />
