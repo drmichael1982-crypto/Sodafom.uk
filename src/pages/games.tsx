@@ -9,8 +9,9 @@ import { games as _games } from 'virtual:content';
 import { API_PREFIX } from '@/lib/config';
 import { ttsSpeak } from '@/lib/voice-context';
 import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
-import { isGameForAgeBand } from '@/lib/archie/game-age';
+import { catalogueAgeBandForLearningAge, isGameForAgeBand } from '@/lib/archie/game-age';
 import { readScopedGameStars } from '@/lib/archie/storage';
+import { resolveLearningAge } from '@/lib/learning-age';
 
 type WeeklyChallenge = { gameId: string; title: string; emoji: string; tagline: string; prize: string };
 const games = _games as typeof _games & { weeklyChallenge?: WeeklyChallenge };
@@ -365,9 +366,10 @@ const ARCHIE_TIPS = [
 ];
 // Accepts: "5-7" | "8-10" | "11-13" (from hub/homepage) or exact year-band
 // labels like "5–6", "6–7" etc. (from direct URL). Returns AGE_ALL if unknown.
-function resolveAgeParam(raw: string | null): string {
-  if (!raw) return AGE_ALL;
+function resolveAgeParam(raw: string | null, fallback = AGE_ALL): string {
+  if (!raw) return fallback;
   const normalised = raw.replace('–', '-').trim(); // normalise en-dash → hyphen
+  if (normalised.toLowerCase() === 'all' || normalised.toLowerCase() === AGE_ALL.toLowerCase()) return AGE_ALL;
   // Exact year-band match (e.g. "5-6" → "5–6")
   const exactMatch = AGE_YEARS.find(
     (a) => a.label.replace('–', '-') === normalised
@@ -852,8 +854,8 @@ function HeroGameCarousel({
 export default function GamesPage({ initialCat, initialAge }: { initialCat?: string; initialAge?: string }) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedAge, setSelectedAge] = useState(() => {
-    if (initialAge) return initialAge;
-    return resolveAgeParam(searchParams.get('age'));
+    const learnerBand = catalogueAgeBandForLearningAge(resolveLearningAge()) ?? AGE_ALL;
+    return resolveAgeParam(searchParams.get('age') ?? initialAge ?? null, learnerBand);
   });
   const [selectedCat, setSelectedCat] = useState(() => {
     // initialCat (from homepage icon picker) takes priority over URL param
@@ -1025,12 +1027,19 @@ export default function GamesPage({ initialCat, initialAge }: { initialCat?: str
     }
   }
 
-  // Sync state if URL changes externally (e.g. browser back/forward)
+  // Sync state if the URL or active learner changes. A URL age remains an
+  // explicit choice; without one, the active learner drives the catalogue.
   React.useEffect(() => {
-    setSelectedAge(resolveAgeParam(searchParams.get('age')));
+    const syncAge = () => {
+      const learnerBand = catalogueAgeBandForLearningAge(resolveLearningAge()) ?? AGE_ALL;
+      setSelectedAge(resolveAgeParam(searchParams.get('age') ?? initialAge ?? null, learnerBand));
+    };
+    syncAge();
+    window.addEventListener('sodafom:active-child-changed', syncAge);
     const cat = searchParams.get('cat');
     setSelectedCat(cat ? `cat-${cat}` : 'cat-all');
-  }, [searchParams]);
+    return () => window.removeEventListener('sodafom:active-child-changed', syncAge);
+  }, [initialAge, searchParams]);
   const {
     speak,
     speakingId

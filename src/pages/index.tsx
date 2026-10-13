@@ -13,11 +13,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Helmet } from '@dr.pogodin/react-helmet';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
-import { Star, Zap, ChevronDown, LogIn, UserPlus, ShieldCheck, BookOpen, Calculator, Pencil, FlaskConical, Play, ChevronRight, ClipboardList, BrainCircuit } from 'lucide-react';
+import { Star, Zap, ChevronDown, LogIn, UserPlus, BookOpen, Calculator, Pencil, FlaskConical, Play, ChevronRight, ClipboardList, BrainCircuit } from 'lucide-react';
 import { ArchieCharacter } from '../components/ArchieCharacter';
 import GamesPage from './games';
 import { useSession } from '@/lib/auth/auth-client';
-import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 import { getChildInterests, getInterestTheme, isSchoolFriendlyInterest, saveChildInterest, removeChildInterest } from '@/lib/interest-themes';
 import { loadTutorMemory } from '@/lib/tutor/memory';
 
@@ -267,22 +266,6 @@ export default function HomePage() {
     }
   }, [urlSubject]);
 
-  const [researchMode, setResearchMode] = useState(() => {
-    if (OPEN_TESTING_MODE) return true;
-    if (typeof window === 'undefined') return false;
-    const isFreeAccess = localStorage.getItem('sodafom_free_access') === 'true';
-    return isFreeAccess || localStorage.getItem('sodafom_research_mode') === 'true';
-  });
-
-  React.useEffect(() => {
-    const handleResearchChange = () => {
-      const isFreeAccess = localStorage.getItem('sodafom_free_access') === 'true';
-      setResearchMode(OPEN_TESTING_MODE || isFreeAccess || localStorage.getItem('sodafom_research_mode') === 'true');
-    };
-    window.addEventListener('sodafom_research_mode_change', handleResearchChange);
-    return () => window.removeEventListener('sodafom_research_mode_change', handleResearchChange);
-  }, []);
-
   function handleSubjectPick(id: SubjectId | 'all') {
     setChosen(id);
     setGamesKey(k => k + 1);
@@ -314,7 +297,7 @@ export default function HomePage() {
         <title>Sodafom — Fun Learning Games for Kids Ages 5–13</title>
         <meta
           name="description"
-          content="Sodafom: 127 fun maths, spelling, reading and science games for children aged 5–13. Earn stars, unlock badges and learn through play. Start your free trial today!"
+          content="Sodafom: 127 fun maths, spelling, reading and science games for children aged 5–13. Earn stars, unlock badges and learn through play for free."
         />
         <link rel="canonical" href={siteUrl} />
         <meta property="og:title" content="Sodafom — Fun Learning Games for Kids Ages 5–13" />
@@ -555,7 +538,7 @@ export default function HomePage() {
                     { value: '127', label: 'Learning games', emoji: '🎮' },
                     { value: '5–13', label: 'Ages covered', emoji: '👧' },
                     { value: '4', label: 'Subjects', emoji: '📚' },
-                    { value: '£1', label: 'Per month', emoji: '⭐' },
+                    { value: 'Free', label: 'Current access', emoji: '⭐' },
                   ].map(s => (
                     <div key={s.label}>
                       <p className="text-primary-foreground font-black text-2xl sm:text-3xl">{s.emoji} {s.value}</p>
@@ -612,7 +595,7 @@ export default function HomePage() {
                   className="text-center mb-8"
                 >
                   <h2 className="text-3xl font-black text-foreground mb-2" style={{ fontFamily: 'var(--font-heading)' }}>
-                    Four subjects, one subscription
+                    Four subjects, one free app
                   </h2>
                   <p className="text-muted-foreground">Everything your child needs — all in one place.</p>
                 </motion.div>
@@ -659,10 +642,10 @@ export default function HomePage() {
                   {[
                     { emoji: '🇬🇧', title: 'UK curriculum aligned',   body: 'Every game maps to the national curriculum for KS1, KS2 and KS3.' },
                     { emoji: '🔒', title: 'No ads, ever',              body: 'Completely ad-free. No in-app purchases. Just pure learning.' },
-                    { emoji: '👨‍👩‍👧', title: 'Up to 4 children',         body: 'One subscription covers the whole family — all ages, all subjects.' },
+                    { emoji: '👨‍👩‍👧', title: 'Up to 4 children',         body: 'Family learning stays free — across supported ages and subjects.' },
                     { emoji: '📊', title: 'Parent progress dashboard', body: 'See exactly what your child has played and how they\'re improving.' },
                     { emoji: '⭐', title: 'Stars & rewards',           body: 'Children earn stars, unlock characters and stay motivated to learn.' },
-                    { emoji: '💳', title: 'Cancel any time',           body: 'No long contracts. Cancel with one click — no questions asked.' },
+                    { emoji: '💚', title: 'No payment required',       body: 'The current release is free to explore, with no checkout or subscription.' },
                   ].map((item, i) => (
                     <motion.div
                       key={item.title}
@@ -688,7 +671,7 @@ export default function HomePage() {
                   {[
                     { quote: 'My son went from hating maths to asking to play every evening. Absolute game changer!', name: 'Sarah M.', child: 'Mum of Jake, age 8' },
                     { quote: 'The spelling games are brilliant. My daughter\'s confidence has soared since we started.', name: 'David T.', child: 'Dad of Lily, age 7' },
-                    { quote: 'Best £1 I spend each month. The progress dashboard shows exactly where she\'s improving.', name: 'Emma R.', child: 'Mum of Ava, age 10' },
+                    { quote: 'The progress dashboard shows exactly where she is improving, and she enjoys choosing what to practise next.', name: 'Emma R.', child: 'Mum of Ava, age 10' },
                   ].map((t, i) => (
                     <motion.div
                       key={t.name}
@@ -720,7 +703,7 @@ export default function HomePage() {
                     Ready to start learning?
                   </h2>
                   <p className="text-primary-foreground/80 mb-7 font-semibold">
-                    Pick a subject above — or start your free trial now.
+                    Pick a subject above — learning is free in this release.
                   </p>
                   <div className="flex flex-wrap justify-center gap-3">
                     <button
@@ -729,16 +712,14 @@ export default function HomePage() {
                     >
                       <Play size={16} className="fill-current" /> Choose a subject
                     </button>
-                    {!researchMode && (
-                      <Link
-                        to="/subscribe"
-                        className="flex items-center gap-2 px-7 py-3.5 rounded-full font-black text-base border-2 border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10 transition-all"
-                      >
-                        <ShieldCheck size={16} /> Start free trial
-                      </Link>
-                    )}
+                    <Link
+                      to="/games"
+                      className="flex items-center gap-2 px-7 py-3.5 rounded-full font-black text-base border-2 border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10 transition-all"
+                    >
+                      Browse free games
+                    </Link>
                   </div>
-                  {!researchMode && <p className="text-primary-foreground/60 text-xs mt-4">No card required for free games · £1/month after trial</p>}
+                  <p className="text-primary-foreground/60 text-xs mt-4">No card required · payment collection is off</p>
                 </motion.div>
               </div>
             </section>

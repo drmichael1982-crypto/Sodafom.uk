@@ -1,9 +1,18 @@
 import { isValidElement } from 'react';
 import { Navigate, matchRoutes } from 'react-router';
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { routes } from './routes';
 
 describe('open testing mode commerce routes', () => {
+  it('keeps the reachable classic home page consistent with free access', () => {
+    const source = readFileSync(`${process.cwd()}/src/pages/index.tsx`, 'utf8');
+    expect(source).not.toContain('£1');
+    expect(source).not.toContain('Start free trial');
+    expect(source).not.toContain('one subscription');
+    expect(source).toContain('payment collection is off');
+  });
+
   it.each([
     '/pricing',
     '/demo',
