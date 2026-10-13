@@ -529,6 +529,30 @@ const results = [];
       }
       for (const [name, route] of [['home', '/'], ['games', '/games'], ['lesson', '/lesson'], ['parents', '/parents'], ['teacher', '/teacher']]) {
         await goto(route); await page.screenshot({ path: `${output}/${name}-${viewport.width}.png`, fullPage: true });
+        if (name === 'lesson') {
+          const lessonLayout = await page.locator('.compact-lesson').evaluate(element => {
+            const board = element.querySelector('.compact-board')?.getBoundingClientRect();
+            const companionElement = element.querySelector('.lesson-companion');
+            const companion = companionElement?.getBoundingClientRect();
+            const frame = element.getBoundingClientRect();
+            return {
+              board: board && { left: board.left, right: board.right, top: board.top, bottom: board.bottom },
+              companion: companion && { left: companion.left, right: companion.right, top: companion.top, bottom: companion.bottom },
+              companionDisplay: companionElement && getComputedStyle(companionElement).display,
+              frame: { left: frame.left, right: frame.right, top: frame.top, bottom: frame.bottom },
+            };
+          });
+          if (viewport.width >= 700) {
+            assert.equal(lessonLayout.companionDisplay, 'flex', `tablet lesson companion must be visible at ${viewport.width}px`);
+            assert.ok(lessonLayout.board && lessonLayout.companion, `tablet lesson regions must render at ${viewport.width}px`);
+            assert.ok(lessonLayout.companion.left >= lessonLayout.board.right + 8, `tablet lesson regions must not overlap at ${viewport.width}px`);
+            assert.ok(lessonLayout.companion.right <= lessonLayout.frame.right + 1 && lessonLayout.companion.bottom <= lessonLayout.frame.bottom + 1,
+              `tablet lesson companion must stay inside the app frame at ${viewport.width}px`);
+            await page.getByRole('complementary', { name: "Archie's spelling steps", exact: true }).getByText('Take your time. You can pause whenever you need.', { exact: true }).waitFor();
+          } else {
+            assert.equal(lessonLayout.companionDisplay, 'none', `phone lesson companion must stay hidden at ${viewport.width}px`);
+          }
+        }
         if (name === 'games') {
           const yearControl = page.getByRole('combobox', { name: 'My learning year', exact: true });
           const labelFit = await yearControl.evaluate(element => {

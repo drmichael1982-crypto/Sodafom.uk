@@ -20,7 +20,20 @@
 .app-screen-pager,.app-screen-window{min-width:0}.app-screen-controls{flex-shrink:0;flex-wrap:wrap}.app-screen-controls button{min-width:44px}.soda-page .a-bottom a,.space-jigsaw-home .home-screen-tabs button{min-height:44px}
 .soda-page .a-top>*,.soda-page .a-page-help>*{min-width:0}.soda-page .a-top .a-logo{overflow-wrap:anywhere}.soda-page .a-page-help span{overflow-wrap:anywhere}
 .app-screen-flow :is(input,select,textarea){max-width:100%;box-sizing:border-box;font-size:max(16px,1em);min-width:0}.app-screen-flow :is(input:not([type=checkbox]):not([type=radio]),select,button){min-height:44px}.app-screen-flow :is(img,video,canvas){max-width:100%;height:auto}.app-screen-flow :is(p,h2,h3,label){overflow-wrap:anywhere}
-.compact-lesson{overflow-y:auto;overscroll-behavior:contain}.compact-lesson .compact-board{flex-shrink:0;min-height:180px}.compact-lesson header>*{min-width:0}.compact-lesson h1{overflow-wrap:anywhere}.compact-lesson nav .a-button{white-space:normal}.compact-lesson::after{display:none}
+.compact-lesson{overflow-y:auto;overscroll-behavior:contain}.compact-lesson .compact-board{flex-shrink:0;min-height:180px}.compact-lesson header>*{min-width:0}.compact-lesson h1{overflow-wrap:anywhere}.compact-lesson nav .a-button{white-space:normal}.compact-lesson::after,.lesson-companion{display:none}
+@media(min-width:700px) and (min-height:700px){
+  .compact-lesson{display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,30%);grid-template-rows:auto minmax(280px,1fr) auto;gap:20px!important;padding:clamp(16px,2.5vw,28px)!important;overflow:hidden}
+  .compact-lesson header{grid-column:1/-1;grid-row:1}
+  .compact-lesson .compact-board{grid-column:1;grid-row:2;min-width:0;min-height:0;height:auto;background:repeating-linear-gradient(to bottom,#fff 0,#fff 47px,#e4eef9 48px)!important}
+  .compact-lesson nav{grid-column:1;grid-row:3;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px!important}
+  .compact-lesson .lesson-companion{grid-column:2;grid-row:2/4;display:flex;min-width:0;min-height:0;overflow:hidden;flex-direction:column;align-items:center;padding:14px;border:4px solid #fff;border-radius:24px;background:linear-gradient(160deg,#dff5ff,#fff7cf);box-shadow:0 12px 32px #12396c25;text-align:center}
+  .lesson-companion img{display:block;width:100%;min-height:0;flex:1;object-fit:contain;object-position:center bottom}
+  .lesson-companion h2{margin:8px 0;font-size:clamp(20px,2.5vw,28px);line-height:1.2;color:#123c78}
+  .lesson-companion ol{display:grid;width:100%;gap:8px;margin:0;padding:0;list-style:none;counter-reset:lesson-step}
+  .lesson-companion li{counter-increment:lesson-step;padding:8px;border:2px solid #aed5ef;border-radius:14px;background:#fff;color:#173c75;font-weight:900}
+  .lesson-companion li::before{content:counter(lesson-step);display:inline-grid;place-items:center;width:26px;height:26px;margin-right:7px;border-radius:50%;background:#ffd64e;color:#173268}
+  .lesson-companion p{margin:10px 0 0;font-size:15px;line-height:1.45;color:#284f78;font-weight:750}
+}
 .space-jigsaw-home .screen-activities>section[aria-labelledby=home-puzzle-title]{overflow-y:auto;overscroll-behavior:contain;scroll-padding:12px}.space-jigsaw-home .home-picture-puzzle{flex-shrink:0;min-height:308px}
 @media(max-width:380px){.soda-page .a-top{flex-wrap:wrap}.soda-page .a-top .a-logo{font-size:24px}.app-screen-controls{gap:4px}.app-screen-controls button{padding:8px;font-size:14px}}
 @media(max-height:550px){.soda-page .a-page-help{display:flex;flex-shrink:0;min-height:44px}.soda-page .a-page-help>span{display:none}.soda-page .a-page-help .a-button{min-height:44px}.soda-page .soda-hero h1{font-size:20px!important}.soda-page .a-bottom{max-height:88px;overflow-y:auto}.compact-lesson{height:100dvh}.compact-lesson .compact-board{min-height:160px}.space-jigsaw-home .space-home-preview{display:none!important}}
