@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import { db } from '../../../../db/client.js';
 import { activitySessions, progressSummaries, children } from '../../../../db/schema.js';
-import { and, eq, desc, sql } from 'drizzle-orm';
+import { and, eq, desc, gte, sql } from 'drizzle-orm';
 import { getAuth } from '@/lib/auth/auth';
 
 interface SubjectSummaryRow {
@@ -76,18 +76,37 @@ export default async function handler(req: Request, res: Response) {
       });
     }
 
-    const [recent, summaries] = await Promise.all([
+    const activityWindowStart = new Date();
+    activityWindowStart.setDate(activityWindowStart.getDate() - 29);
+    activityWindowStart.setHours(0, 0, 0, 0);
+
+    const [recent, activity30, summaries, totalRows] = await Promise.all([
       db.select().from(activitySessions)
         .where(eq(activitySessions.childId, childId))
         .orderBy(desc(activitySessions.completedAt))
         .limit(20),
+      db.select().from(activitySessions)
+        .where(and(
+          eq(activitySessions.childId, childId),
+          gte(activitySessions.completedAt, activityWindowStart),
+        ))
+        .orderBy(desc(activitySessions.completedAt)),
       db.select().from(progressSummaries)
         .where(eq(progressSummaries.childId, childId))
         .orderBy(desc(progressSummaries.weekStart))
         .limit(12),
+      db.select({ totalPlays: sql<number>`COUNT(*)` })
+        .from(activitySessions)
+        .where(eq(activitySessions.childId, childId)),
     ]);
 
-    res.json({ recent, summaries, totalStars: childRow.totalStars });
+    res.json({
+      recent,
+      activity30,
+      summaries,
+      totalStars: childRow.totalStars,
+      totalPlays: Number(totalRows[0]?.totalPlays ?? 0),
+    });
   } catch (e) {
     res.status(500).json({ error: String(e) });
   }
