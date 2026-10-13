@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { Star, BookOpen, Calculator, Pencil, FlaskConical, ChevronRight, Clock, Users, Trophy } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { games as gamesContent } from 'virtual:content';
+import { OPEN_TESTING_MODE } from '@/lib/testing-mode';
 
 const siteUrl = 'https://sodafom.uk';
 
@@ -34,6 +35,7 @@ interface GameEntry {
   emoji: string;
   description?: string;
   ageGroup?: string;
+  ageGroups?: string[];
   slug: string;
 }
 
@@ -66,6 +68,9 @@ export default function GameOfTheWeekPage() {
 
   const subjectCfg = game ? (SUBJECT_CONFIG[game.subject] ?? SUBJECT_CONFIG.maths) : null;
   const curriculumLinks = game ? (CURRICULUM_LINKS[game.subject] ?? []) : [];
+  const ageGroups = game?.ageGroups?.length
+    ? game.ageGroups.join(' · ')
+    : game?.ageGroup ?? '5–13';
 
   const jsonLd = game ? {
     '@context': 'https://schema.org',
@@ -80,7 +85,7 @@ export default function GameOfTheWeekPage() {
     <>
       <Helmet>
         <title>{game ? `Game of the Week: ${game.title}` : 'Game of the Week'} | Sodafom</title>
-        <meta name="description" content={game ? `This week's featured Sodafom game is ${game.title} — a ${game.subject} game for children ages 5–13. Play now and earn bonus stars!` : 'Discover this week\'s featured learning game on Sodafom.'} />
+        <meta name="description" content={game ? `This week's featured Sodafom game is ${game.title} — a ${game.subject} game for ages ${ageGroups}. Play now and earn bonus stars!` : 'Discover this week\'s featured learning game on Sodafom.'} />
         <link rel="canonical" href={`${siteUrl}/game-of-the-week`} />
         <meta property="og:title" content={game ? `Game of the Week: ${game.title} | Sodafom` : 'Game of the Week | Sodafom'} />
         <meta property="og:description" content="A new featured game every week — earn bonus stars and explore the curriculum." />
@@ -168,7 +173,7 @@ export default function GameOfTheWeekPage() {
               >
                 {[
                   { icon: <Clock size={20} />, label: 'Play time', value: '5–10 min' },
-                  { icon: <Users size={20} />, label: 'Age range', value: '5–13 years' },
+                  { icon: <Users size={20} />, label: 'Age groups', value: ageGroups },
                   { icon: <Star size={20} className="fill-accent text-accent" />, label: 'Max stars', value: '3 stars' },
                   { icon: <Trophy size={20} />, label: 'Subject', value: subjectCfg?.label ?? 'Mixed' },
                 ].map((stat, i) => (
@@ -251,7 +256,9 @@ export default function GameOfTheWeekPage() {
                 Ready to play?
               </motion.h2>
               <motion.p variants={fadeUp} className="text-primary-foreground/80 mb-6">
-                Start your 7-day free trial and unlock all 118 games today.
+                {OPEN_TESTING_MODE
+                  ? 'The featured game and the full learning catalogue are free during testing.'
+                  : 'Start your 7-day free trial and unlock the full learning catalogue today.'}
               </motion.p>
               <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
                 {game && (
