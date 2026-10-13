@@ -9,7 +9,8 @@ import { ArrowLeft, Calculator, BookOpen, Pencil, Clock, Star, TrendingUp, Zap, 
 
 // ── Sparkline ─────────────────────────────────────────────────────────────────
 function Sparkline({ sessions }: { sessions: { starsEarned: number }[] }) {
-  const last14 = sessions.slice(-14);
+  // The API returns newest first; charts should read oldest to newest.
+  const last14 = sessions.slice(0, 14).reverse();
   if (last14.length < 2) return null;
   const max = Math.max(...last14.map(s => s.starsEarned), 1);
   const w = 200, h = 40, pad = 4;
@@ -161,6 +162,15 @@ function ScoreBar({
 
 // ── Recent badges strip ───────────────────────────────────────────────────────
 
+function localDayKey(value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 // ── 14-day activity heatmap ───────────────────────────────────────────────────
 function ActivityHeatmap({ sessions }: { sessions: ActivitySession[] }) {
   // Build last 14 days
@@ -168,8 +178,8 @@ function ActivityHeatmap({ sessions }: { sessions: ActivitySession[] }) {
   for (let i = 13; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    const key = d.toISOString().slice(0, 10);
-    const daySessions = sessions.filter(s => s.completedAt.slice(0, 10) === key);
+    const key = localDayKey(d);
+    const daySessions = sessions.filter(s => localDayKey(s.completedAt) === key);
     days.push({
       key,
       label: d.toLocaleDateString('en-GB', { weekday: 'short' }),
@@ -372,7 +382,7 @@ function SubjectSummaryCard({
         }}>
             {cfg.emoji} {cfg.label}
           </h3>
-          <p className="text-xs text-muted-foreground">{subjectSessions.length} sessions</p>
+          <p className="text-xs text-muted-foreground">{subjectSessions.length} session{subjectSessions.length === 1 ? '' : 's'}</p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -400,8 +410,11 @@ export function ChildProgressView() {
   }>();
   const [child, setChild] = useState<Child | null>(null);
   const [sessions, setSessions] = useState<ActivitySession[]>([]);
+  const [activity30, setActivity30] = useState<ActivitySession[]>([]);
   const [summaries, setSummaries] = useState<ProgressSummary[]>([]);
   const [totalStars, setTotalStars] = useState(0);
+  const [totalPlays, setTotalPlays] = useState(0);
+  const [totalDurationSeconds, setTotalDurationSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [activeSubject, setActiveSubject] = useState<string>('all');
@@ -410,8 +423,11 @@ export function ChildProgressView() {
     if (!Number.isSafeInteger(parsedChildId) || parsedChildId <= 0) {
       setChild(null);
       setSessions([]);
+      setActivity30([]);
       setSummaries([]);
       setTotalStars(0);
+      setTotalPlays(0);
+      setTotalDurationSeconds(0);
       setLoadError(false);
       setLoading(false);
       return;
@@ -420,8 +436,11 @@ export function ChildProgressView() {
     const controller = new AbortController();
     setChild(null);
     setSessions([]);
+    setActivity30([]);
     setSummaries([]);
     setTotalStars(0);
+    setTotalPlays(0);
+    setTotalDurationSeconds(0);
     setActiveSubject('all');
     setLoadError(false);
     setLoading(true);
@@ -445,9 +464,15 @@ export function ChildProgressView() {
       if (controller.signal.aborted) return;
       const found = normalizeChildrenResponse(childrenData).find(c => c.id === parsedChildId);
       setChild(found ?? null);
-      setSessions(Array.isArray(progressData?.recent) ? progressData.recent : []);
+      const recent = Array.isArray(progressData?.recent) ? progressData.recent : [];
+      setSessions(recent);
+      setActivity30(Array.isArray(progressData?.activity30) ? progressData.activity30 : recent);
       setSummaries(Array.isArray(progressData?.summaries) ? progressData.summaries : []);
       setTotalStars(Number.isFinite(Number(progressData?.totalStars)) ? Number(progressData.totalStars) : 0);
+      setTotalPlays(Number.isFinite(Number(progressData?.totalPlays)) ? Math.max(0, Number(progressData.totalPlays)) : recent.length);
+      setTotalDurationSeconds(Number.isFinite(Number(progressData?.totalDurationSeconds))
+        ? Math.max(0, Number(progressData.totalDurationSeconds))
+        : recent.reduce((total: number, session: ActivitySession) => total + Number(session.durationSeconds ?? 0), 0));
     }).catch(() => {
       if (!controller.signal.aborted) setLoadError(true);
     }).finally(() => {
@@ -457,8 +482,7 @@ export function ChildProgressView() {
     return () => controller.abort();
   }, [childId]);
   const filteredSessions = activeSubject === 'all' ? sessions : sessions.filter(s => s.subject === activeSubject);
-  const totalSessions = sessions.length;
-  const totalMins = sessions.reduce((a, s) => a + Math.round(s.durationSeconds / 60), 0);
+  const totalMins = Math.round(totalDurationSeconds / 60);
   if (loading) {
     return <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -517,7 +541,7 @@ export function ChildProgressView() {
             {[{
             icon: <Zap size={20} />,
             label: 'Total sessions',
-            value: totalSessions,
+            value: totalPlays,
             color: 'bg-primary/10 text-primary'
           }, {
             icon: <Star size={20} />,
@@ -559,19 +583,19 @@ export function ChildProgressView() {
           </div>
 
           {/* 14-day activity heatmap */}
-          <ActivityHeatmap sessions={sessions} />
+          <ActivityHeatmap sessions={activity30} />
 
           {/* Subject progress bar chart */}
-          <SubjectProgressChart sessions={sessions} />
+          <SubjectProgressChart sessions={activity30} />
 
           {/* Subject summaries */}
           <h2 className="text-xl font-black text-foreground mb-4" style={{
           fontFamily: 'var(--font-heading)'
         }}>
-            Subject overview
+            Subject overview — last 30 days
           </h2>
           <motion.div variants={stagger} initial="hidden" animate="visible" className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-            {Object.keys(SUBJECT_CONFIG).map(subject => <SubjectSummaryCard key={subject} subject={subject} summaries={summaries} sessions={sessions} />)}
+            {Object.keys(SUBJECT_CONFIG).map(subject => <SubjectSummaryCard key={subject} subject={subject} summaries={summaries} sessions={activity30} />)}
           </motion.div>
 
           {/* Activity history */}

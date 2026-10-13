@@ -95,7 +95,10 @@ export default async function handler(req: Request, res: Response) {
         .where(eq(progressSummaries.childId, childId))
         .orderBy(desc(progressSummaries.weekStart))
         .limit(12),
-      db.select({ totalPlays: sql<number>`COUNT(*)` })
+      db.select({
+        totalPlays: sql<number>`COUNT(*)`,
+        totalDurationSeconds: sql<number>`COALESCE(SUM(${activitySessions.durationSeconds}), 0)`,
+      })
         .from(activitySessions)
         .where(eq(activitySessions.childId, childId)),
     ]);
@@ -106,6 +109,7 @@ export default async function handler(req: Request, res: Response) {
       summaries,
       totalStars: childRow.totalStars,
       totalPlays: Number(totalRows[0]?.totalPlays ?? 0),
+      totalDurationSeconds: Number(totalRows[0]?.totalDurationSeconds ?? 0),
     });
   } catch (e) {
     res.status(500).json({ error: String(e) });

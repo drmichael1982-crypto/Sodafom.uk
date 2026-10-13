@@ -110,7 +110,7 @@ describe('child progress ownership boundary', () => {
     expect(mocks.execute).not.toHaveBeenCalled();
   });
 
-  it('returns a complete 30-day window and a separate all-time play count', async () => {
+  it('returns a complete 30-day window and separate all-time totals', async () => {
     const recent = [{ id: 20, activityTitle: 'Latest game' }];
     const activity30 = [
       { id: 20, activityTitle: 'Latest game' },
@@ -123,7 +123,10 @@ describe('child progress ownership boundary', () => {
       .mockReturnValueOnce({ from: () => ({ where: () => ({ orderBy: () => ({ limit: () => Promise.resolve(recent) }) }) }) })
       .mockReturnValueOnce({ from: () => ({ where: () => ({ orderBy: () => Promise.resolve(activity30) }) }) })
       .mockReturnValueOnce({ from: () => ({ where: () => ({ orderBy: () => ({ limit: () => Promise.resolve(summaries) }) }) }) })
-      .mockReturnValueOnce({ from: () => ({ where: () => Promise.resolve([{ totalPlays: '142' }]) }) });
+      .mockReturnValueOnce({ from: () => ({ where: () => Promise.resolve([{
+        totalPlays: '142',
+        totalDurationSeconds: '3720',
+      }]) }) });
 
     const res = response();
     await getProgress({
@@ -139,6 +142,7 @@ describe('child progress ownership boundary', () => {
       summaries,
       totalStars: 77,
       totalPlays: 142,
+      totalDurationSeconds: 3720,
     });
   });
 });
