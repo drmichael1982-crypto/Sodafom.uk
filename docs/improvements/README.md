@@ -2,6 +2,7 @@
 
 Read the latest note first and recheck GitHub/CI/deployment before work.
 
+1. [Current-target reconciliation — 13 October 2026](2026-10-13-current-target-reconciliation.md): reconciles the latest learner switcher and reward-ordering target into the cumulative 2D candidate while retaining the distinct game-card cues and previous teacher-layout repair.
 1. [Game-card visual cues — 12 October 2026](2026-10-12-game-card-visual-cues.md): differentiates repeated game-card scenes with stable high-contrast activity cues while preserving accessible names, reduced-motion behavior, routes and the original branded artwork.
 1. [Parent dashboard learner focus — 12 October 2026](2026-10-12-parent-dashboard-learner-focus.md): replaces stacked multi-learner detail reports with an accessible large-target learner selector, preserving family totals and learner isolation while shortening the phone dashboard.
 1. [Parent Hub learner-removal reconciliation — 12 October 2026](2026-10-12-learner-removal-reconciliation.md): combines the latest active-learner deletion context with the existing Reading Speed candidate, restores a mergeable draft PR and records the current deployment, simulated tests and adult-account visual boundary.
